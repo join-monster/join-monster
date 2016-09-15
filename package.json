@@ -10,6 +10,8 @@
     "build": "babel src --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
     "server": "nodemon -x babel-node ./example/server.js",
+    "lint": "eslint src",
+    "prepublish": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
