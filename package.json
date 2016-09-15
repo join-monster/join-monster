@@ -1,0 +1,55 @@
+{
+  "name": "join-monster",
+  "version": "0.0.0",
+  "description": "'A GraphQL-to-SQL query executor.'",
+  "main": "lib/index.js",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "build": "babel src --out-dir dist",
+    "watch": "babel src --watch --out-dir dist",
+    "server": "nodemon -x babel-node ./example/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stems/join-monster.git"
+  },
+  "keywords": [
+    "graphql",
+    "sql",
+    "query",
+    "schema"
+  ],
+  "author": "",
+  "contributors": [
+    "Andrew Carlson <andrew@stem.is>",
+    "Matthew Elder <matt@stem.is>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/stems/join-monster/issues"
+  },
+  "homepage": "https://github.com/stems/join-monster#readme",
+  "peerDependencies": {
+    "graphql": "^0.6.2"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.14.0",
+    "babel-preset-node6": "^11.0.0",
+    "babel-preset-stage-0": "^6.5.0",
+    "eslint": "^3.5.0",
+    "graphql-relay": "^0.4.3",
+    "knex": "^0.12.0",
+    "koa": "^1.2.4",
+    "koa-graphql": "^0.5.6",
+    "koa-mount": "^1.3.0",
+    "nodemon": "^1.10.2",
+    "sqlite3": "^3.1.4"
+  },
+  "dependencies": {
+    "graphql": "^0.6.2",
+    "nesthydrationjs": "^0.3.0"
+  }
+}
