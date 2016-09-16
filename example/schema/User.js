@@ -9,6 +9,7 @@ import {
   globalIdField
 } from 'graphql-relay'
 
+import Comment from './Comment'
 
 export default new GraphQLObjectType({
   description: 'a stem contract account',
@@ -16,11 +17,9 @@ export default new GraphQLObjectType({
   sqlTable: 'accounts',
   fields: () => ({
     id: {
-      description: 'A user\'s ID',
       type: GraphQLInt
     },
     email: {
-      description: 'account email',
       type: GraphQLString,
       sqlColumn: 'email_address'
     },
@@ -40,6 +39,11 @@ export default new GraphQLObjectType({
       type: GraphQLString,
       sqlDeps: [ 'first_name', 'last_name' ],
       resolve: user => `${user.first_name} ${user.last_name}`
+    },
+    comments: {
+      description: 'Comments the user has written on people\'s posts',
+      type: new GraphQLList(Comment),
+      sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
     }
   })
 })

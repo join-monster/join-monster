@@ -12,6 +12,8 @@
     "server": "nodemon -x babel-node ./example/server.js",
     "lint": "eslint src",
     "prepublish": "npm run build",
+    "db:build": "echo '.quit' | sqlite3 example/data.sl3 -init example/data.sql",
+    "db:shell": "sqlite3 example/data.sl3",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
