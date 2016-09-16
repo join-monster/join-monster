@@ -1,4 +1,4 @@
-![join-monster](./join-monster.png)
+![join-monster](./join_monster.png)
 
 # Join Monster
 
