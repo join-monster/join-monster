@@ -2,7 +2,7 @@
   "name": "join-monster",
   "version": "0.0.1",
   "description": "'A GraphQL-to-SQL query executor.'",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "engines": {
     "node": ">=6.0.0"
   },
