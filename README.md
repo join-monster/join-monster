@@ -1,5 +1,6 @@
 ![join-monster](./join-monster.png)
 
+# Join Monster
 
 ### Solving the round-trip problem between the API and the SQL Database
 
