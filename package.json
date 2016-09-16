@@ -9,7 +9,7 @@
   "scripts": {
     "build": "babel src --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
-    "server": "nodemon -x babel-node ./example/server.js",
+    "server": "nodemon -x babel-node -w dist -w example ./example/server.js",
     "lint": "eslint src",
     "prepublish": "npm run build",
     "db:build": "echo '.quit' | sqlite3 example/data.sl3 -init example/data.sql",

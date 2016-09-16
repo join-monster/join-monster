@@ -21,7 +21,6 @@ export default new GraphQLObjectType({
     author: {
       description: 'The user that created the post',
       type: User,
-      as: 'foo',
       sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id`
     }
   })
