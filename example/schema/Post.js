@@ -4,6 +4,8 @@ import {
   GraphQLInt
 } from 'graphql'
 
+import User from './User'
+
 export default new GraphQLObjectType({
   description: 'A post from a user',
   name: 'Post',
@@ -15,6 +17,12 @@ export default new GraphQLObjectType({
     body: {
       description: 'The content of the post',
       type: GraphQLString
+    },
+    author: {
+      description: 'The user that created the post',
+      type: User,
+      as: 'foo',
+      sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id`
     }
   })
 })
