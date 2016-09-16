@@ -10,11 +10,22 @@
     "build": "babel src --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
     "server": "nodemon -x babel-node -w dist -w example ./example/server.js",
-    "lint": "eslint src",
+    "lint": "eslint src test",
     "prepublish": "npm run build",
     "db:build": "echo '.quit' | sqlite3 example/data.sl3 -init example/data.sql",
     "db:shell": "sqlite3 example/data.sl3",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava"
+  },
+  "ava": {
+    "files": [
+      "test/**/*.js"
+    ],
+    "concurrency": 10,
+    "verbose": true,
+    "require": "babel-register",
+    "babel": {
+      "babelrc": true
+    }
   },
   "repository": {
     "type": "git",
@@ -40,6 +51,7 @@
     "graphql": "^0.6.2"
   },
   "devDependencies": {
+    "ava": "^0.16.0",
     "babel-cli": "^6.14.0",
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-0": "^6.5.0",

@@ -1,5 +1,3 @@
-import assert from 'assert'
-
 import { inspect, validateSqlAST } from './util'
 
 export default function makeNestHydrationSpec(topNode) {

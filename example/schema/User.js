@@ -27,11 +27,11 @@ export default new GraphQLObjectType({
       description: 'The ID base-64 encoded',
       type: GraphQLString,
       sqlColumn: 'id',
-      resolve: user => toBase64(user.id)
+      resolve: user => toBase64(user.idEncoded)
     },
     globalId: {
       description: 'The global ID for the Relay spec',
-      ...globalIdField(),
+      ...globalIdField('User', user => user.globalId),
       sqlColumn: 'id'
     },
     full_name: {
