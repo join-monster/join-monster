@@ -1,6 +1,6 @@
-import util from 'util'
 import assert from 'assert'
-import * as _ from 'lodash'
+
+import { inspect, validateSqlAST } from './util'
 
 export default function makeNestHydrationSpec(topNode) {
   validateSqlAST(topNode)
@@ -19,28 +19,21 @@ function _makeNestHydrationSpecForSqlAST(parent, prefix, node) {
     const columns = node.children.filter(c => c.column)
     const tables = node.children.filter(c => c.table)
 
-    const oneSpec = {
-      ...(_.fromPairs(columnDeps.map(col => [ col, prefixToPass + col ]))),
-      ...(_.fromPairs(columns.map(c => [ c.fieldName, prefixToPass + c.column ]))),
-      // recurse
-      ...(_.fromPairs(tables.map(t =>
-        [ t.fieldName, _makeNestHydrationSpecForSqlAST(node, prefixToPass, t) ]
-      )))
+    const fieldSpec = {}
+    columnDeps.forEach(col => fieldSpec[col] = prefixToPass + col)
+    columns.forEach(col => fieldSpec[col.fieldName] = prefixToPass + col.column)
+    for (let table of tables) {
+      const spec = _makeNestHydrationSpecForSqlAST(node, prefixToPass, table)
+      fieldSpec[table.fieldName] = spec
     }
 
     if (node.grabMany) {
-      return [ oneSpec ]
+      return [ fieldSpec ]
     } else {
-      return oneSpec
+      return fieldSpec
     }
   } else {
-    throw new Error('unexpected/unknown node type reached: ' + util.inspect(node))
+    throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
-}
-
-
-function validateSqlAST(topNode) {
-  // topNode should not have a sqlJoin entry...
-  assert(topNode.sqlJoin == null)
 }
 

@@ -1,11 +1,11 @@
-import util from 'util'
-import assert from 'assert'
-import * as _ from 'lodash'
+import { validateSqlAST, inspect } from './util'
 
 export default function stringifySqlAST(topNode) {
   validateSqlAST(topNode)
-  const { selections, joins } = _stringifySqlAST(null, topNode, '', [], [])
-  return 'SELECT\n  ' + _.uniq(selections).join(',\n  ') + '\n' + joins.join('\n')
+  let { selections, joins } = _stringifySqlAST(null, topNode, '', [], [])
+  // make sure these are unique by converting to a set and then back to an array
+  selections = [ ...new Set(selections) ]
+  return 'SELECT\n  ' + selections.join(',\n  ') + '\n' + joins.join('\n')
 }
 
 function _stringifySqlAST(parent, node, prefix, selections, joins) {
@@ -38,12 +38,8 @@ function _stringifySqlAST(parent, node, prefix, selections, joins) {
       `${JSON.stringify(parent.as)}.${JSON.stringify(col)} AS ${JSON.stringify(prefix + col)}`
     ))
   } else {
-    throw new Error('unexpected/unknown node type reached: ' + util.inspect(node))
+    throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
   return { selections, joins }
 }
 
-function validateSqlAST(topNode) {
-  // topNode should not have a sqlJoin entry...
-  assert(topNode.sqlJoin == null)
-}

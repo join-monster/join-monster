@@ -17,6 +17,8 @@ export default function queryASTToSqlAST(ast) {
   // this represents the parsed query
   const queryAST = ast.fieldASTs[0]
   // ast.parentType is from the schema, its the GraphQLObjectType that is parent to the current field
+  // this allows us to get the field definition of the current field so we can grab that extra metadata
+  // e.g. sqlColumn or sqlJoin, etc.
   const parentType = ast.parentType
   getGraphQLType(queryAST, parentType, sqlAST)
   return sqlAST
@@ -44,12 +46,16 @@ export default function queryASTToSqlAST(ast) {
     // is this a table in SQL?
     if (gqlType instanceof GraphQLObjectType && config.sqlTable) {
       sqlASTNode.table = config.sqlTable
+
+      // take the field name as the default alias
       let alias = field.as || field.name
+      // but if that's already in use, just add an _ at the end
       if (usedTableAliases.has(alias)) {
         alias += '_'
       }
       usedTableAliases.add(alias)
       sqlASTNode.as = alias
+
       sqlASTNode.fieldName = field.name
       sqlASTNode.grabMany = grabMany
       sqlASTNode.sqlJoin = field.sqlJoin
@@ -59,6 +65,7 @@ export default function queryASTToSqlAST(ast) {
         for (let selection of queryASTNode.selectionSet.selections) {
           const newNode = {}
           sqlASTNode.children.push(newNode)
+          // recurse down and build up the new node for this child field
           getGraphQLType(selection, gqlType, newNode)
         }
       }
