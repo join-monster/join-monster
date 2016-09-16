@@ -1,3 +1,6 @@
+![join-monster](./join-monster.png)
+
+
 # Solving the round-trip problem between the API and the SQL Database
 
 GraphQL is an API query language created by Facebook to solve the round-trip problem often encountered with REST APIs. Web and mobile clients are now able to get all the data it needs - and nothing more - all within a single request-response cycle. Additionally, many of the early adopters have used it in conjunction with the power of SQL databases. However, the round-trip issue still remains between the server and the database. Resolving the fields of a GraphQL query can involve many subsequent SQL queries, often with joins, resulting in many trips to the database.
