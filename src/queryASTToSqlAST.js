@@ -47,18 +47,16 @@ export default function queryASTToSqlAST(ast) {
     if (gqlType instanceof GraphQLObjectType && config.sqlTable) {
       sqlASTNode.table = config.sqlTable
 
-      // take the field name as the default alias
-      let alias = field.as || field.name
-      // but if that's already in use, just add an _ at the end
-      if (usedTableAliases.has(alias)) {
-        alias += '_'
-      }
-      usedTableAliases.add(alias)
-      sqlASTNode.as = alias
+      // the graphQL field name will be the default alias for the table
+      // if thats taken, this function will just add an underscore to the end to make it unique
+      sqlASTNode.as = makeUnique(usedTableAliases, field.name)
 
       sqlASTNode.fieldName = field.name
       sqlASTNode.grabMany = grabMany
       sqlASTNode.sqlJoin = field.sqlJoin
+      sqlASTNode.sqlJoins = field.sqlJoins
+      sqlASTNode.joinTable = field.joinTable
+      sqlASTNode.joinTableAs = makeUnique(usedTableAliases, field.joinTable)
       // tables have child fields, lets push them to an array
       sqlASTNode.children = []
       if (queryASTNode.selectionSet) {
@@ -84,4 +82,12 @@ export default function queryASTToSqlAST(ast) {
 
 function stripNonNullType(type) {
   return type instanceof GraphQLNonNull ? type.ofType : type
+}
+
+function makeUnique(usedNames, name) {
+  if (usedNames.has(name)) {
+    name += '_'
+  }
+  usedNames.add(name)
+  return name
 }

@@ -11,7 +11,7 @@ import {
 
 import Comment from './Comment'
 
-export default new GraphQLObjectType({
+const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
   sqlTable: 'accounts',
@@ -44,9 +44,20 @@ export default new GraphQLObjectType({
       description: 'Comments the user has written on people\'s posts',
       type: new GraphQLList(Comment),
       sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
+    },
+    following: {
+      description: 'Users that this user is following',
+      type: new GraphQLList(User),
+      joinTable: 'relationships',
+      sqlJoins: [
+        (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
+        (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
+      ]
     }
   })
 })
+
+export default User 
 
 function toBase64(clear) {
   return Buffer.from(String(clear)).toString('base64')

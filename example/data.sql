@@ -27,3 +27,11 @@ CREATE TABLE posts (
 
 INSERT INTO posts (body, author_id)
 VALUES ('If I could marry a programming language, it would be Haskell.', 2);
+
+CREATE TABLE relationships (
+  follower_id INTEGER NOT NULL,
+  followee_id INTEGER NOT NULL
+);
+
+INSERT INTO relationships (follower_id, followee_id)
+VALUES (1, 2);

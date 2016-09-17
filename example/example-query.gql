@@ -1,0 +1,23 @@
+{
+  users {
+    id
+    idEncoded
+    full_name
+    email
+    comments {
+      body
+      author {
+        id
+      }
+      post {
+        body
+        author {
+          id
+        }
+      }
+    }
+    following {
+      full_name
+    }
+  }
+}

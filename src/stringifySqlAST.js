@@ -11,16 +11,26 @@ export default function stringifySqlAST(topNode) {
 function _stringifySqlAST(parent, node, prefix, selections, joins) {
   if (node.table) {
     if (node.sqlJoin) {
+      // select * from accounts a join relationships r on a.id = r.follower_id join accounts b on b.id = r.followee_id
       // add join
       const joinCondition = node.sqlJoin(parent.as, node.as)
 
       joins.push(
-        `LEFT JOIN ${JSON.stringify(node.table)} AS ${JSON.stringify(node.as)} ON ${joinCondition}`
+        `LEFT JOIN ${node.table} AS ${node.as} ON ${joinCondition}`
+      )
+    } else if (node.joinTable) {
+      if (!node.sqlJoins) throw new Error('Must set "sqlJoins" for a join table.')
+      const joinCondition1 = node.sqlJoins[0](parent.as, node.joinTableAs)
+      const joinCondition2 = node.sqlJoins[1](node.joinTableAs, node.as)
+
+      joins.push(
+        `LEFT JOIN ${node.joinTable} AS ${node.joinTableAs} ON ${joinCondition1}`,
+        `LEFT JOIN ${node.table} AS ${node.as} ON ${joinCondition2}`
       )
     } else {
       // add from to joins array
       joins.push(
-        `FROM ${JSON.stringify(node.table)} AS ${JSON.stringify(node.fieldName)}`
+        `FROM ${node.table} AS ${node.fieldName}`
       )
     }
 
@@ -31,11 +41,11 @@ function _stringifySqlAST(parent, node, prefix, selections, joins) {
 
   } else if (node.column) {
     selections.push(
-      `${JSON.stringify(parent.as)}.${JSON.stringify(node.column)} AS ${JSON.stringify(prefix + node.column)}`
+      `${parent.as}.${node.column} AS ${prefix + node.column}`
     )
   } else if (node.columnDeps) {
     node.columnDeps.forEach(col => selections.push(
-      `${JSON.stringify(parent.as)}.${JSON.stringify(col)} AS ${JSON.stringify(prefix + col)}`
+      `${parent.as}.${col} AS ${prefix + col}`
     ))
   } else {
     throw new Error('unexpected/unknown node type reached: ' + inspect(node))
