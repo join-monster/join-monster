@@ -4,7 +4,7 @@ import {
   GraphQLList
 } from 'graphql'
 
-const dataFilePath = path.join(__dirname, '../data.sl3')
+const dataFilePath = path.join(__dirname, '../data/data.sl3')
 const knex = require('knex')({
   client: 'sqlite3',
   connection: {

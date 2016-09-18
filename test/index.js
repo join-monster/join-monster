@@ -180,3 +180,30 @@ test('should handle joins with the same table name', async t => {
   t.deepEqual(data, expect)
 })
 
+test('it should handle many to many relationship', async t => {
+  const query = wrap(`
+    full_name
+    following {
+      full_name
+    }
+  `)
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      {
+        full_name: 'andrew carlson',
+        following: [
+          {
+            full_name: 'matt elder'
+          }
+        ]
+      },
+      {
+        full_name: 'matt elder',
+        following: []
+      }
+    ]
+  }
+  t.deepEqual(data, expect)
+})
