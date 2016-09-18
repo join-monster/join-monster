@@ -1,7 +1,8 @@
 import path from 'path'
 import {
   GraphQLObjectType,
-  GraphQLList
+  GraphQLList,
+  GraphQLInt
 } from 'graphql'
 
 const dataFilePath = path.join(__dirname, '../data/data.sl3')
@@ -21,8 +22,17 @@ export default new GraphQLObjectType({
   fields: () => ({
     users: {
       type: new GraphQLList(User),
+      args: {
+        id: {
+          description: 'The users ID number',
+          type: GraphQLInt
+        }
+      },
+      where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
+        if (args.id) return `${usersTable}.id = ${args.id}`
+      },
       resolve: (parent, args, context, ast) => {
-        return joinMonster(ast, sql => {
+        return joinMonster(ast, context, sql => {
           return knex.raw(sql)
         })
       }

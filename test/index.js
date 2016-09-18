@@ -75,18 +75,23 @@ test('get a field that depends on multiple sql columns', async t => {
 })
 
 test('should join a one-to-many relation', async t => {
-  const query = wrap('comments { id, body }')
+  const query = wrap('id, comments { id, body }')
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
     users: [
       {
+        id: 1,
         comments: [
           {
             id: 1,
             body: 'Wow this is a great post, Matt.'
           }
         ]
+      },
+      {
+        id: 2,
+        comments: []
       }
     ]
   }
@@ -202,6 +207,24 @@ test('it should handle many to many relationship', async t => {
       {
         full_name: 'matt elder',
         following: []
+      }
+    ]
+  }
+  t.deepEqual(data, expect)
+})
+
+test('it should handle a where condition', async t => {
+  const query = `{
+    users(id: 1) {
+      full_name
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      {
+        full_name: 'andrew carlson'
       }
     ]
   }

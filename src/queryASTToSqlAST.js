@@ -51,8 +51,20 @@ export default function queryASTToSqlAST(ast) {
       // if thats taken, this function will just add an underscore to the end to make it unique
       sqlASTNode.as = makeUnique(usedTableAliases, field.name)
 
+      // add the arguments that were passed, if any.
+      // TODO: do something with this info. perhaps implement a where clause and pass this along
+      if (queryASTNode.arguments.length) {
+        const args = sqlASTNode.args = {}
+        for (let arg of queryASTNode.arguments) {
+          args[arg.name.value] = arg.value.value
+        }
+      }
+
       sqlASTNode.fieldName = field.name
       sqlASTNode.grabMany = grabMany
+      if (field.where) {
+        sqlASTNode.where = field.where
+      }
       if (field.sqlJoin) {
         sqlASTNode.sqlJoin = field.sqlJoin
       }

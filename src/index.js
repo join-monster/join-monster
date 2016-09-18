@@ -7,14 +7,14 @@ import makeNestHydrationSpec from './makeNestHydrationSpec'
 import { emphasize, inspect } from './util'
 
 
-module.exports = (ast, dbCall) => {
+module.exports = (ast, context, dbCall) => {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
   // the spec for the Nest Hydration will be determined
   const sqlAST = queryASTToSqlAST(ast)
   debug(emphasize('SQL_AST'), inspect(sqlAST))
 
   // now convert the "SQL AST" to sql
-  const sql = stringifySqlAST(sqlAST)
+  const sql = stringifySqlAST(sqlAST, context)
   debug(emphasize('SQL'), inspect(sql))
 
   // and generate the nest hydration spec
