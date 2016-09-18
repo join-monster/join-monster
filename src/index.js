@@ -28,7 +28,7 @@ module.exports = (ast, dbCall) => {
         if (err) {
           reject(err)
         } else {
-          debug(emphasize('RAW'), inspect(rows))
+          debug(emphasize('RAW_DATA'), inspect(rows))
           resolve(nest(rows, nestSpec))
         }
       })

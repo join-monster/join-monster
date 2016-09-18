@@ -53,10 +53,14 @@ export default function queryASTToSqlAST(ast) {
 
       sqlASTNode.fieldName = field.name
       sqlASTNode.grabMany = grabMany
-      sqlASTNode.sqlJoin = field.sqlJoin
-      sqlASTNode.sqlJoins = field.sqlJoins
-      sqlASTNode.joinTable = field.joinTable
-      sqlASTNode.joinTableAs = makeUnique(usedTableAliases, field.joinTable)
+      if (field.sqlJoin) {
+        sqlASTNode.sqlJoin = field.sqlJoin
+      }
+      if (field.joinTable) {
+        sqlASTNode.sqlJoins = field.sqlJoins
+        sqlASTNode.joinTable = field.joinTable
+        sqlASTNode.joinTableAs = makeUnique(usedTableAliases, field.joinTable)
+      }
       // tables have child fields, lets push them to an array
       sqlASTNode.children = []
       if (queryASTNode.selectionSet) {
