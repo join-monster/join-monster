@@ -9,6 +9,9 @@ GraphQL is an API query language created by Facebook to solve the round-trip pro
 This created a performance bottleneck on our production server, which we initially addressed by writing a single SQL query with multiple joins at the top-level resolver. All the child resolvers simply looked up properties from this conglomerate result. This resulted in more data being sent over TCP/IP than was requested by the client. Furthermore, an update to this query in the API server was required any time the client needed additional fields. We wanted to be able to get all the data necessary - and no more - in a single database query. To achieve this, we created Join Monster.
 
 #### Translate GraphQL to SQL based on your schema
+
+Join Monster is a query execution layer for GraphQL that automatically generates SQL by reading the query AST. By adding a minimal amount of metadata to your GraphQL schema, Join Monster can analyze it along with the GraphQL query and "compile" the SQL to fetch the data from the database in a single reound-trip. The result is automatically nested into the correct shape for response to the API request. In doing to we have improved both the efficiency and the maintainability of our API. Not only is the SQL fetching all the data in a single query, it no longer has to be manually translated from the GraphQL. The SQL can adapt to schema changes since it is derived dynamically.
+
 ```graphql
 {
   users {
@@ -68,4 +71,50 @@ LEFT JOIN posts AS post ON comments.post_id = post.id
 LEFT JOIN accounts AS author_ ON post.author_id = author_.id
 ```
 
-Join Monster is a query execution layer for GraphQL that automatically generates SQL by reading the query AST. By adding a minimal amount of metadata to your GraphQL schema, Join Monster can analyze it along with the GraphQL query and "compile" the SQL to fetch the data from the database in a single reound-trip. The result is automatically nested into the correct shape for response to the API request. In doing to we have improved both the efficiency and the maintainability of our API. Not only is the SQL fetching all the data in a single query, it no longer has to be manually translated from the GraphQL. The SQL can adapt to schema changes since it is derived dynamically.
+which respondes with...
+
+```javascript
+{
+  "data": {
+    "users": [
+      {
+        "id": 1,
+        "idEncoded": "MQ==",
+        "full_name": "andrew carlson",
+        "email": "andrew@stem.is",
+        "following": [
+          {
+            "id": 2,
+            "full_name": "matt elder"
+          }
+        ],
+        "comments": [
+          {
+            "body": "Wow this is a great post, Matt.",
+            "author": {
+              "id": 1,
+              "full_name": "andrew carlson"
+            },
+            "post": {
+              "id": 1,
+              "body": "If I could marry a programming language, it would be Haskell.",
+              "author": {
+                "id": 2,
+                "full_name": "matt elder"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "idEncoded": "Mg==",
+        "full_name": "matt elder",
+        "email": "matt@stem.is",
+        "following": [],
+        "comments": []
+      }
+    ]
+  }
+}
+```
