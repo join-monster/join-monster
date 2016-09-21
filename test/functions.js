@@ -7,6 +7,9 @@ import stringifySqlAST from '../src/stringifySqlAST'
 import makeNestHydrationSpec from '../src/makeNestHydrationSpec'
 
 let ast
+let sqlAST
+let sql
+let nestSpec
 
 // before starting the test, run the query and grab that ast
 test.before(async () => {
@@ -44,9 +47,9 @@ test.before(async () => {
   ast = resolveSpy.lastCall.args[3]
 })
 
-test('should validate each of the individual functions', async t => {
-  const sqlAST = queryASTToSqlAST(ast)
-  let expect = JSON.stringify({
+test.serial('queryASTToSqlAST', t => {
+  sqlAST = queryASTToSqlAST(ast)
+  const expect = JSON.stringify({
     table: 'accounts',
     as: 'users',
     args: { id: '1' },
@@ -118,9 +121,11 @@ test('should validate each of the individual functions', async t => {
   t.is(typeof sqlAST.children[6].children[2].sqlJoin, 'function')
   t.is(typeof sqlAST.children[6].children[3].sqlJoin, 'function')
   t.is(typeof sqlAST.children[6].children[3].children[2].sqlJoin, 'function')
+})
 
-  const sql = stringifySqlAST(sqlAST)
-  expect = `\
+test.serial('stringifySqlAST', t => {
+  sql = stringifySqlAST(sqlAST)
+  const expect = `\
 SELECT
   users.id AS id,
   users.email_address AS email_address,
@@ -145,9 +150,11 @@ LEFT JOIN posts AS post ON comments.post_id = post.id
 LEFT JOIN accounts AS author_ ON post.author_id = author_.id
 WHERE users.id = 1`
   t.is(sql, expect)
+})
 
-  const nestSpec = makeNestHydrationSpec(sqlAST)
-  expect = [
+test.serial('makeNestHydrationSpec', t => {
+  nestSpec = makeNestHydrationSpec(sqlAST)
+  const expect = [
     {
       first_name: 'first_name',
       last_name: 'last_name',
