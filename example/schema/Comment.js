@@ -11,6 +11,7 @@ export default new GraphQLObjectType({
   description: 'Comments on posts',
   name: 'Comment',
   sqlTable: 'comments',
+  uniqueKey: 'id',
   fields: () => ({
     id: {
       type: GraphQLInt

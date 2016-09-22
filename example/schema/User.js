@@ -15,6 +15,7 @@ const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
   sqlTable: 'accounts',
+  uniqueKey: 'id',
   fields: () => ({
     id: {
       type: GraphQLInt
@@ -53,6 +54,11 @@ const User = new GraphQLObjectType({
         (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
         (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
       ]
+    },
+    numLegs: {
+      description: 'How many legs this user has',
+      type: GraphQLInt,
+      sqlColumn: 'num_legs'
     }
   })
 })

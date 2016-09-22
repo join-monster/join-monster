@@ -10,6 +10,7 @@ export default new GraphQLObjectType({
   description: 'A post from a user',
   name: 'Post',
   sqlTable: 'posts',
+  uniqueKey: 'id',
   fields: () => ({
     id: {
       type: GraphQLInt

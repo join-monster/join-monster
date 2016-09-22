@@ -120,6 +120,9 @@ test('should join on a nested relation', async t => {
             }
           }
         ]
+      },
+      {
+        comments: []
       }
     ]
   }

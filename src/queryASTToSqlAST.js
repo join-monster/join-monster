@@ -46,13 +46,15 @@ export default function queryASTToSqlAST(ast) {
     // is this a table in SQL?
     if (gqlType instanceof GraphQLObjectType && config.sqlTable) {
       sqlASTNode.table = config.sqlTable
+      if (!config.sqlTable) {
+        throw new Error(`Must specify "sqlTable" property on ${field.type.name} GraphQLObjectType definition.`)
+      }
 
       // the graphQL field name will be the default alias for the table
       // if thats taken, this function will just add an underscore to the end to make it unique
       sqlASTNode.as = makeUnique(usedTableAliases, field.name)
 
       // add the arguments that were passed, if any.
-      // TODO: do something with this info. perhaps implement a where clause and pass this along
       if (queryASTNode.arguments.length) {
         const args = sqlASTNode.args = {}
         for (let arg of queryASTNode.arguments) {
@@ -62,6 +64,7 @@ export default function queryASTToSqlAST(ast) {
 
       sqlASTNode.fieldName = field.name
       sqlASTNode.grabMany = grabMany
+
       if (field.where) {
         sqlASTNode.where = field.where
       }
@@ -73,8 +76,16 @@ export default function queryASTToSqlAST(ast) {
         sqlASTNode.joinTable = field.joinTable
         sqlASTNode.joinTableAs = makeUnique(usedTableAliases, field.joinTable)
       }
+
       // tables have child fields, lets push them to an array
       sqlASTNode.children = []
+      // if getting many, we need a unique identifier to dedup the results
+      if (grabMany) {
+        if (!config.uniqueKey) {
+          throw new Error(`Requesting a list of ${config.sqlTable}. You must specify the "uniqueKey" on the GraphQLObjectType definition`)
+        }
+        sqlASTNode.children.push({ column: config.uniqueKey, fieldName: config.uniqueKey })
+      }
       if (queryASTNode.selectionSet) {
         for (let selection of queryASTNode.selectionSet.selections) {
           const newNode = {}
@@ -100,9 +111,10 @@ function stripNonNullType(type) {
   return type instanceof GraphQLNonNull ? type.ofType : type
 }
 
+// our table aliases need to be unique. simply check if we've used this ailas already. if we have, just add a "$" at the end
 function makeUnique(usedNames, name) {
   if (usedNames.has(name)) {
-    name += '_'
+    name += '$'
   }
   usedNames.add(name)
   return name

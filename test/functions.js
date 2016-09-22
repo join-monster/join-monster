@@ -58,6 +58,7 @@ test.serial('queryASTToSqlAST', t => {
     where: () => {},
     children: [
       { column: 'id', fieldName: 'id' },
+      { column: 'id', fieldName: 'id' },
       { column: 'id', fieldName: 'idEncoded' },
       { column: 'id', fieldName: 'globalId' },
       { column: 'email_address', fieldName: 'email' },
@@ -70,7 +71,10 @@ test.serial('queryASTToSqlAST', t => {
         sqlJoins: [ () => {}, () => {} ],
         joinTable: 'relationships',
         joinTableAs: 'relationships',
-        children: [ { columnDeps: [ 'first_name', 'last_name' ] } ]
+        children: [
+          { column: 'id', fieldName: 'id' },
+          { columnDeps: [ 'first_name', 'last_name' ] },
+        ]
       },
       {
         table: 'comments',
@@ -79,6 +83,7 @@ test.serial('queryASTToSqlAST', t => {
         grabMany: true,
         sqlJoin: () => {},
         children: [
+          { column: 'id', fieldName: 'id' },
           { column: 'id', fieldName: 'id' },
           { column: 'body', fieldName: 'body' },
           {
@@ -100,7 +105,7 @@ test.serial('queryASTToSqlAST', t => {
               { column: 'body', fieldName: 'body' },
               {
                 table: 'accounts',
-                as: 'author_',
+                as: 'author$',
                 fieldName: 'author',
                 grabMany: false,
                 sqlJoin: () => {},
@@ -117,38 +122,39 @@ test.serial('queryASTToSqlAST', t => {
   t.is(JSON.stringify(sqlAST), expect, 'stringified versions of the ast should be equal')
   // since the previous test didn't check the functions, lets make sure we see some functions where they should be
   t.is(typeof sqlAST.where, 'function')
-  t.is(typeof sqlAST.children[6].sqlJoin, 'function')
-  t.is(typeof sqlAST.children[6].children[2].sqlJoin, 'function')
-  t.is(typeof sqlAST.children[6].children[3].sqlJoin, 'function')
-  t.is(typeof sqlAST.children[6].children[3].children[2].sqlJoin, 'function')
+  t.is(typeof sqlAST.children[7].sqlJoin, 'function')
+  t.is(typeof sqlAST.children[7].children[3].sqlJoin, 'function')
+  t.is(typeof sqlAST.children[7].children[4].sqlJoin, 'function')
+  t.is(typeof sqlAST.children[7].children[4].children[2].sqlJoin, 'function')
 })
 
 test.serial('stringifySqlAST', t => {
   sql = stringifySqlAST(sqlAST)
   const expect = `\
 SELECT
-  users.id AS id,
-  users.email_address AS email_address,
-  users.first_name AS first_name,
-  users.last_name AS last_name,
-  following.first_name AS following__first_name,
-  following.last_name AS following__last_name,
-  comments.id AS comments__id,
-  comments.body AS comments__body,
-  author.first_name AS comments__author__first_name,
-  author.last_name AS comments__author__last_name,
-  post.id AS comments__post__id,
-  post.body AS comments__post__body,
-  author_.first_name AS comments__post__author___first_name,
-  author_.last_name AS comments__post__author___last_name
-FROM accounts AS users
-LEFT JOIN relationships AS relationships ON users.id = relationships.follower_id
-LEFT JOIN accounts AS following ON relationships.followee_id = following.id
-LEFT JOIN comments AS comments ON users.id = comments.author_id
-LEFT JOIN accounts AS author ON comments.author_id = author.id
-LEFT JOIN posts AS post ON comments.post_id = post.id
-LEFT JOIN accounts AS author_ ON post.author_id = author_.id
-WHERE users.id = 1`
+  "users"."id" AS "id",
+  "users"."email_address" AS "email_address",
+  "users"."first_name" AS "first_name",
+  "users"."last_name" AS "last_name",
+  "following"."id" AS "following__id",
+  "following"."first_name" AS "following__first_name",
+  "following"."last_name" AS "following__last_name",
+  "comments"."id" AS "comments__id",
+  "comments"."body" AS "comments__body",
+  "author"."first_name" AS "comments__author__first_name",
+  "author"."last_name" AS "comments__author__last_name",
+  "post"."id" AS "comments__post__id",
+  "post"."body" AS "comments__post__body",
+  "author$"."first_name" AS "comments__post__author$__first_name",
+  "author$"."last_name" AS "comments__post__author$__last_name"
+FROM "accounts" AS "users"
+LEFT JOIN "relationships" AS "relationships" ON "users".id = "relationships".follower_id
+LEFT JOIN "accounts" AS "following" ON "relationships".followee_id = "following".id
+LEFT JOIN "comments" AS "comments" ON "users".id = "comments".author_id
+LEFT JOIN "accounts" AS "author" ON "comments".author_id = "author".id
+LEFT JOIN "posts" AS "post" ON "comments".post_id = "post".id
+LEFT JOIN "accounts" AS "author$" ON "post".author_id = "author$".id
+WHERE "users".id = 1`
   t.is(sql, expect)
 })
 
@@ -164,6 +170,7 @@ test.serial('makeNestHydrationSpec', t => {
       email: 'email_address',
       following: [
         {
+          id: 'following__id',
           first_name: 'following__first_name',
           last_name: 'following__last_name'
         }
@@ -180,8 +187,8 @@ test.serial('makeNestHydrationSpec', t => {
             id: 'comments__post__id',
             body: 'comments__post__body',
             author: {
-              first_name: 'comments__post__author___first_name',
-              last_name: 'comments__post__author___last_name'
+              first_name: 'comments__post__author$__first_name',
+              last_name: 'comments__post__author$__last_name'
             }
           }
         }

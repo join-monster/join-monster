@@ -2,7 +2,8 @@ CREATE TABLE accounts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email_address VARCHAR(150),
   first_name VARCHAR(255),
-  last_name VARCHAR(255)
+  last_name VARCHAR(255),
+  num_legs INTEGER DEFAULT 2
 );
 
 INSERT INTO accounts (email_address, first_name, last_name)
