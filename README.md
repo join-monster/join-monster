@@ -4,7 +4,7 @@
 
 A JavaScript execution layer from GraphQL to SQL aimed at solving the round-trip problem between the API and the database.
 
-It is **NOT** a tool for creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply **translates** a GraphQL query to a SQL query *based on the existing schemas*.
+It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply **translates** a GraphQL query to a SQL query *based on the existing schemas*.
 
 ## The problem with GraphQL & SQL that we solve
 GraphQL is an elegant solution the round-trip problem often encountered with REST APIs. Many are using it in conjunction with the power of SQL databases. But how do we mitigate the number of roundtrips to our **database**? Consider the following schema: `Users` that have many `Posts` that have many `Comments`.
@@ -53,9 +53,9 @@ const Post = new GraphQLObjectType({
 })
 ```
 
-Elegant as this is, consider what happens if the user has 20 posts. That's one SQL query for the posts, and **20 more** for each post's set of comments. This is a total of at least 21 round-trips to the database (we haven't considered how we got the `User` data)! This could easily become a performance bottleneck. We've encountered the round-trip problem again. GraphQL was supposed to give us a solution for this!
+Elegant as this is, consider what happens if the user has 20 posts. That's one SQL query for the posts, and **20 more** for each post's set of comments. This is a total of at least 21 round-trips to the database (we haven't considered how we got the `User` data)! This could easily become a performance bottleneck. We've encountered the round-trip problem again (on the back-end instead of the client). GraphQL was supposed to give us a solution for this!
 
-Of course, it doesn't hvae to be done this way. Perhaps we can reduce the round-trips by doing the joins all at once in the `User` resolver.
+Of course, it doesn't have to be done this way. Perhaps we can reduce the round-trips by doing the joins all at once in the `User` resolver.
 
 ```javascript
 const Query = new GraphQLObjectType({
@@ -77,7 +77,7 @@ const Query = new GraphQLObjectType({
   })
 })
 ```
-So we got all the data at the top level, this will simplify the `Posts` and `Comments` resolvers.
+So we got all the data at the top level, this will simplify the `Posts` and `Comments` resolvers since those properties are already there.
 ```javascript
 const User = new GraphQLObjectType({
   name: 'User',
@@ -114,9 +114,9 @@ During the execution of this request, it will wastefully join on the comments! T
 
 ![schema-complex](img/schema-complex.png)
 
-Imagine doing all those joins up front. This is especially wasteful when client only want a couple of those resources. We now have the inverse problem: **getting too much data.** Furthermore, we've reduced the maintainability of our code. Changes to the schema will require changes to the SQL query that fetches all the data. Often times there is the extra burden of converting the database result into the Object shape, since many database drivers simply return a flat, tabular structure.
+Imagine doing all those joins up front. This is especially wasteful when client only wants a couple of those resources. We now have the inverse problem: **getting too much data.** Furthermore, we've reduced the maintainability of our code. Changes to the schema will require changes to the SQL query that fetches all the data. Often times there is the extra burden of converting the database result into the Object shape, since many database drivers simply return a flat, tabular structure.
 
-## How it works
+## How It Works
 
 Join Monster fetches only the data you need - *nothing more, nothing less*, just like to original philosophy of GraphQL. It reads the parsed GraphQL query, looks at your schema definition, and generates the SQL automatically that will fetch no more than what is required to fulfill the request.
 
@@ -241,13 +241,15 @@ Join Monster is a means of fetching data from your SQL database. It will not pre
 
 ## Usage
 
-See the `example` directory for a reference. I'll demonstrate the steps to set up this example.
+See the `example` directory for a reference. I'll demonstrate the steps to set up this example. We'll set up a little API for a simple blog site for `Users` that can make `Posts` as well as `Comments` on people's posts. We will also let them follow other users. Here is a picture of the schema.
 
 ![schema-example](img/schema-example.png)
 
+I'll omit the code to set up the SQL. A small set of SQLite3 sample data is provided in the example at `example/data/data.sl3`.
+
 ### 1. Declare GraphQL and SQL schemas like you normally would
 
-I'll omit the SQL. Here is how the `graphql-js` schema would look.
+Here is how the `graphql-js` schema would look.
 
 ```javascript
 import { GraphQLSchema } from 'graphql'
@@ -530,7 +532,7 @@ const User = new GraphQLObjectType({
 
 ### 8. Where Conditions
 
-We of course don't want every row from every table. In a similar manner to the `sqlJoin` function, you can define a `where` function on a field. Its parameters are the table alias (generated automatically by `joinMonster`, the GraphQL arguments on that field, and the "context" mentioned earlier. The string returned is the `WHERE` condition. If a falsy value is returned, there will be no `WHERE` condition. We'll add another top-level field that just returns one user.
+We of course don't always want every row from every table. In a similar manner to the `sqlJoin` function, you can define a `where` function on a field. Its parameters are the table alias (generated automatically by `joinMonster`), the GraphQL arguments on that field, and the "context" mentioned earlier. The string returned is the `WHERE` condition. If a falsy value is returned, there will be no `WHERE` condition. We'll add another top-level field that just returns one user.
 
 ```javascript
 const QueryRoot = new GraphQLObjectType({
