@@ -305,7 +305,7 @@ const User = new GraphQLObjectType({
 
 ### 3. Add Metadata to the `User` Fields
 
-You'll need to provide a bit of information about each column, like `sqlColumn` and `sqlDeps`.
+You'll need to provide a bit of information about each column, like `sqlColumn` and `sqlDeps`. These will be added to the *fields* in the type definition.
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -343,7 +343,7 @@ function toBase64(clear) {
 }
 ```
 
-### 3. Let Join Monster Grab Your Data
+### 4. Let Join Monster Grab Your Data
 
 Import `joinMonster`. Have the top-most field that maps to a SQL table implement a resolver function that calls `joinMonster`. Simply pass it the AST info, a "context" object (which can be empty for now), and a callback that takes the SQL as a parameter, calls the database, and returns the data (or a `Promise` of the data). The data must be an array of objects where each object represents a row in the result set.
 
@@ -384,9 +384,9 @@ You're ready to handle queries on the `Users`!
 }
 ```
 
-### 4. Adding Joins
+### 5. Adding Joins
 
-Let's add a field to our `User` which is a `GraphQLObjectType`: their `Comments` which also map to a SQL table. Let's define that type and add the additional SQL metadata.
+Let's add a field to our `User` which is a `GraphQLObjectType`: their `Comments` which also map to a SQL table as a one-to-many relationship. Let's define that type and add the additional SQL metadata.
 
 ```javascript
 const Comment = new GraphQLObjectType({
@@ -405,7 +405,7 @@ const Comment = new GraphQLObjectType({
 })
 ```
 
-We need to add a field to our `User`, and tell `joinMonster` how to grab these comments via a `JOIN`. This can be done with a `sqlJoin` property with a function. It will take the parent table and child table names (actually the aliases that `joinMonster` will generate) as arguments respectively and return the join condition.
+We need to add a field to our `User`, and tell `joinMonster` how to grab these comments via a `JOIN`. This can be done with a `sqlJoin` property with a function. It will take the parent table and child table names (actually the aliases that `joinMonster` will generate) as parameters respectively and return the join condition.
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -431,3 +431,209 @@ Now you can query for the comments for each user!
   }
 }
 ```
+
+### 6. Arbitrary Depth
+
+Let's go deeper and join the post on the comment, a one-to-one relationship. We'll define the `Post`, give it the SQL metadata, and add it as a field on the `Comment`. Each of these also has an author, which maps to the `User` type, let's tell `joinMonster` how to fetch those too.
+
+```javascript
+const Post = new GraphQLObjectType({
+  name: 'Post',
+  sqlTable: 'posts',
+  uniqueKey: 'id',
+  fields: () => ({
+    id: {
+      type: GraphQLInt
+    },
+    body: {
+      description: 'The content of the post',
+      type: GraphQLString
+    },
+    // we'll give the `Post` a field which is a reference to its author, back to the `User` type too
+    author: {
+      description: 'The user that created the post',
+      type: User,
+      sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id`
+    }
+  })
+})
+
+const Comment = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    post: {
+      description: 'The post that the comment belongs to',
+      type: Post,
+      sqlJoin: (commentTable, postTable) => `${commentTable}.post_id = ${postTable}.id`
+    },
+    author: {
+      description: 'The user who wrote the comment',
+      type: User,
+      sqlJoin: (commentTable, userTable) => `${commentTable}.author_id = ${userTable}.id`
+    }
+  })
+})
+```
+
+Now you have some depth and back references. It would be possible to cycle.
+
+```graphql
+{
+  users { 
+    id, idEncoded, email, full_name
+    comments {
+      id, body
+      author { full_name }
+      post {
+        id, body
+        author { full_name }
+      }
+    }
+  }
+}
+```
+
+### 7. Many-to-Many, Self-Referential Relationship
+
+Let us allow `Users` to follow one another. We'll need a join table for the many-to-many and hence two joins to fetch this field. For this we can specify `joinTable` and `sqlJoins` on the field, which should be intuitive based on previous examples.
+
+```javascript
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    following: {
+      description: 'Users that this user is following',
+      type: new GraphQLList(User),
+      joinTable: 'relationships', // this is the name of our join table
+      sqlJoins: [
+        // first the parent table to the join table
+        (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
+        // then the join table to the child
+        (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
+      ]
+    },
+  })
+})
+```
+
+```grapql
+{
+  users { 
+    id, idEncoded, email, full_name
+    following { full_name }
+  }
+}
+```
+
+
+### 8. Where Conditions
+
+We of course don't want every row from every table. In a similar manner to the `sqlJoin` function, you can define a `where` function on a field. Its parameters are the table alias (generated automatically by `joinMonster`, the GraphQL arguments on that field, and the "context" mentioned earlier. The string returned is the `WHERE` condition. If a falsy value is returned, there will be no `WHERE` condition. We'll add another top-level field that just returns one user.
+
+```javascript
+const QueryRoot = new GraphQLObjectType({
+  name: 'Query',
+  fields: () => ({
+    users: { /*...*/ },
+    user: {
+      type: User,
+      args: {
+        id: { type: GraphQLInt }
+      },
+      where: (usersTable, args, context) => {
+        if (args.id) return `${usersTable}.id = ${args.id}`
+      },
+      resolve: (parent, args, context, ast) => {
+        return joinMonster(ast, {}, sql => {
+          return knex.raw(sql)
+        })
+      }
+    }
+  })
+})
+```
+
+```graphql
+{
+  user(id: 1) { 
+    id, idEncoded, email, full_name
+    following { full_name }
+    comments { id, body }
+  }
+}
+```
+
+### 9. Join Monster Context
+
+The `joinMonster` function has a second parameter which is basically an arbitrary object with useful contextual information that your `where` functions might depend on. For example, if you want to get the **logged in** user, the ID of the loggen in user could be passed in the second argument.
+
+```javascript
+{
+  //...
+  // there is a GraphQL context and a Join Monster context. these are separate!
+  resolve: (parent, args, context, ast) => {
+    // get some info off the HTTP request, like the cookie.
+    const loggedInUserId = getHeaderAndParseCookie(context)
+    return joinMonster(ast, { id: loggedInUserId }, sql => {
+      return knex.raw(sql)
+    })
+  }
+}
+```
+
+### 10. Other 
+
+Relay global IDs are very simple.
+```javascript
+{
+  //...
+  fields: () => ({
+    globalId: {
+      description: 'The global ID for the Relay spec',
+      // grab the ID and convert it
+      ...globalIdField('User', user => user.globalId),
+      sqlColumn: 'id'
+    }
+  })
+}
+
+// using a single `sqlDeps` is another way to get the ID column. This way will not rename the property to "globalId"
+// Since the value is at the "id" property, which is what `globalIdField` looks for by default, the second argument
+// can be omitted
+{
+  //...
+  fields: () => ({
+    globalId: {
+      ...globalIdField('User'),
+      sqlDeps: [ 'id' ]
+    }
+  })
+}
+```
+
+Not all the fields on an Object Type that maps to a SQL Table have to be from that table. Join Monster does not interfere with your custom resolvers, so you can still incorporate other data sources.
+
+The `joinMonster` function also supports old-fashioned callback mode. Just give it a callback with 2 parameters and it will wait for `done` to be called.
+
+```javascript
+joinMonster(ast, ctx, (sql, done) => {
+  db.query(sql, (err, data) => {
+    if (err) {
+      done(err)
+    } else {
+      done(null, data)
+    }
+  })
+})
+```
+
+**There's still a lot of work to do. Please feel free to fork and submit a Pull Request!**
+
+## TODO
+
+- [ ] Support the Relay spec for connections and edges (pagination)
+- [ ] Aggregate functions
+- [ ] Caching layer?
+
