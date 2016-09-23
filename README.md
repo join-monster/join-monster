@@ -635,6 +635,7 @@ joinMonster(ast, ctx, (sql, done) => {
 
 ## TODO
 
+- [ ] Much better error messages in cases of mistakes (like missing sql properties)
 - [ ] Support the Relay spec for connections and edges (pagination)
 - [ ] Aggregate functions
 - [ ] Caching layer?

@@ -9,7 +9,6 @@ import { emphasize, inspect } from './util'
 
 function joinMonster(ast, context, dbCall) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
-  // the spec for the Nest Hydration will be determined
   const sqlAST = queryASTToSqlAST(ast)
   debug(emphasize('SQL_AST'), inspect(sqlAST))
 
@@ -17,7 +16,7 @@ function joinMonster(ast, context, dbCall) {
   const sql = stringifySqlAST(sqlAST, context)
   debug(emphasize('SQL'), inspect(sql))
 
-  // and generate the nest hydration spec
+  // figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
   const nestSpec = makeNestHydrationSpec(sqlAST)
   debug(emphasize('NEST_SPEC'), inspect(nestSpec))
 
