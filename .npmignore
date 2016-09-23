@@ -1,5 +1,7 @@
 example/
 src/
+test/
+*.png
 README.md
 .gitignore
 
