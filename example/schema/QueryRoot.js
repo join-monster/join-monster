@@ -2,6 +2,7 @@ import path from 'path'
 import {
   GraphQLObjectType,
   GraphQLList,
+  GraphQLString,
   GraphQLInt
 } from 'graphql'
 
@@ -13,13 +14,17 @@ const knex = require('knex')({
   }
 })
 
-import joinMonster from '../../dist/index'
+import joinMonster from '../../src/index'
 import User from './User'
 
 export default new GraphQLObjectType({
   description: 'global query object',
   name: 'Query',
   fields: () => ({
+    version: {
+      type: GraphQLString,
+      resolve: () => joinMonster.version
+    },
     users: {
       type: new GraphQLList(User),
       args: {

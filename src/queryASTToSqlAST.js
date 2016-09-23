@@ -80,6 +80,8 @@ export default function queryASTToSqlAST(ast) {
       // tables have child fields, lets push them to an array
       sqlASTNode.children = []
       // if getting many, we need a unique identifier to dedup the results
+      // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
+      // need whichever column that the schema specifies as the unique one to be the first child
       if (grabMany) {
         if (!config.uniqueKey) {
           throw new Error(`Requesting a list of ${config.sqlTable}. You must specify the "uniqueKey" on the GraphQLObjectType definition`)

@@ -11,20 +11,23 @@ export default function stringifySqlAST(topNode, context) {
 function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres) {
   if (node.table) {
 
+    // generate the "where" condition, if applicable
     if (node.where) {
       const whereCondition = node.where(`"${node.as}"`, node.args || {}, context) 
       if (whereCondition) {
         wheres.push(`WHERE ${whereCondition}`)
       }
     }
+
+    // generate the join or joins
+    // this condition is for single joins (one-to-one or one-to-many relations)
     if (node.sqlJoin) {
-      // select * from accounts a join relationships r on a.id = r.follower_id join accounts b on b.id = r.followee_id
-      // add join
       const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`)
 
       joins.push(
         `LEFT JOIN "${node.table}" AS "${node.as}" ON ${joinCondition}`
       )
+    // this condition is through a join table (many-to-many relations)
     } else if (node.joinTable) {
       if (!node.sqlJoins) throw new Error('Must set "sqlJoins" for a join table.')
       const joinCondition1 = node.sqlJoins[0](`"${parent.as}"`, `"${node.joinTableAs}"`)
@@ -35,7 +38,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
         `LEFT JOIN "${node.table}" AS "${node.as}" ON ${joinCondition2}`
       )
     } else {
-      // add from to joins array
+      // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
       joins.push(
         `FROM "${node.table}" AS "${node.fieldName}"`
       )

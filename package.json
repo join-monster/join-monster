@@ -1,15 +1,15 @@
 {
   "name": "join-monster",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "'A GraphQL-to-SQL query executor.'",
   "main": "dist/index.js",
   "engines": {
     "node": ">=6.0.0"
   },
   "scripts": {
-    "build": "babel src --out-dir dist",
+    "build": "babel src --minified --no-comments --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
-    "server": "nodemon -x babel-node -w dist -w example ./example/server.js",
+    "server": "babel-watch ./example/server.js",
     "lint": "eslint src test",
     "prepublish": "npm run build",
     "db:build": "rm -f example/data/data.sl3; echo '.quit' | sqlite3 example/data/data.sl3 -init example/data/setup.sql",
@@ -56,13 +56,13 @@
     "babel-cli": "^6.14.0",
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-0": "^6.5.0",
+    "babel-watch": "^2.0.3-rc0",
     "eslint": "^3.5.0",
     "graphql-relay": "^0.4.3",
     "knex": "^0.12.0",
     "koa": "^1.2.4",
     "koa-graphql": "^0.5.6",
     "koa-mount": "^1.3.0",
-    "nodemon": "^1.10.2",
     "sinon": "^1.17.6",
     "sqlite3": "^3.1.4"
   },

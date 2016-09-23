@@ -7,7 +7,7 @@ import makeNestHydrationSpec from './makeNestHydrationSpec'
 import { emphasize, inspect } from './util'
 
 
-module.exports = (ast, context, dbCall) => {
+function joinMonster(ast, context, dbCall) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
   // the spec for the Nest Hydration will be determined
   const sqlAST = queryASTToSqlAST(ast)
@@ -47,4 +47,8 @@ module.exports = (ast, context, dbCall) => {
     return Promise.resolve(nest(result, nestSpec))
   }
 }
+
+joinMonster.version = require('../package.json').version
+
+export default joinMonster
 
