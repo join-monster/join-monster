@@ -27,6 +27,14 @@ export default new GraphQLObjectType({
     },
     users: {
       type: new GraphQLList(User),
+      resolve: (parent, args, context, ast) => {
+        return joinMonster(ast, context, sql => {
+          return knex.raw(sql)
+        })
+      }
+    },
+    user: {
+      type: User,
       args: {
         id: {
           description: 'The users ID number',

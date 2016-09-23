@@ -218,18 +218,16 @@ test('it should handle many to many relationship', async t => {
 
 test('it should handle a where condition', async t => {
   const query = `{
-    users(id: 1) {
+    user(id: 1) {
       full_name
     }
   }`
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
-    users: [
-      {
-        full_name: 'andrew carlson'
-      }
-    ]
+    user: {
+      full_name: 'andrew carlson'
+    }
   }
   t.deepEqual(data, expect)
 })
