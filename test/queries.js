@@ -231,3 +231,17 @@ test('it should handle a where condition', async t => {
   }
   t.deepEqual(data, expect)
 })
+
+test('it should disambiguate two entities with identical fields', async t => {
+  const query = wrap('numLegs')
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      { numLegs: 2 }, // andy
+      { numLegs: 2 }  // matt
+    ]
+  }
+  t.deepEqual(data, expect)
+})
+

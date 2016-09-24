@@ -11,7 +11,8 @@ const knex = require('knex')({
   client: 'sqlite3',
   connection: {
     filename: dataFilePath
-  }
+  },
+  useNullAsDefault: true
 })
 
 import joinMonster from '../../src/index'
