@@ -1,15 +1,16 @@
-![join-monster](img/join_monster.png)
+<!-- Use fully qualified URL for the images so they'll also be visible from the NPM page too -->
+![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/img/join_monster.png)
 
 ## What is Join Monster?
 
-A JavaScript execution layer from GraphQL to SQL aimed at solving the round-trip problem between the API and the database.
+A JavaScript execution layer from GraphQL to SQL aimed at solving the round-trip problem between the API and the database by dynamically **translating GraphQL to SQL** for efficient data retrieval.
 
-It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply **translates** a GraphQL query to a SQL query *based on the existing schemas*.
+It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*.
 
 ## The problem with GraphQL & SQL that we solve
 GraphQL is an elegant solution the round-trip problem often encountered with REST APIs. Many are using it in conjunction with the power of SQL databases. But how do we mitigate the number of roundtrips to our **database**? Consider the following schema: `Users` that have many `Posts` that have many `Comments`.
 
-![schema](img/schema.png)
+![schema](https://raw.githubusercontent.com/stems/join-monster/master/img/schema.png)
 
 Here is a sensible query to retrieve some info from these tables.
 ```graphql
@@ -112,7 +113,7 @@ Although we made the round-trip problem go away, what if another query doesn't e
 
 During the execution of this request, it will wastefully join on the comments! The resolving phase essentially becomes a bunch of property lookups for a conglomerate result we prepared in the top-level. It's not too bad now, but this approach will not scale to more complex schema. Consider a schema like this:
 
-![schema-complex](img/schema-complex.png)
+![schema-complex](https://raw.githubusercontent.com/stems/join-monster/master/img/schema-complex.png)
 
 Imagine doing all those joins up front. This is especially wasteful when client only wants a couple of those resources. We now have the inverse problem: **getting too much data.** Furthermore, we've reduced the maintainability of our code. Changes to the schema will require changes to the SQL query that fetches all the data. Often times there is the extra burden of converting the database result into the Object shape, since many database drivers simply return a flat, tabular structure.
 
@@ -243,7 +244,7 @@ Join Monster is a means of fetching data from your SQL database. It will not pre
 
 See the `example` directory for a reference. I'll demonstrate the steps to set up this example. We'll set up a little API for a simple blog site for `Users` that can make `Posts` as well as `Comments` on people's posts. We will also let them follow other users. Here is a picture of the schema.
 
-![schema-example](img/schema-example.png)
+![schema-example](https://raw.githubusercontent.com/stems/join-monster/master/img/schema-example.png)
 
 I'll omit the code to set up the SQL. A small set of SQLite3 sample data is provided in the example at `example/data/data.sl3`.
 

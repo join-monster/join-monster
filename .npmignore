@@ -1,7 +1,6 @@
 example/
 src/
 test/
-*.png
-README.md
+img/
 .gitignore
 
