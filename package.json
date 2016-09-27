@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=6.0.0"
   },
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "babel src --minified --no-comments --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
