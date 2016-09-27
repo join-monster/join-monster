@@ -1,10 +1,5 @@
 import assert from 'assert'
 
-import {
-  GraphQLNonNull,
-  GraphQLObjectType,
-  GraphQLList
-} from 'graphql'
 
 export default function queryASTToSqlAST(ast) {
   // we need to guard against two tables being aliased to the same thing, so lets keep track of that
@@ -35,7 +30,7 @@ export default function queryASTToSqlAST(ast) {
     let gqlType = stripNonNullType(field.type)
 
     // if list then mark flag true & get the type inside the GraphQLList container type
-    if (gqlType instanceof GraphQLList) {
+    if (gqlType.constructor.name === 'GraphQLList') {
       gqlType = gqlType.ofType
       grabMany = true
     }
@@ -44,7 +39,7 @@ export default function queryASTToSqlAST(ast) {
     const config = gqlType._typeConfig
 
     // is this a table in SQL?
-    if (gqlType instanceof GraphQLObjectType && config.sqlTable) {
+    if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
       sqlASTNode.table = config.sqlTable
       if (!config.sqlTable) {
         throw new Error(`Must specify "sqlTable" property on ${field.type.name} GraphQLObjectType definition.`)
@@ -110,7 +105,7 @@ export default function queryASTToSqlAST(ast) {
 }
 
 function stripNonNullType(type) {
-  return type instanceof GraphQLNonNull ? type.ofType : type
+  return type.constructor.name === 'GraphQLNonNull' ? type.ofType : type
 }
 
 // our table aliases need to be unique. simply check if we've used this ailas already. if we have, just add a "$" at the end

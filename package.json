@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "A GraphQL-to-SQL query execution layer.",
   "main": "dist/index.js",
   "engines": {
@@ -52,7 +52,7 @@
   },
   "homepage": "https://github.com/stems/join-monster#readme",
   "peerDependencies": {
-    "graphql": "^0.6.2"
+    "graphql": "0.x"
   },
   "devDependencies": {
     "ava": "^0.16.0",
@@ -61,6 +61,7 @@
     "babel-preset-stage-0": "^6.5.0",
     "babel-watch": "^2.0.3-rc0",
     "eslint": "^3.5.0",
+    "graphql": "^0.7.0",
     "graphql-relay": "^0.4.3",
     "knex": "^0.12.0",
     "koa": "^1.2.4",
@@ -70,7 +71,6 @@
     "sqlite3": "^3.1.4"
   },
   "dependencies": {
-    "graphql": "^0.6.2",
     "nesthydrationjs": "^0.3.0"
   }
 }
