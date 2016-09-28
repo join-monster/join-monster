@@ -6,9 +6,7 @@ import { partial } from 'lodash'
 
 function wrap(query) {
   return `{
-    users {
-      ${query}
-    }
+    users { ${query} }
   }`
 }
 
@@ -115,15 +113,11 @@ test('should join on a nested relation', async t => {
           {
             id: 1,
             body: 'Wow this is a great post, Matt.',
-            author: {
-              full_name: 'andrew carlson'
-            }
+            author: { full_name: 'andrew carlson' }
           }
         ]
       },
-      {
-        comments: []
-      }
+      { comments: [] }
     ]
   }
   t.deepEqual(data, expect)
@@ -138,15 +132,11 @@ test('should handle joins with the same table name', async t => {
     comments {
       id
       body
-      author {
-        full_name
-      }
+      author { full_name }
       post {
         id
         body
-        author {
-          full_name
-        }
+        author { full_name }
       }
     }
   `)
@@ -163,15 +153,11 @@ test('should handle joins with the same table name', async t => {
           {
             id: 1,
             body: 'Wow this is a great post, Matt.',
-            author: {
-              full_name: 'andrew carlson'
-            },
+            author: { full_name: 'andrew carlson' },
             post: {
               id: 1,
               body: 'If I could marry a programming language, it would be Haskell.',
-              author: {
-                full_name: 'matt elder'
-              }
+              author: { full_name: 'matt elder' }
             }
           }
         ]
@@ -191,9 +177,7 @@ test('should handle joins with the same table name', async t => {
 test('it should handle many to many relationship', async t => {
   const query = wrap(`
     full_name
-    following {
-      full_name
-    }
+    following { full_name }
   `)
   const { data, errors } = await run(query)
   t.is(errors, undefined)
@@ -202,9 +186,7 @@ test('it should handle many to many relationship', async t => {
       {
         full_name: 'andrew carlson',
         following: [
-          {
-            full_name: 'matt elder'
-          }
+          { full_name: 'matt elder' }
         ]
       },
       {
@@ -225,9 +207,7 @@ test('it should handle a where condition', async t => {
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
-    user: {
-      full_name: 'andrew carlson'
-    }
+    user: { full_name: 'andrew carlson' }
   }
   t.deepEqual(data, expect)
 })
@@ -245,3 +225,83 @@ test('it should disambiguate two entities with identical fields', async t => {
   t.deepEqual(data, expect)
 })
 
+test('it should handle fragments at the top level', async t => {
+  const query = `
+    {
+      users {
+        ...F0
+      }
+    }
+    fragment F0 on User { id }
+  `
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      { id: 1 },
+      { id: 2 }
+    ]
+  }
+  t.deepEqual(data, expect)
+})
+
+test('it should handle fragments nested lower', async t => {
+  const query = `
+    {
+      users {
+        ...F0
+        comments {
+          ...F2
+          ...F3
+          post { ...F1 }
+        }
+      }
+    }
+    fragment F0 on User { id }
+    fragment F1 on Post { body }
+    fragment F2 on Comment { id }
+    fragment F3 on Comment { body }
+  `
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      {
+        id: 1,
+        comments: [
+          {
+            id: 1,
+            body: 'Wow this is a great post, Matt.',
+            post: {
+              body: 'If I could marry a programming language, it would be Haskell.'
+            }
+          }
+        ]
+      },
+      {
+        id: 2,
+        comments: []
+      }
+    ]
+  }
+  t.deepEqual(data, expect)
+})
+
+test('it should handle an inline fragment', async t => {
+  const query = `
+    {
+      users {
+        ... on User { full_name }
+      }
+    }
+  `
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      { full_name: 'andrew carlson' },
+      { full_name: 'matt elder' }
+    ]
+  }
+  t.deepEqual(data, expect)
+})

@@ -315,12 +315,12 @@ const User = new GraphQLObjectType({
   //...
   fields: () => ({
     id: {
-      type: GraphQLInt
       // the column name is assumed to be the same as the field name
+      type: GraphQLInt
     },
     email: {
       type: GraphQLString,
-      // if the column name is different, it is specified
+      // if the column name is different, it must be specified specified
       sqlColumn: 'email_address'
     },
     idEncoded: {
@@ -328,6 +328,7 @@ const User = new GraphQLObjectType({
       type: GraphQLString,
       sqlColumn: 'id',
       // this field uses a sqlColumn and applies a resolver function on the value
+      // if a resolver is present, the `sqlColumn` MUST be specified even if it is the same name as the field
       resolve: user => toBase64(user.idEncoded)
     },
     full_name: {

@@ -85,10 +85,29 @@ export default function queryASTToSqlAST(ast) {
       }
       if (queryASTNode.selectionSet) {
         for (let selection of queryASTNode.selectionSet.selections) {
-          const newNode = {}
-          sqlASTNode.children.push(newNode)
-          // recurse down and build up the new node for this child field
-          getGraphQLType(selection, gqlType, newNode)
+          // we need to figure out what kind of selection this is
+          switch (selection.kind) {
+          // if its another field, recurse through that
+          case 'Field':
+            growNewTreeAndAddToChildren(sqlASTNode.children, selection, gqlType)
+            break
+          // if its an inline fragment, it has some fields and we gotta recurse thru all them
+          case 'InlineFragment':
+            for (let fragSelection of selection.selectionSet.selections) {
+              growNewTreeAndAddToChildren(sqlASTNode.children, fragSelection, gqlType)
+            }
+            break
+          // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
+          case 'FragmentSpread':
+            const fragmentName = selection.name.value
+            const fragment = ast.fragments[fragmentName]
+            for (let fragSelection of fragment.selectionSet.selections) {
+              growNewTreeAndAddToChildren(sqlASTNode.children, fragSelection, gqlType)
+            }
+            break
+          default:
+            throw new Error('Unknown selection kind: ' + selection.kind)
+          }
         }
       }
     // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
@@ -101,6 +120,12 @@ export default function queryASTToSqlAST(ast) {
     } else {
       throw new Error(`Your GraphQL field "${fieldName}" needs additional metadata for join-monster. Object Types need a "sqlTable".`)
     }
+  }
+
+  function growNewTreeAndAddToChildren(children, selection, graphQLType) {
+    const newNode = {}
+    children.push(newNode)
+    getGraphQLType(selection, graphQLType, newNode)
   }
 }
 

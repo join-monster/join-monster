@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "A GraphQL-to-SQL query execution layer.",
   "main": "dist/index.js",
   "engines": {
@@ -10,7 +10,7 @@
     "dist/"
   ],
   "scripts": {
-    "build": "babel src --minified --no-comments --out-dir dist",
+    "build": "babel src --no-comments --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
     "server": "babel-watch ./example/server.js",
     "lint": "eslint src test",
