@@ -6,7 +6,7 @@ import {
   GraphQLInt
 } from 'graphql'
 
-const dataFilePath = path.join(__dirname, '../data/data.sl3')
+const dataFilePath = path.join(__dirname, '../data/test-data.sl3')
 const knex = require('knex')({
   client: 'sqlite3',
   connection: {
@@ -31,7 +31,9 @@ export default new GraphQLObjectType({
       resolve: (parent, args, context, ast) => {
         return joinMonster(ast, context, sql => {
           // place the SQL query in the response headers. ONLY for debugging. Don't do this in production
-          context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
+          if (context) {
+            context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
+          }
           return knex.raw(sql)
         })
       }
@@ -49,7 +51,9 @@ export default new GraphQLObjectType({
       },
       resolve: (parent, args, context, ast) => {
         return joinMonster(ast, context, sql => {
-          context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
+          if (context) {
+            context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
+          }
           return knex.raw(sql)
         })
       }

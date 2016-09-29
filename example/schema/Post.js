@@ -5,6 +5,7 @@ import {
 } from 'graphql'
 
 import User from './User'
+import Comment from './Comment'
 
 export default new GraphQLObjectType({
   description: 'A post from a user',
@@ -23,6 +24,11 @@ export default new GraphQLObjectType({
       description: 'The user that created the post',
       type: User,
       sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id`
+    },
+    comments: {
+      description: 'The comments on this post',
+      type: Comment,
+      sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
     }
   })
 })

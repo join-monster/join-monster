@@ -1,5 +1,6 @@
 <!-- Use fully qualified URL for the images so they'll also be visible from the NPM page too -->
 ![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/img/join_monster.png)
+[![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster)
 
 ## What is Join Monster?
 
@@ -240,6 +241,16 @@ The SQL queries will **adapt** not only with the varying complexities of queries
 
 Join Monster is a means of fetching data from your SQL database. It will not prevent you from writing custom resolvers or hinder your ability to define either of your schemas.
 
+## Running the Demo
+
+```shell
+$ git clone https://github.com/stems/join-monster.git
+$ cd join-monster
+$ npm install
+$ npm start
+# go to http://localhost:3000/graphql
+```
+
 ## Usage
 
 See the `example` directory for a reference. I'll demonstrate the steps to set up this example. We'll set up a little API for a simple blog site for `Users` that can make `Posts` as well as `Comments` on people's posts. We will also let them follow other users. Here is a picture of the schema.
@@ -387,6 +398,8 @@ You're ready to handle queries on the `Users`!
   users { id, idEncoded, email, full_name }
 }
 ```
+
+**Note:** `joinMonster` does *NOT* have to be at the root field of the query. You can call `joinMonster` at and field at any depth and it will handle fetching the data for its children.
 
 ### 5. Adding Joins
 
