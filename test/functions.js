@@ -23,21 +23,21 @@ test.before(async () => {
       idEncoded
       globalId
       email
-      full_name
+      fullName
       following {
-        full_name
+        fullName
       }
       comments {
         id
         body
         author {
-          full_name
+          fullName
         }
         post {
           id
           body
           author {
-            full_name
+            fullName
           }
         }
       }

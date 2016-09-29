@@ -15,6 +15,7 @@ function joinMonster(ast, context, dbCall) {
   // now convert the "SQL AST" to sql
   const sql = stringifySqlAST(sqlAST, context)
   debug(emphasize('SQL'), inspect(sql))
+  if (!sql) return Promise.resolve({})
 
   // figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
   const nestSpec = makeNestHydrationSpec(sqlAST)

@@ -30,6 +30,8 @@ export default new GraphQLObjectType({
       type: new GraphQLList(User),
       resolve: (parent, args, context, ast) => {
         return joinMonster(ast, context, sql => {
+          // place the SQL query in the response headers. ONLY for debugging. Don't do this in production
+          context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
           return knex.raw(sql)
         })
       }
@@ -47,6 +49,7 @@ export default new GraphQLObjectType({
       },
       resolve: (parent, args, context, ast) => {
         return joinMonster(ast, context, sql => {
+          context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
           return knex.raw(sql)
         })
       }

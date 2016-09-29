@@ -10,6 +10,7 @@ import {
 } from 'graphql-relay'
 
 import Comment from './Comment'
+import Post from './Post'
 
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
@@ -35,7 +36,7 @@ const User = new GraphQLObjectType({
       ...globalIdField('User', user => user.globalId),
       sqlColumn: 'id'
     },
-    full_name: {
+    fullName: {
       description: 'A user\'s first and last name',
       type: GraphQLString,
       sqlDeps: [ 'first_name', 'last_name' ],
@@ -46,6 +47,11 @@ const User = new GraphQLObjectType({
       type: new GraphQLList(Comment),
       sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
     },
+    posts: {
+      description: 'A list of Posts the user has written',
+      type: new GraphQLList(Post),
+      sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
+    },
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
@@ -54,6 +60,10 @@ const User = new GraphQLObjectType({
         (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
         (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
       ]
+    },
+    favNums: {
+      type: new GraphQLList(GraphQLInt),
+      resolve: () => [1, 2, 3]
     },
     numLegs: {
       description: 'How many legs this user has',

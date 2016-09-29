@@ -5,6 +5,7 @@ export default function stringifySqlAST(topNode, context) {
   let { selections, joins, wheres } = _stringifySqlAST(null, topNode, '', context, [], [], [])
   // make sure these are unique by converting to a set and then back to an array
   selections = [ ...new Set(selections) ]
+  if (!selections.length) return ''
   return 'SELECT\n  ' + selections.join(',\n  ') + '\n' + joins.join('\n') + '\n' + wheres.join('\n')
 }
 
@@ -57,6 +58,8 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
     node.columnDeps.forEach(col => selections.push(
       `"${parent.as}"."${col}" AS "${prefix + col}"`
     ))
+  } else if (node.noop) {
+    return
   } else {
     throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }

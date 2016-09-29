@@ -2,7 +2,7 @@
   users {
     id
     idEncoded
-    full_name
+    fullName
     email
     comments {
       body
@@ -17,7 +17,7 @@
       }
     }
     following {
-      full_name
+      fullName
     }
   }
 }

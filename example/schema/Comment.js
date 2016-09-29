@@ -17,7 +17,7 @@ export default new GraphQLObjectType({
       type: GraphQLInt
     },
     body: {
-      descritpion: 'The content of the comment',
+      description: 'The content of the comment',
       type: GraphQLString
     },
     post: {

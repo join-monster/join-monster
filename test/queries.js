@@ -61,13 +61,13 @@ test('get a globalID field', async t => {
 })
 
 test('get a field that depends on multiple sql columns', async t => {
-  const query = wrap('full_name')
+  const query = wrap('fullName')
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   t.deepEqual(data, {
     users: [
-      { full_name: 'andrew carlson' },
-      { full_name: 'matt elder' }
+      { fullName: 'andrew carlson' },
+      { fullName: 'matt elder' }
     ]
   })
 })
@@ -101,7 +101,7 @@ test('should join on a nested relation', async t => {
     comments {
       id
       body
-      author { full_name }
+      author { fullName }
     }
   `)
   const { data, errors } = await run(query)
@@ -113,7 +113,7 @@ test('should join on a nested relation', async t => {
           {
             id: 1,
             body: 'Wow this is a great post, Matt.',
-            author: { full_name: 'andrew carlson' }
+            author: { fullName: 'andrew carlson' }
           }
         ]
       },
@@ -128,15 +128,15 @@ test('should handle joins with the same table name', async t => {
     idEncoded
     globalId
     email
-    full_name
+    fullName
     comments {
       id
       body
-      author { full_name }
+      author { fullName }
       post {
         id
         body
-        author { full_name }
+        author { fullName }
       }
     }
   `)
@@ -148,16 +148,16 @@ test('should handle joins with the same table name', async t => {
         idEncoded: 'MQ==',
         globalId: 'VXNlcjox',
         email: 'andrew@stem.is',
-        full_name: 'andrew carlson',
+        fullName: 'andrew carlson',
         comments: [
           {
             id: 1,
             body: 'Wow this is a great post, Matt.',
-            author: { full_name: 'andrew carlson' },
+            author: { fullName: 'andrew carlson' },
             post: {
               id: 1,
               body: 'If I could marry a programming language, it would be Haskell.',
-              author: { full_name: 'matt elder' }
+              author: { fullName: 'matt elder' }
             }
           }
         ]
@@ -166,7 +166,7 @@ test('should handle joins with the same table name', async t => {
         idEncoded: 'Mg==',
         globalId: 'VXNlcjoy',
         email: 'matt@stem.is',
-        full_name: 'matt elder',
+        fullName: 'matt elder',
         comments: []
       }
     ]
@@ -176,21 +176,21 @@ test('should handle joins with the same table name', async t => {
 
 test('it should handle many to many relationship', async t => {
   const query = wrap(`
-    full_name
-    following { full_name }
+    fullName
+    following { fullName }
   `)
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
     users: [
       {
-        full_name: 'andrew carlson',
+        fullName: 'andrew carlson',
         following: [
-          { full_name: 'matt elder' }
+          { fullName: 'matt elder' }
         ]
       },
       {
-        full_name: 'matt elder',
+        fullName: 'matt elder',
         following: []
       }
     ]
@@ -201,13 +201,13 @@ test('it should handle many to many relationship', async t => {
 test('it should handle a where condition', async t => {
   const query = `{
     user(id: 1) {
-      full_name
+      fullName
     }
   }`
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
-    user: { full_name: 'andrew carlson' }
+    user: { fullName: 'andrew carlson' }
   }
   t.deepEqual(data, expect)
 })
@@ -291,7 +291,7 @@ test('it should handle an inline fragment', async t => {
   const query = `
     {
       users {
-        ... on User { full_name }
+        ... on User { fullName }
       }
     }
   `
@@ -299,9 +299,37 @@ test('it should handle an inline fragment', async t => {
   t.is(errors, undefined)
   const expect = {
     users: [
-      { full_name: 'andrew carlson' },
-      { full_name: 'matt elder' }
+      { fullName: 'andrew carlson' },
+      { fullName: 'matt elder' }
     ]
   }
   t.deepEqual(data, expect)
 })
+
+test('it should handle a column that resolves independantly of SQL', async t => {
+  const query = wrap('id, favNums')
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      { id: 1, favNums: [1, 2, 3] },
+      { id: 2, favNums: [1, 2, 3] }
+    ]
+  }
+  t.deepEqual(data, expect)
+})
+
+test('it should handle a query that gets nothing from the database', async t => {
+  const query = `{
+    user(id:2) {
+      favNums
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: { favNums: [1, 2, 3] }
+  }
+  t.deepEqual(data, expect)
+})
+

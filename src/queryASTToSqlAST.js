@@ -118,7 +118,7 @@ export default function queryASTToSqlAST(ast) {
     } else if (field.sqlDeps) {
       sqlASTNode.columnDeps = field.sqlDeps
     } else {
-      throw new Error(`Your GraphQL field "${fieldName}" needs additional metadata for join-monster. Object Types need a "sqlTable".`)
+      sqlASTNode.noop = true
     }
   }
 
