@@ -1,5 +1,6 @@
 import {
   GraphQLObjectType,
+  GraphQLList,
   GraphQLString,
   GraphQLInt
 } from 'graphql'
@@ -27,7 +28,7 @@ export default new GraphQLObjectType({
     },
     comments: {
       description: 'The comments on this post',
-      type: Comment,
+      type: new GraphQLList(Comment),
       sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
     }
   })

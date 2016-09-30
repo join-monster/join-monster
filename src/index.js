@@ -28,7 +28,8 @@ function joinMonster(ast, context, dbCall) {
         if (err) {
           reject(err)
         } else {
-          debug(emphasize('RAW_DATA'), inspect(rows))
+          debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 10)))
+          debug(`${rows.length} rows...`)
           resolve(nest(rows, nestSpec))
         }
       })
@@ -39,7 +40,8 @@ function joinMonster(ast, context, dbCall) {
   // if their func gave us a promise for the data, wait for the data
   if (result.then) {
     return result.then(rows => {
-      debug(emphasize('RAW DATA'), inspect(rows))
+      debug(emphasize('RAW DATA'), inspect(rows.slice(0, 10)))
+      debug(`${rows.length} rows...`)
       return nest(rows, nestSpec)
     })
   // otherwise, they were supposed to give us the data directly

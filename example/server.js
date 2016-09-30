@@ -16,7 +16,13 @@ router.get('/graphql', graphiql({
   js: '/graphiql.js'
 }))
 
-router.post('/graphql', graphqlHTTP({ schema }))
+router.post('/graphql', graphqlHTTP({
+  schema,
+  formatError: e => {
+    console.error(e)
+    return e
+  }
+}))
 
 app.use(router.routes())
 // serve the custom build of GraphiQL

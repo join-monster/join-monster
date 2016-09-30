@@ -6,7 +6,7 @@ import {
   GraphQLInt
 } from 'graphql'
 
-const dataFilePath = path.join(__dirname, '../data/test-data.sl3')
+const dataFilePath = path.join(__dirname, '../data', process.env.NODE_ENV === 'test' ? 'test-data.sl3' : 'demo-data.sl3')
 const knex = require('knex')({
   client: 'sqlite3',
   connection: {
