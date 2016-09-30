@@ -1,23 +1,22 @@
 {
   users {
-    id
-    idEncoded
-    fullName
-    email
-    comments {
+    ...UserInfo
+    posts {
+      id
       body
-      author {
-        id
-      }
-      post {
+      comments {
         body
         author {
-          id
+          ... UserInfo
+          following {
+            id
+          }
         }
       }
     }
-    following {
-      fullName
-    }
   }
+}
+
+fragment UserInfo on User {
+  id, fullName, email
 }

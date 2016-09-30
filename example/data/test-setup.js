@@ -1,7 +1,7 @@
-const knex = require('./setup-schema')('test')
+const knex = require('./schema-setup')('test')
 
 ;(async () => {
-  await knex('accounts').batchInsert([
+  await knex.batchInsert('accounts', [
     {
       email_address: 'andrew@stem.is',
       first_name: 'andrew',
@@ -29,4 +29,9 @@ const knex = require('./setup-schema')('test')
     follower_id: 1,
     followee_id: 2
   })
-}).catch(err => { throw err })
+
+  await knex.destroy()
+})().catch(err => {
+  console.error(err)
+  throw err
+})

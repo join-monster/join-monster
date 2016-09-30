@@ -128,7 +128,7 @@ Instead of writing the SQL yourself, you configure the schema definition with a 
 {                         SELECT                             {
   user(id: 1) {             "user"."id",                       user: {
     idEncoded               "user"."first_name",                 idEncoded: 'MQ==',
-    full_name     ==>       "user"."last_name",      ==>         full_name: 'andrew carlson',
+    fullName     ==>       "user"."last_name",      ==>         fullName: 'andrew carlson',
     email                   "user"."email_address"               email: 'andrew@stem.is'
   }                       FROM "accounts" AS "user"            }
 }                         WHERE "user".id = 1                }
@@ -139,14 +139,14 @@ To something as complex as this:
 ```graphql
 {
   users {
-    id, idEncoded, full_name, email
-    following { id, full_name }
+    id, idEncoded, fullName, email
+    following { id, fullName }
     comments {
       body
-      author { id, full_name }
+      author { id, fullName }
       post {
         id, body
-        author { id, full_name }
+        author { id, fullName }
       }
     }
   }
@@ -192,12 +192,12 @@ and responds with...
       {
         "id": 1,
         "idEncoded": "MQ==",
-        "full_name": "andrew carlson",
+        "fullName": "andrew carlson",
         "email": "andrew@stem.is",
         "following": [
           {
             "id": 2,
-            "full_name": "matt elder"
+            "fullName": "matt elder"
           }
         ],
         "comments": [
@@ -205,14 +205,14 @@ and responds with...
             "body": "Wow this is a great post, Matt.",
             "author": {
               "id": 1,
-              "full_name": "andrew carlson"
+              "fullName": "andrew carlson"
             },
             "post": {
               "id": 1,
               "body": "If I could marry a programming language, it would be Haskell.",
               "author": {
                 "id": 2,
-                "full_name": "matt elder"
+                "fullName": "matt elder"
               }
             }
           }
@@ -221,7 +221,7 @@ and responds with...
       {
         "id": 2,
         "idEncoded": "Mg==",
-        "full_name": "matt elder",
+        "fullName": "matt elder",
         "email": "matt@stem.is",
         "following": [],
         "comments": []
@@ -285,7 +285,7 @@ const User = new GraphQLObjectType({
       type: GraphQLString,
       resolve: user => toBase64(user.idEncoded)
     },
-    full_name: {
+    fullName: {
       description: 'A user\'s first and last name',
       type: GraphQLString
     }
@@ -346,7 +346,7 @@ const User = new GraphQLObjectType({
       // if a resolver is present, the `sqlColumn` MUST be specified even if it is the same name as the field
       resolve: user => toBase64(user.idEncoded)
     },
-    full_name: {
+    fullName: {
       description: 'A user\'s first and last name',
       type: GraphQLString,
       // perhaps there is no 1-to-1 mapping of field to column
@@ -399,7 +399,7 @@ const knex = require('knex')({
 You're ready to handle queries on the `Users`!
 ```graphql
 {
-  users { id, idEncoded, email, full_name }
+  users { id, idEncoded, email, fullName }
 }
 ```
 
@@ -447,7 +447,7 @@ Now you can query for the comments for each user!
 ```graphql
 {
   users { 
-    id, idEncoded, email, full_name
+    id, idEncoded, email, fullName
     comments { id, body }
   }
 }
@@ -502,13 +502,13 @@ Now you have some depth and back references. It would be possible to cycle.
 ```graphql
 {
   users { 
-    id, idEncoded, email, full_name
+    id, idEncoded, email, fullName
     comments {
       id, body
-      author { full_name }
+      author { fullName }
       post {
         id, body
-        author { full_name }
+        author { fullName }
       }
     }
   }
@@ -542,8 +542,8 @@ const User = new GraphQLObjectType({
 ```grapql
 {
   users { 
-    id, idEncoded, email, full_name
-    following { full_name }
+    id, idEncoded, email, fullName
+    following { fullName }
   }
 }
 ```
@@ -579,8 +579,8 @@ const QueryRoot = new GraphQLObjectType({
 ```graphql
 {
   user(id: 1) { 
-    id, idEncoded, email, full_name
-    following { full_name }
+    id, idEncoded, email, fullName
+    following { fullName }
     comments { id, body }
   }
 }
