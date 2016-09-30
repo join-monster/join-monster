@@ -4,9 +4,11 @@
 
 ## What is Join Monster?
 
-A JavaScript execution layer from GraphQL to SQL aimed at solving the round-trip problem between the API and the database by dynamically **translating GraphQL to SQL** for efficient data retrieval.
+A JavaScript execution layer from GraphQL to SQL aimed at solving the round-trip problem between the API and the database by dynamically **translating GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution.
 
-It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*.
+Think of it as an alternative to Facebook's DataLoader if you're fetching from a SQL database. It's a little opionionated, but not an ORM.
+
+It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree.
 
 ## The problem with GraphQL & SQL that we solve
 GraphQL is an elegant solution the round-trip problem often encountered with REST APIs. Many are using it in conjunction with the power of SQL databases. But how do we mitigate the number of roundtrips to our **database**? Consider the following schema: `Users` that have many `Posts` that have many `Comments`.
@@ -55,7 +57,7 @@ const Post = new GraphQLObjectType({
 })
 ```
 
-Elegant as this is, consider what happens if the user has 20 posts. That's one SQL query for the posts, and **20 more** for each post's set of comments. This is a total of at least 21 round-trips to the database (we haven't considered how we got the `User` data)! This could easily become a performance bottleneck. We've encountered the round-trip problem again (on the back-end instead of the client). GraphQL was supposed to give us a solution for this!
+Elegant as this is, consider what happens if the user has 20 posts. That's one SQL query for the posts, and **20 more** for each post's set of comments. This is a total of at least 21 round-trips to the database (we haven't considered how we got the `User` data)! This could easily become a performance bottleneck. We've encountered the round-trip problem again (on the back-end instead of the client). We need to optimize the data-fetching against our back-end!
 
 Of course, it doesn't have to be done this way. Perhaps we can reduce the round-trips by doing the joins all at once in the `User` resolver.
 
@@ -72,6 +74,7 @@ const Query = new GraphQLObjectType({
           JOIN comments ON comments.post_id = posts.id
         `
         const rows = await db.query(sql)
+        // convert the flat rows to the object tree structure
         const tree = nestObjectShape(rows)
         return tree
       }
@@ -120,7 +123,7 @@ Imagine doing all those joins up front. This is especially wasteful when client 
 
 ## How It Works
 
-Join Monster fetches only the data you need - *nothing more, nothing less*, just like to original philosophy of GraphQL. It reads the parsed GraphQL query, looks at your schema definition, and generates the SQL automatically that will fetch no more than what is required to fulfill the request.
+Join Monster fetches only the data you need - *nothing more, nothing less*, just like to original philosophy of GraphQL. It reads the parsed GraphQL query, looks at your schema definition, and generates the SQL automatically that will fetch no more than what is required to fulfill the request. All data fetching for all resources becomes a single batch request.
 
 Instead of writing the SQL yourself, you configure the schema definition with a bit of additional metadata about the SQL schema. Your queries can be as simple as this:
 
@@ -231,7 +234,7 @@ and responds with...
 }
 ```
 
-The SQL queries will **adapt** not only with the varying complexities of queries, but also changes in the schema. No back-and-forth from web server to database. No need to get convert the raw result to the nested structure. Lots of benefits for a little bit of configuration.
+Join Monster generates the SQL dynamically. The SQL queries will **adapt** not only with the varying complexities of queries, but also changes in the schema. No back-and-forth from web server to database. No need to get convert the raw result to the nested structure. Lots of benefits for a little bit of configuration.
 
 - [X] Fetch all the data in a single database query.
 - [X] Automatically generate adapting SQL queries.
@@ -239,7 +242,7 @@ The SQL queries will **adapt** not only with the varying complexities of queries
 - [X] Easier maintainability.
 - [X] Coexists with your custom resolve functions.
 
-Join Monster is a means of fetching data from your SQL database. It will not prevent you from writing custom resolvers or hinder your ability to define either of your schemas.
+Join Monster is a means of batch-fetching data from your SQL database. It will not prevent you from writing custom resolvers or hinder your ability to define either of your schemas.
 
 ## Running the Demo
 
