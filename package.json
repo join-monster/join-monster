@@ -15,7 +15,7 @@
     "start": "babel-watch ./example/server.js",
     "lint": "eslint src test",
     "prepublish": "npm run build",
-    "db-test-build": "rm -f example/data/test-data.sl3; echo '.quit' | sqlite3 example/data/test-data.sl3 -init example/data/test-setup.sql",
+    "db-test-build": "rm -f example/data/test-data.js; babel-node example/data/test-setup.js",
     "db-shell": "sqlite3 --column --header example/data/test-data.sl3",
     "test": "npm run db-test-build && ava",
     "postinstall": "npm run db-test-build"
