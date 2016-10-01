@@ -1,0 +1,11 @@
+.wy-side-nav-search {
+  background-color: #37E0AF
+}
+
+.wy-side-nav-search input[type=text] {
+  border-color: #1cb086
+}
+
+a { color: #1cb086; }
+a:visited { color: #1cb086; }
+a.icon-home { color: white }

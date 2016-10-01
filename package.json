@@ -41,7 +41,9 @@
     "graphql",
     "sql",
     "query",
-    "schema"
+    "schema",
+    "compile",
+    "translate"
   ],
   "author": "Stem Disintermedia, Inc.",
   "contributors": [

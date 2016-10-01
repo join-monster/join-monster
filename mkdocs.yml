@@ -1,0 +1,20 @@
+site_name: Join Monster
+site_description: A GraphQL-to-SQL execution layer.
+repo_url: https://github.com/stems/join-monster
+theme: readthedocs
+extra_css: 
+  - custom.css
+pages:
+  - Introduction: index.md
+  - "The Problem We Solve": problem.md
+  - "How It Works": how-it-works.md
+  - "Usage":
+    - "1. Declare Data Model": data-model.md
+    - "2. Map Objects to Tables": map-to-table.md
+    - "3. Add Metadata to Fields": field-metadata.md
+    - "4. Calling Join Monster": call-function.md
+    - "5. Joining Objects": start-joins.md
+    - "6. Arbitrary Depth": arbitrary-depth.md
+    - "7. Many-to-Many Joins": many-to-many.md
+    - "8. Where Conditions": where.md
+  - "Why Not Other Alternatives?": why-us.md
