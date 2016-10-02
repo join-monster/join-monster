@@ -2,7 +2,7 @@
 ![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/join_monster.png)
 [![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster)
 
-#### [Documentation](http://join-monster.readthedocs.io/en/latest/)
+### [Read the Documentation](http://join-monster.readthedocs.io/en/latest/)
 
 ## What is Join Monster?
 
