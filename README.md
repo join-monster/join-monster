@@ -2,6 +2,8 @@
 ![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/join_monster.png)
 [![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster)
 
+#### [Documentation](http://join-monster.readthedocs.io/en/latest/)
+
 ## What is Join Monster?
 
 A JavaScript execution layer from GraphQL to SQL for batch data fetching between the API and the database by dynamically **translating GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution.
