@@ -9,3 +9,9 @@
 a { color: #1cb086; }
 a:visited { color: #1cb086; }
 a.icon-home { color: white }
+.wy-menu-vertical a { color: #37E0AF }
+
+img {
+  margin-left: auto;
+  margin-right: auto;
+}
