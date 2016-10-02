@@ -1,17 +1,20 @@
 .wy-side-nav-search {
-  background-color: #37E0AF
+  background-color: #37E0AF;
 }
 
 .wy-side-nav-search input[type=text] {
-  border-color: #1cb086
+  border-color: #1cb086;
 }
 
 a { color: #1cb086; }
 a:visited { color: #1cb086; }
-a.icon-home { color: white }
-.wy-menu-vertical a { color: #37E0AF }
+a.icon-home { color: white; }
+.wy-menu-vertical a { color: #37E0AF; }
 
-img {
-  margin-left: auto;
-  margin-right: auto;
+.wy-menu-vertical a:active {
+  background-color: #aaa;
+}
+
+.hljs-keyword {
+  color: #1cb086;
 }

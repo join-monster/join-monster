@@ -1,7 +1,12 @@
 site_name: Join Monster
 site_description: A GraphQL-to-SQL execution layer.
 repo_url: https://github.com/stems/join-monster
+site_favicon: img/join_monster.ico
 theme: readthedocs
+extra_javascript:
+  # MkDocs includes an old version of highlight.js, but it doesn't recognize all modern JS syntax, import a newer version
+  - //cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js
+  - custom.js
 extra_css: 
   - custom.css
 pages:
@@ -17,4 +22,4 @@ pages:
     - "6. Arbitrary Depth": arbitrary-depth.md
     - "7. Many-to-Many Joins": many-to-many.md
     - "8. Where Conditions": where.md
-  - "Why Not Other Alternatives?": why-us.md
+  - "Pros and Cons": pros-cons.md

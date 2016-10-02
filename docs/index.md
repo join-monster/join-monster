@@ -3,7 +3,7 @@
 
 ## What Is It?
 
-Join Monster is a JavaScript execution layer from GraphQL to SQL for batch data fetching for the Node.js `graphql-js` implementation. It's a function that takes a GraphQL query and dynamically **translates GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution. It fetches only the data you need - *nothing more, nothing less*.
+Join Monster is a JavaScript execution layer from GraphQL to SQL for batch data fetching for the Node.js [graphql-js](https://github.com/graphql/graphql-js) implementation. It's a function that takes a GraphQL query and dynamically **translates GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution. It fetches only the data you need - *nothing more, nothing less*.
 
 It solves the problem of making too many database queries, i.e. the "round-trip" problem, where the round-trips are requests for data over the TCP/IP stack between your API server and your SQL database. Think of it as an alternative to Facebook's DataLoader, but with more specificity toward SQL and hence simpler to use with SQL.
 
