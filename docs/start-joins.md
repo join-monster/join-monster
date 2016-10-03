@@ -40,6 +40,8 @@ const User = new GraphQLObjectType({
 })
 ```
 
+**Note:** If your column names have capital letters, or consist of anything that isn't an alpha-numeric character, $ and #, then you must *double-quote* your column names in the returned `JOIN` condition. The table aliases being passed to the `sqlJoin` function are already quoted, but any identifier that you type yourself will not be automatically quoted.
+
 Now you can query for the comments for each user!
 ```graphql
 {

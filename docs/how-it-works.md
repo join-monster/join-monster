@@ -54,7 +54,7 @@ Also notice the `immortal` field, which does have a resolver. This field demonst
 
 ## Internal Workings
 
-Once does not need to know this in order to use Join Monster. It's a convenient visualization for those who want to dive into the code.
+One does not need to know this in order to use [Join Monster](https://github.com/stems/join-monster). It's a convenient visualization for those who want to dive into the code.
 
 ![internals](img/internals.png)
 

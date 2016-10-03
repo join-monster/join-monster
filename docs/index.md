@@ -5,9 +5,9 @@
 
 Join Monster is a JavaScript execution layer from GraphQL to SQL for batch data fetching for the Node.js [graphql-js](https://github.com/graphql/graphql-js) implementation. It's a function that takes a GraphQL query and dynamically **translates GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution. It fetches only the data you need - *nothing more, nothing less*.
 
-It solves the problem of making too many database queries, i.e. the "round-trip" problem, where the round-trips are requests for data over the TCP/IP stack between your API server and your SQL database. Think of it as an alternative to Facebook's DataLoader, but with more specificity toward SQL and hence simpler to use with SQL.
+It solves the problem of making too many database queries, i.e. the "round-trip" problem, where the round-trips are requests for data over the TCP/IP stack between your API server and your SQL database. Think of it as an alternative to Facebook's [DataLoader](https://github.com/facebook/dataloader), but with more specificity toward SQL and hence simpler to use with SQL.
 
-It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree. Join Monster is a little opinionated, but not a full ORM.
+It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree. It's is a little opinionated, but not a full ORM.
 
 
 ## Preview

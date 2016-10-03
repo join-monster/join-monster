@@ -665,3 +665,4 @@ joinMonster(ast, ctx, (sql, done) => {
 - [ ] Aggregate functions
 - [ ] Caching layer?
 
+#### [Official Documentation](http://join-monster.readthedocs.io/en/latest/)

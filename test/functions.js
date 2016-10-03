@@ -4,7 +4,7 @@ import schema from '../example/schema/index'
 import sinon from 'sinon'
 import queryASTToSqlAST from '../src/queryASTToSqlAST'
 import stringifySqlAST from '../src/stringifySqlAST'
-import makeNestHydrationSpec from '../src/makeNestHydrationSpec'
+import defineObjectShape from '../src/defineObjectShape'
 
 let ast
 let sqlAST
@@ -157,8 +157,8 @@ WHERE "user".id = 1`
   t.is(sql, expect)
 })
 
-test.serial('makeNestHydrationSpec', t => {
-  nestSpec = makeNestHydrationSpec(sqlAST)
+test.serial('defineObjectShape', t => {
+  nestSpec = defineObjectShape(sqlAST)
   const expect = {
     first_name: 'first_name',
     last_name: 'last_name',

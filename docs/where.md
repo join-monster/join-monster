@@ -58,3 +58,5 @@ The `joinMonster` function has a second parameter which is basically an arbitrar
 }
 ```
 
+Again, don't forget to double-quote case sensitive column names.
+

@@ -3,7 +3,7 @@ const debug = require('debug')('join-monster')
 
 import queryASTToSqlAST from './queryASTToSqlAST'
 import stringifySqlAST from './stringifySqlAST'
-import makeNestHydrationSpec from './makeNestHydrationSpec'
+import defineObjectShape from './defineObjectShape'
 import { emphasize, inspect } from './util'
 
 
@@ -18,7 +18,7 @@ function joinMonster(ast, context, dbCall) {
   if (!sql) return Promise.resolve({})
 
   // figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
-  const nestSpec = makeNestHydrationSpec(sqlAST)
+  const nestSpec = defineObjectShape(sqlAST)
   debug(emphasize('NEST_SPEC'), inspect(nestSpec))
 
   // are they using the callback interface? then lets wrap this in a promise
