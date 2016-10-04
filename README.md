@@ -322,7 +322,7 @@ Your SQL Tables must map to a `GraphQLObjectType`. Add the `sqlTable` and `uniqu
 const User = new GraphQLObjectType({
   name: 'User',
   sqlTable: 'accounts', // the SQL table for this object type is called "accounts"
-  uniqueKey: 'id', // only required if we ever retrieve a GraphQLList of User types. Used for de-duplication
+  uniqueKey: 'id', // the id in each row is unique for this table
   fields: () => ({ /*...*/ })
 })
 ```
@@ -660,7 +660,6 @@ joinMonster(ast, ctx, (sql, done) => {
 
 ## TODO
 
-- [ ] Support composite keys for `uniqueKey`
 - [ ] Much better error messages in cases of mistakes (like missing sql properties)
 - [ ] Support the Relay spec for connections and edges (pagination)
 - [ ] Aggregate functions

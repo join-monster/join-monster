@@ -1,4 +1,4 @@
-For an example usage, check the [example](https://github.com/stems/join-monster/tree/master/example) directory in the Join Monster repo for a reference. There is also some sample data provided for **SQLite3**.
+For an example usage, check this [example](https://github.com/stems/join-monster-demo) for a reference. There is also some sample data provided for **SQLite3** at `/data/demo-data.sl3`.
 
 ## Defining SQL Schema
 
@@ -6,7 +6,7 @@ We'll set up a little API for a simple blog site for `Users` that can make `Post
 
 ![schema-example](img/schema-example.png)
 
-I'll omit the code to set up the SQL tables. You can find the implementation [here](https://github.com/stems/join-monster/blob/master/example/data/schema.sql). Now let's take a look at the application layer.
+I'll omit the code to set up the SQL tables. You can find the implementation [here](https://github.com/stems/join-monster-demo/blob/master/data/schema.sql). Now let's take a look at the application layer.
 
 
 ## Declaring GraphQL Schema

@@ -55,7 +55,7 @@ Array of objects, where each object is a row from the table. For example:
 
 ## Accessing Your Database
 
-You'll need to set up the connection to the database. For the provided [example](https://github.com/stems/join-monster/tree/master/example), there is a small SQLite3 file provided. You can import `knex` and load the data like this.
+You'll need to set up the connection to the database. For the provided [example](https://github.com/stems/join-monster-demo), there is a small SQLite3 file provided at `/data/demo-data.sl3`. You can import `knex` and load the data like this.
 ```javascript
 const dataFilePath = 'path/to/the/data.sl3' // make this the path to the database file
 const knex = require('knex')({

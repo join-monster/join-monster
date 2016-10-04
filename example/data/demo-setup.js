@@ -57,6 +57,35 @@ const numRelationships = 15
   }
   await knex.batchInsert('relationships', relationships, 50)
 
+
+  await knex.batchInsert('sponsors', [
+    {
+      generation: 1,
+      first_name: 'erlich',
+      last_name: 'bachman'
+    },
+    {
+      generation: 1,
+      first_name: 'andrew',
+      last_name: 'bachman'
+    },
+    {
+      generation: 2,
+      first_name: 'erlich',
+      last_name: 'bachman'
+    },
+    {
+      generation: 2,
+      first_name: 'matt',
+      last_name: 'bachman'
+    },
+    {
+      generation: 1,
+      first_name: 'matt',
+      last_name: 'daemon'
+    }
+  ])
+
   await knex.destroy()
 
 })().catch(err => { throw err })

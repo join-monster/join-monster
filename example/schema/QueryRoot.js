@@ -17,6 +17,7 @@ const knex = require('knex')({
 
 import joinMonster from '../../src/index'
 import User from './User'
+import Sponsor from './Sponsor'
 
 export default new GraphQLObjectType({
   description: 'global query object',
@@ -55,6 +56,17 @@ export default new GraphQLObjectType({
             context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
           }
           return knex.raw(sql)
+        })
+      }
+    },
+    sponsors: {
+      type: new GraphQLList(Sponsor),
+      resolve: (parent, args, context, ast) => {
+        // use the callback version this time
+        return joinMonster(ast, context, (sql, done) => {
+          knex.raw(sql)
+          .then(data => done(null, data))
+          .catch(done)
         })
       }
     }

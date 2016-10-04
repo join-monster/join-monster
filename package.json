@@ -14,6 +14,7 @@
     "watch": "babel src --watch --out-dir dist",
     "start": "babel-watch ./example/server.js",
     "lint": "eslint src test",
+    "docs": "mkdocs serve",
     "prepublish": "npm run build",
     "db-test-build": "rm -f example/data/test-data.sl3; babel-node example/data/test-setup.js",
     "db-demo-build": "rm -f example/data/demo-data.sl3; babel-node example/data/demo-setup.js",

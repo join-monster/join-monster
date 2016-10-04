@@ -6,7 +6,6 @@ CREATE TABLE accounts (
   num_legs INTEGER DEFAULT 2
 );
 
-
 CREATE TABLE comments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   body TEXT NOT NULL,
@@ -14,16 +13,21 @@ CREATE TABLE comments (
   author_id INTEGER NOT NULL
 );
 
-
 CREATE TABLE posts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   body TEXT NOT NULL,
   author_id INTEGER NOT NULL
 );
 
-
 CREATE TABLE relationships (
   follower_id INTEGER NOT NULL,
   followee_id INTEGER NOT NULL,
   UNIQUE (follower_id, followee_id) ON CONFLICT REPLACE
+);
+
+CREATE TABLE sponsors (
+  generation INTEGER NOT NULL,
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
+  num_legs INTEGER DEFAULT 2
 );

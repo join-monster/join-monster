@@ -2,13 +2,36 @@
 
 We'll add a couple of properties to the `GraphQLObjectType` definition on `User`. Our users data lives in the `accounts` table, so we'll set the `sqlTable` property to `'accounts'`.
 
-If we ever request a `GraphQLList` of `User`s, we need to be a unique identifier so it's unambiguous which objects are distinct entities  and which were duplicated due to a join. Our `accounts` table has a primary key, the `'id'`, so we'll set that as the `uniqueKey` property. This isn't required if we never get a list of users, but we recommend adding it anyways in the event that you add such a field later.
+We also need a unique identifier so it's unambiguous which objects are distinct entities and which were duplicated due to a join. Our `accounts` table has a primary key, the `'id'`, so we'll set that as the `uniqueKey` property. The `uniqueKey` does not need to have any constraints in the actual database. It's up to you to make sure no duplicate values exist in whichever column you indicate as being unique.
 
 ```javascript
 const User = new GraphQLObjectType({
   name: 'User',
   sqlTable: 'accounts', // the SQL table for this object type is called "accounts"
-  uniqueKey: 'id', // only required if we ever retrieve a GraphQLList of User types. Used for de-duplication
+  uniqueKey: 'id', // id is different for every row
+  fields: () => ({ /*...*/ })
+})
+```
+
+## Composite Keys
+
+If no single column in your table is unique, that's okay. Perhaps you have a *composite key*, where the combined value of multiple column is unique for each row.
+
+| generation | first_name | last_name |
+| ---------- | ---------- | --------- |
+| 1          | erlich     | bachman   |
+| 1          | andrew     | bachman   |
+| 2          | erlich     | bachman   |
+| 2          | matt       | bachman   |
+| 1          | matt       | daemon    |
+
+Just make `uniqueKey` an array of string instead of a string. Join Monster will use the SQL `||` operator to concatenate the values of those columns and identify the row based on the combination.
+
+```javascript
+const User = new GraphQLObjectType({
+  name: 'User',
+  sqlTable: 'accounts',
+  uniqueKey: [ 'generation', 'first_name', 'last_name' ],
   fields: () => ({ /*...*/ })
 })
 ```

@@ -10,8 +10,8 @@ export default function stringifySqlAST(topNode, context) {
 }
 
 function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres) {
-  if (node.table) {
-
+  switch(node.type) {
+  case 'table':
     // generate the "where" condition, if applicable
     if (node.where) {
       const whereCondition = node.where(`"${node.as}"`, node.args || {}, context) 
@@ -26,7 +26,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
       const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`)
 
       joins.push(
-        `LEFT JOIN "${node.table}" AS "${node.as}" ON ${joinCondition}`
+        `LEFT JOIN "${node.name}" AS "${node.as}" ON ${joinCondition}`
       )
     // this condition is through a join table (many-to-many relations)
     } else if (node.joinTable) {
@@ -36,12 +36,12 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
 
       joins.push(
         `LEFT JOIN "${node.joinTable}" AS "${node.joinTableAs}" ON ${joinCondition1}`,
-        `LEFT JOIN "${node.table}" AS "${node.as}" ON ${joinCondition2}`
+        `LEFT JOIN "${node.name}" AS "${node.as}" ON ${joinCondition2}`
       )
     } else {
       // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
       joins.push(
-        `FROM "${node.table}" AS "${node.fieldName}"`
+        `FROM "${node.name}" AS "${node.fieldName}"`
       )
     }
 
@@ -50,17 +50,26 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
       _stringifySqlAST(node, child, parent ? prefix + node.as + '__' : prefix, context, selections, joins, wheres)
     }
 
-  } else if (node.column) {
+    break
+  case 'column':
     selections.push(
-      `"${parent.as}"."${node.column}" AS "${prefix + node.column}"`
+      `"${parent.as}"."${node.name}" AS "${prefix + node.name}"`
     )
-  } else if (node.columnDeps) {
-    node.columnDeps.forEach(col => selections.push(
+    break
+  case 'columnDeps':
+    node.name.forEach(col => selections.push(
       `"${parent.as}"."${col}" AS "${prefix + col}"`
     ))
-  } else if (node.noop) {
+    break
+  case 'composite':
+    const keys = node.name.map(key => `"${parent.as}"."${key}"`)
+    selections.push(
+      `${keys.join(' || ')} AS "${prefix + node.fieldName}"`
+    )
+    break
+  case 'noop':
     return
-  } else {
+  default:
     throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
   return { selections, joins, wheres }

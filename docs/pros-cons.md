@@ -3,12 +3,12 @@
 [Join Monster](https://github.com/stems/join-monster) generates the SQL dynamically. The SQL queries will **adapt** not only with the varying complexities of queries, but also changes in the schema. No back-and-forth from web server to database. No need to get convert the raw result to the nested structure. Lots of benefits for a little bit of configuration.
 
 
-<input type="checkbox" checked>Fetch all the data in a single database query.<br>
-<input type="checkbox" checked>No over-fetching.<br>
-<input type="checkbox" checked>Automatically generate adapting SQL queries.<br>
-<input type="checkbox" checked>Automatically build the nested object structure.<br>
-<input type="checkbox" checked>Easier maintainability.<br>
-<input type="checkbox" checked>Coexists with your custom resolve functions and existing schemas.<br>
+- Fetch all the data in a single database query.
+- No over-fetching.
+- Automatically generate adapting SQL queries.
+- Automatically build the nested object structure.
+- Easier maintainability.
+- Coexists with your custom resolve functions and existing schemas.
 
 ## Cons
 

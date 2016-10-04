@@ -33,8 +33,8 @@ const User = new GraphQLObjectType({
     },
     globalId: {
       description: 'The global ID for the Relay spec',
-      ...globalIdField('User', user => user.globalId),
-      sqlColumn: 'id'
+      ...globalIdField('User'),
+      sqlDeps: [ 'id' ]
     },
     fullName: {
       description: 'A user\'s first and last name',
@@ -69,6 +69,12 @@ const User = new GraphQLObjectType({
       description: 'How many legs this user has',
       type: GraphQLInt,
       sqlColumn: 'num_legs'
+    },
+    numFeet: {
+      description: 'How many feet this user has',
+      type: GraphQLInt,
+      sqlDeps: [ 'num_legs' ],
+      resolve: user => user.num_legs
     }
   })
 })

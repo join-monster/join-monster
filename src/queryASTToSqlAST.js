@@ -40,7 +40,8 @@ export default function queryASTToSqlAST(ast) {
 
     // is this a table in SQL?
     if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
-      sqlASTNode.table = config.sqlTable
+      sqlASTNode.type = 'table'
+      sqlASTNode.name = config.sqlTable
       if (!config.sqlTable) {
         throw new Error(`Must specify "sqlTable" property on ${field.type.name} GraphQLObjectType definition.`)
       }
@@ -73,28 +74,39 @@ export default function queryASTToSqlAST(ast) {
       }
 
       // tables have child fields, lets push them to an array
-      sqlASTNode.children = []
-      // if getting many, we need a unique identifier to dedup the results
+      const children = sqlASTNode.children = []
+
       // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
       // need whichever column that the schema specifies as the unique one to be the first child
-      if (grabMany) {
-        if (!config.uniqueKey) {
-          throw new Error(`Requesting a list of ${config.sqlTable}. You must specify the "uniqueKey" on the GraphQLObjectType definition`)
-        }
-        sqlASTNode.children.push({ column: config.uniqueKey, fieldName: config.uniqueKey })
+      if (!config.uniqueKey) {
+        throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${config.sqlTable}`)
       }
+      if (typeof config.uniqueKey === 'string') {
+        children.push({
+          type: 'column',
+          name: config.uniqueKey,
+          fieldName: config.uniqueKey
+        })
+      } else if (Array.isArray(config.uniqueKey)) {
+        children.push({
+          type: 'composite',
+          name: config.uniqueKey,
+          fieldName: config.uniqueKey.join('#')
+        })
+      }
+
       if (queryASTNode.selectionSet) {
         for (let selection of queryASTNode.selectionSet.selections) {
           // we need to figure out what kind of selection this is
           switch (selection.kind) {
           // if its another field, recurse through that
           case 'Field':
-            growNewTreeAndAddToChildren(sqlASTNode.children, selection, gqlType)
+            growNewTreeAndAddToChildren(children, selection, gqlType)
             break
           // if its an inline fragment, it has some fields and we gotta recurse thru all them
           case 'InlineFragment':
             for (let fragSelection of selection.selectionSet.selections) {
-              growNewTreeAndAddToChildren(sqlASTNode.children, fragSelection, gqlType)
+              growNewTreeAndAddToChildren(children, fragSelection, gqlType)
             }
             break
           // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
@@ -102,7 +114,7 @@ export default function queryASTToSqlAST(ast) {
             const fragmentName = selection.name.value
             const fragment = ast.fragments[fragmentName]
             for (let fragSelection of fragment.selectionSet.selections) {
-              growNewTreeAndAddToChildren(sqlASTNode.children, fragSelection, gqlType)
+              growNewTreeAndAddToChildren(children, fragSelection, gqlType)
             }
             break
           default:
@@ -112,13 +124,15 @@ export default function queryASTToSqlAST(ast) {
       }
     // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
     } else if (field.sqlColumn || !field.resolve) {
-      sqlASTNode.column = field.sqlColumn || field.name
+      sqlASTNode.type = 'column'
+      sqlASTNode.name = field.sqlColumn || field.name
       sqlASTNode.fieldName = field.name
     // or maybe it just depends on some SQL columns
     } else if (field.sqlDeps) {
-      sqlASTNode.columnDeps = field.sqlDeps
+      sqlASTNode.type = 'columnDeps'
+      sqlASTNode.name = field.sqlDeps
     } else {
-      sqlASTNode.noop = true
+      sqlASTNode.type = 'noop'
     }
   }
 

@@ -23,3 +23,4 @@ pages:
     - "7. Many-to-Many Joins": many-to-many.md
     - "8. Where Conditions": where.md
   - "Pros and Cons": pros-cons.md
+  - "Change Log": CHANGELOG.md
