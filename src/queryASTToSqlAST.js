@@ -35,9 +35,13 @@ export default function queryASTToSqlAST(ast) {
       grabMany = true
     }
 
+    // if its a relay connection, there are several things we need to do
     if (/Connection$/.test(gqlType.name) && gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges) {
+      // flag grabMany to true...
       grabMany = true
+      // get the GraphQL Type inside the list of edges inside the Node from the schema definition
       gqlType = field.type._fields.edges.type.ofType._fields.node.type
+      // and then find the fields being selected on the query, also buried within edges and Node
       const edges = queryASTNode.selectionSet.selections.find(selection => selection.name.value === 'edges')
       queryASTNode = edges.selectionSet.selections.find(selection => selection.name.value === 'node') || {}
     }
@@ -137,6 +141,7 @@ export default function queryASTToSqlAST(ast) {
     } else if (field.sqlDeps) {
       sqlASTNode.type = 'columnDeps'
       sqlASTNode.name = field.sqlDeps
+    // maybe this node wants to business with your SQL, it has its own resolver
     } else {
       sqlASTNode.type = 'noop'
     }

@@ -22,5 +22,6 @@ pages:
     - "6. Arbitrary Depth": arbitrary-depth.md
     - "7. Many-to-Many Joins": many-to-many.md
     - "8. Where Conditions": where.md
+    - "9. Relay Support": relay.md
   - "Pros and Cons": pros-cons.md
   - "Change Log": CHANGELOG.md

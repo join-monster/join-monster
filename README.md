@@ -610,58 +610,17 @@ The `joinMonster` function has a second parameter which is basically an arbitrar
 }
 ```
 
-### 10. Other 
+### 10. Relay Compatibility 
 
-Relay global IDs are very simple.
-```javascript
-{
-  //...
-  fields: () => ({
-    globalId: {
-      description: 'The global ID for the Relay spec',
-      // grab the ID and convert it
-      ...globalIdField('User', user => user.globalId),
-      sqlColumn: 'id'
-    }
-  })
-}
+It works well with [graphql-relay-js](https://github.com/graphql/graphql-relay-js)! Check out [the docs](http://join-monster.readthedocs.io/en/latest/relay) for more details.
 
-// using a single `sqlDeps` is another way to get the ID column. This way will not rename the property to "globalId"
-// Since the value is at the "id" property, which is what `globalIdField` looks for by default, the second argument
-// can be omitted
-{
-  //...
-  fields: () => ({
-    globalId: {
-      ...globalIdField('User'),
-      sqlDeps: [ 'id' ]
-    }
-  })
-}
-```
-
-Not all the fields on an Object Type that maps to a SQL Table have to be from that table. Join Monster does not interfere with your custom resolvers, so you can still incorporate other data sources.
-
-The `joinMonster` function also supports old-fashioned callback mode. Just give it a callback with 2 parameters and it will wait for `done` to be called.
-
-```javascript
-joinMonster(ast, ctx, (sql, done) => {
-  db.query(sql, (err, data) => {
-    if (err) {
-      done(err)
-    } else {
-      done(null, data)
-    }
-  })
-})
-```
 
 **There's still a lot of work to do. Please feel free to fork and submit a Pull Request!**
 
 ## TODO
 
 - [ ] Much better error messages in cases of mistakes (like missing sql properties)
-- [ ] Support the Relay spec for connections and edges (pagination)
+- [ ] Implement `LIMIT` `OFFSET` pagination for relay connections
 - [ ] Aggregate functions
 - [ ] Caching layer?
 
