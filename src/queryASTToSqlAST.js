@@ -22,7 +22,7 @@ export default function queryASTToSqlAST(ast) {
     // first, get the name of the field being queried
     const fieldName = queryASTNode.name.value
     // then, get the field from the schema definition
-    const field = parentTypeNode._fields[fieldName]
+    let field = parentTypeNode._fields[fieldName]
 
     // this flag will keep track of whether multiple rows are needed
     let grabMany = false
@@ -35,6 +35,14 @@ export default function queryASTToSqlAST(ast) {
       grabMany = true
     }
 
+    if (/Connection$/.test(gqlType.name) && gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges) {
+      grabMany = true
+      gqlType = field.type._fields.edges.type.ofType._fields.node.type
+      const edges = queryASTNode.selectionSet.selections.find(selection => selection.name.value === 'edges')
+      queryASTNode = edges.selectionSet.selections.find(selection => selection.name.value === 'node') || {}
+      console.log(queryASTNode)
+      //queryASTNode = queryASTNode.selectionSet.selections[0].selectionSet.selections[0]
+    }
     // the typeConfig has all the keyes from the GraphQLObjectType definition
     const config = gqlType._typeConfig
 
@@ -51,7 +59,7 @@ export default function queryASTToSqlAST(ast) {
       sqlASTNode.as = makeUnique(usedTableAliases, field.name)
 
       // add the arguments that were passed, if any.
-      if (queryASTNode.arguments.length) {
+      if (queryASTNode.arguments && queryASTNode.arguments.length) {
         const args = sqlASTNode.args = {}
         for (let arg of queryASTNode.arguments) {
           args[arg.name.value] = arg.value.value
