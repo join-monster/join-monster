@@ -26,7 +26,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
       const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`)
 
       joins.push(
-        `LEFT JOIN "${node.name}" AS "${node.as}" ON ${joinCondition}`
+        `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
       )
     // this condition is through a join table (many-to-many relations)
     } else if (node.joinTable) {
@@ -35,13 +35,13 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
       const joinCondition2 = node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`)
 
       joins.push(
-        `LEFT JOIN "${node.joinTable}" AS "${node.joinTableAs}" ON ${joinCondition1}`,
-        `LEFT JOIN "${node.name}" AS "${node.as}" ON ${joinCondition2}`
+        `LEFT JOIN ${node.joinTable} AS "${node.joinTableAs}" ON ${joinCondition1}`,
+        `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition2}`
       )
     } else {
       // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
       joins.push(
-        `FROM "${node.name}" AS "${node.fieldName}"`
+        `FROM ${node.name} AS "${node.fieldName}"`
       )
     }
 
