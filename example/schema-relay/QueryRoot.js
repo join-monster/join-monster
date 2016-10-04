@@ -1,4 +1,3 @@
-import path from 'path'
 import {
   GraphQLObjectType,
   GraphQLList,
@@ -6,18 +5,11 @@ import {
   GraphQLInt
 } from 'graphql'
 
-const dataFilePath = path.join(__dirname, '../data', process.env.NODE_ENV === 'test' ? 'test-data.sl3' : 'demo-data.sl3')
-const knex = require('knex')({
-  client: 'sqlite3',
-  connection: {
-    filename: dataFilePath
-  },
-  useNullAsDefault: true
-})
-
+import knex from './database'
 import joinMonster from '../../src/index'
 import User from './User'
 import Sponsor from './Sponsor'
+import { getNode } from './Node'
 
 export default new GraphQLObjectType({
   description: 'global query object',
@@ -27,6 +19,7 @@ export default new GraphQLObjectType({
       type: GraphQLString,
       resolve: () => joinMonster.version
     },
+    node: getNode().nodeField,
     users: {
       type: new GraphQLList(User),
       resolve: (parent, args, context, ast) => {

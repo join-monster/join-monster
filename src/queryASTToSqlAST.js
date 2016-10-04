@@ -40,8 +40,6 @@ export default function queryASTToSqlAST(ast) {
       gqlType = field.type._fields.edges.type.ofType._fields.node.type
       const edges = queryASTNode.selectionSet.selections.find(selection => selection.name.value === 'edges')
       queryASTNode = edges.selectionSet.selections.find(selection => selection.name.value === 'node') || {}
-      console.log(queryASTNode)
-      //queryASTNode = queryASTNode.selectionSet.selections[0].selectionSet.selections[0]
     }
     // the typeConfig has all the keyes from the GraphQLObjectType definition
     const config = gqlType._typeConfig

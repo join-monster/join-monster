@@ -5,6 +5,7 @@ import queryASTToSqlAST from './queryASTToSqlAST'
 import stringifySqlAST from './stringifySqlAST'
 import defineObjectShape from './defineObjectShape'
 import { emphasize, inspect } from './util'
+import util from 'util'
 
 
 function joinMonster(ast, context, dbCall) {
@@ -28,6 +29,7 @@ function joinMonster(ast, context, dbCall) {
         if (err) {
           reject(err)
         } else {
+          rows = validate(rows)
           debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 10)))
           debug(`${rows.length} rows...`)
           resolve(nest(rows, nestSpec))
@@ -40,13 +42,22 @@ function joinMonster(ast, context, dbCall) {
   // if their func gave us a promise for the data, wait for the data
   if (result.then) {
     return result.then(rows => {
+      rows = validate(rows)
       debug(emphasize('RAW DATA'), inspect(rows.slice(0, 10)))
       debug(`${rows.length} rows...`)
       return nest(rows, nestSpec)
     })
   // otherwise, they were supposed to give us the data directly
   } else {
-    return Promise.resolve(nest(result, nestSpec))
+    return Promise.resolve(nest(validate(result), nestSpec))
+  }
+}
+
+function validate(rows) {
+  if (Array.isArray(rows)) return rows
+  else if (rows.rows) return rows.rows
+  else {
+    throw new Error(`"dbCall" function must return/resolve an array of objects where each object is a row from the result set. Instead got ${util.inspect(rows, { depth: 3 })}`)
   }
 }
 

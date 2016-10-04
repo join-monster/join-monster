@@ -6,7 +6,8 @@ import graphqlHTTP from 'koa-graphql'
 import graphiql from 'koa-custom-graphiql'
 import koaStatic from 'koa-static'
 
-import schema from './schema/index'
+import schemaBasic from './schema-basic/index'
+import schemaRelay from './schema-relay/index'
 
 const app = koa()
 const router = koaRouter()
@@ -16,8 +17,22 @@ router.get('/graphql', graphiql({
   js: '/graphiql.js'
 }))
 
+router.get('/graphql-relay', graphiql({
+  url: '/graphql-relay',
+  css: '/graphiql.css',
+  js: '/graphiql.js'
+}))
+
 router.post('/graphql', graphqlHTTP({
-  schema,
+  schema: schemaBasic,
+  formatError: e => {
+    console.error(e)
+    return e
+  }
+}))
+
+router.post('/graphql-relay', graphqlHTTP({
+  schema: schemaRelay,
   formatError: e => {
     console.error(e)
     return e

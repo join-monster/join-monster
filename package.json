@@ -16,10 +16,11 @@
     "lint": "eslint src test",
     "docs": "mkdocs serve",
     "prepublish": "npm run build",
-    "db-test-build": "rm -f example/data/test-data.sl3; babel-node example/data/test-setup.js",
+    "db-test1-build": "rm -f example/data/test1-data.sl3; babel-node example/data/test1-setup.js",
+    "db-test2-build": "rm -f example/data/test2-data.sl3; babel-node example/data/test2-setup.js",
     "db-demo-build": "rm -f example/data/demo-data.sl3; babel-node example/data/demo-setup.js",
     "db-shell": "sqlite3 --column --header example/data/demo-data.sl3",
-    "test": "npm run db-test-build && NODE_ENV=test ava"
+    "test": "NODE_ENV=test ava"
   },
   "ava": {
     "files": [

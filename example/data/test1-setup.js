@@ -1,4 +1,4 @@
-const knex = require('./schema-setup')('test')
+const knex = require('./schema-setup')('test1')
 
 ;(async () => {
   await knex.batchInsert('accounts', [
