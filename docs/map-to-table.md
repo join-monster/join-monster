@@ -13,6 +13,19 @@ const User = new GraphQLObjectType({
 })
 ```
 
+## Table Name Details
+
+If your table is on a SQL schema that is not the default, e.g. `public`, you can specify it in `sqlTable` with a dot separator. Names that include characters other than **a-z**, **#**, and **$** (for example capital letters) must be wrapped in double quotes.
+
+```javascript
+const User = new GraphQLObjectType({
+  name: 'User',
+  sqlTable: 'public."Accounts"', // the SQL table is on the schema "public" called "Accounts"
+  uniqueKey: 'id',
+  fields: () => ({ /*...*/ })
+})
+```
+
 ## Composite Keys
 
 If no single column in your table is unique, that's okay. Perhaps you have a *composite key*, where the combined value of multiple column is unique for each row.

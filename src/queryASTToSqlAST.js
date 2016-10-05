@@ -41,9 +41,15 @@ export default function queryASTToSqlAST(ast) {
       grabMany = true
       // get the GraphQL Type inside the list of edges inside the Node from the schema definition
       gqlType = field.type._fields.edges.type.ofType._fields.node.type
-      // and then find the fields being selected on the query, also buried within edges and Node
+      // let's remember those arguments on the connection
+      const args = queryASTNode.arguments
+      // and then find the fields being selected on the underlying type, also buried within edges and Node
       const edges = queryASTNode.selectionSet.selections.find(selection => selection.name.value === 'edges')
       queryASTNode = edges.selectionSet.selections.find(selection => selection.name.value === 'node') || {}
+      // place the arguments on this inner field, so our SQL AST picks it up later
+      queryASTNode.arguments = args
+      // we'll set a flag for pagination. not being used yet. for future optimization
+      sqlASTNode.relayPaging = true
     }
     // the typeConfig has all the keyes from the GraphQLObjectType definition
     const config = gqlType._typeConfig
@@ -61,7 +67,7 @@ export default function queryASTToSqlAST(ast) {
       sqlASTNode.as = makeUnique(usedTableAliases, field.name)
 
       // add the arguments that were passed, if any.
-      if (queryASTNode.arguments && queryASTNode.arguments.length) {
+      if (queryASTNode.arguments.length) {
         const args = sqlASTNode.args = {}
         for (let arg of queryASTNode.arguments) {
           args[arg.name.value] = arg.value.value
@@ -141,7 +147,7 @@ export default function queryASTToSqlAST(ast) {
     } else if (field.sqlDeps) {
       sqlASTNode.type = 'columnDeps'
       sqlASTNode.name = field.sqlDeps
-    // maybe this node wants to business with your SQL, it has its own resolver
+    // maybe this node wants no business with your SQL, because it has its own resolver
     } else {
       sqlASTNode.type = 'noop'
     }
