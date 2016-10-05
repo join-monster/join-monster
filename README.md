@@ -327,6 +327,8 @@ const User = new GraphQLObjectType({
 })
 ```
 
+Wrap the name in an additional pair of double quotes if the name contains capital letters. You can also prefix this string with the schema name if it is different than the default, separated by a period.
+
 ### 3. Add Metadata to the `User` Fields
 
 You'll need to provide a bit of information about each column, like `sqlColumn` and `sqlDeps`. These will be added to the *fields* in the type definition.
