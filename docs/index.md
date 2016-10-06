@@ -5,7 +5,7 @@
 
 Join Monster is a JavaScript execution layer from GraphQL to SQL for batch data fetching for the Node.js [graphql-js](https://github.com/graphql/graphql-js) implementation. It's a function that takes a GraphQL query and dynamically **translates GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution. It fetches only the data you need - *nothing more, nothing less*.
 
-It solves the problem of making too many database queries, i.e. the "round-trip" problem, where the round-trips are requests for data over the TCP/IP stack between your API server and your SQL database. Think of it as an alternative to Facebook's [DataLoader](https://github.com/facebook/dataloader), but with more specificity toward SQL and hence simpler to use with SQL.
+It solves the problem of making too many database queries, i.e. the "round-trip" problem, where the round-trips are requests for data over the TCP/IP stack between your API server and your SQL database. Think of it as an alternative to Facebook's [DataLoader](https://github.com/facebook/dataloader), but with more specificity toward SQL, making it more powerful and simpler to use with SQL.
 
 It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree. It's is a little opinionated, but not a full ORM.
 
@@ -64,13 +64,13 @@ SELECT
   "author$"."id" AS "comments__post__author$__id",
   "author$"."first_name" AS "comments__post__author$__first_name",
   "author$"."last_name" AS "comments__post__author$__last_name"
-FROM "accounts" AS "users"
-LEFT JOIN "relationships" AS "relationships" ON "users".id = "relationships".follower_id
-LEFT JOIN "accounts" AS "following" ON "relationships".followee_id = "following".id
-LEFT JOIN "comments" AS "comments" ON "users".id = "comments".author_id
-LEFT JOIN "accounts" AS "author" ON "comments".author_id = "author".id
-LEFT JOIN "posts" AS "post" ON "comments".post_id = "post".id
-LEFT JOIN "accounts" AS "author$" ON "post".author_id = "author$".id
+FROM accounts AS "users"
+LEFT JOIN relationships AS "relationships" ON "users".id = "relationships".follower_id
+LEFT JOIN accounts AS "following" ON "relationships".followee_id = "following".id
+LEFT JOIN comments AS "comments" ON "users".id = "comments".author_id
+LEFT JOIN accounts AS "author" ON "comments".author_id = "author".id
+LEFT JOIN posts AS "post" ON "comments".post_id = "post".id
+LEFT JOIN accounts AS "author$" ON "post".author_id = "author$".id
 ```
 
 and responds with...

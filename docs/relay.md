@@ -24,6 +24,42 @@ const User = new GraphQLObjectType({
 })
 ```
 
+## Node Type
+
+Join Monster provides a helper for easily fetching data in order to implement Relay's **Node Interface**.
+
+```javascript
+import {
+  nodeDefinitions,
+  fromGlobalId
+} from 'graphql-relay'
+
+const { nodeInterface, nodeField } = nodeDefinitions(
+  // resolve the ID to an object
+  (globalId, context, ast) => {
+    // parse the globalID
+    const { type, id } = fromGlobalId(globalId)
+    // pass the type name and other info. `joinMonster` will find the type from the name and write the SQL
+    return joinMonster.getNode(type, ast, context,
+      table => `${table}.id = ${id}`,
+      sql => knex.raw(sql)
+    )
+  },
+  // determines the type. Join Monster places that type onto the result object on the "__type__" property
+  obj => obj.__type__
+)
+
+const Query = new GraphQLObjectType({
+  name: 'Query',
+  fields: () => ({
+    node: nodeField,
+    users: {...}
+  })
+})
+```
+
+Similar to the main `joinMonster` function, it expects the GraphQL AST, a context, and a function for calling the database that receives the generated SQL. It will also need to type name and a `where` function. See [API](/API/#getNode) for details
+
 ## Connection Types
 
 Join Monster will automatically detect a Relay Connection type and drill through it to get the necessary metadata off your object type contained within. We just have to import and use the helpers.

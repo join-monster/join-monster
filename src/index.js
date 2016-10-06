@@ -70,7 +70,7 @@ function compileSqlAST(sqlAST, context) {
  * @param {Function} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
  * @returns {Promise<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
-joinMonster.getNode = (typeName, ast, context, where, dbCall) => {
+function getNode(typeName, ast, context, where, dbCall) {
   const type = ast.schema.getType(typeName)
   const fakeParentNode = {
     _fields: {
@@ -89,6 +89,8 @@ joinMonster.getNode = (typeName, ast, context, where, dbCall) => {
     return obj
   })
 }
+
+joinMonster.getNode = getNode
 
 function handleUserDbCall(dbCall, sql, shapeDefinition) {
   if (dbCall.length === 2) {

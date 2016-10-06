@@ -2,7 +2,7 @@
 
 We haven't actually seen the module get used yet...
 
-Import `joinMonster`. Have the top-most field that maps to a SQL table implement a resolver function that calls `joinMonster`. Simply pass it the AST info (this includes the parsed query and your schema definition), a "context" object (which can be empty for now), and a callback that takes the SQL as a parameter, calls the database, and returns the data (or a `Promise` of the data). The data must be an array of objects where each object represents a row in the result set.
+Import `joinMonster`. Have the top-most field that maps to a SQL table implement a resolver function that calls `joinMonster`. Simply pass it the AST info (this includes the parsed query and your schema definition), a "context" object (which can be empty for now), and a callback that takes the SQL as a parameter, calls the database, and returns the data (or a `Promise` of the data).
 
 ```javascript
 import joinMonster from 'join-monster'
@@ -23,29 +23,9 @@ const QueryRoot = new GraphQLObjectType({
 })
 ```
 
-### joinMonster(astInfo, context, dbCall) ⇒ `Promise<Object>`
-Takes the GraphQL AST and returns a nest Object with the data.
+See [API](/API/#joinMonster) for details on this function.
 
-**Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database.
-
-| Param | Type | Description |
-| --- | --- | --- |
-| astInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained form the first argument to the resolver. |
-| context | <code>Object</code> | An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization. |
-| dbCall | <code>function</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
-
-### `dbCall(sql, [done])` -> `Promise<Array<Objects>>`
-
-**Params:**
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| sql  | String | The SQL that Join Monster generated. Use it to query your database. |
-| [done] | Function | If you do not return a `Promise`, you must include a second parameter. This is an error-first callback. If successful, pass it the data from the database.
-
-**Returns:**
-
-Array of objects, where each object is a row from the table. For example:
+The data *MUST* be an array of objects where each object represents a row in the result set. For example:
 ```javascript
 [
   { id: 1, email_address: 'andrew@stem.is', post__id: 13, post__body: 'Hello world.' },

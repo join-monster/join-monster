@@ -4,6 +4,9 @@
 <dt><a href="#joinMonster">joinMonster(astInfo, context, dbCall)</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>Takes the GraphQL AST and returns a nest Object with the data.</p>
 </dd>
+<dt><a href="#getNode">getNode(typeName, astInfo, context, where, dbCall)</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
+<dd><p>A helper for resolving the Node type in Relay.</p>
+</dd>
 </dl>
 
 ## Typedefs
@@ -13,7 +16,10 @@
 <dd><p>User-defined function that sends a raw SQL query to the databse.</p>
 </dd>
 <dt><a href="#where">where</a> ⇒ <code>String</code></dt>
-<dd><p>Function for generating the a <code>WHERE</code> condition.</p>
+<dd><p>Function for generating a <code>WHERE</code> condition.</p>
+</dd>
+<dt><a href="#sqlJoin">sqlJoin</a> ⇒ <code>String</code></dt>
+<dd><p>Function for generating a <code>JOIN</code> condition.</p>
 </dd>
 </dl>
 
@@ -22,7 +28,6 @@
 ## joinMonster(astInfo, context, dbCall) ⇒ <code>Promise.&lt;Object&gt;</code>
 Takes the GraphQL AST and returns a nest Object with the data.
 
-**Kind**: global function  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database.  
 
 | Param | Type | Description |
@@ -31,12 +36,11 @@ Takes the GraphQL AST and returns a nest Object with the data.
 | context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization. |
 | dbCall | <code>[dbCall](#dbCall)</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
 
-<a name="joinMonster.getNode"></a>
+<a name="getNode"></a>
 
-### joinMonster.getNode(typeName, astInfo, context, where, dbCall) ⇒ <code>Promise.&lt;Object&gt;</code>
+## getNode(typeName, astInfo, context, where, dbCall) ⇒ <code>Promise.&lt;Object&gt;</code>
 A helper for resolving the Node type in Relay.
 
-**Kind**: static method of <code>[joinMonster](#joinMonster)</code>  
 **Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.  
 
 | Param | Type | Description |
@@ -52,7 +56,6 @@ A helper for resolving the Node type in Relay.
 ## dbCall ⇒ <code>Array</code> &#124; <code>Promise.&lt;Array&gt;</code>
 User-defined function that sends a raw SQL query to the databse.
 
-**Kind**: global typedef  
 **Returns**: <code>Array</code> &#124; <code>Promise.&lt;Array&gt;</code> - The raw data as a flat array of objects. Each object must represent a row from the result set.  
 
 | Param | Type | Description |
@@ -63,9 +66,8 @@ User-defined function that sends a raw SQL query to the databse.
 <a name="where"></a>
 
 ## where ⇒ <code>String</code>
-Function for generating the a `WHERE` condition.
+Function for generating a `WHERE` condition.
 
-**Kind**: global typedef  
 **Returns**: <code>String</code> - The condition for the `WHERE` clause.  
 
 | Param | Type | Description |
@@ -73,4 +75,16 @@ Function for generating the a `WHERE` condition.
 | tableAlias | <code>String</code> | The alias generated for this table. Already double-quoted. |
 | args | <code>Object</code> | The GraphQL arguments for this field. |
 | context | <code>Object</code> | An Object with arbitrary contextual information. |
+
+<a name="sqlJoin"></a>
+
+## sqlJoin ⇒ <code>String</code>
+Function for generating a `JOIN` condition.
+
+**Returns**: <code>String</code> - The condition for the `LEFT JOIN`.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| parentTable | <code>String</code> | The alias generated for the parent's table. Already double-quoted. |
+| childTable | <code>String</code> | The alias for the child's table. Already double-quoted. |
 
