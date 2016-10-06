@@ -8,7 +8,7 @@
 
 ## What is Join Monster?
 
-A JavaScript execution layer from GraphQL to SQL for batch data fetching between the API and the database by dynamically **translating GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution.
+A JavaScript execution layer from GraphQL to SQL for batch data fetching between the API and the database by dynamically **translating GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution. Simply delcare the data requirements of each field in you schema. Then, for each query, Join Monster will look at what was requested, find the data requirements, fetch, and shape your data.
 
 Think of it as an alternative to Facebook's DataLoader if you're fetching from a SQL database. It's a little opionionated, but not an ORM.
 
