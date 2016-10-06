@@ -23,15 +23,16 @@ const QueryRoot = new GraphQLObjectType({
 })
 ```
 
-### `joinMonster(astInfo, context, dbCall)` -> `Promise<Object>`
+### joinMonster(astInfo, context, dbCall) ⇒ `Promise<Object>`
+Takes the GraphQL AST and returns a nest Object with the data.
 
-**Params:**
+**Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database.
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| astInfo | Object | Contains the parsed GraphQL query, schema definition, and more. Obtained form the first argument to the resolver. |
-| context | Object | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization. |
-| dbCall | Function | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
+| Param | Type | Description |
+| --- | --- | --- |
+| astInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained form the first argument to the resolver. |
+| context | <code>Object</code> | An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization. |
+| dbCall | <code>function</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
 
 ### `dbCall(sql, [done])` -> `Promise<Array<Objects>>`
 

@@ -1,3 +1,7 @@
+### v0.3.4 (Oct 6, 2016)
+- Add helper method for getting data for Relay's Node type.
+- Fix bug with Union and Interface types.
+
 ### v0.3.2 (Oct 5, 2016)
 - Add support for specifying schema names for your SQL tables.
 
