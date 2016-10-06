@@ -3,34 +3,20 @@ import {
   fromGlobalId
 } from 'graphql-relay'
 
+import joinMonster from '../../src/index'
+
 import knex from './database'
 
-function getTypes() {
-  const types = {}
-  for (let type of [ 'Comment', 'Post', 'User' ]) {
-    types[type] = require(`./${type}`).default
-  }
-  return types
-}
-
 const { nodeInterface, nodeField } = nodeDefinitions(
-  globalId => {
+  (globalId, context, ast) => {
     const { type, id } = fromGlobalId(globalId)
-    const types = getTypes()
-    const config = types[type]._typeConfig
-    return (
-      knex(config.sqlTable).first().where({ id })
-      .then(obj => {
-        obj._type = type
-        return obj
-      })
+    return joinMonster.getNode(type, ast, context,
+      table => `${table}.id = ${id}`,
+      sql => knex.raw(sql)
     )
   },
-  obj => {
-    return getTypes()[obj._type]
-  }
+  obj => obj.__type__
 )
 
-export function getNode() {
-  return { nodeInterface, nodeField }
-}
+export { nodeInterface, nodeField }
+

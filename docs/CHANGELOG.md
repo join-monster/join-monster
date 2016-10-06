@@ -1,3 +1,6 @@
+### v0.3.2 (Oct 5, 2016)
+- Add support for specifying schema names for your SQL tables.
+
 ### v0.3.1 (Oct 4, 2016)
 - Detect Relay connection type and fetch data for it.
 

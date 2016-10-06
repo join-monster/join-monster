@@ -9,7 +9,7 @@ import knex from './database'
 import joinMonster from '../../src/index'
 import User from './User'
 import Sponsor from './Sponsor'
-import { getNode } from './Node'
+import { nodeField } from './Node'
 
 export default new GraphQLObjectType({
   description: 'global query object',
@@ -19,7 +19,7 @@ export default new GraphQLObjectType({
       type: GraphQLString,
       resolve: () => joinMonster.version
     },
-    node: getNode().nodeField,
+    node: nodeField,
     users: {
       type: new GraphQLList(User),
       resolve: (parent, args, context, ast) => {

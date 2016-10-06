@@ -9,8 +9,8 @@ function* count(limit) {
 }
 
 const numUsers = 5
-const numPosts = 10
-const numComments = 25
+const numPosts = 50
+const numComments = 500
 const numRelationships = 15
 
 ;(async () => {

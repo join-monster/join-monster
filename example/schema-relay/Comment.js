@@ -1,21 +1,23 @@
 import {
   GraphQLObjectType,
-  GraphQLString,
-  GraphQLInt
+  GraphQLString
 } from 'graphql'
 
-import { globalIdField } from 'graphql-relay'
+import {
+  globalIdField,
+  connectionDefinitions
+} from 'graphql-relay'
 
-import Post from './Post'
+import { Post } from './Post'
 import User from './User'
-import { getNode } from './Node'
+import { nodeInterface } from './Node'
 
-export default new GraphQLObjectType({
+export const Comment = new GraphQLObjectType({
   description: 'Comments on posts',
   name: 'Comment',
   sqlTable: 'comments',
   uniqueKey: 'id',
-  interfaces: () => [ getNode().nodeInterface ],
+  interfaces: [ nodeInterface ],
   fields: () => ({
     id: {
       ...globalIdField(),
@@ -37,3 +39,6 @@ export default new GraphQLObjectType({
     }
   })
 })
+
+const { connectionType: CommentConnection } = connectionDefinitions({ nodeType: Comment })
+export { CommentConnection }

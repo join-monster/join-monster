@@ -8,24 +8,20 @@ import {
 import {
   globalIdField,
   connectionArgs,
-  connectionDefinitions,
   connectionFromArray
 } from 'graphql-relay'
 
+import { PostConnection } from './Post'
+import { CommentConnection } from './Comment'
+import { nodeInterface } from './Node'
 
-import Post from './Post'
-import Comment from './Comment'
-import { getNode } from './Node'
-
-const { connectionType: PostConnection } = connectionDefinitions({ nodeType: Post })
-const { connectionType: CommentConnection } = connectionDefinitions({ nodeType: Comment })
 
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
   sqlTable: 'accounts',
   uniqueKey: 'id',
-  interfaces: () => [ getNode().nodeInterface ],
+  interfaces: [ nodeInterface ],
   fields: () => ({
     id: {
       description: 'The global ID for the Relay spec',
