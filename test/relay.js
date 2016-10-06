@@ -6,6 +6,16 @@ import { partial } from 'lodash'
 
 const run = partial(graphql, schemaRelay)
 
+test('it should get a globalId', async t => {
+  const query = `{
+    users { id }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = { users: [ { id: 'VXNlcjox' }, { id: 'VXNlcjoy' } ] }
+  t.deepEqual(data, expect)
+})
+
 test('it should fetch a Node type with inline fragments', async t => {
   const query = `{
     node(id: "UG9zdDox") {

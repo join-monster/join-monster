@@ -124,3 +124,7 @@ and responds with...
 ## Demo
 
 See it in action with [this demo API](https://join-monster.herokuapp.com/graphql?query=%7B%20users%20%7B%20%0A%20%20id%2C%20fullName%2C%20email%0A%20%20posts%20%7B%20id%2C%20body%20%7D%0A%7D%7D).
+
+## Example
+
+An API set up with Join Monster, both [with](https://github.com/stems/join-monster-demo/tree/master/schema-relay) and [without](https://github.com/stems/join-monster-demo/tree/master/schema-basic) Relay compliance.

@@ -19,7 +19,7 @@ If one table's object type is nested as a field within another table's object ty
 
 So [Join Monster](https://github.com/stems/join-monster) needs some additional metadata in order to write the right SQL. How does one declare these mappings, and unique keys, and joins, etc.?
 
-These are declared by decorating the schema definition with some additional keys that [Join Monster](https://github.com/stems/join-monster) will look for. Below is an example of  mapping the `User` object to an `accounts` table that joins on `posts` for a `Post` object. For details see the following **Usage** section.
+These are declared by decorating the schema definition with some additional properties that [Join Monster](https://github.com/stems/join-monster) will look for. Below is an example of  mapping the `User` object to an `accounts` table that joins on `posts` for a `Post` object. For details see the following **Usage** section.
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -46,6 +46,8 @@ const User = new GraphQLObjectType({
   })
 })
 ```
+
+Join Monster provides a declarative API that lets you define **data requirements** on your object types and fields. By placing these properties directly on the schema definition, GraphQL effectively *becomes* your ORM because it is the mapping between the application and the data.
 
 Notice that most of these fields do not have resolvers. Most of the time, adding the SQL decorations will be enough. [Join Monster](https://github.com/stems/join-monster) fetches the data and converts it to the correct object tree structure with property names the same as their respoctive fields so that the default resolving behavior will find the data.
 

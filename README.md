@@ -4,6 +4,7 @@
 
 #### [Read the Documentation](http://join-monster.readthedocs.io/en/latest/)
 #### [Try Demo](https://join-monster.herokuapp.com/graphql?query=%7B%20users%20%7B%20%0A%20%20id%2C%20fullName%2C%20email%0A%20%20posts%20%7B%20id%2C%20body%20%7D%0A%7D%7D)
+#### [Example Repo](https://github.com/stems/join-monster-demo)
 
 ## What is Join Monster?
 
@@ -11,7 +12,8 @@ A JavaScript execution layer from GraphQL to SQL for batch data fetching between
 
 Think of it as an alternative to Facebook's DataLoader if you're fetching from a SQL database. It's a little opionionated, but not an ORM.
 
-It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree.
+It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree. And it works with Relay!
+
 
 ## The problem with GraphQL & SQL that we solve
 GraphQL is an elegant solution the round-trip problem often encountered with REST APIs. Many are using it in conjunction with the power of SQL databases. But how do we mitigate the number of roundtrips to our **database**? Consider the following schema: `Users` that have many `Posts` that have many `Comments`.
@@ -263,11 +265,11 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 
 ## Usage
 
-See the `example` directory for a reference. I'll demonstrate the steps to set up this example. We'll set up a little API for a simple blog site for `Users` that can make `Posts` as well as `Comments` on people's posts. We will also let them follow other users. Here is a picture of the schema.
+See the [example repo](https://github.com/stems/join-monster-demo/tree/master/schema-basic) for a reference. I'll demonstrate the steps to set up this example. We'll set up a little API for a simple blog site for `Users` that can make `Posts` as well as `Comments` on people's posts. We will also let them follow other users. Here is a picture of the schema.
 
 ![schema-example](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/schema-example.png)
 
-I'll omit the code to set up the SQL. A small set of SQLite3 sample data is provided in the example at `example/data/data.sl3`.
+I'll omit the code to set up the SQL. A small set of SQLite3 sample data is provided in the [example](https://github.com/stems/join-monster-demo/tree/master/schema-basic) at `example/data/data.sl3`.
 
 ### 1. Declare GraphQL and SQL schemas like you normally would
 
