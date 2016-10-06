@@ -1,5 +1,7 @@
 import { inspect, validateSqlAST } from './util'
 
+// generate an object that defines the correct nesting shape for our GraphQL
+// this will be used by the library NestHydrationJS, check out their docs
 export default function defineObjectShape(topNode) {
   validateSqlAST(topNode)
   return _defineObjectShape(null, '', topNode)
@@ -29,8 +31,10 @@ function _defineObjectShape(parent, prefix, node) {
       }
     }
 
+    // if we need many, just wrap the field definition in an array
     if (node.grabMany) {
       return [ fieldDefinition ]
+    // otherwise, it will just grab the first result
     } else {
       return fieldDefinition
     }

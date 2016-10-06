@@ -71,7 +71,9 @@ function compileSqlAST(sqlAST, context) {
  * @returns {Promise<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
 function getNode(typeName, ast, context, where, dbCall) {
+  // get the GraphQL type from the schema using the name
   const type = ast.schema.getType(typeName)
+  // our getGraphQLType expects every requested field to be in the schema definition. "node" isn't a parent of whatever type we're getting, so we'll just wrap that type in an object that LOOKS that same as a hypothetical Node type
   const fakeParentNode = {
     _fields: {
       node: {
@@ -82,9 +84,11 @@ function getNode(typeName, ast, context, where, dbCall) {
     }
   }
   const sqlAST = {}
+  // uses the same underlying function as the main `joinMonster`
   getGraphQLType(ast.fieldASTs[0], fakeParentNode, sqlAST, ast.fragments, new Set)
   const { sql, shapeDefinition } = compileSqlAST(sqlAST, context)
   return handleUserDbCall(dbCall, sql, shapeDefinition).then(obj => {
+    // after we get the data, slap the Type on there to assist with determining the type
     obj.__type__ = type
     return obj
   })
@@ -92,9 +96,13 @@ function getNode(typeName, ast, context, where, dbCall) {
 
 joinMonster.getNode = getNode
 
+// handles the different callback signatures and return values.
 function handleUserDbCall(dbCall, sql, shapeDefinition) {
+  // if there are two args, we're in "callback mode"
   if (dbCall.length === 2) {
+    // wrap it in a promise
     return new Promise((resolve, reject) => {
+      // wait for them to call "done"
       dbCall(sql, (err, rows) => {
         if (err) {
           reject(err)
@@ -123,14 +131,18 @@ function handleUserDbCall(dbCall, sql, shapeDefinition) {
   }
 }
 
+// validate the data they gave us
 function validate(rows) {
+  // its supposed to be an array of objects
   if (Array.isArray(rows)) return rows
+  // a check for the most common error. a lot of ORMs return an object with the desired data on the `rows` property
   else if (rows.rows) return rows.rows
   else {
     throw new Error(`"dbCall" function must return/resolve an array of objects where each object is a row from the result set. Instead got ${util.inspect(rows, { depth: 3 })}`)
   }
 }
 
+// expose the package version for debugging
 joinMonster.version = require('../package.json').version
 export default joinMonster
 
