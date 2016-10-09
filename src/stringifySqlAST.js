@@ -41,7 +41,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
     } else {
       // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
       joins.push(
-        `FROM ${node.name} AS "${node.fieldName}"`
+        `FROM ${node.name} AS "${node.as}"`
       )
     }
 
@@ -53,7 +53,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
     break
   case 'column':
     selections.push(
-      `"${parent.as}"."${node.name}" AS "${prefix + node.name}"`
+      `"${parent.as}"."${node.name}" AS "${prefix + node.as}"`
     )
     break
   case 'columnDeps':

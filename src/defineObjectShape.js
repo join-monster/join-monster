@@ -17,7 +17,7 @@ function _defineObjectShape(parent, prefix, node) {
     for (let child of node.children) {
       switch (child.type) {
       case 'column':
-        fieldDefinition[child.fieldName] = prefixToPass + child.name
+        fieldDefinition[child.fieldName] = prefixToPass + child.as
         break
       case 'composite':
         fieldDefinition[child.fieldName] = prefixToPass + child.fieldName

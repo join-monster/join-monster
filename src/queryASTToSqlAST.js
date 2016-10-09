@@ -1,9 +1,11 @@
 import assert from 'assert'
+import G from 'generatorics'
 
 
 export function queryASTToSqlAST(ast) {
   // we need to guard against two tables being aliased to the same thing, so lets keep track of that
-  const usedTableAliases = new Set
+  //const usedTableAliases = new Set
+  const mininyms = G.baseNAll('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#$')
 
   // we'll build up the AST representing the SQL recursively
   const sqlAST = {}
@@ -15,12 +17,12 @@ export function queryASTToSqlAST(ast) {
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = ast.parentType
-  getGraphQLType(queryAST, parentType, sqlAST, ast.fragments, usedTableAliases)
+  getGraphQLType(queryAST, parentType, sqlAST, ast.fragments, mininyms)
   return sqlAST
 
 }
 
-export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, usedTableAliases) {
+export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, mininyms) {
   // first, get the name of the field being queried
   const fieldName = queryASTNode.name.value
   // then, get the field from the schema definition
@@ -53,12 +55,13 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
   // is this a table in SQL?
   if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
-    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, usedTableAliases, grabMany)
+    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininyms, grabMany)
   // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
   } else if (field.sqlColumn || !field.resolve) {
     sqlASTNode.type = 'column'
     sqlASTNode.name = field.sqlColumn || field.name
     sqlASTNode.fieldName = field.name
+    sqlASTNode.as = mininyms.next().value.join('')
   // or maybe it just depends on some SQL columns
   } else if (field.sqlDeps) {
     sqlASTNode.type = 'columnDeps'
@@ -69,7 +72,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   }
 }
 
-function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, usedTableAliases, grabMany) {
+function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininyms, grabMany) {
   const config = gqlType._typeConfig
 
   sqlASTNode.type = 'table'
@@ -77,7 +80,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, usedTa
 
   // the graphQL field name will be the default alias for the table
   // if thats taken, this function will just add an underscore to the end to make it unique
-  sqlASTNode.as = makeUnique(usedTableAliases, field.name)
+  sqlASTNode.as = mininyms.next().value.join('')
 
   // add the arguments that were passed, if any.
   if (queryASTNode.arguments.length) {
@@ -99,7 +102,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, usedTa
   if (field.joinTable) {
     sqlASTNode.sqlJoins = field.sqlJoins
     sqlASTNode.joinTable = field.joinTable
-    sqlASTNode.joinTableAs = makeUnique(usedTableAliases, field.joinTable)
+    sqlASTNode.joinTableAs = mininyms.next().value.join('')
   }
 
   // tables have child fields, lets push them to an array
@@ -114,13 +117,15 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, usedTa
     children.push({
       type: 'column',
       name: config.uniqueKey,
-      fieldName: config.uniqueKey
+      fieldName: config.uniqueKey,
+      as: mininyms.next().value.join('')
     })
   } else if (Array.isArray(config.uniqueKey)) {
     children.push({
       type: 'composite',
       name: config.uniqueKey,
-      fieldName: config.uniqueKey.join('#')
+      fieldName: config.uniqueKey.join('#'),
+      as: mininyms.next().value.join('')
     })
   }
 
@@ -130,7 +135,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, usedTa
       switch (selection.kind) {
       // if its another field, recurse through that
       case 'Field':
-        growNewTreeAndAddToChildren(children, selection, gqlType, fragments, usedTableAliases)
+        growNewTreeAndAddToChildren(children, selection, gqlType, fragments, mininyms)
         break
       // if its an inline fragment, it has some fields and we gotta recurse thru all them
       case 'InlineFragment':
@@ -138,7 +143,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, usedTa
         // this became necessary when supporting queries on the Relay Node type
         if (selection.typeCondition.name.value === gqlType.name) {
           for (let fragSelection of selection.selectionSet.selections) {
-            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, usedTableAliases)
+            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, mininyms)
           }
         }
         break
@@ -149,7 +154,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, usedTa
         // make sure fragment type matches the type being queried
         if (fragment.typeCondition.name.value === gqlType.name) {
           for (let fragSelection of fragment.selectionSet.selections) {
-            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, usedTableAliases)
+            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, mininyms)
           }
         }
         break
@@ -188,10 +193,10 @@ function stripNonNullType(type) {
 }
 
 // our table aliases need to be unique. simply check if we've used this ailas already. if we have, just add a "$" at the end
-function makeUnique(usedNames, name) {
-  if (usedNames.has(name)) {
-    name += '$'
-  }
-  usedNames.add(name)
-  return name
-}
+//function makeUnique(usedNames, name) {
+  //if (usedNames.has(name)) {
+    //name += '$'
+  //}
+  //usedNames.add(name)
+  //return name
+//}
