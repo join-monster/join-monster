@@ -21,6 +21,12 @@ We try to produce ANSI-compliant SQL. We currently do not specialize for any par
 
 ## Alternatives
 
+### GraphpostgresQL
+
+What if you executed GraphQL on the database directly? (GraphpostgresQL)[https://github.com/solidsnack/GraphpostgresQL] is a proof-of-concept that compiles a GraphQL-like language to SQL using PL/PGSQL. It is not fully compliant with the GraphQL spec.
+
+### PostGraphQL
+
 One way to not worry about how your API fetches data from the database is to not create a custom API in the first place. If you're using PostgreSQL, the entire API, with authentication, can be generated via reflection using [PostGraphQL](https://github.com/calebmer/postgraphql). Some of us may want a more conservative solution, one that doesn't create your entire API for you.
 
 ### DataLoader

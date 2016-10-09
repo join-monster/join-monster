@@ -66,7 +66,7 @@ function compileSqlAST(sqlAST, context) {
  * @param {String} typeName - The Name of the GraphQLObjectType
  * @param {Object} astInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
  * @param {Object} context - An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization.
- * @param {Function} where - A function that returns the WHERE condition.
+ * @param {where} where - A function that returns the WHERE condition.
  * @param {Function} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
  * @returns {Promise<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
