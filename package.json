@@ -89,6 +89,7 @@
     "sqlite3": "^3.1.4"
   },
   "dependencies": {
+    "generatorics": "^1.0.8",
     "nesthydrationjs": "^0.3.0"
   }
 }
