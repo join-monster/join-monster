@@ -14,7 +14,7 @@
     "watch": "babel src --watch --out-dir dist",
     "test": "npm run lint && npm run testonly",
     "testonly": "NODE_ENV=test ava",
-    "coverage": "nyc npm run testonly",
+    "coverage": "nyc --reporter=html npm run testonly",
     "lint": "eslint src test",
     "start": "babel-watch ./example/server.js",
     "docs": "mkdocs serve",

@@ -136,7 +136,7 @@ function validate(rows) {
   // its supposed to be an array of objects
   if (Array.isArray(rows)) return rows
   // a check for the most common error. a lot of ORMs return an object with the desired data on the `rows` property
-  else if (rows.rows) return rows.rows
+  else if (rows && rows.rows) return rows.rows
   else {
     throw new Error(`"dbCall" function must return/resolve an array of objects where each object is a row from the result set. Instead got ${util.inspect(rows, { depth: 3 })}`)
   }
