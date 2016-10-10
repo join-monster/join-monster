@@ -18,6 +18,8 @@ Before commiting your changes, **run the lint, tests, and coverage to make sure 
 
 We will make timely releases with any new changes, so you do not need to worry about publishing. But if you desperately want your changes in the NPM repository, you can trigger a new release. Tagged commits to the master branch will trigger a new build on NPM. Before pushing your commits, run `npm version patch|minor|major` to bump the version and automatically tag the commit. Then `git push --follow-tags` and make your pull request. Travis-CI will publish the package. Do not publish manually form the command line.
 
+New versions MUST be compliant with [semver](http://semver.org/).
+
 ## License
 
 By contributing to Join Monster, you agree that your contributions will be licensed under the LICENSE file in the project root directory.
