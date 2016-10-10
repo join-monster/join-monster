@@ -624,6 +624,8 @@ It works well with [graphql-relay-js](https://github.com/graphql/graphql-relay-j
 ## TODO
 
 - [ ] Much better error messages in cases of mistakes (like missing sql properties)
+- [ ] Figure out a way to handle Interface and Union types
+- [ ] Figure out a way to support the schema language
 - [ ] Implement `LIMIT` `OFFSET` pagination for relay connections
 - [ ] Aggregate functions
 - [ ] Caching layer?
