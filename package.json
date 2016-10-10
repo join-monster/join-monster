@@ -35,6 +35,11 @@
       "babelrc": true
     }
   },
+  "nyc": {
+    "include": [
+      "src/*.js"
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stems/join-monster.git"

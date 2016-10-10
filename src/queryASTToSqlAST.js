@@ -1,11 +1,10 @@
 import assert from 'assert'
-import G from 'generatorics'
+import AliasNamespace from 'aliasNamespace'
 
 
-export function queryASTToSqlAST(ast) {
+export function queryASTToSqlAST(ast, options) {
   // we need to guard against two tables being aliased to the same thing, so lets keep track of that
-  //const usedTableAliases = new Set
-  const mininyms = G.baseNAll('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#$')
+  const namespace = new AliasNamespace(options.minify)
 
   // we'll build up the AST representing the SQL recursively
   const sqlAST = {}
@@ -17,12 +16,11 @@ export function queryASTToSqlAST(ast) {
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = ast.parentType
-  getGraphQLType(queryAST, parentType, sqlAST, ast.fragments, mininyms)
+  getGraphQLType(queryAST, parentType, sqlAST, ast.fragments, namespace)
   return sqlAST
-
 }
 
-export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, mininyms) {
+export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, namespace) {
   // first, get the name of the field being queried
   const fieldName = queryASTNode.name.value
   // then, get the field from the schema definition
@@ -61,7 +59,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
     sqlASTNode.type = 'column'
     sqlASTNode.name = field.sqlColumn || field.name
     sqlASTNode.fieldName = field.name
-    sqlASTNode.as = mininyms.next().value.join('')
+    sqlASTNode.as = namespace.generate('column', sqlASTNode.name)
   // or maybe it just depends on some SQL columns
   } else if (field.sqlDeps) {
     sqlASTNode.type = 'columnDeps'
@@ -192,11 +190,3 @@ function stripNonNullType(type) {
   return type.constructor.name === 'GraphQLNonNull' ? type.ofType : type
 }
 
-// our table aliases need to be unique. simply check if we've used this ailas already. if we have, just add a "$" at the end
-//function makeUnique(usedNames, name) {
-  //if (usedNames.has(name)) {
-    //name += '$'
-  //}
-  //usedNames.add(name)
-  //return name
-//}
