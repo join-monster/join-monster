@@ -18,9 +18,8 @@
     "start": "babel-watch ./example/server.js",
     "docs": "mkdocs serve",
     "jsdoc": "jsdoc2md src/index.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md",
-    "prepublish": "npm run build",
-    "preversion": ". ./scripts/checkgit.sh && npm test",
     "prepublish": ". ./scripts/prepublish.sh && npm run build",
+    "preversion": ". ./scripts/checkgit.sh && npm test",
     "db-test1-build": "rm -f example/data/test1-data.sl3; babel-node example/data/test1-setup.js",
     "db-test2-build": "rm -f example/data/test2-data.sl3; babel-node example/data/test2-setup.js",
     "db-demo-build": "rm -f example/data/demo-data.sl3; babel-node example/data/demo-setup.js",
@@ -68,6 +67,7 @@
   "devDependencies": {
     "ava": "^0.16.0",
     "babel-cli": "^6.14.0",
+    "babel-eslint": "^7.0.0",
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-0": "^6.5.0",
     "babel-watch": "^2.0.3-rc0",
