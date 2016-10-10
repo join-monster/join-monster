@@ -14,6 +14,7 @@
     "watch": "babel src --watch --out-dir dist",
     "test": "npm run lint && npm run testonly",
     "testonly": "NODE_ENV=test ava",
+    "coverage": "nyc npm run testonly",
     "lint": "eslint src test",
     "start": "babel-watch ./example/server.js",
     "docs": "mkdocs serve",
@@ -36,6 +37,11 @@
     "babel": {
       "babelrc": true
     }
+  },
+  "nyc": {
+    "include": [
+      "src/*.js"
+    ]
   },
   "repository": {
     "type": "git",
@@ -83,6 +89,7 @@
     "koa-graphql": "^0.5.6",
     "koa-router": "^5.4.0",
     "koa-static": "^2.0.0",
+    "nyc": "^8.3.1",
     "sinon": "^1.17.6",
     "sqlite3": "^3.1.4"
   },
