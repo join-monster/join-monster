@@ -12,16 +12,19 @@
   "scripts": {
     "build": "babel src --no-comments --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
-    "start": "babel-watch ./example/server.js",
+    "test": "npm run lint && npm run testonly",
+    "testonly": "NODE_ENV=test ava",
     "lint": "eslint src test",
+    "start": "babel-watch ./example/server.js",
     "docs": "mkdocs serve",
     "jsdoc": "jsdoc2md src/index.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md",
     "prepublish": "npm run build",
+    "preversion": ". ./scripts/checkgit.sh && npm test",
+    "prepublish": ". ./scripts/prepublish.sh && npm run build",
     "db-test1-build": "rm -f example/data/test1-data.sl3; babel-node example/data/test1-setup.js",
     "db-test2-build": "rm -f example/data/test2-data.sl3; babel-node example/data/test2-setup.js",
     "db-demo-build": "rm -f example/data/demo-data.sl3; babel-node example/data/demo-setup.js",
-    "db-shell": "sqlite3 --column --header example/data/demo-data.sl3",
-    "test": "NODE_ENV=test ava"
+    "db-shell": "sqlite3 --column --header example/data/demo-data.sl3"
   },
   "ava": {
     "files": [
