@@ -191,7 +191,9 @@ function stripNonNullType(type) {
 function makeUnique(usedNames, name) {
   if (usedNames.has(name)) {
     name += '$'
+    return makeUnique(usedNames, name)
   }
+
   usedNames.add(name)
   return name
 }
