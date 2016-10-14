@@ -1,7 +1,7 @@
 ## Functions
 
 <dl>
-<dt><a href="#joinMonster">joinMonster(astInfo, context, dbCall)</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
+<dt><a href="#joinMonster">joinMonster(astInfo, context, dbCall, [options])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>Takes the GraphQL AST and returns a nest Object with the data.</p>
 </dd>
 <dt><a href="#getNode">getNode(typeName, astInfo, context, where, dbCall)</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
@@ -25,7 +25,7 @@
 
 <a name="joinMonster"></a>
 
-## joinMonster(astInfo, context, dbCall) ⇒ <code>Promise.&lt;Object&gt;</code>
+## joinMonster(astInfo, context, dbCall, [options]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Takes the GraphQL AST and returns a nest Object with the data.
 
 **Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database.  
@@ -35,6 +35,8 @@ Takes the GraphQL AST and returns a nest Object with the data.
 | astInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
 | context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization. |
 | dbCall | <code>[dbCall](#dbCall)</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
+| [options] | <code>Object</code> |  |
+| options.minify | <code>Boolean</code> | Generate minimum-length column names in the results table. |
 
 <a name="getNode"></a>
 
@@ -48,7 +50,7 @@ A helper for resolving the Node type in Relay.
 | typeName | <code>String</code> | The Name of the GraphQLObjectType |
 | astInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
 | context | <code>Object</code> | An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization. |
-| where | <code>function</code> | A function that returns the WHERE condition. |
+| where | <code>[where](#where)</code> | A function that returns the WHERE condition. |
 | dbCall | <code>function</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
 
 <a name="dbCall"></a>

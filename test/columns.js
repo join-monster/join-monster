@@ -152,3 +152,16 @@ test('it should handle a query that gets nothing from the database', async t => 
   t.deepEqual(data, expect)
 })
 
+test('it should handle duplicate fields', async t => {
+  const query = wrap('id id id id idEncoded fullName fullName')
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      { id: 1, idEncoded: 'MQ==', fullName: 'andrew carlson' },
+      { id: 2, idEncoded: 'Mg==', fullName: 'matt elder' }
+    ]
+  }
+  t.deepEqual(data, expect)
+})
+

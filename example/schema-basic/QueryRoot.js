@@ -15,9 +15,13 @@ const knex = require('knex')({
   useNullAsDefault: true
 })
 
-import joinMonster from '../../src/index'
 import User from './User'
 import Sponsor from './Sponsor'
+
+import joinMonster from '../../src/index'
+const options = {
+  minify: process.env.MINIFY == 1
+}
 
 export default new GraphQLObjectType({
   description: 'global query object',
@@ -36,7 +40,7 @@ export default new GraphQLObjectType({
             context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
           }
           return knex.raw(sql)
-        })
+        }, options)
       }
     },
     user: {
@@ -56,7 +60,7 @@ export default new GraphQLObjectType({
             context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
           }
           return knex.raw(sql)
-        })
+        }, options)
       }
     },
     sponsors: {
@@ -67,7 +71,7 @@ export default new GraphQLObjectType({
           knex.raw(sql)
           .then(data => done(null, data))
           .catch(done)
-        })
+        }, options)
       }
     }
   })

@@ -1,3 +1,9 @@
+### v0.3.6 (Oct 13, 2016)
+- Option to minify the raw data column names.
+
+### v0.3.5 (Oct 9, 2016)
+- Add test coverage tools.
+
 ### v0.3.4 (Oct 6, 2016)
 - Add helper method for getting data for Relay's Node type.
 - Fix bug with Union and Interface types.

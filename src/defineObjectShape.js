@@ -17,13 +17,15 @@ function _defineObjectShape(parent, prefix, node) {
     for (let child of node.children) {
       switch (child.type) {
       case 'column':
-        fieldDefinition[child.fieldName] = prefixToPass + child.name
+        fieldDefinition[child.fieldName] = prefixToPass + child.as
         break
       case 'composite':
         fieldDefinition[child.fieldName] = prefixToPass + child.fieldName
         break
       case 'columnDeps':
-        child.name.forEach(name => fieldDefinition[name] = prefixToPass + name)
+        for (let name in child.names) {
+          fieldDefinition[name] = prefixToPass + child.names[name]
+        }
         break
       case 'table':
         const definition = _defineObjectShape(node, prefixToPass, child)

@@ -1,11 +1,16 @@
+import util from 'util'
 import { nest } from 'nesthydrationjs'
 const debug = require('debug')('join-monster')
 
-import { queryASTToSqlAST, getGraphQLType } from './queryASTToSqlAST'
+import {
+  queryASTToSqlAST,
+  getGraphQLType,
+  pruneDuplicateSqlDeps
+} from './queryASTToSqlAST'
 import stringifySqlAST from './stringifySqlAST'
 import defineObjectShape from './defineObjectShape'
+import AliasNamespace from './aliasNamespace'
 import { emphasize, inspect } from './util'
-import util from 'util'
 
 
 /**
@@ -36,11 +41,13 @@ import util from 'util'
  * @param {Object} astInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
  * @param {Object} context - An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization.
  * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
+ * @param {Object} [options]
+ * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
  * @returns {Promise<Object>} The correctly nested data from the database.
  */
-function joinMonster(ast, context, dbCall) {
+function joinMonster(ast, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
-  const sqlAST = queryASTToSqlAST(ast)
+  const sqlAST = queryASTToSqlAST(ast, options)
   const { sql, shapeDefinition } = compileSqlAST(sqlAST, context)
   if (!sql) return Promise.resolve({})
 
@@ -70,7 +77,7 @@ function compileSqlAST(sqlAST, context) {
  * @param {Function} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
  * @returns {Promise<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
-function getNode(typeName, ast, context, where, dbCall) {
+function getNode(typeName, ast, context, where, dbCall, options = {}) {
   // get the GraphQL type from the schema using the name
   const type = ast.schema.getType(typeName)
   // our getGraphQLType expects every requested field to be in the schema definition. "node" isn't a parent of whatever type we're getting, so we'll just wrap that type in an object that LOOKS that same as a hypothetical Node type
@@ -83,9 +90,11 @@ function getNode(typeName, ast, context, where, dbCall) {
       }
     }
   }
+  const namespace = new AliasNamespace(options.minify)
   const sqlAST = {}
   // uses the same underlying function as the main `joinMonster`
-  getGraphQLType(ast.fieldASTs[0], fakeParentNode, sqlAST, ast.fragments, new Set)
+  getGraphQLType(ast.fieldASTs[0], fakeParentNode, sqlAST, ast.fragments, namespace)
+  pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = compileSqlAST(sqlAST, context)
   return handleUserDbCall(dbCall, sql, shapeDefinition).then(obj => {
     // after we get the data, slap the Type on there to assist with determining the type
@@ -108,7 +117,7 @@ function handleUserDbCall(dbCall, sql, shapeDefinition) {
           reject(err)
         } else {
           rows = validate(rows)
-          debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 10)))
+          debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
           debug(`${rows.length} rows...`)
           resolve(nest(rows, shapeDefinition))
         }
@@ -121,7 +130,7 @@ function handleUserDbCall(dbCall, sql, shapeDefinition) {
   if (typeof result.then === 'function') {
     return result.then(rows => {
       rows = validate(rows)
-      debug(emphasize('RAW DATA'), inspect(rows.slice(0, 10)))
+      debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
       debug(`${rows.length} rows...`)
       return nest(rows, shapeDefinition)
     })

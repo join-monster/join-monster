@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "A GraphQL-to-SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -12,7 +12,7 @@
   "scripts": {
     "build": "babel src --no-comments --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
-    "test": "npm run lint && npm run testonly",
+    "test": "npm run lint && npm run testonly && MINIFY=1 npm run testonly",
     "testonly": "NODE_ENV=test ava",
     "coverage": "nyc --reporter=html npm run testonly",
     "lint": "eslint src test",
@@ -95,6 +95,7 @@
     "sqlite3": "^3.1.4"
   },
   "dependencies": {
+    "generatorics": "^1.0.8",
     "nesthydrationjs": "^0.3.0"
   }
 }
