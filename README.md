@@ -1,6 +1,6 @@
 <!-- Use fully qualified URL for the images so they'll also be visible from the NPM page too -->
 ![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/join_monster.png)
-[![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster)
+[![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster) [![Build Status](https://travis-ci.org/stems/join-monster.svg?branch=master)](https://travis-ci.org/stems/join-monster) [![Documentation Status](https://readthedocs.org/projects/join-monster/badge/?version=latest)](http://join-monster.readthedocs.io/en/latest/?badge=latest)
 
 #### [Read the Documentation](http://join-monster.readthedocs.io/en/latest/)
 #### [Try Demo](https://join-monster.herokuapp.com/graphql?query=%7B%20users%20%7B%20%0A%20%20id%2C%20fullName%2C%20email%0A%20%20posts%20%7B%20id%2C%20body%20%7D%0A%7D%7D)
@@ -624,6 +624,8 @@ It works well with [graphql-relay-js](https://github.com/graphql/graphql-relay-j
 ## TODO
 
 - [ ] Much better error messages in cases of mistakes (like missing sql properties)
+- [ ] Figure out a way to handle Interface and Union types
+- [ ] Figure out a way to support the schema language
 - [ ] Implement `LIMIT` `OFFSET` pagination for relay connections
 - [ ] Aggregate functions
 - [ ] Caching layer?

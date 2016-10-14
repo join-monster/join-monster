@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "A GraphQL-to-SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -12,16 +12,19 @@
   "scripts": {
     "build": "babel src --no-comments --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
-    "start": "babel-watch ./example/server.js",
+    "test": "npm run lint && npm run testonly",
+    "testonly": "NODE_ENV=test ava",
+    "coverage": "nyc --reporter=html npm run testonly",
     "lint": "eslint src test",
+    "start": "babel-watch ./example/server.js",
     "docs": "mkdocs serve",
     "jsdoc": "jsdoc2md src/index.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md",
-    "prepublish": "npm run build",
+    "prepublish": "in-publish && source ./scripts/prepublish.sh && npm run build || not-in-publish",
+    "preversion": ". ./scripts/checkgit.sh && npm test",
     "db-test1-build": "rm -f example/data/test1-data.sl3; babel-node example/data/test1-setup.js",
     "db-test2-build": "rm -f example/data/test2-data.sl3; babel-node example/data/test2-setup.js",
     "db-demo-build": "rm -f example/data/demo-data.sl3; babel-node example/data/demo-setup.js",
-    "db-shell": "sqlite3 --column --header example/data/demo-data.sl3",
-    "test": "NODE_ENV=test ava"
+    "db-shell": "sqlite3 --column --header example/data/demo-data.sl3"
   },
   "ava": {
     "files": [
@@ -70,6 +73,7 @@
   "devDependencies": {
     "ava": "^0.16.0",
     "babel-cli": "^6.14.0",
+    "babel-eslint": "^7.0.0",
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-0": "^6.5.0",
     "babel-watch": "^2.0.3-rc0",
@@ -78,6 +82,7 @@
     "graphql": "^0.7.0",
     "graphql-relay": "^0.4.3",
     "graphsiql": "0.0.2",
+    "in-publish": "^2.0.0",
     "jsdoc-to-markdown": "^1.3.7",
     "knex": "^0.12.0",
     "koa": "^1.2.4",
@@ -85,6 +90,7 @@
     "koa-graphql": "^0.5.6",
     "koa-router": "^5.4.0",
     "koa-static": "^2.0.0",
+    "nyc": "^8.3.1",
     "sinon": "^1.17.6",
     "sqlite3": "^3.1.4"
   },
