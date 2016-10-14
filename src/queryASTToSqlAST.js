@@ -50,8 +50,11 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
     // reassign those
     gqlType = stripped.gqlType
     queryASTNode = stripped.queryASTNode
-    // we'll set a flag for pagination. not being used yet. for future optimization
-    sqlASTNode.relayPaging = true
+    // we'll set a flag for pagination.
+    if (field.sqlPaginate) {
+      sqlASTNode.paginate = true
+      sqlASTNode.sortKey = field.sortKey
+    }
   }
   // the typeConfig has all the keyes from the GraphQLObjectType definition
   const config = gqlType._typeConfig
@@ -130,6 +133,20 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
       name: config.uniqueKey,
       fieldName: clumsyName,
       as: namespace.generate('column', clumsyName)
+    })
+  }
+
+  if (sqlASTNode.paginate) {
+    children.push({
+      type: 'column',
+      name: '$start',
+      fieldName: '$start',
+      as: '$start'
+    }, {
+      type: 'column',
+      name: '$end',
+      fieldName: '$end',
+      as: '$end'
     })
   }
 

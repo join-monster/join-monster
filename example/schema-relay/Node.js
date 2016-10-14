@@ -5,7 +5,8 @@ import {
 
 import joinMonster from '../../src/index'
 const options = {
-  minify: process.env.MINIFY == 1
+  minify: process.env.MINIFY == 1,
+  dialect: 'pg'
 }
 
 import knex from './database'

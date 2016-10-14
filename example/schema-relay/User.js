@@ -8,7 +8,8 @@ import {
 import {
   globalIdField,
   connectionArgs,
-  connectionFromArray
+  connectionFromArray,
+  connectionDefinitions
 } from 'graphql-relay'
 
 import { PostConnection } from './Post'
@@ -51,9 +52,8 @@ const User = new GraphQLObjectType({
       description: 'A list of Posts the user has written',
       type: PostConnection, 
       args: connectionArgs,
-      resolve: (user, args) => {
-        return connectionFromArray(user.posts, args)
-      },
+      sqlPaginate: true,
+      sortKey: 'id',
       sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
     },
     following: {
@@ -83,8 +83,7 @@ const User = new GraphQLObjectType({
   })
 })
 
+const { connectionType: UserConnection } = connectionDefinitions({ nodeType: User })
+
 export default User 
 
-function toBase64(clear) {
-  return Buffer.from(String(clear)).toString('base64')
-}

@@ -1,4 +1,4 @@
-import { validateSqlAST, inspect } from './util'
+import { validateSqlAST, inspect, parseCursor } from '../util'
 
 export default function stringifySqlAST(topNode, context) {
   validateSqlAST(topNode)
@@ -22,7 +22,34 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
 
     // generate the join or joins
     // this condition is for single joins (one-to-one or one-to-many relations)
-    if (node.sqlJoin) {
+    if (node.sqlJoin && node.paginate) {
+      const key = node.sortKey
+      const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`)
+      const whereCondition = node.sqlJoin(`"${parent.as}"`, node.name)
+      let filterCondition = ''
+      if (node.args && node.args.after) {
+        const cursor = parseCursor(node.args.after)
+        filterCondition += `WHERE ${node.name}."${node.sortKey}" > ${cursor}`
+      }
+      let limitCondition = ''
+      if (node.args && node.args.first) {
+        limitCondition += `LIMIT ${Number(node.args.first) + 1}`
+      }
+      const join = `\
+LEFT JOIN LATERAL (
+  SELECT * FROM(
+    SELECT *,
+      min("${key}") OVER () AS "$start",
+      max("${key}") OVER () AS "$end"
+    FROM ${node.name}
+    WHERE ${whereCondition}
+    ORDER BY "${key}"
+  ) ${node.name}
+  ${filterCondition}
+  ${limitCondition}
+) AS "${node.as}" ON ${joinCondition}`
+      joins.push(join)
+    } else if (node.sqlJoin) {
       const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`)
 
       joins.push(

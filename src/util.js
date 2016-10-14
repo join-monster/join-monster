@@ -13,3 +13,13 @@ export function validateSqlAST(topNode) {
   // topNode should not have a sqlJoin entry...
   assert(topNode.sqlJoin == null)
 }
+
+export function base64(str) {
+  return new Buffer(str).toString('base64')
+}
+
+export function parseCursor(opaque) {
+  const clear = new Buffer(opaque, 'base64').toString()
+  const [ _, value ] = clear.split(':')
+  return value
+}

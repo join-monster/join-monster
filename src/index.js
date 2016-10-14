@@ -7,8 +7,8 @@ import {
   getGraphQLType,
   pruneDuplicateSqlDeps
 } from './queryASTToSqlAST'
-import stringifySqlAST from './stringifySqlAST'
 import defineObjectShape from './defineObjectShape'
+import postProcess from './postProcess'
 import AliasNamespace from './aliasNamespace'
 import { emphasize, inspect } from './util'
 
@@ -48,18 +48,20 @@ import { emphasize, inspect } from './util'
 function joinMonster(ast, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
   const sqlAST = queryASTToSqlAST(ast, options)
-  const { sql, shapeDefinition } = compileSqlAST(sqlAST, context)
+  const { sql, shapeDefinition } = compileSqlAST(sqlAST, context, options)
   if (!sql) return Promise.resolve({})
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
-  return handleUserDbCall(dbCall, sql, shapeDefinition)
+  return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST)
 }
 
-function compileSqlAST(sqlAST, context) {
+function compileSqlAST(sqlAST, context, options) {
   debug(emphasize('SQL_AST'), inspect(sqlAST))
 
   // now convert the "SQL AST" to sql
-  const sql = stringifySqlAST(sqlAST, context)
+  const dialect = options.dialect || 'standard'
+  const stringify = require('./stringifiers/' + dialect).default
+  const sql = stringify(sqlAST, context)
   debug(emphasize('SQL'), inspect(sql))
 
   // figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
@@ -95,8 +97,8 @@ function getNode(typeName, ast, context, where, dbCall, options = {}) {
   // uses the same underlying function as the main `joinMonster`
   getGraphQLType(ast.fieldASTs[0], fakeParentNode, sqlAST, ast.fragments, namespace)
   pruneDuplicateSqlDeps(sqlAST, namespace)
-  const { sql, shapeDefinition } = compileSqlAST(sqlAST, context)
-  return handleUserDbCall(dbCall, sql, shapeDefinition).then(obj => {
+  const { sql, shapeDefinition } = compileSqlAST(sqlAST, context, options)
+  return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST).then(obj => {
     // after we get the data, slap the Type on there to assist with determining the type
     obj.__type__ = type
     return obj
@@ -106,7 +108,7 @@ function getNode(typeName, ast, context, where, dbCall, options = {}) {
 joinMonster.getNode = getNode
 
 // handles the different callback signatures and return values.
-function handleUserDbCall(dbCall, sql, shapeDefinition) {
+function handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST) {
   // if there are two args, we're in "callback mode"
   if (dbCall.length === 2) {
     // wrap it in a promise
@@ -119,7 +121,8 @@ function handleUserDbCall(dbCall, sql, shapeDefinition) {
           rows = validate(rows)
           debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
           debug(`${rows.length} rows...`)
-          resolve(nest(rows, shapeDefinition))
+          const nested = nest(rows, shapeDefinition)
+          resolve(postProcess(nested, sqlAST))
         }
       })
     })
@@ -132,7 +135,8 @@ function handleUserDbCall(dbCall, sql, shapeDefinition) {
       rows = validate(rows)
       debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
       debug(`${rows.length} rows...`)
-      return nest(rows, shapeDefinition)
+      const nested = nest(rows, shapeDefinition)
+      return postProcess(nested, sqlAST)
     })
   // otherwise, they were supposed to give us the data directly
   } else {

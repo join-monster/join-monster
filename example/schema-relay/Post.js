@@ -39,9 +39,8 @@ export const Post = new GraphQLObjectType({
       description: 'The comments on this post',
       type: CommentConnection,
       args: connectionArgs,
-      resolve: (post, args) => {
-        return connectionFromArray(post.comments, args)
-      },
+      sqlPaginate: true,
+      sortKey: 'id',
       sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
     }
   })
