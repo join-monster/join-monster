@@ -2,7 +2,11 @@ import util from 'util'
 import { nest } from 'nesthydrationjs'
 const debug = require('debug')('join-monster')
 
-import { queryASTToSqlAST, getGraphQLType } from './queryASTToSqlAST'
+import {
+  queryASTToSqlAST,
+  getGraphQLType,
+  pruneDuplicateSqlDeps
+} from './queryASTToSqlAST'
 import stringifySqlAST from './stringifySqlAST'
 import defineObjectShape from './defineObjectShape'
 import AliasNamespace from './aliasNamespace'
@@ -90,6 +94,7 @@ function getNode(typeName, ast, context, where, dbCall, options = {}) {
   const sqlAST = {}
   // uses the same underlying function as the main `joinMonster`
   getGraphQLType(ast.fieldASTs[0], fakeParentNode, sqlAST, ast.fragments, namespace)
+  pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = compileSqlAST(sqlAST, context)
   return handleUserDbCall(dbCall, sql, shapeDefinition).then(obj => {
     // after we get the data, slap the Type on there to assist with determining the type
@@ -112,7 +117,7 @@ function handleUserDbCall(dbCall, sql, shapeDefinition) {
           reject(err)
         } else {
           rows = validate(rows)
-          debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 10)))
+          debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
           debug(`${rows.length} rows...`)
           resolve(nest(rows, shapeDefinition))
         }
@@ -125,7 +130,7 @@ function handleUserDbCall(dbCall, sql, shapeDefinition) {
   if (typeof result.then === 'function') {
     return result.then(rows => {
       rows = validate(rows)
-      debug(emphasize('RAW DATA'), inspect(rows.slice(0, 10)))
+      debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
       debug(`${rows.length} rows...`)
       return nest(rows, shapeDefinition)
     })

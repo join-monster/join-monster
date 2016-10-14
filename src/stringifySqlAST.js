@@ -57,9 +57,11 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
     )
     break
   case 'columnDeps':
-    node.name.forEach(col => selections.push(
-      `"${parent.as}"."${col}" AS "${prefix + col}"`
-    ))
+    for (let name in node.names) {
+      selections.push(
+        `"${parent.as}"."${name}" AS "${prefix + node.names[name]}"`
+      )
+    }
     break
   case 'composite':
     const keys = node.name.map(key => `"${parent.as}"."${key}"`)

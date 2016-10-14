@@ -4,6 +4,9 @@ import {
 } from 'graphql-relay'
 
 import joinMonster from '../../src/index'
+const options = {
+  minify: process.env.MINIFY == 1
+}
 
 import knex from './database'
 
@@ -12,7 +15,13 @@ const { nodeInterface, nodeField } = nodeDefinitions(
     const { type, id } = fromGlobalId(globalId)
     return joinMonster.getNode(type, ast, context,
       table => `${table}.id = ${id}`,
-      sql => knex.raw(sql)
+      sql => {
+        if (context) {
+          context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
+        }
+        return knex.raw(sql)
+      },
+      options
     )
   },
   obj => obj.__type__

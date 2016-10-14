@@ -1,9 +1,10 @@
 import assert from 'assert'
-import AliasNamespace from 'aliasNamespace'
+import AliasNamespace from './aliasNamespace'
 
 
 export function queryASTToSqlAST(ast, options) {
-  // we need to guard against two tables being aliased to the same thing, so lets keep track of that
+  // this is responsible for all the logic regarding creating SQL aliases
+  // we need varying degrees of uniqueness and readability
   const namespace = new AliasNamespace(options.minify)
 
   // we'll build up the AST representing the SQL recursively
@@ -17,6 +18,10 @@ export function queryASTToSqlAST(ast, options) {
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = ast.parentType
   getGraphQLType(queryAST, parentType, sqlAST, ast.fragments, namespace)
+
+  // make sure each "sqlDep" is only specified once at each level. also assign it an alias
+  pruneDuplicateSqlDeps(sqlAST, namespace)
+
   return sqlAST
 }
 
@@ -53,7 +58,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
   // is this a table in SQL?
   if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
-    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininyms, grabMany)
+    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namespace, grabMany)
   // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
   } else if (field.sqlColumn || !field.resolve) {
     sqlASTNode.type = 'column'
@@ -63,14 +68,14 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   // or maybe it just depends on some SQL columns
   } else if (field.sqlDeps) {
     sqlASTNode.type = 'columnDeps'
-    sqlASTNode.name = field.sqlDeps
+    sqlASTNode.names = field.sqlDeps
   // maybe this node wants no business with your SQL, because it has its own resolver
   } else {
     sqlASTNode.type = 'noop'
   }
 }
 
-function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininyms, grabMany) {
+function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namespace, grabMany) {
   const config = gqlType._typeConfig
 
   sqlASTNode.type = 'table'
@@ -78,7 +83,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininy
 
   // the graphQL field name will be the default alias for the table
   // if thats taken, this function will just add an underscore to the end to make it unique
-  sqlASTNode.as = mininyms.next().value.join('')
+  sqlASTNode.as = namespace.generate('table', field.name)
 
   // add the arguments that were passed, if any.
   if (queryASTNode.arguments.length) {
@@ -100,7 +105,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininy
   if (field.joinTable) {
     sqlASTNode.sqlJoins = field.sqlJoins
     sqlASTNode.joinTable = field.joinTable
-    sqlASTNode.joinTableAs = mininyms.next().value.join('')
+    sqlASTNode.joinTableAs = namespace.generate('table', field.joinTable)
   }
 
   // tables have child fields, lets push them to an array
@@ -116,14 +121,15 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininy
       type: 'column',
       name: config.uniqueKey,
       fieldName: config.uniqueKey,
-      as: mininyms.next().value.join('')
+      as: namespace.generate('column', config.uniqueKey)
     })
   } else if (Array.isArray(config.uniqueKey)) {
+    const clumsyName = config.uniqueKey.join('#')
     children.push({
       type: 'composite',
       name: config.uniqueKey,
-      fieldName: config.uniqueKey.join('#'),
-      as: mininyms.next().value.join('')
+      fieldName: clumsyName,
+      as: namespace.generate('column', clumsyName)
     })
   }
 
@@ -133,7 +139,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininy
       switch (selection.kind) {
       // if its another field, recurse through that
       case 'Field':
-        growNewTreeAndAddToChildren(children, selection, gqlType, fragments, mininyms)
+        growNewTreeAndAddToChildren(children, selection, gqlType, fragments, namespace)
         break
       // if its an inline fragment, it has some fields and we gotta recurse thru all them
       case 'InlineFragment':
@@ -141,7 +147,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininy
         // this became necessary when supporting queries on the Relay Node type
         if (selection.typeCondition.name.value === gqlType.name) {
           for (let fragSelection of selection.selectionSet.selections) {
-            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, mininyms)
+            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, namespace)
           }
         }
         break
@@ -152,7 +158,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, mininy
         // make sure fragment type matches the type being queried
         if (fragment.typeCondition.name.value === gqlType.name) {
           for (let fragSelection of fragment.selectionSet.selections) {
-            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, mininyms)
+            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, namespace)
           }
         }
         break
@@ -188,5 +194,35 @@ function growNewTreeAndAddToChildren(children, selection, graphQLType, fragments
 
 function stripNonNullType(type) {
   return type.constructor.name === 'GraphQLNonNull' ? type.ofType : type
+}
+
+export function pruneDuplicateSqlDeps(sqlAST, namespace) {
+  // keep track of all the dependent columns at this depth in a Set (for uniqueness)
+  const deps = new Set
+  const children = sqlAST.children
+
+  // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
+  for (let i = children.length - 1; i >= 0; i--) {
+    const child = children[i]
+    if (child.type === 'columnDeps') {
+      child.names.forEach(name => deps.add(name))
+      children.splice(i, 1)
+    // or if its another table, recurse on it
+    } else if (child.type === 'table') {
+      pruneDuplicateSqlDeps(child, namespace)
+    }
+  }
+
+  // now that we collected the "columnDeps", add them all to one node
+  // the "names" property will put all the column names in an object as keys
+  // the values of this object will be the SQL alias
+  const newNode = {
+    type: 'columnDeps',
+    names: {}
+  }
+  deps.forEach(name => {
+    newNode.names[name] = namespace.generate('column', name)
+  })
+  children.push(newNode)
 }
 

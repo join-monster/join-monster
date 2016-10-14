@@ -23,7 +23,9 @@ function _defineObjectShape(parent, prefix, node) {
         fieldDefinition[child.fieldName] = prefixToPass + child.fieldName
         break
       case 'columnDeps':
-        child.name.forEach(name => fieldDefinition[name] = prefixToPass + name)
+        for (let name in child.names) {
+          fieldDefinition[name] = prefixToPass + child.names[name]
+        }
         break
       case 'table':
         const definition = _defineObjectShape(node, prefixToPass, child)
