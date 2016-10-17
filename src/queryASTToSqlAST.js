@@ -124,7 +124,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
       as: namespace.generate('column', config.uniqueKey)
     })
   } else if (Array.isArray(config.uniqueKey)) {
-    const clumsyName = config.uniqueKey.join('#')
+    const clumsyName = config.uniqueKey.join('#') // need a name for this column, smash the individual column names together
     children.push({
       type: 'composite',
       name: config.uniqueKey,
@@ -134,37 +134,38 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
   }
 
   if (queryASTNode.selectionSet) {
-    for (let selection of queryASTNode.selectionSet.selections) {
-      // we need to figure out what kind of selection this is
-      switch (selection.kind) {
-      // if its another field, recurse through that
-      case 'Field':
-        growNewTreeAndAddToChildren(children, selection, gqlType, fragments, namespace)
-        break
-      // if its an inline fragment, it has some fields and we gotta recurse thru all them
-      case 'InlineFragment':
-        // check to make sure the type of this fragment matches the type being queried
-        // this became necessary when supporting queries on the Relay Node type
-        if (selection.typeCondition.name.value === gqlType.name) {
-          for (let fragSelection of selection.selectionSet.selections) {
-            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, namespace)
-          }
-        }
-        break
-      // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
-      case 'FragmentSpread':
-        const fragmentName = selection.name.value
-        const fragment = fragments[fragmentName]
-        // make sure fragment type matches the type being queried
-        if (fragment.typeCondition.name.value === gqlType.name) {
-          for (let fragSelection of fragment.selectionSet.selections) {
-            growNewTreeAndAddToChildren(children, fragSelection, gqlType, fragments, namespace)
-          }
-        }
-        break
-      default:
-        throw new Error('Unknown selection kind: ' + selection.kind)
+    handleSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, namespace)
+  }
+}
+
+// the selections could be several types, handle each type here
+function handleSelections(children, selections, gqlType, fragments, namespace) {
+  for (let selection of selections) {
+    // we need to figure out what kind of selection this is
+    switch (selection.kind) {
+    // if its another field, recurse through that
+    case 'Field':
+      growNewTreeAndAddToChildren(children, selection, gqlType, fragments, namespace)
+      break
+    // if its an inline fragment, it has some fields and we gotta recurse thru all them
+    case 'InlineFragment':
+      // check to make sure the type of this fragment matches the type being queried
+      // this became necessary when supporting queries on the Relay Node type
+      if (selection.typeCondition.name.value === gqlType.name) {
+        handleSelections(children, selection.selectionSet.selections, gqlType, fragments, namespace)
       }
+      break
+    // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
+    case 'FragmentSpread':
+      const fragmentName = selection.name.value
+      const fragment = fragments[fragmentName]
+      // make sure fragment type matches the type being queried
+      if (fragment.typeCondition.name.value === gqlType.name) {
+        handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, namespace)
+      }
+      break
+    default:
+      throw new Error('Unknown selection kind: ' + selection.kind)
     }
   }
 }
@@ -186,10 +187,10 @@ function stripRelayConnection(field, queryASTNode) {
   return { gqlType, queryASTNode }
 }
 
-function growNewTreeAndAddToChildren(children, selection, graphQLType, fragments, usedTableAliases) {
+function growNewTreeAndAddToChildren(children, selection, graphQLType, fragments, namespace) {
   const newNode = {}
   children.push(newNode)
-  getGraphQLType(selection, graphQLType, newNode, fragments, usedTableAliases)
+  getGraphQLType(selection, graphQLType, newNode, fragments, namespace)
 }
 
 function stripNonNullType(type) {
