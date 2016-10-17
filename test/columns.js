@@ -125,6 +125,30 @@ test('it should handle an inline fragment', async t => {
   t.deepEqual(data, expect)
 })
 
+test('it should handle nested fragments', async t => {
+  const query = `
+    {
+      users {
+        ... on User {
+          ...info
+        }
+      }
+    }
+    fragment info on User {
+      id, fullName, email
+    }
+  `
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      { id: 1, fullName: 'andrew carlson', email: 'andrew@stem.is' },
+      { id: 2, fullName: 'matt elder', email: 'matt@stem.is' }
+    ]
+  }
+  t.deepEqual(expect, data)
+})
+
 test('it should handle a column that resolves independantly of SQL', async t => {
   const query = wrap('id, favNums')
   const { data, errors } = await run(query)

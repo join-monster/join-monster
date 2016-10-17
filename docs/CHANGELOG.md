@@ -1,3 +1,6 @@
+### v0.3.7 (Oct 16, 2016)
+- Fix bug with nested fragments.
+
 ### v0.3.6 (Oct 13, 2016)
 - Option to minify the raw data column names.
 
