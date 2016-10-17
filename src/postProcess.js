@@ -1,21 +1,38 @@
-import { base64 } from './util'
+import { base64, parseCursor } from './util'
 
 function postProcess(data, sqlAST) {
+  // TODO: handle if data is an array
+  for (let child of sqlAST.children || []) {
+    if (Array.isArray(data)) {
+      for (let item of data) {
+        const dataChild = item[child.fieldName]
+        if (dataChild) {
+          item[child.fieldName] = postProcess(item[child.fieldName], child)
+        }
+      }
+    }
+    const dataChild = data[child.fieldName]
+    if (dataChild) {
+      data[child.fieldName] = postProcess(data[child.fieldName], child)
+    }
+  }
   if (sqlAST.paginate) {
     let edges = []
     let pageInfo = {}
-    const key = sqlAST.sortKey
     let hasNextPage = false
     let hasPreviousPage = false
-    if (sqlAST.args.first) {
+    if (sqlAST.args && sqlAST.args.first) {
       if (data.length > sqlAST.args.first) {
         data.pop()
         hasNextPage = true
       }
-      edges = data.map(obj => {
-        const value = obj[sqlAST.sortKey]
+      let offset = 0
+      if (sqlAST.args.after) {
+        offset = parseInt(parseCursor(sqlAST.args.after)) + 1
+      }
+      edges = data.map((obj, i) => {
         return {
-          cursor: base64(`${key}:${value}`),
+          cursor: base64(`offset:${offset + i}`),
           node: obj
         }
       })
@@ -24,19 +41,12 @@ function postProcess(data, sqlAST) {
         hasPreviousPage
       }
       if (data[0]) {
-        pageInfo.startCursor = base64(`${key}:${data[0].$start}`)
-        pageInfo.endCursor = base64(`${key}:${data[0].$end}`)
+        pageInfo.startCursor = base64(`offset:${offset}`)
+        pageInfo.endCursor = base64(`offset:${offset + edges.length - 1}`)
       }
     }
     return {
       edges, pageInfo
-    }
-  }
-  // TODO: handle if data is an array
-  for (let child of sqlAST.children || []) {
-    const dataChild = data[child.fieldName]
-    if (dataChild) {
-      data[child.fieldName] = postProcess(data[child.fieldName], child)
     }
   }
   return data

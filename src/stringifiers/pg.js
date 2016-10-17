@@ -23,30 +23,28 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
     // generate the join or joins
     // this condition is for single joins (one-to-one or one-to-many relations)
     if (node.sqlJoin && node.paginate) {
-      const key = node.sortKey
+      let orderCondition = ''
+      if (Array.isArray(node.orderBy)) {
+        orderCondition += node.orderBy.map(str => `"${str}"`).join(',')
+      } else if (typeof node.orderBy === 'string') {
+        orderCondition += `"${node.orderBy}"`
+      } else {
+        throw new Error('"orderBy" is required for pagination')
+      }
       const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`)
       const whereCondition = node.sqlJoin(`"${parent.as}"`, node.name)
-      let filterCondition = ''
+      let offset = 0
       if (node.args && node.args.after) {
-        const cursor = parseCursor(node.args.after)
-        filterCondition += `WHERE ${node.name}."${node.sortKey}" > ${cursor}`
+        offset = parseInt(parseCursor(node.args.after)) + 1
       }
-      let limitCondition = ''
-      if (node.args && node.args.first) {
-        limitCondition += `LIMIT ${Number(node.args.first) + 1}`
-      }
+      const limit = node.args && node.args.first || 'ALL'
       const join = `\
 LEFT JOIN LATERAL (
-  SELECT * FROM(
-    SELECT *,
-      min("${key}") OVER () AS "$start",
-      max("${key}") OVER () AS "$end"
-    FROM ${node.name}
-    WHERE ${whereCondition}
-    ORDER BY "${key}"
-  ) ${node.name}
-  ${filterCondition}
-  ${limitCondition}
+  SELECT *, count(*) OVER () AS "$total"
+  FROM ${node.name}
+  WHERE ${whereCondition}
+  ORDER BY ${orderCondition}
+  LIMIT ${limit} OFFSET ${offset}
 ) AS "${node.as}" ON ${joinCondition}`
       joins.push(join)
     } else if (node.sqlJoin) {
@@ -65,6 +63,8 @@ LEFT JOIN LATERAL (
         `LEFT JOIN ${node.joinTable} AS "${node.joinTableAs}" ON ${joinCondition1}`,
         `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition2}`
       )
+    } else if (node.paginate) {
+      console.log('todo')
     } else {
       // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
       joins.push(

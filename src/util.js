@@ -21,5 +21,8 @@ export function base64(str) {
 export function parseCursor(opaque) {
   const clear = new Buffer(opaque, 'base64').toString()
   const [ _, value ] = clear.split(':')
+  if (!_ || !value) {
+    throw new Error('invalid cursor format')
+  }
   return value
 }

@@ -53,7 +53,11 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
     // we'll set a flag for pagination.
     if (field.sqlPaginate) {
       sqlASTNode.paginate = true
-      sqlASTNode.sortKey = field.sortKey
+      if (field.sortKey) {
+        sqlASTNode.sortKey = field.sortKey
+      } else if (field.orderBy) {
+        sqlASTNode.orderBy = field.orderBy
+      }
     }
   }
   // the typeConfig has all the keyes from the GraphQLObjectType definition
@@ -139,14 +143,9 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
   if (sqlASTNode.paginate) {
     children.push({
       type: 'column',
-      name: '$start',
-      fieldName: '$start',
-      as: '$start'
-    }, {
-      type: 'column',
-      name: '$end',
-      fieldName: '$end',
-      as: '$end'
+      name: '$total',
+      fieldName: '$total',
+      as: '$total'
     })
   }
 
