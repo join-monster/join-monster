@@ -13,7 +13,7 @@ import { nodeField } from './Node'
 import joinMonster from '../../src/index'
 const options = {
   minify: process.env.MINIFY == 1,
-  dialect: 'pg'
+  dialect: process.env.PG_URL ? 'pg' : 'standard'
 }
 
 export default new GraphQLObjectType({

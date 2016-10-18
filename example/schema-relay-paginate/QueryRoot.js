@@ -1,4 +1,3 @@
-import path from 'path'
 import {
   GraphQLObjectType,
   GraphQLList,
@@ -6,14 +5,17 @@ import {
   GraphQLInt
 } from 'graphql'
 
-import knex from './database'
+import { forwardConnectionArgs } from 'graphql-relay'
 
-import User from './User'
+import knex from './database'
+import { User, UserConnection } from './User'
 import Sponsor from './Sponsor'
+import { nodeField } from './Node'
 
 import joinMonster from '../../src/index'
 const options = {
-  minify: process.env.MINIFY == 1
+  minify: process.env.MINIFY == 1,
+  dialect: process.env.PG_URL ? 'pg' : 'standard'
 }
 
 export default new GraphQLObjectType({
@@ -24,8 +26,12 @@ export default new GraphQLObjectType({
       type: GraphQLString,
       resolve: () => joinMonster.version
     },
+    node: nodeField,
     users: {
-      type: new GraphQLList(User),
+      type: UserConnection,
+      args: forwardConnectionArgs,
+      sqlPaginate: true,
+      orderBy: 'id',
       resolve: (parent, args, context, ast) => {
         return joinMonster(ast, context, sql => {
           // place the SQL query in the response headers. ONLY for debugging. Don't do this in production

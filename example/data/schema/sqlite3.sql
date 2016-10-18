@@ -1,33 +1,44 @@
+DROP TABLE IF EXISTS accounts;
 CREATE TABLE accounts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email_address VARCHAR(150),
   first_name VARCHAR(255),
   last_name VARCHAR(255),
-  num_legs INTEGER DEFAULT 2
+  num_legs INTEGER DEFAULT 2,
+  created_at DEFAULT CURRENT_TIMESTAMP
 );
 
+DROP TABLE IF EXISTS comments;
 CREATE TABLE comments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   body TEXT NOT NULL,
   post_id INTEGER NOT NULL,
-  author_id INTEGER NOT NULL
+  author_id INTEGER NOT NULL,
+  created_at DEFAULT CURRENT_TIMESTAMP
 );
 
+DROP TABLE IF EXISTS posts;
 CREATE TABLE posts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   body TEXT NOT NULL,
-  author_id INTEGER NOT NULL
+  author_id INTEGER NOT NULL,
+  created_at DEFAULT CURRENT_TIMESTAMP
 );
 
+DROP TABLE IF EXISTS relationships;
 CREATE TABLE relationships (
   follower_id INTEGER NOT NULL,
   followee_id INTEGER NOT NULL,
+  created_at DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (follower_id, followee_id) ON CONFLICT REPLACE
 );
 
+DROP TABLE IF EXISTS sponsors;
 CREATE TABLE sponsors (
   generation INTEGER NOT NULL,
   first_name VARCHAR(255),
   last_name VARCHAR(255),
-  num_legs INTEGER DEFAULT 2
+  num_legs INTEGER DEFAULT 2,
+  created_at DEFAULT CURRENT_TIMESTAMP
 );
+

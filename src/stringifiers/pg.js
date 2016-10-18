@@ -1,4 +1,5 @@
-import { validateSqlAST, inspect, parseCursor } from '../util'
+import { validateSqlAST, inspect } from '../util'
+import { cursorToOffset } from 'graphql-relay'
 
 export default function stringifySqlAST(topNode, context) {
   validateSqlAST(topNode)
@@ -6,7 +7,11 @@ export default function stringifySqlAST(topNode, context) {
   // make sure these are unique by converting to a set and then back to an array
   selections = [ ...new Set(selections) ]
   if (!selections.length) return ''
-  return 'SELECT\n  ' + selections.join(',\n  ') + '\n' + joins.join('\n') + '\n' + wheres.join('\n')
+  let sql = 'SELECT\n  ' + selections.join(',\n  ') + '\n' + joins.join('\n')
+  if (wheres.length) {
+    sql += '\nWHERE ' + wheres.join(' AND ')
+  }
+  return sql
 }
 
 function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres) {
@@ -16,28 +21,41 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
     if (node.where) {
       const whereCondition = node.where(`"${node.as}"`, node.args || {}, context) 
       if (whereCondition) {
-        wheres.push(`WHERE ${whereCondition}`)
+        wheres.push(`${whereCondition}`)
       }
     }
 
     // generate the join or joins
     // this condition is for single joins (one-to-one or one-to-many relations)
     if (node.sqlJoin && node.paginate) {
-      let orderCondition = ''
-      if (Array.isArray(node.orderBy)) {
-        orderCondition += node.orderBy.map(str => `"${str}"`).join(',')
+      if (node.args && node.args.last) {
+        throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
+      }
+      let orderCondition
+      if (typeof node.orderBy === 'object') {
+        const orderColumns = []
+        for (let column in node.orderBy) {
+          let direction = node.orderBy[column].toUpperCase()
+          if (direction !== 'ASC' && direction !== 'DESC') {
+            throw new Error (direction + ' is not a valid sorting direction')
+          }
+          orderColumns.push(`"${column}" ${direction}`)
+        }
+        orderCondition = orderColumns.join(', ')
       } else if (typeof node.orderBy === 'string') {
-        orderCondition += `"${node.orderBy}"`
+        orderCondition = `"${node.orderBy}"`
       } else {
         throw new Error('"orderBy" is required for pagination')
       }
       const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`)
       const whereCondition = node.sqlJoin(`"${parent.as}"`, node.name)
-      let offset = 0
-      if (node.args && node.args.after) {
-        offset = parseInt(parseCursor(node.args.after)) + 1
+      let limit = 'ALL', offset = 0
+      if (node.args && node.args.first) {
+        limit = parseInt(node.args.first) + 1
+        if (node.args.after) {
+          offset = cursorToOffset(node.args.after) + 1
+        }
       }
-      const limit = node.args && node.args.first || 'ALL'
       const join = `\
 LEFT JOIN LATERAL (
   SELECT *, count(*) OVER () AS "$total"
@@ -64,7 +82,40 @@ LEFT JOIN LATERAL (
         `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition2}`
       )
     } else if (node.paginate) {
-      console.log('todo')
+      if (node.args && node.args.last) {
+        throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
+      }
+      let orderCondition
+      if (typeof node.orderBy === 'object') {
+        const orderColumns = []
+        for (let column in node.orderBy) {
+          let direction = node.orderBy[column].toUpperCase()
+          if (direction !== 'ASC' && direction !== 'DESC') {
+            throw new Error (direction + ' is not a valid sorting direction')
+          }
+          orderColumns.push(`"${column}" ${direction}`)
+        }
+        orderCondition = orderColumns.join(', ')
+      } else if (typeof node.orderBy === 'string') {
+        orderCondition = `"${node.orderBy}"`
+      } else {
+        throw new Error('"orderBy" is required for pagination')
+      }
+      let limit = 'ALL', offset = 0
+      if (node.args && node.args.first) {
+        limit = parseInt(node.args.first) + 1
+        if (node.args.after) {
+          offset = cursorToOffset(node.args.after) + 1
+        }
+      }
+      const join = `\
+FROM (
+  SELECT *, count(*) OVER () AS "$total"
+  FROM ${node.name}
+  ORDER BY ${orderCondition}
+  LIMIT ${limit} OFFSET ${offset}
+) AS "${node.as}"`
+      joins.push(join)
     } else {
       // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
       joins.push(

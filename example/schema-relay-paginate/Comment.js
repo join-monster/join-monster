@@ -4,17 +4,25 @@ import {
   GraphQLInt
 } from 'graphql'
 
-import Post from './Post'
-import User from './User'
+import {
+  globalIdField,
+  connectionDefinitions
+} from 'graphql-relay'
 
-export default new GraphQLObjectType({
+import { Post } from './Post'
+import { User } from './User'
+import { nodeInterface } from './Node'
+
+export const Comment = new GraphQLObjectType({
   description: 'Comments on posts',
   name: 'Comment',
   sqlTable: 'comments',
   uniqueKey: 'id',
+  interfaces: [ nodeInterface ],
   fields: () => ({
     id: {
-      type: GraphQLInt
+      ...globalIdField(),
+      sqlDeps: [ 'id' ]
     },
     body: {
       description: 'The content of the comment',
@@ -29,11 +37,9 @@ export default new GraphQLObjectType({
       description: 'The user who wrote the comment',
       type: User,
       sqlJoin: (commentTable, userTable) => `${commentTable}.author_id = ${userTable}.id`
-    },
-    createdAt: {
-      description: 'When this was created',
-      type: GraphQLString,
-      sqlColumn: 'created_at'
     }
   })
 })
+
+const { connectionType: CommentConnection } = connectionDefinitions({ nodeType: Comment })
+export { CommentConnection }

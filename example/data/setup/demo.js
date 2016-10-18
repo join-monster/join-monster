@@ -1,6 +1,5 @@
 import faker from 'faker'
 
-const knex = require('./schema-setup')('demo')
 
 function* count(limit) {
   for (let i = 0; i < limit; i++) {
@@ -10,10 +9,11 @@ function* count(limit) {
 
 const numUsers = 5
 const numPosts = 50
-const numComments = 500
+const numComments = 300
 const numRelationships = 15
 
-;(async () => {
+module.exports = async () => {
+  const knex = require('../schema/setup')('demo')
 
   console.log('creating accounts...')
   const accounts = new Array(numUsers)
@@ -21,7 +21,8 @@ const numRelationships = 15
     accounts[i] = {
       first_name: faker.name.firstName(),
       last_name: faker.name.lastName(),
-      email_address: faker.internet.email()
+      email_address: faker.internet.email(),
+      created_at: faker.date.past()
     }
   }
   await knex.batchInsert('accounts', accounts, 50)
@@ -31,7 +32,8 @@ const numRelationships = 15
   for (let i of count(numPosts)) {
     posts[i] = {
       body: faker.lorem.sentences(faker.random.number({ min: 2, max: 4 })),
-      author_id: faker.random.number({ min: 1, max: numUsers })
+      author_id: faker.random.number({ min: 1, max: numUsers }),
+      created_at: faker.date.past()
     }
   }
   await knex.batchInsert('posts', posts, 50)
@@ -42,18 +44,27 @@ const numRelationships = 15
     comments[i] = {
       body: faker.hacker.phrase(),
       post_id: faker.random.number({ min: 1, max: numPosts }),
-      author_id: faker.random.number({ min: 1, max: numUsers })
+      author_id: faker.random.number({ min: 1, max: numUsers }),
+      created_at: faker.date.past()
     }
   }
   await knex.batchInsert('comments', comments, 50)
 
   console.log('creating relationships...')
-  const relationships = new Array(numRelationships)
+  const relationships = []
+  const used = new Set
   for (let i of count(numRelationships)) {
-    relationships[i] = {
-      follower_id: faker.random.number({ min: 1, max: numUsers }),
-      followee_id: faker.random.number({ min: 1, max: numUsers })
+    const follower_id = faker.random.number({ min: 1, max: numUsers })
+    const followee_id = faker.random.number({ min: 1, max: numUsers })
+    const key = `${follower_id}-${followee_id}`
+    if (!used.has(key)) {
+      relationships.push({
+        follower_id,
+        followee_id,
+        created_at: faker.date.past()
+      })
     }
+    used.add(key)
   }
   await knex.batchInsert('relationships', relationships, 50)
 
@@ -87,5 +98,4 @@ const numRelationships = 15
   ])
 
   await knex.destroy()
-
-})().catch(err => { throw err })
+}

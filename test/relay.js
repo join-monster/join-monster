@@ -1,6 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaRelay from '../example/schema-relay/index'
+import schemaRelay from '../example/schema-relay-standard/index'
 import { partial } from 'lodash'
 
 
@@ -126,8 +126,8 @@ test('it should handle the relay connection type', async t => {
           },
           {
             node: {
-              id: 'Q29tbWVudDo0',
-              body: 'Somebody please help me with thi library. It is so much work.'
+              id: 'Q29tbWVudDoz',
+              body: 'Also, submit a PR if you have a feature you want to add.'
             }
           }
         ]
@@ -194,14 +194,14 @@ test('it should handle nested connection types', async t => {
                 edges: [
                   {
                     node: {
-                      id: 'Q29tbWVudDoz',
-                      body: 'Also, submit a PR if you have a feature you want to add.'
+                      id: 'Q29tbWVudDoy',
+                      body: 'Do not forget to check out the demo.'
                     }
                   },
                   {
                     node: {
-                      id: 'Q29tbWVudDoy',
-                      body: 'Do not forget to check out the demo.'
+                      id: 'Q29tbWVudDoz',
+                      body: 'Also, submit a PR if you have a feature you want to add.'
                     }
                   }
                 ]

@@ -95,7 +95,7 @@ function getNode(typeName, ast, context, where, dbCall, options = {}) {
   const namespace = new AliasNamespace(options.minify)
   const sqlAST = {}
   // uses the same underlying function as the main `joinMonster`
-  getGraphQLType(ast.fieldASTs[0], fakeParentNode, sqlAST, ast.fragments, namespace)
+  getGraphQLType(ast.fieldASTs[0], fakeParentNode, sqlAST, ast.fragments, namespace, options)
   pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = compileSqlAST(sqlAST, context, options)
   return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST).then(obj => {

@@ -7,8 +7,7 @@ import {
 
 import {
   globalIdField,
-  connectionArgs,
-  connectionFromArray,
+  forwardConnectionArgs,
   connectionDefinitions
 } from 'graphql-relay'
 
@@ -42,18 +41,20 @@ const User = new GraphQLObjectType({
     comments: {
       description: 'Comments the user has written on people\'s posts',
       type: CommentConnection,
-      args: connectionArgs,
-      resolve: (user, args) => {
-        return connectionFromArray(user.comments, args)
-      },
+      args: forwardConnectionArgs,
+      sqlPaginate: true,
+      orderBy: 'id',
       sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
     },
     posts: {
       description: 'A list of Posts the user has written',
       type: PostConnection, 
-      args: connectionArgs,
+      args: forwardConnectionArgs,
       sqlPaginate: true,
-      orderBy: 'id',
+      orderBy: {
+        created_at: 'desc',
+        id: 'asc'
+      },
       sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
     },
     following: {
@@ -85,5 +86,5 @@ const User = new GraphQLObjectType({
 
 const { connectionType: UserConnection } = connectionDefinitions({ nodeType: User })
 
-export default User 
+export { User, UserConnection }
 

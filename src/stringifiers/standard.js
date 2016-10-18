@@ -6,7 +6,11 @@ export default function stringifySqlAST(topNode, context) {
   // make sure these are unique by converting to a set and then back to an array
   selections = [ ...new Set(selections) ]
   if (!selections.length) return ''
-  return 'SELECT\n  ' + selections.join(',\n  ') + '\n' + joins.join('\n') + '\n' + wheres.join('\n')
+  let sql = 'SELECT\n  ' + selections.join(',\n  ') + '\n' + joins.join('\n')
+  if (wheres.length) {
+    sql += '\nWHERE ' + wheres.join(' AND ')
+  }
+  return sql
 }
 
 function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres) {
@@ -16,7 +20,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
     if (node.where) {
       const whereCondition = node.where(`"${node.as}"`, node.args || {}, context) 
       if (whereCondition) {
-        wheres.push(`WHERE ${whereCondition}`)
+        wheres.push(`${whereCondition}`)
       }
     }
 

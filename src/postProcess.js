@@ -1,4 +1,4 @@
-import { base64, parseCursor } from './util'
+import { connectionFromArraySlice, cursorToOffset } from 'graphql-relay'
 
 function postProcess(data, sqlAST) {
   // TODO: handle if data is an array
@@ -16,38 +16,15 @@ function postProcess(data, sqlAST) {
       data[child.fieldName] = postProcess(data[child.fieldName], child)
     }
   }
-  if (sqlAST.paginate) {
-    let edges = []
-    let pageInfo = {}
-    let hasNextPage = false
-    let hasPreviousPage = false
-    if (sqlAST.args && sqlAST.args.first) {
-      if (data.length > sqlAST.args.first) {
-        data.pop()
-        hasNextPage = true
-      }
-      let offset = 0
-      if (sqlAST.args.after) {
-        offset = parseInt(parseCursor(sqlAST.args.after)) + 1
-      }
-      edges = data.map((obj, i) => {
-        return {
-          cursor: base64(`offset:${offset + i}`),
-          node: obj
-        }
-      })
-      pageInfo = {
-        hasNextPage,
-        hasPreviousPage
-      }
-      if (data[0]) {
-        pageInfo.startCursor = base64(`offset:${offset}`)
-        pageInfo.endCursor = base64(`offset:${offset + edges.length - 1}`)
-      }
+  if (sqlAST.paginate && sqlAST.orderBy) {
+    let offset = 0
+    if (sqlAST.args && sqlAST.args.after) {
+      offset = cursorToOffset(sqlAST.args.after) + 1
     }
-    return {
-      edges, pageInfo
-    }
+    const arrayLength = data[0] && parseInt(data[0].$total)
+    const connection = connectionFromArraySlice(data, sqlAST.args || {}, { sliceStart: offset, arrayLength })
+    connection.pageInfo.total = arrayLength
+    return connection
   }
   return data
 }

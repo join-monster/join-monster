@@ -7,7 +7,7 @@ import graphiql from 'koa-custom-graphiql'
 import koaStatic from 'koa-static'
 
 import schemaBasic from './schema-basic/index'
-import schemaRelay from './schema-relay/index'
+import schemaRelay from './schema-relay-paginate/index'
 
 const app = koa()
 const router = koaRouter()

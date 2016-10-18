@@ -6,11 +6,10 @@ import {
 import {
   globalIdField,
   connectionDefinitions,
-  connectionArgs,
-  connectionFromArray
+  forwardConnectionArgs
 } from 'graphql-relay'
 
-import User from './User'
+import { User } from './User'
 import { CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
 
@@ -38,7 +37,7 @@ export const Post = new GraphQLObjectType({
     comments: {
       description: 'The comments on this post',
       type: CommentConnection,
-      args: connectionArgs,
+      args: forwardConnectionArgs,
       sqlPaginate: true,
       orderBy: 'id',
       sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
