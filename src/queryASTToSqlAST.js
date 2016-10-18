@@ -1,23 +1,24 @@
 import assert from 'assert'
 import AliasNamespace from './aliasNamespace'
+import { wrap } from './util'
 
 
-export function queryASTToSqlAST(ast, options) {
+export function queryASTToSqlAST(resolveInfo, options) {
   // this is responsible for all the logic regarding creating SQL aliases
   // we need varying degrees of uniqueness and readability
   const namespace = new AliasNamespace(options.minify)
 
   // we'll build up the AST representing the SQL recursively
   const sqlAST = {}
-  assert.equal(ast.fieldASTs.length, 1, 'We thought this would always have a length of 1. FIX ME!!')
+  assert.equal(resolveInfo.fieldASTs.length, 1, 'We thought this would always have a length of 1. FIX ME!!')
 
   // this represents the parsed query
-  const queryAST = ast.fieldASTs[0]
-  // ast.parentType is from the schema, its the GraphQLObjectType that is parent to the current field
+  const queryAST = resolveInfo.fieldASTs[0]
+  // resolveInfo.parentType is from the schema, its the GraphQLObjectType that is parent to the current field
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
-  const parentType = ast.parentType
-  getGraphQLType(queryAST, parentType, sqlAST, ast.fragments, namespace, options)
+  const parentType = resolveInfo.parentType
+  getGraphQLType(queryAST, parentType, sqlAST, resolveInfo.fragments, namespace, options)
 
   // make sure each "sqlDep" is only specified once at each level. also assign it an alias
   pruneDuplicateSqlDeps(sqlAST, namespace)
@@ -43,7 +44,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   }
 
   // if its a relay connection, there are several things we need to do
-  if (/Connection$/.test(gqlType.name) && gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges) {
+  if (/Connection$/.test(gqlType.name) && gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
     // grab the types and fields inside the connection
     const stripped = stripRelayConnection(field, queryASTNode)
@@ -53,7 +54,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
     // we'll set a flag for pagination.
     if (field.sqlPaginate) {
       if (options.dialect !== 'pg') {
-        throw new Error('Cannot so SQL pagination for connections with this SQL dialect')
+        throw new Error('Cannot do SQL pagination for connections with this SQL dialect')
       }
       sqlASTNode.paginate = true
       if (field.sortKey) {
@@ -99,12 +100,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
   if (queryASTNode.arguments.length) {
     const args = sqlASTNode.args = {}
     for (let arg of queryASTNode.arguments) {
-      let value = arg.value.value
-      // TODO parse other kinds of variables
-      if (arg.value.kind === 'IntValue') {
-        value = parseInt(value)
-      }
-      args[arg.name.value] = value
+      args[arg.name.value] = parseArgValue(arg.value)
     }
   }
 
@@ -126,35 +122,10 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
   // tables have child fields, lets push them to an array
   const children = sqlASTNode.children = []
 
-  // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
-  // need whichever column that the schema specifies as the unique one to be the first child
-  if (!config.uniqueKey) {
-    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${config.sqlTable}`)
-  }
-  if (typeof config.uniqueKey === 'string') {
-    children.push({
-      type: 'column',
-      name: config.uniqueKey,
-      fieldName: config.uniqueKey,
-      as: namespace.generate('column', config.uniqueKey)
-    })
-  } else if (Array.isArray(config.uniqueKey)) {
-    const clumsyName = config.uniqueKey.join('#') // need a name for this column, smash the individual column names together
-    children.push({
-      type: 'composite',
-      name: config.uniqueKey,
-      fieldName: clumsyName,
-      as: namespace.generate('column', clumsyName)
-    })
-  }
+  handleUniqueKey(config, children, namespace)
 
   if (sqlASTNode.paginate) {
-    children.push({
-      type: 'column',
-      name: '$total',
-      fieldName: '$total',
-      as: namespace.generate('column', '$total')
-    })
+    handleColumnsRequiredForPagination(sqlASTNode, namespace)
   }
 
   if (queryASTNode.selectionSet) {
@@ -162,7 +133,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
   }
 }
 
-// the selections could be several types, handle each type here
+// the selections could be several types, recursively handle each type here
 function handleSelections(children, selections, gqlType, fragments, namespace, options) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
@@ -196,6 +167,62 @@ function handleSelections(children, selections, gqlType, fragments, namespace, o
   }
 }
 
+function handleUniqueKey(config, children, namespace) {
+  // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
+  // need whichever column that the schema specifies as the unique one to be the first child
+  if (!config.uniqueKey) {
+    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${config.sqlTable}`)
+  }
+  if (typeof config.uniqueKey === 'string') {
+    children.push({
+      type: 'column',
+      name: config.uniqueKey,
+      fieldName: config.uniqueKey,
+      as: namespace.generate('column', config.uniqueKey)
+    })
+  } else if (Array.isArray(config.uniqueKey)) {
+    const clumsyName = config.uniqueKey.join('#') // need a name for this column, smash the individual column names together
+    children.push({
+      type: 'composite',
+      name: config.uniqueKey,
+      fieldName: clumsyName,
+      as: namespace.generate('column', clumsyName)
+    })
+  }
+}
+
+function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
+  if (sqlASTNode.sortKey) {
+    // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
+    for (let column of wrap(sqlASTNode.sortKey.key)) {
+      const newChild = {
+        type: 'column',
+        name: column,
+        fieldName: column,
+        as: namespace.generate('column', column)
+      }
+      // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
+      if (sqlASTNode.joinTable) {
+        newChild.fromOtherTable = sqlASTNode.joinTableAs
+      }
+      sqlASTNode.children.push(newChild)
+    }
+  } else if (sqlASTNode.orderBy) {
+    // this type of paging can visit arbitrary pages, so lets provide the total number of items
+    // on this special "$total" column which we will compute in the query
+    const newChild = {
+      type: 'column',
+      name: '$total',
+      fieldName: '$total',
+      as: namespace.generate('column', '$total')
+    }
+    if (sqlASTNode.joinTable) {
+      newChild.fromOtherTable = sqlASTNode.joinTableAs
+    }
+    sqlASTNode.children.push(newChild)
+  }
+}
+
 function stripRelayConnection(field, queryASTNode) {
   // get the GraphQL Type inside the list of edges inside the Node from the schema definition
   const gqlType = field.type._fields.edges.type.ofType._fields.node.type
@@ -212,7 +239,6 @@ function stripRelayConnection(field, queryASTNode) {
   queryASTNode.arguments = args
   return { gqlType, queryASTNode }
 }
-
 
 function stripNonNullType(type) {
   return type.constructor.name === 'GraphQLNonNull' ? type.ofType : type
@@ -246,5 +272,14 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
     newNode.names[name] = namespace.generate('column', name)
   })
   children.push(newNode)
+}
+
+function parseArgValue(value) {
+  let primitive = value.value
+  // TODO parse other kinds of variables
+  if (value.kind === 'IntValue') {
+    primitive = parseInt(primitive)
+  }
+  return primitive
 }
 

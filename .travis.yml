@@ -1,5 +1,6 @@
 language: node_js
 node_js: stable
+
 deploy:
   - provider: npm
     skip_cleanup: true
@@ -11,3 +12,19 @@ deploy:
     # NPM API key, encrypted with public key crypto. only travis has the private key.
     api_key:
       secure: PcwMn5hXRyFOEV3RFp1MWMvZnj2T2nSJ2vV/8vdVNDL+QwVaQGICWLeUGbcMmtliowMVCpNswZ8+cVyg+HUlvdF8dlpNTzuHA4Cv1V/+RUfJbtTaZVPIezswtjbxcOxS69ZNCJbRJXoWojiYUSXzBjdGFHRWGFzFYbdhMgXYt8sgkN3FSdny7MdHMsOk5TISFdVu9XppFO4SCru1jf6iyXQe+6ZaH/XyI9BdPbQ3SPl7NpvLwJBSGeTdxaI779r74wRUBlBlIO52U7IsTb4zhES25E1+dMBc3mOGRScj4/wx6p4880jhJupDA/feQnkStdAjVDzMtqXNwmlRMcvQX5xD4cSHYTInMkO6Y3d3MsV9DX7LTVTX6x5oDrsHA6SkToL09w5OFB9FU2M6j7vqRLws1hv85seOsEwaqqYeYyBtlFSN0vKfvF4R3yZJ/3GPkKTvevNyZZQ1GN09ZQzKp2tkCHl/vKzXTb2HCD8ql8/lhaqX1qA8vC5X1SDNhAEIjqmjFJPa/IeT8lK219KWa4fURs9fQAhQO5f0r735TTEL0SY99BXrTXfiYLje5dGV4cM9ABp3ENLDJH1oMj9j+W0tZ0192/tJOdoKQ62vBlFxQ7MWe1A49PjqVNLBUGnuVyq7xAXHMF5Iwf5Pq2Pg7QUptin5QKxcutH057xDSn0=
+
+services:
+  - postgresql
+addons:
+  # default postgres version is 9.1, which lacks the features we need
+  postgresql: "9.4"
+before_script:
+  # create the databases
+  - psql -c "CREATE DATABASE test1 LC_COLLATE 'en_US.UTF-8';" -U postgres
+  - psql -c "CREATE DATABASE test2 LC_COLLATE 'en_US.UTF-8';" -U postgres
+  - psql -c "CREATE DATABASE test3 LC_COLLATE 'en_US.UTF-8';" -U postgres
+  - psql -c "CREATE DATABASE demo LC_COLLATE 'en_US.UTF-8';" -U postgres
+  # populate them with data
+  - npm run db-build
+env:
+  - PG_URL='postgres://postgres@localhost/'

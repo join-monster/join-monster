@@ -15,6 +15,7 @@ assert(process.env.PG_URL, 'Environment variable PG_URL must be defined, e.g. "p
   await require('./setup/test1')()
   await require('./setup/test2')()
   await require('./setup/demo')()
+
   console.log('restoring dump...')
   const out = execSync(`psql ${process.env.PG_URL}test3 < ${__dirname}/setup/test3-dump.sql`)
   if (out.toString()) {

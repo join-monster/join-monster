@@ -43,11 +43,12 @@ import { emphasize, inspect } from './util'
  * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
  * @param {Object} [options]
  * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
+ * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'` and `'standard'` are supported.
  * @returns {Promise<Object>} The correctly nested data from the database.
  */
-function joinMonster(ast, context, dbCall, options = {}) {
+function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
-  const sqlAST = queryASTToSqlAST(ast, options)
+  const sqlAST = queryASTToSqlAST(resolveInfo, options)
   const { sql, shapeDefinition } = compileSqlAST(sqlAST, context, options)
   if (!sql) return Promise.resolve({})
 
@@ -77,11 +78,12 @@ function compileSqlAST(sqlAST, context, options) {
  * @param {Object} context - An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization.
  * @param {where} where - A function that returns the WHERE condition.
  * @param {Function} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
+ * @param {Object} [options] - Same as `joinMonster` function's options.
  * @returns {Promise<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
-function getNode(typeName, ast, context, where, dbCall, options = {}) {
+function getNode(typeName, resolveInfo, context, where, dbCall, options = {}) {
   // get the GraphQL type from the schema using the name
-  const type = ast.schema.getType(typeName)
+  const type = resolveInfo.schema.getType(typeName)
   // our getGraphQLType expects every requested field to be in the schema definition. "node" isn't a parent of whatever type we're getting, so we'll just wrap that type in an object that LOOKS that same as a hypothetical Node type
   const fakeParentNode = {
     _fields: {
@@ -95,7 +97,7 @@ function getNode(typeName, ast, context, where, dbCall, options = {}) {
   const namespace = new AliasNamespace(options.minify)
   const sqlAST = {}
   // uses the same underlying function as the main `joinMonster`
-  getGraphQLType(ast.fieldASTs[0], fakeParentNode, sqlAST, ast.fragments, namespace, options)
+  getGraphQLType(resolveInfo.fieldASTs[0], fakeParentNode, sqlAST, resolveInfo.fragments, namespace, options)
   pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = compileSqlAST(sqlAST, context, options)
   return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST).then(obj => {

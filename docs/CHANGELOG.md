@@ -1,3 +1,8 @@
+### v0.4.0 (Oct 20, 2016)
+- Add Postgres dialect option
+- Support SQL pagination based on integer offsets
+- Support SQL pagination based on a sort key(s)
+
 ### v0.3.7 (Oct 16, 2016)
 - Fix bug with nested fragments.
 

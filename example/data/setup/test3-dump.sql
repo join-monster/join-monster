@@ -14,14 +14,14 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
 --
 
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
@@ -34,7 +34,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: accounts; Type: TABLE; Schema: public; Owner: andy
+-- Name: accounts; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE accounts (
@@ -47,10 +47,8 @@ CREATE TABLE accounts (
 );
 
 
-ALTER TABLE accounts OWNER TO andy;
-
 --
--- Name: accounts_id_seq; Type: SEQUENCE; Schema: public; Owner: andy
+-- Name: accounts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE accounts_id_seq
@@ -61,17 +59,15 @@ CREATE SEQUENCE accounts_id_seq
     CACHE 1;
 
 
-ALTER TABLE accounts_id_seq OWNER TO andy;
-
 --
--- Name: accounts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: andy
+-- Name: accounts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE accounts_id_seq OWNED BY accounts.id;
 
 
 --
--- Name: comments; Type: TABLE; Schema: public; Owner: andy
+-- Name: comments; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE comments (
@@ -83,10 +79,8 @@ CREATE TABLE comments (
 );
 
 
-ALTER TABLE comments OWNER TO andy;
-
 --
--- Name: comments_id_seq; Type: SEQUENCE; Schema: public; Owner: andy
+-- Name: comments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE comments_id_seq
@@ -97,17 +91,15 @@ CREATE SEQUENCE comments_id_seq
     CACHE 1;
 
 
-ALTER TABLE comments_id_seq OWNER TO andy;
-
 --
--- Name: comments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: andy
+-- Name: comments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE comments_id_seq OWNED BY comments.id;
 
 
 --
--- Name: posts; Type: TABLE; Schema: public; Owner: andy
+-- Name: posts; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE posts (
@@ -118,10 +110,8 @@ CREATE TABLE posts (
 );
 
 
-ALTER TABLE posts OWNER TO andy;
-
 --
--- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: andy
+-- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE posts_id_seq
@@ -132,17 +122,15 @@ CREATE SEQUENCE posts_id_seq
     CACHE 1;
 
 
-ALTER TABLE posts_id_seq OWNER TO andy;
-
 --
--- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: andy
+-- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE posts_id_seq OWNED BY posts.id;
 
 
 --
--- Name: relationships; Type: TABLE; Schema: public; Owner: andy
+-- Name: relationships; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE relationships (
@@ -152,10 +140,8 @@ CREATE TABLE relationships (
 );
 
 
-ALTER TABLE relationships OWNER TO andy;
-
 --
--- Name: sponsors; Type: TABLE; Schema: public; Owner: andy
+-- Name: sponsors; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE sponsors (
@@ -167,31 +153,29 @@ CREATE TABLE sponsors (
 );
 
 
-ALTER TABLE sponsors OWNER TO andy;
-
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: andy
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY accounts ALTER COLUMN id SET DEFAULT nextval('accounts_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: andy
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY comments ALTER COLUMN id SET DEFAULT nextval('comments_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: andy
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY posts ALTER COLUMN id SET DEFAULT nextval('posts_id_seq'::regclass);
 
 
 --
--- Data for Name: accounts; Type: TABLE DATA; Schema: public; Owner: andy
+-- Data for Name: accounts; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY accounts (id, email_address, first_name, last_name, num_legs, created_at) FROM stdin;
@@ -204,14 +188,14 @@ COPY accounts (id, email_address, first_name, last_name, num_legs, created_at) F
 
 
 --
--- Name: accounts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: andy
+-- Name: accounts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('accounts_id_seq', 5, true);
 
 
 --
--- Data for Name: comments; Type: TABLE DATA; Schema: public; Owner: andy
+-- Data for Name: comments; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY comments (id, body, post_id, author_id, created_at) FROM stdin;
@@ -519,14 +503,14 @@ COPY comments (id, body, post_id, author_id, created_at) FROM stdin;
 
 
 --
--- Name: comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: andy
+-- Name: comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('comments_id_seq', 300, true);
 
 
 --
--- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: andy
+-- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY posts (id, body, author_id, created_at) FROM stdin;
@@ -584,14 +568,14 @@ COPY posts (id, body, author_id, created_at) FROM stdin;
 
 
 --
--- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: andy
+-- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('posts_id_seq', 50, true);
 
 
 --
--- Data for Name: relationships; Type: TABLE DATA; Schema: public; Owner: andy
+-- Data for Name: relationships; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY relationships (follower_id, followee_id, created_at) FROM stdin;
@@ -610,10 +594,15 @@ COPY relationships (follower_id, followee_id, created_at) FROM stdin;
 
 
 --
--- Data for Name: sponsors; Type: TABLE DATA; Schema: public; Owner: andy
+-- Data for Name: sponsors; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY sponsors (generation, first_name, last_name, num_legs, created_at) FROM stdin;
+1	erlich	bachman	2	2016-10-17 17:49:07.364085-07
+1	andrew	bachman	2	2016-10-17 17:49:07.364085-07
+2	erlich	bachman	2	2016-10-17 17:49:07.364085-07
+2	matt	bachman	2	2016-10-17 17:49:07.364085-07
+1	matt	daemon	2	2016-10-17 17:49:07.364085-07
 1	erlich	bachman	2	2016-10-17 17:49:07.364085-07
 1	andrew	bachman	2	2016-10-17 17:49:07.364085-07
 2	erlich	bachman	2	2016-10-17 17:49:07.364085-07
@@ -623,7 +612,7 @@ COPY sponsors (generation, first_name, last_name, num_legs, created_at) FROM std
 
 
 --
--- Name: accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: andy
+-- Name: accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY accounts
@@ -631,7 +620,7 @@ ALTER TABLE ONLY accounts
 
 
 --
--- Name: comments_pkey; Type: CONSTRAINT; Schema: public; Owner: andy
+-- Name: comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY comments
@@ -639,7 +628,7 @@ ALTER TABLE ONLY comments
 
 
 --
--- Name: posts_pkey; Type: CONSTRAINT; Schema: public; Owner: andy
+-- Name: posts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY posts
@@ -647,7 +636,7 @@ ALTER TABLE ONLY posts
 
 
 --
--- Name: relationships_follower_id_followee_id_key; Type: CONSTRAINT; Schema: public; Owner: andy
+-- Name: relationships_follower_id_followee_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY relationships
@@ -655,12 +644,12 @@ ALTER TABLE ONLY relationships
 
 
 --
--- Name: public; Type: ACL; Schema: -; Owner: andy
+-- Name: public; Type: ACL; Schema: -; Owner: -
 --
 
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM andy;
-GRANT ALL ON SCHEMA public TO andy;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 

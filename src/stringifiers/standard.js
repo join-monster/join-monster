@@ -2,10 +2,17 @@ import { validateSqlAST, inspect } from '../util'
 
 export default function stringifySqlAST(topNode, context) {
   validateSqlAST(topNode)
+  // recursively determine the selections, joins, and where conditions that we need
   let { selections, joins, wheres } = _stringifySqlAST(null, topNode, '', context, [], [], [])
+
   // make sure these are unique by converting to a set and then back to an array
+  // defend against things like `SELECT user.id AS id, user.id AS id...`
+  // GraphQL doesn't defend against duplicate fields in the query
   selections = [ ...new Set(selections) ]
+
+  // bail out if they made no selections
   if (!selections.length) return ''
+
   let sql = 'SELECT\n  ' + selections.join(',\n  ') + '\n' + joins.join('\n')
   if (wheres.length) {
     sql += '\nWHERE ' + wheres.join(' AND ')
@@ -76,6 +83,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
     )
     break
   case 'noop':
+    // this case if for fields that have nothing to do with the SQL, they resolve independantly
     return
   default:
     throw new Error('unexpected/unknown node type reached: ' + inspect(node))
