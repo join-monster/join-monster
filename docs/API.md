@@ -4,7 +4,7 @@
 <dt><a href="#joinMonster">joinMonster(astInfo, context, dbCall, [options])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>Takes the GraphQL AST and returns a nest Object with the data.</p>
 </dd>
-<dt><a href="#getNode">getNode(typeName, astInfo, context, where, dbCall)</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
+<dt><a href="#getNode">getNode(typeName, astInfo, context, where, dbCall, [options])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>A helper for resolving the Node type in Relay.</p>
 </dd>
 </dl>
@@ -37,10 +37,11 @@ Takes the GraphQL AST and returns a nest Object with the data.
 | dbCall | <code>[dbCall](#dbCall)</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
 | [options] | <code>Object</code> |  |
 | options.minify | <code>Boolean</code> | Generate minimum-length column names in the results table. |
+| options.dialect | <code>String</code> | The dialect of SQL your Database uses. Currently `'pg'` and `'standard'` are supported. |
 
 <a name="getNode"></a>
 
-## getNode(typeName, astInfo, context, where, dbCall) ⇒ <code>Promise.&lt;Object&gt;</code>
+## getNode(typeName, astInfo, context, where, dbCall, [options]) ⇒ <code>Promise.&lt;Object&gt;</code>
 A helper for resolving the Node type in Relay.
 
 **Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.  
@@ -52,6 +53,7 @@ A helper for resolving the Node type in Relay.
 | context | <code>Object</code> | An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization. |
 | where | <code>[where](#where)</code> | A function that returns the WHERE condition. |
 | dbCall | <code>function</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
+| [options] | <code>Object</code> | Same as `joinMonster` function's options. |
 
 <a name="dbCall"></a>
 

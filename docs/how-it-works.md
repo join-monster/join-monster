@@ -7,7 +7,7 @@ There are a few constraints in order for SQL's relational model to make sense wi
 
 ![data-model](img/object-map.png)
 
-SQL tables must be mapped to a `GraphQLObjectType`. Field on this `GraphQLObjectType` correspond to a SQL column in either a one-to-one, or one-to-many correspondence (e.g. a `fullName` field may need a `last_name` and a `first_name` column in the table). Not all fields have to have a corresponding SQL column. Some can still resolve data from other sources.
+SQL tables must be mapped to a `GraphQLObjectType`. Field on this `GraphQLObjectType` can *depend* on a SQL column in either a one-to-one, or one-to-many correspondence (e.g. a `fullName` field may need a `last_name` and a `first_name` column in the table). Not all fields have to have a corresponding SQL column. Some can still resolve data from other sources.
 
 Each instance of the object type is one row from it's mapped table. Fields which are a `GraphQLList` of your table's object type represent any number of rows from that table. If you schema includes any such lists, your table must also have a unique key.
 
@@ -36,7 +36,7 @@ const User = new GraphQLObjectType({
       sqlColumn: 'email_address'
     },
     immortal: {
-      type: graphQLInt,
+      type: graphQLBoolean,
       resolve: () => false
     },
     posts: {
@@ -49,17 +49,23 @@ const User = new GraphQLObjectType({
 
 Join Monster provides a declarative API that lets you define **data requirements** on your object types and fields. By placing these properties directly on the schema definition, GraphQL effectively *becomes* your ORM because it is the mapping between the application and the data.
 
-Notice that most of these fields do not have resolvers. Most of the time, adding the SQL decorations will be enough. [Join Monster](https://github.com/stems/join-monster) fetches the data and converts it to the correct object tree structure with property names the same as their respoctive fields so that the default resolving behavior will find the data.
+Notice that most of these fields do not have resolvers. Most of the time, adding the SQL decorations will be enough. [Join Monster](https://github.com/stems/join-monster) fetches the data and converts it to the correct object tree structure with the expected property names so the child resolvers know where to find the data.
 
 Also notice the `immortal` field, which does have a resolver. This field demonstrates how not all the fields must come from the batch request. You can write custom resolvers like you normally would that gets data from anywhere else. [Join Monster](https://github.com/stems/join-monster) is just a way of fetching data, it will not hinder your ability to write your resolvers. You can also have your fields get data fron a column *and* apply a resolver to modify, format, or extend the data.
 
+## Calling the Function
 
-## Internal Workings
+The data for any field, along with all of its descendants, can be fetched by calling `joinMonster`, the function that you import from the module. All you have to do is pass it the `resolveInfo`, the 4th parameter of the resolve function. You then write a callback to receive the generated SQL, call your database, and return the raw data. Join Monster will take it from there and return the shaped data.
 
-One does not need to know this in order to use [Join Monster](https://github.com/stems/join-monster). It's a convenient visualization for those who want to dive into the code.
+```javascript
+users: {
+  type: new GraphQLList(User),
+  resolve: (parent, args, context, resolveInfo) => {
+    return joinMonster(resolveInfo, {}, sql => {
+      // knex is a SQL query library for NodeJS. This method returns a `Promise` of the data
+      return knex.raw(sql)
+    })
+  }
+}
+```
 
-![internals](img/internals.png)
-
-It starts with the parsed AST of the client's GraphQL query. Join Monster gets the fields being requested and finds the corresponding field in the schema definition. From there it grabs that extra metadata needed to generate the SQL. After traversing the whole query AST, an intermediate representation is generated: a hybrid of the GraphQL query and the SQL metadata. We call it the **SQL AST**. This is then compiled to the SQL itself. The SQL AST is also converted to another structure that specifies the **Shape Definition**.
-
-The SQL is then passed to the user-defined function for talking to the database. This function must then return the "raw data", a flat array of all the rows. The Shape Definition is used to nest the data and deduplicate any entities within the rows. The rest of the execution phase proceeds with these new data. The properties on this data tree will have the same names as their respective fields, so children of the resolver that called `joinMonster` know where to find the data.

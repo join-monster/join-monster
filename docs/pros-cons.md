@@ -1,35 +1,29 @@
 ## Benefits
 
-[Join Monster](https://github.com/stems/join-monster) generates the SQL dynamically. The SQL queries will **adapt** not only with the varying complexities of queries, but also changes in the schema. No back-and-forth from web server to database. No need to get convert the raw result to the nested structure. Lots of benefits for a little bit of configuration.
+Using [Join Monster](https://github.com/stems/join-monster) provides the following benefits.
 
 
-- **Batching** - Fetch all the data in a single database query.
-- **Efficient** - No over-fetching.
-- **Maintainability** - SQL is automatically generated. No need to rewrite queries when the schema changes.
-- **Abstracted** - Automatically build the nested object structure.
-- **Unobtrusive** - Coexists with your custom resolve functions and existing schemas. Use it on the whole tree or only in parts.
+- **Batching** - Fetch all the data in a single database query. Cut down on network latency.
+- **Efficient** - No over-fetching. Don't waste your server's memory.
+- **Maintainability** - SQL is automatically generated and *adaptive*. No need to rewrite queries when the schema changes.
+- **Unobtrusive** - Coexists with your custom resolve functions and existing schemas. Use it on the whole tree or only in parts. Retain the power and expressiveness in defining your schema.
+- **Declarative** - Simply define the *data requirements* of the GraphQL fields on the SQL columns.
 - **GraphQL becomes the ORM** - Mixing and matching sucks. With only a few additions of metadata, the GraphQL schema *becomes* the mapping relation.
+
+It solved a real performance bottleneck due to network latency for us. We consider it a good prototyping tool because changing the schema is very easy to do. Only a few properties on the schema need to change in order to update the generated SQL. The developer is freed from the burden of manually translating queries to connect the two representations of the data — the GraphQL schema and the SQL schema.
 
 ## Limitations
 
 There are some constraints on how your data model looks. We need to be able to make some assumptions in order to sensibly translate queries from a hierarchical structure to a relational one. Not all schemas will be able to allow [Join Monster](https://github.com/stems/join-monster) to handle all the data fetching, perhaps not in whole but in part.
 
-We try to produce ANSI-compliant SQL. We currently do not specialize for any particular dialects. Hence, it won't always produce be the optimal way to query on every SQL database. Because you aren't writing the queries yourself, you lose some freedom to do some performance tuning. [Join Monster](https://github.com/stems/join-monster), however, remains transparent about what SQL it actually produces - an important capability for judiciously choosing database indexes. You can `console.log` it or run your Node.js process with the environment variable `DEBUG=join-monster` for some useful diagnostic information. Furthermore, you can use our [custom version of GraphiQL](https://github.com/acarl005/graphsiql) used in [the demo](https://join-monster.herokuapp.com/graphql?query=%7B%20users%20%7B%20%0A%20%20id%2C%20fullName%2C%20email%0A%20%20posts%20%7B%20id%2C%20body%20%7D%0A%7D%7D) to visualize the SQL.
+It is not tested at high scale. Again, it is a prototyping tool at this point in time.  
+
+Because you aren't writing the queries yourself, you lose some freedom to do some performance tuning. [Join Monster](https://github.com/stems/join-monster), however, remains transparent about what SQL it actually produces - an important capability for judiciously choosing database indexes. The developer is still responsible for making the generated queries optimized by creating the right indexes for better query plans. You can `console.log` the SQL queries or run your Node.js process with the environment variable `DEBUG=join-monster` for some useful diagnostic information. Furthermore, you can use our [custom version of GraphiQL](https://github.com/acarl005/graphsiql) used in [the demo](https://join-monster.herokuapp.com/graphql?query=%7B%20users%20%7B%20%0A%20%20id%2C%20fullName%2C%20email%0A%20%20posts%20%7B%20id%2C%20body%20%7D%0A%7D%7D) to visualize the SQL.
 
 ![graphsiql](img/graphsiql.png)
 
 
-## Alternatives
-
-### GraphpostgresQL
-
-What if you executed GraphQL on the database directly? (GraphpostgresQL)[https://github.com/solidsnack/GraphpostgresQL] is a proof-of-concept that compiles a GraphQL-like language to SQL using PL/PGSQL. It is not fully compliant with the GraphQL spec.
-
-### PostGraphQL
-
-One way to not worry about how your API fetches data from the database is to not create a custom API in the first place. If you're using PostgreSQL, the entire API, with authentication, can be generated via reflection using [PostGraphQL](https://github.com/calebmer/postgraphql). Some of us may want a more conservative solution, one that doesn't create your entire API for you.
-
-### DataLoader
+## Why Not Use Data Loader?
 
 [DataLoader](https://github.com/facebook/dataloader) is Facebook's own solution for batch requests. It also caches individual entities. It's a simple and general tool for data fetching.
 

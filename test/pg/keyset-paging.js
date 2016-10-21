@@ -338,3 +338,81 @@ test('handle a conection type with a many-to-many', async t => {
   ])
 })
 
+test('should handle pagination with duplicate objects', async t => {
+  const user1Id = toGlobalId('User', 1)
+  // notice the cyclical nature of this query. we get a user. then we get their posts. the we get the author, who is that same user
+  // we need to make sure join monster references the same object instead of cloning it
+  const query = `{
+    node(id: "${user1Id}") {
+      ... on User {
+        ...info
+        posts(first: 3) {
+          edges {
+            node {
+              body
+              author {
+                ...info
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  fragment info on User {
+    id
+    fullName
+    email
+    following {
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const following = {
+    edges: [
+      { node: { id: toGlobalId('User', 4) } }
+    ]
+  }
+  // this object gets duplicated in the result 4 times!
+  const user1 = {
+    id: user1Id,
+    fullName: 'Alivia Waelchi',
+    email: 'Mohammed.Hayes@hotmail.com',
+    following,
+  }
+  const expect = {
+    node: {
+      ...user1,
+      posts: {
+        edges: [
+          {
+            node: {
+              body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.',
+              author: user1
+            }
+          },
+          {
+            node: {
+              body: 'Eum iure laudantium officia doloremque et ut fugit ut. Magni eveniet ipsa.',
+              author: user1
+            }
+          },
+          {
+            node: {
+              body: 'Incidunt quibusdam nulla adipisci error quia. Consequatur consequatur soluta fugit dolor iure. Voluptas accusamus fugiat assumenda enim.',
+              author: user1
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(data, expect)
+})
+
+

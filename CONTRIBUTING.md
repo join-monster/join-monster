@@ -1,7 +1,7 @@
 Contributing to Join Monster
 ========================
 
-All active development of Join Monster happens on GitHub. We actively welcome and appreciate your [pull requests](https://help.github.com/articles/creating-a-pull-request)!
+All development of Join Monster happens on GitHub. We actively welcome and appreciate your [pull requests](https://help.github.com/articles/creating-a-pull-request)!
 
 ## Issues
 
@@ -16,7 +16,7 @@ Before commiting your changes, **run the lint, tests, and coverage to make sure 
 
 ## Release on NPM
 
-We will make timely releases with any new changes, so you do not need to worry about publishing. Tagged commits to the master branch will trigger a new build on NPM. Travis-CI will publish the package. Do not publish manually form the command line.
+We will make timely releases with any new changes, so you do not need to worry about publishing. Tagged commits to the master branch will trigger a new build on NPM. Travis-CI will publish the package. Do not publish manually from the command line.
 
 New versions MUST be compliant with [semver](http://semver.org/).
 

@@ -2,7 +2,7 @@
 
 We haven't actually seen the module get used yet...
 
-Import `joinMonster`. Have the top-most field that maps to a SQL table implement a resolver function that calls `joinMonster`. Simply pass it the AST info (this includes the parsed query and your schema definition), a "context" object (which can be empty for now), and a callback that takes the SQL as a parameter, calls the database, and returns the data (or a `Promise` of the data).
+Import `joinMonster`. Have the top-most field that maps to a SQL table implement a resolver function that calls `joinMonster`. Simply pass it the **resolve info** (this is the 4th parameter of the resolver, which includes the parsed query and your schema definition), a "context" object (which can be empty for now), and a callback that takes the SQL as a parameter, calls the database, and returns the data (or a `Promise` of the data).
 
 ```javascript
 import joinMonster from 'join-monster'
@@ -12,8 +12,8 @@ const QueryRoot = new GraphQLObjectType({
   fields: () => ({
     users: {
       type: new GraphQLList(User),
-      resolve: (parent, args, context, ast) => {
-        return joinMonster(ast, {}, sql => {
+      resolve: (parent, args, context, resolveInfo) => {
+        return joinMonster(resolveInfo, {}, sql => {
           // knex is a SQL query library for NodeJS. This method returns a `Promise` of the data
           return knex.raw(sql)
         })

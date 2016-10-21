@@ -24,5 +24,7 @@ pages:
     - "8. Where Conditions": where.md
     - "9. Relay Support": relay.md
   - "Pros and Cons": pros-cons.md
+  - Warnings: warnings.md
   - API: API.md
+  - "Internal Workings": internals.md
   - "Change Log": CHANGELOG.md
