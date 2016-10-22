@@ -17,8 +17,8 @@ const QueryRoot = new GraphQLObjectType({
       where: (usersTable, args, context) => {
         if (args.id) return `${usersTable}.id = ${args.id}`
       },
-      resolve: (parent, args, context, ast) => {
-        return joinMonster(ast, {}, sql => {
+      resolve: (parent, args, context, resolveInfo) => {
+        return joinMonster(resolveInfo, {}, sql => {
           return knex.raw(sql)
         })
       }
@@ -45,10 +45,10 @@ The `joinMonster` function has a second parameter which is basically an arbitrar
 {
   //...
   // there is a GraphQL context and a Join Monster context. these are separate!
-  resolve: (parent, args, context, ast) => {
+  resolve: (parent, args, context, resolveInfo) => {
     // get some info off the HTTP request, like the cookie.
     const loggedInUserId = getHeaderAndParseCookie(context)
-    return joinMonster(ast, { id: loggedInUserId }, sql => {
+    return joinMonster(resolveInfo, { id: loggedInUserId }, sql => {
       return knex.raw(sql)
     })
   },

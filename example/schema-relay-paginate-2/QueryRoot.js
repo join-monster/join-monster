@@ -35,8 +35,8 @@ export default new GraphQLObjectType({
         order: 'asc',
         key: 'id'
       },
-      resolve: (parent, args, context, ast) => {
-        return joinMonster(ast, context, sql => {
+      resolve: (parent, args, context, resolveInfo) => {
+        return joinMonster(resolveInfo, context, sql => {
           // place the SQL query in the response headers. ONLY for debugging. Don't do this in production
           if (context) {
             context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
@@ -56,8 +56,8 @@ export default new GraphQLObjectType({
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
         if (args.id) return `${usersTable}.id = ${args.id}`
       },
-      resolve: (parent, args, context, ast) => {
-        return joinMonster(ast, context, sql => {
+      resolve: (parent, args, context, resolveInfo) => {
+        return joinMonster(resolveInfo, context, sql => {
           if (context) {
             context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
           }
@@ -67,9 +67,9 @@ export default new GraphQLObjectType({
     },
     sponsors: {
       type: new GraphQLList(Sponsor),
-      resolve: (parent, args, context, ast) => {
+      resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time
-        return joinMonster(ast, context, (sql, done) => {
+        return joinMonster(resolveInfo, context, (sql, done) => {
           knex.raw(sql)
           .then(data => done(null, data))
           .catch(done)

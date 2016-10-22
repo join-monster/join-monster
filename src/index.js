@@ -38,7 +38,7 @@ import { emphasize, inspect } from './util'
 
 /**
  * Takes the GraphQL AST and returns a nest Object with the data.
- * @param {Object} astInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
+ * @param {Object} resolveInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
  * @param {Object} context - An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization.
  * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
  * @param {Object} [options]
@@ -74,7 +74,7 @@ function compileSqlAST(sqlAST, context, options) {
 /**
  * A helper for resolving the Node type in Relay.
  * @param {String} typeName - The Name of the GraphQLObjectType
- * @param {Object} astInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
+ * @param {Object} resolveInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
  * @param {Object} context - An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization.
  * @param {where} where - A function that returns the WHERE condition.
  * @param {Function} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.

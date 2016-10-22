@@ -12,9 +12,9 @@ const options = {
 import knex from './database'
 
 const { nodeInterface, nodeField } = nodeDefinitions(
-  (globalId, context, ast) => {
+  (globalId, context, resolveInfo) => {
     const { type, id } = fromGlobalId(globalId)
-    return joinMonster.getNode(type, ast, context,
+    return joinMonster.getNode(type, resolveInfo, context,
       table => `${table}.id = ${id}`,
       sql => {
         if (context) {

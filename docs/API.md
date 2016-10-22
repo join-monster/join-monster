@@ -1,10 +1,10 @@
 ## Functions
 
 <dl>
-<dt><a href="#joinMonster">joinMonster(astInfo, context, dbCall, [options])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
+<dt><a href="#joinMonster">joinMonster(resolveInfo, context, dbCall, [options])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>Takes the GraphQL AST and returns a nest Object with the data.</p>
 </dd>
-<dt><a href="#getNode">getNode(typeName, astInfo, context, where, dbCall, [options])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
+<dt><a href="#getNode">getNode(typeName, resolveInfo, context, where, dbCall, [options])</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>A helper for resolving the Node type in Relay.</p>
 </dd>
 </dl>
@@ -25,14 +25,14 @@
 
 <a name="joinMonster"></a>
 
-## joinMonster(astInfo, context, dbCall, [options]) ⇒ <code>Promise.&lt;Object&gt;</code>
+## joinMonster(resolveInfo, context, dbCall, [options]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Takes the GraphQL AST and returns a nest Object with the data.
 
 **Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database.  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| astInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
+| resolveInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
 | context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization. |
 | dbCall | <code>[dbCall](#dbCall)</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
 | [options] | <code>Object</code> |  |
@@ -41,7 +41,7 @@ Takes the GraphQL AST and returns a nest Object with the data.
 
 <a name="getNode"></a>
 
-## getNode(typeName, astInfo, context, where, dbCall, [options]) ⇒ <code>Promise.&lt;Object&gt;</code>
+## getNode(typeName, resolveInfo, context, where, dbCall, [options]) ⇒ <code>Promise.&lt;Object&gt;</code>
 A helper for resolving the Node type in Relay.
 
 **Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.  
@@ -49,7 +49,7 @@ A helper for resolving the Node type in Relay.
 | Param | Type | Description |
 | --- | --- | --- |
 | typeName | <code>String</code> | The Name of the GraphQLObjectType |
-| astInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
+| resolveInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
 | context | <code>Object</code> | An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization. |
 | where | <code>[where](#where)</code> | A function that returns the WHERE condition. |
 | dbCall | <code>function</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
