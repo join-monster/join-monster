@@ -41,6 +41,8 @@ Join Monster is a means of batch-fetching data from your SQL database. It will n
 
 Great helpers for the **Node Interface** and automatic pagination for **Connection Types**. [See docs](http://join-monster.readthedocs.io/en/latest/relay/).
 
+You don't *have to* use Relay to paginate your API with Join Monster!
+
 ## Running the Demo
 
 ```shell

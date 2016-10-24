@@ -2,6 +2,8 @@
 
 Join Monster works well with [graphql-relay-js](https://github.com/graphql/graphql-relay-js). Check out the Relay-compliant [version of the demo](https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A). Source code can be found [here](https://github.com/stems/join-monster-demo/tree/master/schema-relay).
 
+**Note:** Although Join Monster uses the [Relay Connection spec](https://facebook.github.io/relay/graphql/connections.htm) for paginated fields in your API, you certainly do not have to use Relay to paginate. You also have several options for how it is implemented on the back-end, such as using SQL's `OFFSET` keyword.
+
 ## Global ID
 
 These are relatively straight-forward, all you need to do is provide the `id` which we'll take from a column and *voila*.
@@ -88,6 +90,7 @@ import {
 import Post from './Post'
 import Comment from './Comment'
 
+// wrap these types in a `Connection` type
 const { connectionType: PostConnection } = connectionDefinitions({ nodeType: Post })
 const { connectionType: CommentConnection } = connectionDefinitions({ nodeType: Comment })
 
@@ -103,10 +106,13 @@ const User = new GraphQLObjectType({
     },
     comments: {
       type: CommentConnection,
+      // accept the standard args for connections, e.g. `first`, `after`...
       args: connectionArgs,
+      // joinMonster give us an array, use the helper to slice the array based on the args
       resolve: (user, args) => {
         return connectionFromArray(user.comments, args)
       },
+      // write the JOIN as you normally would
       sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
     },
     posts: {
@@ -132,7 +138,7 @@ The `type`, `args`, and `resolve` are made simple with these helpers, but can al
 
 ### 2. Integer Offset Paging
 
-This approach is based of the `OFFSET` keyword in SQL. This is a predictable, position-based integer that determines how many rows to skip on a sorted set. To use it, you must choose a stable sort based on one or multiple columns. Tell Join Monster you want to use this method by adding two properties to the field. Set `sqlPaginate` to `true`. Set `orderBy` to tell it how to sort.
+This approach is based of the `OFFSET` keyword in SQL – often used to get numbered pages. It uses a predictable, position-based integer that determines how many rows to skip on a sorted set. To use it, you must choose a stable sort based on one or multiple columns. Tell Join Monster you want to use this method by adding two properties to the field. Set `sqlPaginate` to `true`. Set `orderBy` to tell it how to sort.
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -163,6 +169,7 @@ const User = new GraphQLObjectType({
     // ...
     comments: {
       type: CommentConnection,
+      // this time only forward pagination works
       args: forwardConnectionArgs,
       sqlPaginate: true,
       // orders on both `created_at` and `id`. the first property is the primary sort column.
@@ -177,7 +184,9 @@ const User = new GraphQLObjectType({
 })
 ```
 
-Join Monster will only pull the rows for the requested page out of the database. Because it uses the `LIMIT`, `OFFSET` clauses, the pages will get shifted if a new row is inserted at the beginning. However, you do have the ability to navigate to any page in the middle. You can produce the *cursor* for any row in the middle because you can predict the offset value. `graphql-relay` has a helper for this. For example:
+Join Monster will only pull the rows for the requested page out of the database. Because it uses the `LIMIT`, `OFFSET` clauses, the pages will get shifted if a new row is inserted at the beginning. We also cannot do backward pagination because the total number of rows is required for calculation of the offset. Although the total is known *after* the query is made, it is not available when we need to calculate the offset.
+
+However, you do have the ability to navigate to any page in the middle. You can produce the *cursor* for any row in the middle because you can predict the offset value. `graphql-relay` has a helper for this. For example:
 
 ```javascript
 import { offsetToCursor } from 'graphql-relay'
