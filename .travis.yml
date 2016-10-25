@@ -18,6 +18,13 @@ services:
 addons:
   # default postgres version is 9.1, which lacks the features we need
   postgresql: "9.4"
+  # need a C++ compiler for sqlite3
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
+
 before_script:
   # create the databases
   - psql -c "CREATE DATABASE test1 LC_COLLATE 'en_US.UTF-8';" -U postgres
@@ -27,4 +34,4 @@ before_script:
   # populate them with data
   - npm run db-build
 env:
-  - PG_URL='postgres://postgres@localhost/'
+  - PG_URL='postgres://postgres@localhost/' CXX=g++-4.8
