@@ -88,7 +88,7 @@
     "nyc": "^8.3.1",
     "pg": "^6.1.0",
     "sinon": "^1.17.6",
-    "sqlite3": "^3.1.4"
+    "sqlite3": "^3.1.8"
   },
   "dependencies": {
     "generatorics": "^1.0.8",
