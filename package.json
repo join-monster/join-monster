@@ -73,7 +73,7 @@
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-0": "^6.5.0",
     "babel-watch": "^2.0.3-rc0",
-    "eslint": "^3.5.0",
+    "eslint": "^3.9.0",
     "faker": "^3.1.0",
     "graphql": "^0.7.0",
     "graphsiql": "0.0.3",
