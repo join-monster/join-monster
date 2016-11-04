@@ -5,8 +5,12 @@ import {
 
 import joinMonster from '../../src/index'
 const options = {
-  minify: process.env.MINIFY == 1,
-  dialect: process.env.PG_URL ? 'pg' : 'standard'
+  minify: process.env.MINIFY == 1
+}
+if (knex.client.config.client === 'mysql') {
+  options.dialect = 'mysql'
+} else if (knex.client.config.client === 'pg') {
+  options.dialect = 'pg'
 }
 
 import knex from './database'
@@ -20,7 +24,12 @@ const { nodeInterface, nodeField } = nodeDefinitions(
         if (context) {
           context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
         }
-        return knex.raw(sql)
+        return knex.raw(sql).then(result => {
+          if (options.dialect === 'mysql') {
+            return result[0]
+          }
+          return result
+        })
       },
       options
     )

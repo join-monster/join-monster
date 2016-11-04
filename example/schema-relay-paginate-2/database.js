@@ -1,10 +1,12 @@
-import path from 'path'
 import assert from 'assert'
 
 const connection = process.env.NODE_ENV !== 'test' ?
   pgUrl('demo') :
   pgUrl('test3')
 
+const client = 'pg'
+
+console.log('connection to', { client, connection })
 export default require('knex')({
   client: 'pg',
   connection,

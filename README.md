@@ -9,7 +9,7 @@
 
 ## What is Join Monster?
 
-A JavaScript execution layer from GraphQL to SQL for batch data-fetching between the API and the database by dynamically **translating GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution. Simply declare the data requirements of each field in you schema. Then, for each query, Join Monster will look at what was requested, find the data requirements, fetch, and shape your data.
+A JavaScript execution layer from [graphql-js](https://github.com/graphql/graphql-js) to SQL for batch data-fetching between the API and the database by dynamically **translating GraphQL to SQL** for efficient data retrieval, all in a single batch before resolution. Simply declare the data requirements of each field in you schema. Then, for each query, Join Monster will look at what was requested, find the data requirements, fetch, and shape your data.
 
 
 It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree.
@@ -154,6 +154,8 @@ const QueryRoot = new GraphQLObjectType({
 
 ## TODO
 
+- [ ] Port to other JavaScript implementations of GraphQL (only the reference implementation currently supported)
+- [ ] Add other SQL dialects (Microsoft SQL server, for example, uses `CROSS APPLY` instead of `LATERAL`)
 - [ ] Much better error messages in cases of mistakes (like missing sql properties)
 - [ ] Figure out a way to handle Interface and Union types
 - [ ] Figure out a way to support the schema language
