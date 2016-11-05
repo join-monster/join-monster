@@ -37,4 +37,4 @@ before_script:
   # populate them with data
   - npm run db-build
 env:
-  - PG_URL='postgres://postgres@localhost/' CXX=g++-4.8
+  - MYSQL_URL=mysql://travis@localhost/ PG_URL=postgres://postgres@localhost/ CXX=g++-4.8
