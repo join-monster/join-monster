@@ -1,13 +1,22 @@
 import path from 'path'
 import assert from 'assert'
 
+const dbType = process.env.DB
+
 const connection = process.env.NODE_ENV !== 'test' ?
   pgUrl('demo') :
-  process.env.DB === 'PG' ?
+  dbType === 'PG' ?
     pgUrl('test1') :
-    { filename: path.join(__dirname, '../data/db/test1-data.sl3') }
+    dbType === 'MYSQL' ?
+      mysqlUrl('test1') :
+      { filename: path.join(__dirname, '../data/db/test1-data.sl3') }
 
-const client = typeof connection === 'string' ? 'pg' : 'sqlite3'
+let client = 'sqlite3'
+if (dbType === 'PG') {
+  client = 'pg'
+} else if (dbType === 'MYSQL') {
+  client = 'mysql'
+}
 
 export default require('knex')({
   client,
@@ -20,3 +29,7 @@ function pgUrl(dbName) {
   return process.env.PG_URL + dbName
 }
 
+function mysqlUrl(dbName) {
+  assert(process.env.MYSQL_URL, 'Environment variable MYSQL_URL must be defined, e.g. "mysql//user:pass@localhost/"')
+  return process.env.MYSQL_URL + dbName
+}

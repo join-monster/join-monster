@@ -5,6 +5,9 @@
 -- Dumped from database version 9.5.3
 -- Dumped by pg_dump version 9.5.3
 
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public;
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET client_encoding = 'UTF8';

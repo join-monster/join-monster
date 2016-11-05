@@ -12,8 +12,12 @@ import { nodeField } from './Node'
 
 import joinMonster from '../../src/index'
 const options = {
-  minify: process.env.MINIFY == 1,
-  dialect: process.env.PG_URL ? 'pg' : 'standard'
+  minify: process.env.MINIFY == 1
+}
+if (knex.client.config.client === 'mysql') {
+  options.dialect = 'mysql'
+} else if (knex.client.config.client === 'pg') {
+  options.dialect = 'pg'
 }
 
 export default new GraphQLObjectType({
@@ -33,7 +37,12 @@ export default new GraphQLObjectType({
           if (context) {
             context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
           }
-          return knex.raw(sql)
+          return knex.raw(sql).then(result => {
+            if (options.dialect === 'mysql') {
+              return result[0]
+            }
+            return result
+          })
         }, options)
       }
     },
@@ -53,7 +62,12 @@ export default new GraphQLObjectType({
           if (context) {
             context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
           }
-          return knex.raw(sql)
+          return knex.raw(sql).then(result => {
+            if (options.dialect === 'mysql') {
+              return result[0]
+            }
+            return result
+          })
         }, options)
       }
     },
@@ -63,7 +77,13 @@ export default new GraphQLObjectType({
         // use the callback version this time
         return joinMonster(resolveInfo, context, (sql, done) => {
           knex.raw(sql)
-          .then(data => done(null, data))
+          .then(result => {
+            if (options.dialect === 'mysql') {
+              done(null, result[0])
+            } else {
+              done(null, result)
+            }
+          })
           .catch(done)
         }, options)
       }
