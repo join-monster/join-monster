@@ -23,6 +23,7 @@ pages:
     - "7. Many-to-Many Joins": many-to-many.md
     - "8. Where Conditions": where.md
     - "9. Relay Support & Pagination": relay.md
+    - "SQL Dialects": dialects.md
   - "Pros and Cons": pros-cons.md
   - Warnings: warnings.md
   - API: API.md

@@ -1,3 +1,6 @@
+### v0.5.0 (Nov. 4, 2016)
+- Add dialect for MySQL/MariaDB
+
 ### v0.4.1 (Oct 21, 2016)
 - Fix bug with de-duplication of objects.
 

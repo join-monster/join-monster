@@ -33,6 +33,13 @@ The data *MUST* be an array of objects where each object represents a row in the
 ]
 ```
 
+<div class="admonition danger">
+  <p class="first admonition-title">Warning</p>
+  <p class="last">
+    If you are using Knex, be careful. The <code>raw</code> method will return different objects depending on the knex dialect being used. The exact snippet above may not work with MySQL, MariaDB, etc.
+  </p>
+</div>
+
 
 ## Accessing Your Database
 

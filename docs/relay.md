@@ -2,7 +2,7 @@
 
 Join Monster works well with [graphql-relay-js](https://github.com/graphql/graphql-relay-js). Check out the Relay-compliant [version of the demo](https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A). Source code can be found [here](https://github.com/stems/join-monster-demo/tree/master/schema-relay).
 
-**Note:** Although Join Monster uses the [Relay Connection spec](https://facebook.github.io/relay/graphql/connections.htm) for paginated fields in your API, you certainly do not have to use Relay to paginate. You also have several options for how it is implemented on the back-end, such as using SQL's `OFFSET` keyword.
+**Note:** Although Join Monster uses the [Relay Connection spec](https://facebook.github.io/relay/graphql/connections.htm) for paginated fields in your API, you certainly do not have to use Relay to paginate. You also have several options for how it is implemented on the back-end, such as "offsets" or "cursors". Due to the Relay spec's use of the term "cursor" we will refer to actual cursor-based pagination as "keyset pagination" to avoid clashing names.
 
 ## Global ID
 
@@ -133,6 +133,7 @@ The `type`, `args`, and `resolve` are made simple with these helpers, but can al
 | ---- | ---- |
 | simple setup | not scalable to large amounts of data |
 | write your own custom paging logic |  |
+| portable to all SQL dialects |  |
 
 [See example](https://github.com/stems/join-monster/blob/master/example/schema-relay-standard/User.js)
 
@@ -186,7 +187,7 @@ const User = new GraphQLObjectType({
 
 Join Monster will only pull the rows for the requested page out of the database. Because it uses the `LIMIT`, `OFFSET` clauses, the pages will get shifted if a new row is inserted at the beginning. We also cannot do backward pagination because the total number of rows is required for calculation of the offset. Although the total is known *after* the query is made, it is not available when we need to calculate the offset.
 
-However, you do have the ability to navigate to any page in the middle. You can produce the *cursor* for any row in the middle because you can predict the offset value. `graphql-relay` has a helper for this. For example:
+However, you do have the ability to navigate to any page in the middle. **The Relay Cursor contains the offset.** You can produce the cursor for any row in the middle because you can predict the offset value. `graphql-relay` has a helper for this. For example:
 
 ```javascript
 import { offsetToCursor } from 'graphql-relay'
@@ -244,7 +245,7 @@ This approach relies on the `LATERAL` keyword in the SQL standard. Despite being
 
 | Pros | Cons |
 | ---- | ---- |
-| only fetch the current page from the database | not supported in the "standard" dialect |
+| only fetch the current page from the database | only supported in the `pg` dialect |
 | total number of pages can be known | unstable - shifts the items if insertions are made at the beginning |
 | jump to arbitrary pages in the middle | requires sorting the table, which can be expensive for very large data sets |
 | able to "recursively" page through multiple nested connections | unable to do backward paging |
@@ -342,7 +343,7 @@ This also uses the `LATERAL` keyword. Using it requires opting in to the `pg` di
 
 | Pros | Cons |
 | ---- | ---- |
-| only fetch the current page from the database | not supported in the "standard" dialect |
+| only fetch the current page from the database | only supported in the `pg` dialect |
 | most scalable with proper index scans on sort key | no jumping to middle pages |
 | stable - handles insertions in the middle of the list | total page number not known |
 |  | unable to do "recursive paging" |

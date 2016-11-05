@@ -37,7 +37,7 @@ As mentioned above, the client may incidentally request data from duplicate rows
 Join Monster computes some columns for internal use. It also uses column aliases to infer the object structure, delimited by double underscores. Although unlikely, it's best to avoid risking name clashing and avoiding using these characters in your schemas.
 
 
-## PostGreSQL Version
+## PostgreSQL Version
 
 If using some of the advanced pagination, a non-standard dialect is required. Currently only Postgres is officially supported. The `LATERAL` keyword is used, which is only in versions 9.3 and later. Theoretically, the `pg` dialect should work on Oracle, but this is not tested.
 
