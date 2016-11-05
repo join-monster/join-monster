@@ -18,6 +18,7 @@ if (dbType === 'PG') {
   client = 'mysql'
 }
 
+console.log('connection to', { client, connection })
 export default require('knex')({
   client,
   connection,
