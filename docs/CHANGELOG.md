@@ -1,3 +1,6 @@
+### v0.5.2 (Nov. 6, 2016)
+- Relay connection type names are no longer required to end with "Connection".
+
 ### v0.5.1 (Nov. 5, 2016)
 - Fix problem with introspection queries.
 

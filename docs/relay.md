@@ -73,7 +73,6 @@ Join Monster works with Relay's specification for connection types by providing 
 The simplest approach is to do it on the web server. In this approach, Join Monster will handle it by requesting all the objects like it would for a `GraphQLList` type. When you have all the objects in memory, you can implement your own pagination logic in the resolver. To do this, your field should have a connection type which will be automatically detected by Join Monster. How? If all of the following are true:
 
 1. The field is a `GraphQLObjectType`.
-1. The type's name ends with `"Connection"` (case-sensitive).
 1. The type has a `pageInfo` field.
 1. The type has an `edges` field.
 

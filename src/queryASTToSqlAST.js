@@ -54,7 +54,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   }
 
   // if its a relay connection, there are several things we need to do
-  if (/Connection$/.test(gqlType.name) && gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
+  if (gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
     // grab the types and fields inside the connection
     const stripped = stripRelayConnection(field, queryASTNode)
