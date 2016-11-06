@@ -16,7 +16,6 @@ import { PostConnection } from './Post'
 import { CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
 
-
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',

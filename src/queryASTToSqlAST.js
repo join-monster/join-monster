@@ -73,6 +73,10 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
         sqlASTNode.orderBy = field.orderBy
       }
     }
+  } else {
+    if (field.sqlPaginate) {
+      throw new Error(`To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec. The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`)
+    }
   }
   // the typeConfig has all the keyes from the GraphQLObjectType definition
   const config = gqlType._typeConfig
