@@ -29,8 +29,18 @@ export function queryASTToSqlAST(resolveInfo, options) {
 export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, namespace, options) {
   // first, get the name of the field being queried
   const fieldName = queryASTNode.name.value
+
+  // if this is an internal field (say, for introspection "__typename"), lets ignore it
+  if (fieldName.slice(0, 2) === '__') {
+    sqlASTNode.type = 'noop'
+    return
+  }
+
   // then, get the field from the schema definition
   let field = parentTypeNode._fields[fieldName]
+  if (!field) {
+    throw new Error(`The field "${fieldName}" is not in the ${parentTypeNode.name} type.`)
+  }
 
   // this flag will keep track of whether multiple rows are needed
   let grabMany = false

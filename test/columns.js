@@ -189,3 +189,16 @@ test('it should handle duplicate fields', async t => {
   t.deepEqual(data, expect)
 })
 
+test('it should not be tripped up by the introspection queries', async t => {
+  const query = wrap('__typename')
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    users: [
+      { __typename: 'User' },
+      { __typename: 'User' }
+    ]
+  }
+  t.deepEqual(data, expect)
+})
+
