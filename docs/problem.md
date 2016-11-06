@@ -1,3 +1,7 @@
+## Video Summary
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Y7AdMIuXOgs" frameborder="0" allowfullscreen></iframe>
+
 ## Round Trips
 
 GraphQL is an elegant solution the round-trip problem often encountered with REST APIs. Rather than making several HTTP requests from the client to the API server, all the desired data can be batched in to a single request, reducing wait times due to network latency. However, we *still* have to make sure GraphQL executes quickly against our back-end.

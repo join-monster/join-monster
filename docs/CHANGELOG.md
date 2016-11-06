@@ -1,13 +1,16 @@
+### v0.5.1 (Nov. 5, 2016)
+- Fix problem with introspection queries.
+
 ### v0.5.0 (Nov. 4, 2016)
-- Add dialect for MySQL/MariaDB
+- Add dialect for MySQL/MariaDB.
 
 ### v0.4.1 (Oct 21, 2016)
 - Fix bug with de-duplication of objects.
 
 ### v0.4.0 (Oct 20, 2016)
-- Add Postgres dialect option
-- Support SQL pagination based on integer offsets
-- Support SQL pagination based on a sort key(s)
+- Add Postgres dialect option.
+- Support SQL pagination based on integer offsets.
+- Support SQL pagination based on a sort key(s).
 
 ### v0.3.7 (Oct 16, 2016)
 - Fix bug with nested fragments.
