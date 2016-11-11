@@ -10,10 +10,13 @@ export function queryASTToSqlAST(resolveInfo, options) {
 
   // we'll build up the AST representing the SQL recursively
   const sqlAST = {}
-  assert.equal(resolveInfo.fieldASTs.length, 1, 'We thought this would always have a length of 1. FIX ME!!')
+
+  // v0.8 changed the "fieldASTs" property to "fieldNodes". we want to support both
+  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs 
+  assert.equal(fieldNodes.length, 1, 'We thought this would always have a length of 1. FIX ME!!')
 
   // this represents the parsed query
-  const queryAST = resolveInfo.fieldASTs[0]
+  const queryAST = fieldNodes[0]
   // resolveInfo.parentType is from the schema, its the GraphQLObjectType that is parent to the current field
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
