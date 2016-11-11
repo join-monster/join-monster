@@ -10,7 +10,7 @@ import knex from './database'
 
 import User from './User'
 import Sponsor from './Sponsor'
-import {fromBase64} from './utils'
+import { fromBase64 } from './utils'
 
 import joinMonster from '../../src/index'
 const options = {
