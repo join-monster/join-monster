@@ -2,13 +2,15 @@ import {
   GraphQLObjectType,
   GraphQLList,
   GraphQLString,
-  GraphQLInt
+  GraphQLInt,
+  GraphQLBoolean
 } from 'graphql'
 
 import knex from './database'
 
 import User from './User'
 import Sponsor from './Sponsor'
+import {fromBase64} from './utils'
 
 import joinMonster from '../../src/index'
 const options = {
@@ -50,10 +52,15 @@ export default new GraphQLObjectType({
         id: {
           description: 'The users ID number',
           type: GraphQLInt
+        },
+        idEncoded: {
+          description: 'The users encoded ID number',
+          type: GraphQLString
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
         if (args.id) return `${usersTable}.id = ${args.id}`
+        if (args.idEncoded) return `${usersTable}.id = ${fromBase64(args.idEncoded)}`
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, context, sql => {
@@ -71,6 +78,15 @@ export default new GraphQLObjectType({
     },
     sponsors: {
       type: new GraphQLList(Sponsor),
+      args: {
+        filterLegless: {
+          description: 'Exclude sponsors with no leg info',
+          type: GraphQLBoolean
+        }
+      },
+      where: (sponsorsTable, args, context) => { // eslint-disable-line no-unused-vars
+        if (args.filterLegless) return `${sponsorsTable}.num_legs IS NULL`
+      },
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time
         return joinMonster(resolveInfo, context, (sql, done) => {

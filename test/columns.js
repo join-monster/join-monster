@@ -202,3 +202,61 @@ test('it should not be tripped up by the introspection queries', async t => {
   t.deepEqual(data, expect)
 })
 
+test('it should handle numeric variables', async t => {
+  const query = `
+    query user($userId: Int) {
+      user(id: $userId) {
+        id
+        fullName
+      }
+    }
+  `
+  const variables = {userId: 1}
+  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      id: 1,
+      fullName: 'andrew carlson'
+    }
+  }
+  t.deepEqual(data, expect)
+})
+
+test('it should handle string variables', async t => {
+  const query = `
+    query user($encodedUserId: String) {
+      user(idEncoded: $encodedUserId) {
+        idEncoded
+        fullName
+      }
+    }
+  `
+  const variables = {encodedUserId: 'MQ=='}
+  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      idEncoded: 'MQ==',
+      fullName: 'andrew carlson'
+    }
+  }
+  t.deepEqual(data, expect)
+})
+
+test('it should handle boolean variables', async t => {
+  const query = `
+    query sponsors($filter: Boolean) {
+      sponsors(filterLegless: $filter) {
+        numLegs
+      }
+    }
+  `
+  const variables = {filter: true}
+  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  t.is(errors, undefined)
+  const expect = {
+    sponsors: []
+  }
+  t.deepEqual(data, expect)
+})

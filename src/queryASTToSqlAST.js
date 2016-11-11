@@ -18,7 +18,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = resolveInfo.parentType
-  getGraphQLType(queryAST, parentType, sqlAST, resolveInfo.fragments, namespace, options)
+  getGraphQLType(queryAST, parentType, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, options)
 
   // make sure each "sqlDep" is only specified once at each level. also assign it an alias
   pruneDuplicateSqlDeps(sqlAST, namespace)
@@ -26,7 +26,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   return sqlAST
 }
 
-export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, namespace, options) {
+export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, variables, namespace, options) {
   // first, get the name of the field being queried
   const fieldName = queryASTNode.name.value
 
@@ -83,7 +83,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
   // is this a table in SQL?
   if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
-    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namespace, grabMany, options)
+    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, options)
   // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
   } else if (field.sqlColumn || !field.resolve) {
     sqlASTNode.type = 'column'
@@ -100,7 +100,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   }
 }
 
-function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namespace, grabMany, options) {
+function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, options) {
   const config = gqlType._typeConfig
 
   sqlASTNode.type = 'table'
@@ -114,7 +114,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
   if (queryASTNode.arguments.length) {
     const args = sqlASTNode.args = {}
     for (let arg of queryASTNode.arguments) {
-      args[arg.name.value] = parseArgValue(arg.value)
+      args[arg.name.value] = parseArgValue(arg.value, variables)
     }
   }
 
@@ -143,12 +143,12 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, namesp
   }
 
   if (queryASTNode.selectionSet) {
-    handleSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, namespace, options)
+    handleSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, options)
   }
 }
 
 // the selections could be several types, recursively handle each type here
-function handleSelections(children, selections, gqlType, fragments, namespace, options) {
+function handleSelections(children, selections, gqlType, fragments, variables, namespace, options) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
@@ -156,14 +156,14 @@ function handleSelections(children, selections, gqlType, fragments, namespace, o
     case 'Field':
       const newNode = {}
       children.push(newNode)
-      getGraphQLType(selection, gqlType, newNode, fragments, namespace, options)
+      getGraphQLType(selection, gqlType, newNode, fragments, variables, namespace, options)
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
       // check to make sure the type of this fragment matches the type being queried
       // this became necessary when supporting queries on the Relay Node type
       if (selection.typeCondition.name.value === gqlType.name) {
-        handleSelections(children, selection.selectionSet.selections, gqlType, fragments, namespace, options)
+        handleSelections(children, selection.selectionSet.selections, gqlType, fragments, variables, namespace, options)
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
@@ -172,7 +172,7 @@ function handleSelections(children, selections, gqlType, fragments, namespace, o
       const fragment = fragments[fragmentName]
       // make sure fragment type matches the type being queried
       if (fragment.typeCondition.name.value === gqlType.name) {
-        handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, namespace, options)
+        handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, variables, namespace, options)
       }
       break
     default:
@@ -288,7 +288,12 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   children.push(newNode)
 }
 
-function parseArgValue(value) {
+function parseArgValue(value, variableValues) {
+  if (value.kind === 'Variable') {
+    const variableName = value.name.value
+    return variableValues[variableName]
+  }
+  
   let primitive = value.value
   // TODO parse other kinds of variables
   if (value.kind === 'IntValue') {
