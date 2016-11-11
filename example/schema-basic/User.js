@@ -11,6 +11,7 @@ import {
 
 import Comment from './Comment'
 import Post from './Post'
+import {toBase64} from './utils'
 
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
@@ -80,7 +81,3 @@ const User = new GraphQLObjectType({
 })
 
 export default User 
-
-function toBase64(clear) {
-  return Buffer.from(String(clear)).toString('base64')
-}
