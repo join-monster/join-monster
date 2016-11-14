@@ -286,6 +286,7 @@ function interpretForKeysetPaging(node) {
   return { limit, orderColumns, whereCondition }
 }
 
+// take the sort key and translate that for the where clause
 function sortKeyToWhereCondition(keyObj, descending) {
   const sortColumns = []
   const sortValues = []
@@ -310,6 +311,8 @@ function orderColumnsToString(orderColumns) {
   return conditions.join(', ')
 }
 
+// we need one ORDER BY clause on at the very end to make sure everything comes back in the correct order
+// ordering inner(sub) queries DOES NOT guarantee the order of those results in the outer query
 function stringifyOuterOrder(orders) {
   const conditions = []
   for (let condition of orders) {
