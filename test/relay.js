@@ -55,6 +55,27 @@ test('it should fetch a Node type with named fragments', async t => {
   t.deepEqual(data, expect)
 })
 
+test('it should fetch a Node type with a variable', async t => {
+  const query = `
+    query node($id: ID!){
+      node(id: $id) {
+        ...on User {
+          fullName
+        }
+      }
+    }
+  `
+  const variables = { id: 'VXNlcjox' }
+  const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
+  t.is(errors, undefined)
+  const expect = {
+    node: {
+      fullName: 'andrew carlson',
+    }
+  }
+  t.deepEqual(data, expect)
+})
+
 test('it should handle the relay connection type', async t => {
   const query = `{
     user(id: 1) {

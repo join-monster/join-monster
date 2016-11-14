@@ -1,3 +1,6 @@
+### v0.5.6 (Nov. 14, 2016)
+- Fix bug with query variables on the Node interface.
+
 ### v0.5.5 (Nov. 13, 2016)
 - Add support for dynamic sort keys on paginated fields. Sort keys can now be functions that receive the GraphQL arguments.
 
