@@ -50,6 +50,14 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   // the actual type might be wrapped in a GraphQLNonNull type
   let gqlType = stripNonNullType(field.type)
 
+  // add the arguments that were passed, if any.
+  if (queryASTNode.arguments.length) {
+    const args = sqlASTNode.args = {}
+    for (let arg of queryASTNode.arguments) {
+      args[arg.name.value] = parseArgValue(arg.value, variables)
+    }
+  }
+
   // if list then mark flag true & get the type inside the GraphQLList container type
   if (gqlType.constructor.name === 'GraphQLList') {
     gqlType = gqlType.ofType
@@ -70,11 +78,8 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
         throw new Error('Cannot do SQL pagination for connections with this SQL dialect')
       }
       sqlASTNode.paginate = true
-      if (field.sortKey) {
-        sqlASTNode.sortKey = field.sortKey
-      } else if (field.orderBy) {
-        sqlASTNode.orderBy = field.orderBy
-      }
+
+      getSortColumns(field, sqlASTNode)
     }
   } else {
     if (field.sqlPaginate) {
@@ -112,14 +117,6 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   // the graphQL field name will be the default alias for the table
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
-
-  // add the arguments that were passed, if any.
-  if (queryASTNode.arguments.length) {
-    const args = sqlASTNode.args = {}
-    for (let arg of queryASTNode.arguments) {
-      args[arg.name.value] = parseArgValue(arg.value, variables)
-    }
-  }
 
   sqlASTNode.fieldName = field.name
   sqlASTNode.grabMany = grabMany
@@ -303,5 +300,21 @@ function parseArgValue(value, variableValues) {
     primitive = parseInt(primitive)
   }
   return primitive
+}
+
+function getSortColumns(field, sqlASTNode) {
+  if (field.sortKey) {
+    if (typeof field.sortKey === 'function') {
+      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args)
+    } else {
+      sqlASTNode.sortKey = field.sortKey
+    }
+  } else if (field.orderBy) {
+    if (typeof field.orderBy === 'function') {
+      sqlASTNode.orderBy = field.orderBy(sqlASTNode.args)
+    } else {
+      sqlASTNode.orderBy = field.orderBy
+    }
+  }
 }
 

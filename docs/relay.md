@@ -184,6 +184,8 @@ const User = new GraphQLObjectType({
 })
 ```
 
+If your sort columns are **dynamic**, you can make `orderBy` a *function* that return the `orderBy` value. This function will receive the GraphQL arguments as the first parameter.
+
 Join Monster will only pull the rows for the requested page out of the database. Because it uses the `LIMIT`, `OFFSET` clauses, the pages will get shifted if a new row is inserted at the beginning. We also cannot do backward pagination because the total number of rows is required for calculation of the offset. Although the total is known *after* the query is made, it is not available when we need to calculate the offset.
 
 However, you do have the ability to navigate to any page in the middle. **The Relay Cursor contains the offset.** You can produce the cursor for any row in the middle because you can predict the offset value. `graphql-relay` has a helper for this. For example:
@@ -277,6 +279,8 @@ const User = new GraphQLObjectType({
   })
 })
 ```
+
+You can make the `sortKey` dynamic by making it a function that returns the sort key object instead. This function will take the GraphQL args as the first parameter.
 
 The cursors will be formed from the sort key, which is the `'id'`. This cursor is not predictable, so we lose the ability to jump to pages in the middle. We also don't know the total number. However, we *can* page backwards.
 

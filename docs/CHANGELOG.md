@@ -1,3 +1,9 @@
+### v0.5.5 (Nov. 13, 2016)
+- Add support for dynamic sort keys on paginated fields. Sort keys can now be functions that receive the GraphQL arguments.
+
+### v0.5.4 (Nov. 10, 2016)
+- Add support for query variables.
+
 ### v0.5.2 (Nov. 6, 2016)
 - Relay connection type names are no longer required to end with "Connection".
 

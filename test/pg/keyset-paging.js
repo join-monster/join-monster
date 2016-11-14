@@ -78,6 +78,13 @@ test('should handle root pagination with "first" arg', async t => {
   t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
 })
 
+test('should reject an invalid cursor', async t => {
+  const query = makeUsersQuery({ first: 2, after: objToCursor({ id: 2, created_at: '2016-01-01' }) })
+  const { errors } = await run(query)
+  t.truthy(errors.length)
+  t.regex(errors[0], /Invalid cursor. The column "created_at" is not in the sort key./)
+})
+
 test('should handle root pagination with "first" and "after" args', async t => {
   const query = makeUsersQuery({ first: 2, after: objToCursor({ id: 2 }) })
   const { data, errors } = await run(query)

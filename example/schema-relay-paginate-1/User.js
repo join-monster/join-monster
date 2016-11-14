@@ -51,10 +51,11 @@ const User = new GraphQLObjectType({
       type: PostConnection, 
       args: forwardConnectionArgs,
       sqlPaginate: true,
-      orderBy: {
+      // could be an object or a function that returns the object
+      orderBy: args => ({
         created_at: 'desc',
         id: 'asc'
-      },
+      }),
       sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
     },
     following: {

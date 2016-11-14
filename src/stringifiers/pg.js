@@ -264,7 +264,9 @@ function interpretForKeysetPaging(node) {
   if (node.args && node.args.first) {
     limit = parseInt(node.args.first) + 1
     if (node.args.after) {
-      whereCondition = sortKeyToWhereCondition(cursorToObj(node.args.after), descending)
+      const cursorObj = cursorToObj(node.args.after)
+      validateCursor(cursorObj, wrap(node.sortKey.key))
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending)
     }
     if (node.args.before) {
       throw new Error('Using "before" with "first" is nonsensical.')
@@ -272,7 +274,9 @@ function interpretForKeysetPaging(node) {
   } else if (node.args && node.args.last) {
     limit = parseInt(node.args.last) + 1
     if (node.args.before) {
-      whereCondition = sortKeyToWhereCondition(cursorToObj(node.args.before), descending)
+      const cursorObj = cursorToObj(node.args.before)
+      validateCursor(cursorObj, wrap(node.sortKey.key))
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending)
     }
     if (node.args.after) {
       throw new Error('Using "after" with "last" is nonsensical.')
@@ -315,5 +319,22 @@ function stringifyOuterOrder(orders) {
     }
   }
   return conditions.join(', ')
+}
+
+// the cursor contains the sort keys. it needs to match the keys specified in the `sortKey` on this field in the schema
+function validateCursor(cursorObj, expectedKeys) {
+  const actualKeys = Object.keys(cursorObj)
+  const expectedKeySet = new Set(expectedKeys)
+  const actualKeySet = new Set(actualKeys)
+  for (let key of actualKeys) {
+    if (!expectedKeySet.has(key)) {
+      throw new Error(`Invalid cursor. The column "${key}" is not in the sort key.`)
+    }
+  }
+  for (let key of expectedKeys) {
+    if (!actualKeySet.has(key)) {
+      throw new Error(`Invalid cursor. The column "${key}" is not in the cursor.`)
+    }
+  }
 }
 
