@@ -161,3 +161,8 @@ const QueryRoot = new GraphQLObjectType({
 - [ ] Figure out a way to support the schema language
 - [ ] Aggregate functions
 
+## NON-GOALS
+
+- Caching: application specific cache invalidation makes this a problem we don't want to solve
+- Support EVERY SQL Feature (the most powerful subset of the most popular databases will be supported)
+
