@@ -164,5 +164,5 @@ const QueryRoot = new GraphQLObjectType({
 ## NON-GOALS
 
 - Caching: application specific cache invalidation makes this a problem we don't want to solve
-- Support EVERY SQL Feature (the most powerful subset of the most popular databases will be supported)
+- Support EVERY SQL Feature (only the most powerful subset of the most popular databases will be supported)
 
