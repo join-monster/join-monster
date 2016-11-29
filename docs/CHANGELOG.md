@@ -1,3 +1,6 @@
+### v0.5.7 (Nov. 29, 2016)
+- Fix bug with `WHERE` conditions on paginated fields.
+
 ### v0.5.6 (Nov. 14, 2016)
 - Fix bug with query variables on the Node interface.
 

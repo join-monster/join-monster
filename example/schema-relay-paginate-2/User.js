@@ -49,7 +49,10 @@ const User = new GraphQLObjectType({
     posts: {
       description: 'A list of Posts the user has written',
       type: PostConnection, 
-      args: connectionArgs,
+      args: {
+        ...connectionArgs,
+        search: { type: GraphQLString }
+      },
       sqlPaginate: true,
       // sortKey could be an object... or a function that returns an object
       sortKey: args => {
@@ -57,6 +60,9 @@ const User = new GraphQLObjectType({
           order: 'desc',
           key: [ 'created_at', 'id' ]
         }
+      },
+      where: (table, args) => {
+        if (args.search) return `${table}.body ilike '%${args.search}%'`
       },
       sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
     },

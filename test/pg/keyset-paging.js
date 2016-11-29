@@ -422,4 +422,57 @@ test('should handle pagination with duplicate objects', async t => {
   t.deepEqual(data, expect)
 })
 
+test('handle filtered pagination at the root', async t => {
+  const query = `{
+    users(search: "c%i") {
+      edges {
+        node {
+          fullName
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  t.deepEqual(data, {
+    users: {
+      edges: [
+        {
+          node: { fullName: 'Alivia Waelchi' }
+        },
+        {
+          node: { fullName: 'Ocie Ruecker' }
+        }
+      ]
+    }
+  })
+})
+
+test('filtering on one-to-many-nested field', async t => {
+  const query = `{
+    user(id: 1) {
+      posts(search: "ad") {
+        edges {
+          node {
+            body
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  t.deepEqual(data.user.posts.edges, [
+    {
+      node: {
+        body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.'
+      }
+    },
+    {
+      node: {
+        body: 'Incidunt quibusdam nulla adipisci error quia. Consequatur consequatur soluta fugit dolor iure. Voluptas accusamus fugiat assumenda enim.'
+      }
+    }
+  ])
+})
 

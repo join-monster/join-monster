@@ -49,13 +49,19 @@ const User = new GraphQLObjectType({
     posts: {
       description: 'A list of Posts the user has written',
       type: PostConnection, 
-      args: forwardConnectionArgs,
+      args: {
+        ...forwardConnectionArgs,
+        search: { type: GraphQLString }
+      },
       sqlPaginate: true,
       // could be an object or a function that returns the object
       orderBy: args => ({
         created_at: 'desc',
         id: 'asc'
       }),
+      where: (table, args) => {
+        if (args.search) return `${table}.body ilike '%${args.search}%'`
+      },
       sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
     },
     following: {

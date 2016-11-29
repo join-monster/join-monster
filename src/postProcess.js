@@ -11,8 +11,9 @@ function postProcess(data, sqlAST) {
       for (let dataItem of data) {
         recurseOnObjInData(dataItem, astChild)
       }
+    } else if (data) {
+      recurseOnObjInData(data, astChild)
     }
-    recurseOnObjInData(data, astChild)
   }
   // is cases where pagination was done, take the data and convert to the connection object
   // if any two fields happen to become a reference to the same object (when their `uniqueKey`s are the same),

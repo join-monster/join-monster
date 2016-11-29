@@ -29,11 +29,17 @@ export default new GraphQLObjectType({
     node: nodeField,
     users: {
       type: UserConnection,
-      args: connectionArgs,
+      args: {
+        ...connectionArgs,
+        search: { type: GraphQLString }
+      },
       sqlPaginate: true,
       sortKey: {
         order: 'asc',
         key: 'id'
+      },
+      where: (table, args) => {
+        if (args.search) return `(${table}.first_name ilike '%${args.search}%' OR ${table}.last_name ilike '%${args.search}%')`
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, context, sql => {

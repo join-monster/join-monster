@@ -29,7 +29,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
   switch(node.type) {
   case 'table':
     // generate the "where" condition, if applicable
-    if (node.where) {
+    if (node.where && !node.paginate) {
       const whereCondition = node.where(`"${node.as}"`, node.args || {}, context) 
       if (whereCondition) {
         wheres.push(`${whereCondition}`)
@@ -44,6 +44,12 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
       // do we need to paginate? if so this will be a lateral join
       if (node.paginate) {
         let whereCondition = node.sqlJoin(`"${parent.as}"`, node.name)
+        if (node.where) {
+          const filterCondition = node.where(`${node.name}`, node.args || {}, context) 
+          if (filterCondition) {
+            whereCondition += ' AND ' + filterCondition
+          }
+        }
 
         if (node.sortKey) {
 
@@ -96,9 +102,15 @@ LEFT JOIN LATERAL (
       const joinCondition2 = node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`)
 
       if (node.paginate) {
+        let whereCondition = node.sqlJoins[0](`"${parent.as}"`, node.joinTable)
+        if (node.where) {
+          const filterCondition = node.where(`${node.name}`, node.args || {}, context) 
+          if (filterCondition) {
+            whereCondition += ' AND ' + filterCondition
+          }
+        }
 
         if (node.sortKey) {
-          let whereCondition = node.sqlJoins[0](`"${parent.as}"`, node.joinTable)
           const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node)
           if (whereAddendum) {
             whereCondition += ' AND ' + whereAddendum
@@ -119,7 +131,6 @@ LEFT JOIN LATERAL (
         } else if (node.orderBy) {
 
           const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
-          const whereCondition = node.sqlJoins[0](`"${parent.as}"`, node.joinTable)
           const join = `\
 LEFT JOIN LATERAL (
   SELECT *, count(*) OVER () AS "$total"
@@ -147,11 +158,18 @@ LEFT JOIN LATERAL (
     // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause
     } else if (node.paginate) {
       if (node.sortKey) {
-        const { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
+        let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
+        whereCondition = whereCondition || 'TRUE'
+        if (node.where) {
+          const filterCondition = node.where(`${node.name}`, node.args || {}, context) 
+          if (filterCondition) {
+            whereCondition += ' AND ' + filterCondition
+          }
+        }
         const join = `\
 FROM (
   SELECT * FROM ${node.name}
-  WHERE ${whereCondition || 'TRUE'}
+  WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns)}
   LIMIT ${limit}
 ) AS "${node.as}"`
@@ -162,10 +180,18 @@ FROM (
         })
       } else if (node.orderBy) {
         const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
+        let whereCondition = 'TRUE'
+        if (node.where) {
+          const filterCondition = node.where(`${node.name}`, node.args || {}, context) 
+          if (filterCondition) {
+            whereCondition = filterCondition
+          }
+        }
         const join = `\
 FROM (
   SELECT *, count(*) OVER () AS "$total"
   FROM ${node.name}
+  WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns)}
   LIMIT ${limit} OFFSET ${offset}
 ) AS "${node.as}"`
@@ -204,8 +230,6 @@ FROM (
     break
   case 'composite':
     const keys = node.name.map(key => `"${parent.as}"."${key}"`)
-    // use the || operator for concatenation.
-    // FIXME: this is NOT supported in all SQL databases, e.g. some use a CONCAT function instead...
     selections.push(
       `${keys.join(' || ')} AS "${prefix + node.fieldName}"`
     )
