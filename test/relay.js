@@ -1,5 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
+import { toGlobalId } from 'graphql-relay'
 import schemaRelay from '../example/schema-relay-standard/index'
 import { partial } from 'lodash'
 
@@ -72,6 +73,25 @@ test('it should fetch a Node type with a variable', async t => {
     node: {
       fullName: 'andrew carlson',
     }
+  }
+  t.deepEqual(data, expect)
+})
+
+test('it should not error when no record is returned ', async t => {
+  const query = `
+    query node($id: ID!){
+      node(id: $id) {
+        ...on User {
+          fullName
+        }
+      }
+    }
+  `
+  const variables = { id: toGlobalId('User', 999) }
+  const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
+  t.is(errors, undefined)
+  const expect = {
+    node: null
   }
   t.deepEqual(data, expect)
 })
