@@ -1,11 +1,12 @@
 import { validateSqlAST, inspect, cursorToObj, wrap } from '../util'
 import { cursorToOffset } from 'graphql-relay'
 
-export default function stringifySqlAST(topNode, context) {
+export default async function stringifySqlAST(topNode, context) {
   validateSqlAST(topNode)
 
   // recursively figure out all the selections, joins, and where conditions that we need
-  let { selections, joins, wheres, orders } = _stringifySqlAST(null, topNode, '', context, [], [], [], [])
+  let { selections, joins, wheres, orders } = await _stringifySqlAST(null, topNode, '', context, [], [], [], [])
+
   // make sure these are unique by converting to a set and then back to an array
   // e.g. we want to get rid of things like `SELECT user.id as id, user.id as id, ...`
   // GraphQL does not prevent queries with duplicate fields
@@ -25,12 +26,12 @@ export default function stringifySqlAST(topNode, context) {
   return sql
 }
 
-function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres, orders) {
+async function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres, orders) {
   switch(node.type) {
   case 'table':
     // generate the "where" condition, if applicable
     if (node.where && !node.paginate) {
-      const whereCondition = node.where(`"${node.as}"`, node.args || {}, context) 
+      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context)
       if (whereCondition) {
         wheres.push(`${whereCondition}`)
       }
@@ -45,7 +46,7 @@ function _stringifySqlAST(parent, node, prefix, context, selections, joins, wher
       if (node.paginate) {
         let whereCondition = node.sqlJoin(`"${parent.as}"`, node.name)
         if (node.where) {
-          const filterCondition = node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -104,7 +105,7 @@ LEFT JOIN LATERAL (
       if (node.paginate) {
         let whereCondition = node.sqlJoins[0](`"${parent.as}"`, node.joinTable)
         if (node.where) {
-          const filterCondition = node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -161,7 +162,7 @@ LEFT JOIN LATERAL (
         let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
         whereCondition = whereCondition || 'TRUE'
         if (node.where) {
-          const filterCondition = node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -182,7 +183,7 @@ FROM (
         const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
         let whereCondition = 'TRUE'
         if (node.where) {
-          const filterCondition = node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
           if (filterCondition) {
             whereCondition = filterCondition
           }
