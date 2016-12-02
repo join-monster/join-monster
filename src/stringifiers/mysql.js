@@ -1,9 +1,9 @@
 import { validateSqlAST, inspect } from '../util'
 
-export default function stringifySqlAST(topNode, context) {
+export default async function stringifySqlAST(topNode, context) {
   validateSqlAST(topNode)
   // recursively determine the selections, joins, and where conditions that we need
-  let { selections, joins, wheres } = _stringifySqlAST(null, topNode, '', context, [], [], [])
+  let { selections, joins, wheres } = await _stringifySqlAST(null, topNode, '', context, [], [], [])
 
   // make sure these are unique by converting to a set and then back to an array
   // defend against things like `SELECT user.id AS id, user.id AS id...`
@@ -20,12 +20,12 @@ export default function stringifySqlAST(topNode, context) {
   return sql
 }
 
-function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres) {
+async function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres) {
   switch(node.type) {
   case 'table':
     // generate the "where" condition, if applicable
     if (node.where) {
-      const whereCondition = node.where(`${quote(node.as)}`, node.args || {}, context) 
+      const whereCondition = await node.where(`${quote(node.as)}`, node.args || {}, context) 
       if (whereCondition) {
         wheres.push(`${whereCondition}`)
       }

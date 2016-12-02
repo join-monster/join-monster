@@ -46,26 +46,26 @@ import { emphasize, inspect } from './util'
  * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'standard'` are supported.
  * @returns {Promise<Object>} The correctly nested data from the database.
  */
-function joinMonster(resolveInfo, context, dbCall, options = {}) {
+async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
   const sqlAST = queryASTToSqlAST(resolveInfo, options)
-  const { sql, shapeDefinition } = compileSqlAST(sqlAST, context, options)
+  const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   if (!sql) return Promise.resolve({})
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
   return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST)
 }
 
-function compileSqlAST(sqlAST, context, options) {
+async function compileSqlAST(sqlAST, context, options) {
   debug(emphasize('SQL_AST'), inspect(sqlAST))
 
   // now convert the "SQL AST" to sql
   const dialect = options.dialect || 'standard'
   const stringify = require('./stringifiers/' + dialect).default
-  const sql = stringify(sqlAST, context)
+  const sql = await stringify(sqlAST, context)
   debug(emphasize('SQL'), inspect(sql))
 
-  // figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
+// figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
   const shapeDefinition = defineObjectShape(sqlAST)
   debug(emphasize('SHAPE_DEFINITION'), inspect(shapeDefinition))
   return { sql, shapeDefinition }
@@ -81,7 +81,7 @@ function compileSqlAST(sqlAST, context, options) {
  * @param {Object} [options] - Same as `joinMonster` function's options.
  * @returns {Promise<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
-function getNode(typeName, resolveInfo, context, where, dbCall, options = {}) {
+async function getNode(typeName, resolveInfo, context, where, dbCall, options = {}) {
   // get the GraphQL type from the schema using the name
   const type = resolveInfo.schema.getType(typeName)
   // our getGraphQLType expects every requested field to be in the schema definition. "node" isn't a parent of whatever type we're getting, so we'll just wrap that type in an object that LOOKS that same as a hypothetical Node type
@@ -100,7 +100,7 @@ function getNode(typeName, resolveInfo, context, where, dbCall, options = {}) {
   // uses the same underlying function as the main `joinMonster`
   getGraphQLType(fieldNodes[0], fakeParentNode, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, options)
   pruneDuplicateSqlDeps(sqlAST, namespace)
-  const { sql, shapeDefinition } = compileSqlAST(sqlAST, context, options)
+  const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST).then(obj => {
     // if no data is returned, just return the null response
     if (!obj) {

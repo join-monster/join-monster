@@ -56,11 +56,16 @@ export default new GraphQLObjectType({
         idEncoded: {
           description: 'The users encoded ID number',
           type: GraphQLString
+        },
+        idAsync: {
+          description: 'The users ID number, with an async where function',
+          type: GraphQLInt
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
         if (args.id) return `${usersTable}.id = ${args.id}`
         if (args.idEncoded) return `${usersTable}.id = ${fromBase64(args.idEncoded)}`
+        if (args.idAsync) return Promise.resolve(`${usersTable}.id = ${args.idAsync}`)
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, context, sql => {

@@ -25,6 +25,20 @@ test('it should handle a where condition', async t => {
   t.deepEqual(data, expect)
 })
 
+test('it should handle an async where condition', async t => {
+  const query = `{
+    user(idAsync: 1) {
+      fullName
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: { fullName: 'andrew carlson' }
+  }
+  t.deepEqual(data, expect)
+})
+
 test('a query with a sqlDeps as the first requested field should not mess it up', async t => {
   const query = wrap('numFeet, fullName, id')
   const { data, errors } = await run(query)
