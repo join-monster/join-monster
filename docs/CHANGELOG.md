@@ -1,3 +1,6 @@
+***### v0.5.8 (Dec. 1, 2016)
+- Add null check to node interface handler.
+
 ### v0.5.7 (Nov. 29, 2016)
 - Fix bug with `WHERE` conditions on paginated fields.
 
