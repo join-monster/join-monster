@@ -102,6 +102,10 @@ function getNode(typeName, resolveInfo, context, where, dbCall, options = {}) {
   pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = compileSqlAST(sqlAST, context, options)
   return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST).then(obj => {
+    // if no data is returned, just return the null response
+    if (!obj) {
+      return obj
+    }
     // after we get the data, slap the Type on there to assist with determining the type
     obj.__type__ = type
     return obj
