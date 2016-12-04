@@ -27,7 +27,11 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     if (node.where) {
       const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context)
       if (whereCondition) {
-        wheres.push(`${whereCondition}`)
+        if( whereCondition instanceof Array ) {
+          wheres = wheres.concat( whereCondition )
+        } else {
+          wheres.push(`${whereCondition}`)
+        }
       }
     }
 
@@ -90,4 +94,3 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
   }
   return { selections, joins, wheres }
 }
-

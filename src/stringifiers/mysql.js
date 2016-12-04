@@ -25,8 +25,10 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
   case 'table':
     // generate the "where" condition, if applicable
     if (node.where) {
-      const whereCondition = await node.where(`${quote(node.as)}`, node.args || {}, context) 
-      if (whereCondition) {
+      const whereCondition = await node.where(`${quote(node.as)}`, node.args || {}, context)
+      if( whereCondition instanceof Array ) {
+        wheres = wheres.concat( whereCondition )
+      } else {
         wheres.push(`${whereCondition}`)
       }
     }
@@ -94,4 +96,3 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
 function quote(str) {
   return '`' + str + '`'
 }
-
