@@ -63,7 +63,7 @@ async function compileSqlAST(sqlAST, context, options) {
   const dialect = options.dialect || 'standard'
   const stringify = require('./stringifiers/' + dialect).default
   const sql = await stringify(sqlAST, context)
-  debug(emphasize('SQL'), inspect(sql))
+  debug(emphasize('SQL'), sql)
 
 // figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
   const shapeDefinition = defineObjectShape(sqlAST)

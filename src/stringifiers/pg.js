@@ -331,7 +331,7 @@ function maybeQuote(value) {
 function orderColumnsToString(orderColumns) {
   const conditions = []
   for (let column in orderColumns) {
-    conditions.push(`${column} ${orderColumns[column]}`)
+    conditions.push(`"${column}" ${orderColumns[column]}`)
   }
   return conditions.join(', ')
 }
