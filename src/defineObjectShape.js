@@ -27,6 +27,9 @@ function _defineObjectShape(parent, prefix, node) {
           fieldDefinition[name] = prefixToPass + child.names[name]
         }
         break
+      case 'expression':
+        fieldDefinition[child.fieldName] = prefixToPass + child.as
+        break
       case 'table':
         const definition = _defineObjectShape(node, prefixToPass, child)
         fieldDefinition[child.fieldName] = definition

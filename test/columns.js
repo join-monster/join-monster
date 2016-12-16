@@ -232,7 +232,7 @@ test('it should handle string variables', async t => {
       }
     }
   `
-  const variables = {encodedUserId: 'MQ=='}
+  const variables = { encodedUserId: 'MQ==' }
   const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
   t.is(errors, undefined)
   const expect = {
@@ -252,7 +252,7 @@ test('it should handle boolean variables', async t => {
       }
     }
   `
-  const variables = {filter: true}
+  const variables = { filter: true }
   const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
   t.is(errors, undefined)
   const expect = {
@@ -260,3 +260,16 @@ test('it should handle boolean variables', async t => {
   }
   t.deepEqual(data, expect)
 })
+
+test('it should handle raw SQL expressions', async t => {
+  const query = `{
+    user(id: 2) {
+      fullName
+      capitalizedLastName
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  t.is(data.user.fullName.split(' ')[1].toUpperCase(), data.user.capitalizedLastName)
+})
+

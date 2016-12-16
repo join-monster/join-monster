@@ -235,6 +235,12 @@ FROM (
       `${keys.join(' || ')} AS "${prefix + node.fieldName}"`
     )
     break
+  case 'expression':
+    const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context)
+    selections.push(
+      `${expr} AS "${prefix + node.as}"`
+    )
+    break
   case 'noop':
     // we hit this with fields that don't need anything from SQL, they resolve independantly
     return

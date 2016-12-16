@@ -43,6 +43,11 @@ const User = new GraphQLObjectType({
       sqlDeps: [ 'first_name', 'last_name' ],
       resolve: user => `${user.first_name} ${user.last_name}`
     },
+    capitalizedLastName: {
+      description: 'The last name WITH CAPS LOCK',
+      type: GraphQLString,
+      sqlExpr: (table, args, context) => `upper(${table}.last_name)`
+    },
     comments: {
       description: 'Comments the user has written on people\'s posts',
       type: new GraphQLList(Comment),

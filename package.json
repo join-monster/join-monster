@@ -23,8 +23,8 @@
     "jsdoc": "jsdoc2md src/index.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md",
     "prepublish": "in-publish && /bin/sh ./scripts/prepublish.sh && npm run build || not-in-publish",
     "preversion": ". ./scripts/checkgit.sh && npm test",
-    "db-build": "babel-node example/data/build.js",
-    "db-shell": "sqlite3 --column --header example/data/demo-data.sl3"
+    "db-build": "babel-node example/data/db/build.js",
+    "db-shell": "sqlite3 --column --header example/data/db/demo-data.sl3"
   },
   "ava": {
     "concurrency": 10,

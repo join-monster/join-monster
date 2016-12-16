@@ -82,6 +82,12 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
       `${keys.join(' || ')} AS "${prefix + node.fieldName}"`
     )
     break
+  case 'expression':
+    const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context)
+    selections.push(
+      `${expr} AS "${prefix + node.as}"`
+    )
+    break
   case 'noop':
     // this case if for fields that have nothing to do with the SQL, they resolve independantly
     return

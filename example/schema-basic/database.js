@@ -4,7 +4,7 @@ import assert from 'assert'
 const dbType = process.env.DB
 
 const connection = process.env.NODE_ENV !== 'test' ?
-  pgUrl('demo') :
+  { filename: path.join(__dirname, '../data/db/test1-data.sl3') } :
   dbType === 'PG' ?
     pgUrl('test1') :
     dbType === 'MYSQL' ?

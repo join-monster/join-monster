@@ -92,6 +92,12 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   // is this a table in SQL?
   if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
     handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, options)
+  // is this a raw expression?
+  } else if (field.sqlExpr) {
+    sqlASTNode.type = 'expression'
+    sqlASTNode.sqlExpr = field.sqlExpr
+    sqlASTNode.fieldName = field.name
+    sqlASTNode.as = namespace.generate('column', field.name)
   // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
   } else if (field.sqlColumn || !field.resolve) {
     sqlASTNode.type = 'column'
