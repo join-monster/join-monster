@@ -93,7 +93,13 @@ const User = new GraphQLObjectType({
       // perhaps there is no 1-to-1 mapping of field to column
       // this field depends on multiple columns
       sqlDeps: [ 'first_name', 'last_name' ],
+      // compute the value with a resolver
       resolve: user => `${user.first_name} ${user.last_name}`
+    },
+    capitalizedLastName: {
+      type: GraphQLString,
+      // do a computed column in SQL with raw expression
+      sqlExpr: (table, args) => `UPPER(${table}.last_name)`
     },
     // got tables inside tables??
     // get it with a JOIN!

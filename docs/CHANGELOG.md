@@ -1,3 +1,6 @@
+### v0.7.0 (Dec. 16, 2016)
+- Introducing raw SQL expressions for computed columns.
+
 ### v0.6.0 (Dec. 2, 2016)
 - Support asynchronicity in the `where` function.
 

@@ -21,6 +21,14 @@ import { emphasize, inspect } from './util'
  * @returns {Array|Promise<Array>} The raw data as a flat array of objects. Each object must represent a row from the result set.
  */
 /**
+ * Function for generating a SQL expression.
+ * @callback sqlExpr
+ * @param {String} tableAlias - The alias generated for this table. Already double-quoted.
+ * @param {Object} args - The GraphQL arguments for this field.
+ * @param {Object} context - An Object with arbitrary contextual information.
+ * @returns {String} The expression interpolated into the query to compute the column.
+ */
+/**
  * Function for generating a `WHERE` condition.
  * @callback where
  * @param {String} tableAlias - The alias generated for this table. Already double-quoted.

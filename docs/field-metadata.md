@@ -1,6 +1,6 @@
 ## Correlating Fields to Columns
 
-You'll need to provide a bit of information about each column and its relationship to the table, if any. For fields with a one-to-one correspondence, use the `sqlColumn` property. If a field "depends" on multiple columns, use `sqlDeps`.
+You'll need to provide a bit of information about each column and its relationship to the table, if any. For fields with a one-to-one correspondence, use the `sqlColumn` property.
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -22,14 +22,6 @@ const User = new GraphQLObjectType({
       // this field uses a sqlColumn and applies a resolver function on the value
       // if a resolver is present, the `sqlColumn` MUST be specified even if it is the same name as the field
       resolve: user => toBase64(user.idEncoded)
-    },
-    fullName: {
-      description: 'A user\'s first and last name',
-      type: GraphQLString,
-      // perhaps there is no 1-to-1 mapping of field to column
-      // this field depends on multiple columns
-      sqlDeps: [ 'first_name', 'last_name' ],
-      resolve: user => `${user.first_name} ${user.last_name}`
     }
   })
 })
@@ -40,3 +32,41 @@ function toBase64(clear) {
 ```
 
 In the case of the `id` field, the `sqlColumn` was omitted. Since it has no resolver, it is assumed to have to come from the table and the column name is assumed to be the same as the field name. The same inference is not made if a resolver is present.
+
+## Computed Columns
+
+You can manipulate the data in your query without losing the benefit of a single request.
+
+Maybe your field(s) needs a SQL column to compute a value. If there isn't a simple one-to-one correspondence of columns to field, you can use `sqlDeps`. `sqlDeps` is an array of columns that will get retrieved if the GraphQL field is requested. These are exposed to your resolver, so you can write a `resolve` function to compute a value in JavaScript. For example, a `first_name` and `last_name` column can be *depended on* for a `fullName` field in your API.
+
+```javascript
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    fullName: {
+      description: 'A user\'s first and last name',
+      type: GraphQLString,
+      // perhaps there is no 1-to-1 mapping of field to column
+      // this field depends on multiple columns
+      sqlDeps: [ 'first_name', 'last_name' ],
+      resolve: user => `${user.first_name} ${user.last_name}`
+    }
+  })
+})
+```
+
+You can also do computed columns in the SQL itself with a *raw expression* using `sqlExpr`. This is a function that generated the expression. Its parameters are the table alias (generated automatically by joinMonster), the GraphQL arguments on that field,  and a [context](/where/#adding-context) object.
+
+```javascript
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    capitalizedLastName: {
+      type: GraphQLString,
+      // do a computed column in SQL with raw expression
+      sqlExpr: (table, args) => `UPPER(${table}.last_name)`
+    }
+  })
+})
+```
+
