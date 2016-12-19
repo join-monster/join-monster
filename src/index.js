@@ -2,11 +2,7 @@ import util from 'util'
 import { nest } from 'nesthydrationjs'
 const debug = require('debug')('join-monster')
 
-import {
-  queryASTToSqlAST,
-  getGraphQLType,
-  pruneDuplicateSqlDeps
-} from './queryASTToSqlAST'
+import * as queryAST from './queryASTToSqlAST'
 import defineObjectShape from './defineObjectShape'
 import postProcess from './postProcess'
 import AliasNamespace from './aliasNamespace'
@@ -45,7 +41,7 @@ import { emphasize, inspect } from './util'
  */
 
 /**
- * Takes the GraphQL AST and returns a nest Object with the data.
+ * Takes the GraphQL resolveInfo and returns a hydrated Object with the data.
  * @param {Object} resolveInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
  * @param {Object} context - An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization.
  * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
@@ -56,28 +52,26 @@ import { emphasize, inspect } from './util'
  */
 async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
-  const sqlAST = queryASTToSqlAST(resolveInfo, options)
+  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
-  if (!sql) return Promise.resolve({})
+  if (!sql) return {}
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
   return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST)
 }
 
 /**
- * Takes the GraphQL AST and returns an SQL query
+ * Takes the GraphQL resolveInfo and returns only the SQL query.
  * @param {Object} resolveInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
  * @param {Object} context - An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization.
- * @param {Object} [options]
- * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
- * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'standard'` are supported.
+ * @param {Object} [options] - Same as `joinMonster` function's options.
  * @returns {Promise<string>} The SQL query generated
  */
 async function getSQL(resolveInfo, context, options = {}) {
   // same as above
-  const sqlAST = queryASTToSqlAST(resolveInfo, options)
+  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options)
   const { sql } = await compileSqlAST(sqlAST, context, options)
-  if (!sql) return Promise.resolve({})
+  if (!sql) return {}
 
   return sql
 }
@@ -126,8 +120,8 @@ async function getNode(typeName, resolveInfo, context, where, dbCall, options = 
   const sqlAST = {}
   const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
   // uses the same underlying function as the main `joinMonster`
-  getGraphQLType(fieldNodes[0], fakeParentNode, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, options)
-  pruneDuplicateSqlDeps(sqlAST, namespace)
+  queryAST.getGraphQLType(fieldNodes[0], fakeParentNode, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, options)
+  queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST).then(obj => {
     // if no data is returned, just return the null response
@@ -193,3 +187,4 @@ function validate(rows) {
 // expose the package version for debugging
 joinMonster.version = require('../package.json').version
 export default joinMonster
+
