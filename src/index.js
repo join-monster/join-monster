@@ -64,6 +64,26 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST)
 }
 
+/**
+ * Takes the GraphQL AST and returns an SQL query
+ * @param {Object} resolveInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
+ * @param {Object} context - An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization.
+ * @param {Object} [options]
+ * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
+ * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'standard'` are supported.
+ * @returns {Promise<string>} The SQL query generated
+ */
+async function getSQL(resolveInfo, context, options = {}) {
+  // same as above
+  const sqlAST = queryASTToSqlAST(resolveInfo, options)
+  const { sql } = await compileSqlAST(sqlAST, context, options)
+  if (!sql) return Promise.resolve({})
+
+  return sql
+}
+
+joinMonster.getSQL = getSQL
+
 async function compileSqlAST(sqlAST, context, options) {
   debug(emphasize('SQL_AST'), inspect(sqlAST))
 
@@ -173,4 +193,3 @@ function validate(rows) {
 // expose the package version for debugging
 joinMonster.version = require('../package.json').version
 export default joinMonster
-
