@@ -43,20 +43,6 @@ Great helpers for the **Node Interface** and automatic pagination for **Connecti
 
 You don't *have to* use Relay to paginate your API with Join Monster!
 
-## Running the Demo
-
-```shell
-$ git clone https://github.com/stems/join-monster-demo.git
-$ cd join-monster-demo
-$ npm install
-$ npm start
-# go to http://localhost:3000/graphql
-```
-
-Explore the schema, try out some queries, and see what the resulting SQL queries and responses look like in our custom version of GraphiQL!
-
-![graphsiql](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/graphsiql.png)
-
 ## Usage
 
 1. Assign your SQL tables to their corresponding `GraphQLObjectTypes`.
@@ -155,6 +141,20 @@ const QueryRoot = new GraphQLObjectType({
   })
 })
 ```
+
+## Running the Demo
+
+```shell
+$ git clone https://github.com/stems/join-monster-demo.git
+$ cd join-monster-demo
+$ npm install
+$ npm start
+# go to http://localhost:3000/graphql
+```
+
+Explore the schema, try out some queries, and see what the resulting SQL queries and responses look like in our custom version of GraphiQL!
+
+![graphsiql](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/graphsiql.png)
 
 **There's still a lot of work to do. Please feel free to fork and submit a Pull Request!**
 
