@@ -71,8 +71,6 @@ async function getSQL(resolveInfo, context, options = {}) {
   // same as above
   const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options)
   const { sql } = await compileSqlAST(sqlAST, context, options)
-  if (!sql) return {}
-
   return sql
 }
 
