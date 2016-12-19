@@ -2,7 +2,10 @@
 
 <dl>
 <dt><a href="#joinMonster">joinMonster</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
-<dd><p>Takes the GraphQL AST and returns a nest Object with the data.</p>
+<dd><p>Takes the GraphQL resolveInfo and returns a hydrated Object with the data.</p>
+</dd>
+<dt><a href="#getSQL">getSQL</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
+<dd><p>Takes the GraphQL resolveInfo and returns only the SQL query.</p>
 </dd>
 <dt><a href="#getNode">getNode</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>A helper for resolving the Node type in Relay.</p>
@@ -29,7 +32,7 @@
 <a name="joinMonster"></a>
 
 ## joinMonster ⇒ <code>Promise.&lt;Object&gt;</code>
-Takes the GraphQL AST and returns a nest Object with the data.
+Takes the GraphQL resolveInfo and returns a hydrated Object with the data.
 
 **Returns**: <code>Promise.&lt;Object&gt;</code> - The correctly nested data from the database.  
 
@@ -41,6 +44,19 @@ Takes the GraphQL AST and returns a nest Object with the data.
 | [options] | <code>Object</code> |  |
 | options.minify | <code>Boolean</code> | Generate minimum-length column names in the results table. |
 | options.dialect | <code>String</code> | The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'standard'` are supported. |
+
+<a name="getSQL"></a>
+
+## getSQL ⇒ <code>Promise.&lt;string&gt;</code>
+Takes the GraphQL resolveInfo and returns only the SQL query.
+
+**Returns**: <code>Promise.&lt;string&gt;</code> - The SQL query generated  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| resolveInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
+| context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization. |
+| [options] | <code>Object</code> | Same as `joinMonster` function's options. |
 
 <a name="getNode"></a>
 

@@ -1,3 +1,6 @@
+### v0.8.0 (Dec. 19, 2016)
+- Expose the `getSQL` method for getting only the converted SQL.
+
 ### v0.7.0 (Dec. 16, 2016)
 - Introducing raw SQL expressions for computed columns.
 
