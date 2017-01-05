@@ -28,9 +28,10 @@ const User = new GraphQLObjectType({
 
 ## Node Type
 
-Join Monster provides a helper for easily fetching data in order to implement Relay's **Node Interface**.
+Join Monster provides a helper for easily fetching data in order to implement Relay's **Node Interface**. This is the `getNode` method.
 
 ```javascript
+import joinMonster from 'join-monster'
 import {
   nodeDefinitions,
   fromGlobalId
@@ -42,13 +43,8 @@ const { nodeInterface, nodeField } = nodeDefinitions(
     // parse the globalID
     const { type, id } = fromGlobalId(globalId)
 
-    // get name of unique key defined on table
-    // NOTE: This does not work with composite keys
-    const uniqueKey = resolveInfo.schema.getType(type)._typeConfig.uniqueKey;
-
     // pass the type name and other info. `joinMonster` will find the type from the name and write the SQL
-    return joinMonster.getNode(type, resolveInfo, context,
-      table => `${table}.${uniqueKey} = ${id}`,
+    return joinMonster.getNode(type, resolveInfo, context, id,
       sql => knex.raw(sql)
     )
   },
@@ -65,9 +61,33 @@ const Query = new GraphQLObjectType({
 })
 ```
 
-Similar to the main `joinMonster` function, it expects the GraphQL **resolve info**, a context, and a function for calling the database that receives the generated SQL. It will also need to type name and a `where` function. See [API](/API/#getNode) for details
+The `getNode` method needs the type name, resolve info, a context object, the value of the `primaryKey`, and a function the receives the SQL and queries the database. If the `primaryKey` is composite, an array is needed for the fourth argument. See [API](/API/#getNode) for details
 
 The Node interface also needs to resolve its type, which join monster figures out for you. It places the type on the `"__type__"` property of the resolved data. When you write the `resolveType` function, the second argument for `nodeDefinitions`, you can simply return the object on the `"__type__"` property.
+
+Your global ID may not be the same as the `uniqueKey`. Or you might have more complex logic for retrieving the node from the global ID. For these cases you can pass a [where](/API/#where) function as your fourth argument instead of a value directly. This function generates the WHERE condition dynamically.
+
+```javascript
+const { nodeInterface, nodeField } = nodeDefinitions(
+  // resolve the ID to an object
+  (globalId, context, resolveInfo) => {
+    // parse the globalID
+    const { type, id } = fromGlobalId(globalId)
+
+    // get name of unique key defined on table
+    // NOTE: This does not work with composite keys
+    const uniqueKey = resolveInfo.schema.getType(type)._typeConfig.uniqueKey
+
+    // pass a function to generate the WHERE condition, instead of simply passing a value
+    return joinMonster.getNode(type, resolveInfo, context,
+      table => `${table}.${uniqueKey} = ${id}`,
+      sql => knex.raw(sql)
+    )
+  },
+  // determines the type. Join Monster places that type onto the result object on the "__type__" property
+  obj => obj.__type__
+)
+```
 
 ## Connection Types
 

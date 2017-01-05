@@ -1,3 +1,6 @@
+### v0.9.0 (Jan. 4, 2017)
+- More automatic fetching using `getNode` implemented.
+
 ### v0.8.0 (Dec. 19, 2016)
 - Expose the `getSQL` method for getting only the converted SQL.
 
