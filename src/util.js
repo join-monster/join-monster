@@ -39,7 +39,33 @@ export function cursorToObj(cursor) {
 
 // wrap in a pair of single quotes for the SQL if needed
 export function maybeQuote(value) {
-  return typeof value === 'number' ? value : `'${value}'`
+  if (typeof value === 'number') return value
+  if (typeof value.toSQL === 'function') return value.toSQL()
+
+  // Picked from https://github.com/brianc/node-postgres/blob/876018/lib/client.js#L235..L260
+  // Ported from PostgreSQL 9.2.4 source code in src/interfaces/libpq/fe-exec.c
+  let hasBackslash = false
+  let escaped = '\''
+
+  for(let i = 0; i < value.length; i++) {
+    let c = value[i]
+    if(c === '\'') {
+      escaped += c + c
+    } else if (c === '\\') {
+      escaped += c + c
+      hasBackslash = true
+    } else {
+      escaped += c
+    }
+  }
+
+  escaped += '\''
+
+  if(hasBackslash === true) {
+    escaped = ' E' + escaped
+  }
+
+  return escaped
 }
 
 export function buildWhereFunction(type, condition, options) {
