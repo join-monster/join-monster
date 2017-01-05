@@ -18,6 +18,7 @@ const { nodeInterface, nodeField } = nodeDefinitions(
       table => `${table}.id = ${id}`,
       sql => {
         if (context) {
+          // makes the SQL query available in the GUI. do NOT do such a thing in production
           context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
         }
         return knex.raw(sql)

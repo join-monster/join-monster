@@ -48,12 +48,11 @@
   "keywords": [
     "graphql",
     "sql",
+    "join",
     "query",
     "batch",
     "data",
-    "schema",
-    "compile",
-    "translate"
+    "schema"
   ],
   "author": "Stem Disintermedia, Inc.",
   "contributors": [

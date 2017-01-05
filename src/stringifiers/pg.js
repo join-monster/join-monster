@@ -1,4 +1,4 @@
-import { validateSqlAST, inspect, cursorToObj, wrap } from '../util'
+import { validateSqlAST, inspect, cursorToObj, wrap, maybeQuote } from '../util'
 import { cursorToOffset } from 'graphql-relay'
 
 export default async function stringifySqlAST(topNode, context) {
@@ -329,10 +329,6 @@ function sortKeyToWhereCondition(keyObj, descending) {
   return `(${sortColumns.join(', ')}) ${operator} (${sortValues.join(', ')})`
 }
 
-// wrap in a pair of single quotes for the SQL if needed
-function maybeQuote(value) {
-  return typeof value === 'number' ? value : `'${value}'`
-}
 
 function orderColumnsToString(orderColumns) {
   const conditions = []

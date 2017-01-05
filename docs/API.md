@@ -69,8 +69,8 @@ A helper for resolving the Node type in Relay.
 | --- | --- | --- |
 | typeName | <code>String</code> | The Name of the GraphQLObjectType |
 | resolveInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
-| context | <code>Object</code> | An arbitrary object that gets passed to the where function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization. |
-| where | <code>[where](#where)</code> | A function that returns the WHERE condition. |
+| context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization. |
+| condition | <code>[where](#where)</code> &#124; <code>Number</code> &#124; <code>String</code> &#124; <code>Array</code> | A value to determine the `where` function for searching the node. If it's a function, that function will be used as the `where` function. Otherwise, it is assumed to be the value(s) of the `primaryKey`. An array of values is needed for composite primary keys. |
 | dbCall | <code>function</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
 | [options] | <code>Object</code> | Same as `joinMonster` function's options. |
 
