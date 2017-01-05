@@ -41,9 +41,14 @@ const { nodeInterface, nodeField } = nodeDefinitions(
   (globalId, context, resolveInfo) => {
     // parse the globalID
     const { type, id } = fromGlobalId(globalId)
+
+    // get name of unique key defined on table
+    // NOTE: This does not work with composite keys
+    const uniqueKey = resolveInfo.schema.getType(type)._typeConfig.uniqueKey;
+
     // pass the type name and other info. `joinMonster` will find the type from the name and write the SQL
     return joinMonster.getNode(type, resolveInfo, context,
-      table => `${table}.id = ${id}`,
+      table => `${table}.${uniqueKey} = ${id}`,
       sql => knex.raw(sql)
     )
   },
