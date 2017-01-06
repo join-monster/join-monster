@@ -149,6 +149,86 @@ test('it should handle nested fragments', async t => {
   t.deepEqual(expect, data)
 })
 
+test('it should handle named fragments on an interface', async t => {
+  const query = `
+    {
+      sponsors {
+        ...info
+      }
+      user(id: 1) {
+        ...info
+      }
+    }
+
+    fragment info on Person {
+      fullName
+      ... on User {
+        email
+      }
+      ... on Sponsor {
+        generation
+      }
+    }
+  `
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  //console.log(require('util').inspect(data, { depth: null }))
+  const expect = {
+    sponsors: [
+      { fullName: 'erlich bachman', generation: 1 },
+      { fullName: 'andrew bachman', generation: 1 },
+      { fullName: 'erlich bachman', generation: 2 },
+      { fullName: 'matt bachman', generation: 2 },
+      { fullName: 'matt daemon', generation: 1 }
+    ],
+    user: { fullName: 'andrew carlson', email: 'andrew@stem.is' }
+  }
+  t.deepEqual(data, expect)
+})
+
+test('it should handle inline fragments on an interface', async t => {
+  const query = `
+    {
+      sponsors {
+        ...on Person {
+          fullName
+          ... on User {
+            email
+          }
+          ... on Sponsor {
+            generation
+          }
+        }
+      }
+      user(id: 1) {
+        ...on Person {
+          fullName
+          ... on User {
+            email
+          }
+          ... on Sponsor {
+            generation
+          }
+        }
+      }
+    }
+  `
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  //console.log(require('util').inspect(data, { depth: null }))
+  const expect = {
+    sponsors: [
+      { fullName: 'erlich bachman', generation: 1 },
+      { fullName: 'andrew bachman', generation: 1 },
+      { fullName: 'erlich bachman', generation: 2 },
+      { fullName: 'matt bachman', generation: 2 },
+      { fullName: 'matt daemon', generation: 1 }
+    ],
+    user: { fullName: 'andrew carlson', email: 'andrew@stem.is' }
+  }
+  t.deepEqual(data, expect)
+})
+
 test('it should handle a column that resolves independantly of SQL', async t => {
   const query = wrap('id, favNums')
   const { data, errors } = await run(query)

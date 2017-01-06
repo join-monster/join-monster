@@ -4,12 +4,14 @@ import {
   GraphQLInt
 } from 'graphql'
 
+import Person from './Person'
 
 const Sponsor = new GraphQLObjectType({
   description: 'people who have given money',
   name: 'Sponsor',
   sqlTable: 'sponsors',
   uniqueKey: [ 'generation', 'first_name', 'last_name' ],
+  interfaces: [ Person ],
   fields: () => ({
     firstName: {
       type: GraphQLString,
@@ -18,6 +20,11 @@ const Sponsor = new GraphQLObjectType({
     lastName: {
       type: GraphQLString,
       sqlColumn: 'last_name'
+    },
+    fullName: {
+      type: GraphQLString,
+      sqlDeps: [ 'first_name', 'last_name' ],
+      resolve: sponsor => `${sponsor.first_name} ${sponsor.last_name}`
     },
     generation: {
       type: GraphQLInt,

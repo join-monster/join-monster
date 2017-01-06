@@ -166,21 +166,28 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
-      // check to make sure the type of this fragment matches the type being queried
-      // this became necessary when supporting queries on the Relay Node type
-      if (selection.typeCondition.name.value === gqlType.name) {
-        handleSelections(children, selection.selectionSet.selections, gqlType, fragments, variables, namespace, options)
+      {
+        // check to make sure the type of this fragment (or one of the interfaces it implements) matches the type being queried
+        const selectionNameOfType = selection.typeCondition.name.value
+        const sameType = selectionNameOfType === gqlType.name
+        const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(selectionNameOfType) >= 0
+        if (sameType || interfaceType) {
+          handleSelections(children, selection.selectionSet.selections, gqlType, fragments, variables, namespace, options)
+        }
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
     case 'FragmentSpread':
-      const fragmentName = selection.name.value
-      const fragment = fragments[fragmentName]
-      // make sure fragment type matches the type being queried OR its interfaces
-      const sameType = fragment.typeCondition.name.value === gqlType.name
-      const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragment.typeCondition.name.value) >= 0
-      if (sameType || interfaceType) {
-        handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, variables, namespace, options)
+      {
+        const fragmentName = selection.name.value
+        const fragment = fragments[fragmentName]
+        // make sure fragment type (or one of the interfaces it implements) matches the type being queried
+        const fragmentNameOfType = fragment.typeCondition.name.value
+        const sameType = fragmentNameOfType === gqlType.name
+        const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
+        if (sameType || interfaceType) {
+          handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, variables, namespace, options)
+        }
       }
       break
     default:

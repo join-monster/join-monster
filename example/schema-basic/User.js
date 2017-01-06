@@ -11,6 +11,7 @@ import {
 
 import Comment from './Comment'
 import Post from './Post'
+import Person from './Person'
 import { toBase64 } from './utils'
 
 const User = new GraphQLObjectType({
@@ -18,6 +19,7 @@ const User = new GraphQLObjectType({
   name: 'User',
   sqlTable: 'accounts',
   uniqueKey: 'id',
+  interfaces: [ Person ],
   fields: () => ({
     id: {
       type: GraphQLInt

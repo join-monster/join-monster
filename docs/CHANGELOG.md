@@ -1,3 +1,6 @@
+### v0.9.3 (Jan. g, 2017)
+- Add support for fragments on interface types.
+
 ### v0.9.2 (Jan. 5, 2017)
 - Fix bug when composite keys contain timestamps or dates in PG dialect.
 - Patch SQL injection risk.
