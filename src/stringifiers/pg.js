@@ -232,7 +232,7 @@ FROM (
   case 'composite':
     const keys = node.name.map(key => `"${parent.as}"."${key}"`)
     selections.push(
-      `${keys.join(' || ')} AS "${prefix + node.fieldName}"`
+      `CONCAT(${keys.join(', ')}) AS "${prefix + node.fieldName}"`
     )
     break
   case 'expression':
