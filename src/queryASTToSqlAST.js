@@ -176,8 +176,10 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
     case 'FragmentSpread':
       const fragmentName = selection.name.value
       const fragment = fragments[fragmentName]
-      // make sure fragment type matches the type being queried
-      if (fragment.typeCondition.name.value === gqlType.name) {
+      // make sure fragment type matches the type being queried OR its interfaces
+      const sameType = fragment.typeCondition.name.value === gqlType.name
+      const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragment.typeCondition.name.value) >= 0
+      if (sameType || interfaceType) {
         handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, variables, namespace, options)
       }
       break
