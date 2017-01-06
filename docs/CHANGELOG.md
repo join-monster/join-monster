@@ -1,3 +1,7 @@
+### v0.9.2 (Jan. 5, 2017)
+- Fix bug when composite keys contain timestamps or dates in PG dialect.
+- Patch SQL injection risk.
+
 ### v0.9.0 (Jan. 4, 2017)
 - More automatic fetching using `getNode` implemented.
 

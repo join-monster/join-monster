@@ -26,9 +26,22 @@ const User = new GraphQLObjectType({
 })
 ```
 
+The `sqlTable` can generalize to any **table expression**. You could choose a VIEW instead of an actual TABLE. In fact, you can make it a whole subquery!
+
+```javascript
+const User = new GraphQLObjectType({
+  name: 'User',
+  sqlTable: '(SELECT * FROM accounts)', // this can be an expression that generates a TABLE
+  uniqueKey: 'id',
+  fields: () => ({ /*...*/ })
+})
+```
+
+This can be a useful technique if you data *isn't actually modelled like Join Monster expects*. Placing VIEWs on top of your SQL tables is a good way to achieve logical data independence.
+
 ## Composite Keys
 
-If no single column in your table is unique, that's okay. Perhaps you have a *composite key*, where the combined value of multiple column is unique for each row.
+If no single column in your table is unique, that's okay. Perhaps you have a **composite key**, where the combined value of multiple column is unique for each row.
 
 | generation | first_name | last_name |
 | ---------- | ---------- | --------- |

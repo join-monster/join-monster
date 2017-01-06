@@ -1,7 +1,6 @@
 import {
   GraphQLObjectType,
-  GraphQLString,
-  GraphQLInt
+  GraphQLString
 } from 'graphql'
 
 import {
@@ -43,3 +42,4 @@ export const Comment = new GraphQLObjectType({
 
 const { connectionType: CommentConnection } = connectionDefinitions({ nodeType: Comment })
 export { CommentConnection }
+

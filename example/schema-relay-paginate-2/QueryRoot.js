@@ -39,6 +39,7 @@ export default new GraphQLObjectType({
         key: 'id'
       },
       where: (table, args) => {
+        // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
         if (args.search) return `(${table}.first_name ilike '%${args.search}%' OR ${table}.last_name ilike '%${args.search}%')`
       },
       resolve: (parent, args, context, resolveInfo) => {
@@ -84,3 +85,4 @@ export default new GraphQLObjectType({
     }
   })
 })
+

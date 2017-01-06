@@ -39,6 +39,23 @@ Join Monster computes some columns for internal use. It also uses column aliases
 
 ## PostgreSQL Version
 
-If using some of the advanced pagination, a non-standard dialect is required. Currently only Postgres is officially supported. The `LATERAL` keyword is used, which is only in versions 9.3 and later. Theoretically, the `pg` dialect should work on Oracle, but this is not tested.
+<div class="admonition danger">
+  <p class="first admonition-title">Warning</p>
+  <p class="last">
+    If using Postgres, version 9.3 or later is required.
+  </p>
+</div>
 
+If using some of the advanced pagination, a non-standard dialect is required. Currently only PostgreSQL is officially supported. The `LATERAL` keyword is used, which is only in versions 9.3 and later. Theoretically, the `pg` dialect should work on Oracle, but this is not tested.
+
+## SQL Injection
+
+<div class="admonition danger">
+  <p class="first admonition-title">Warning</p>
+  <p class="last">
+    Escape string inputs to prevent SQL injection.
+  </p>
+</div>
+
+Some functions accept values that the library will interpolate into the query, such as `joinMonster.getNode` or the `sortKey` function. **These are properly escaped**. However, some functions return clauses into which the developer will likely interpolate user input. If these are strings containing malicious code, a SQL injection attack can occur. Such functions, like the `where` function, should escape the input. See [this page](/where/) for example.
 

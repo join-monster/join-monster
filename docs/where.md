@@ -37,6 +37,28 @@ const QueryRoot = new GraphQLObjectType({
 }
 ```
 
+This `where` function directly interpolates user input into its clause. This if fine for integers, as the GraphQL validation will prevent malicious input. However, for strings, this is not recommended in production due to SQL injection risk. Instead, you should **escape the input** yourself or use an established library like [sqlstring](https://github.com/mysqljs/sqlstring), [pg-format](https://github.com/datalanche/node-pg-format), or [pg-escape](https://github.com/segmentio/pg-escape).
+
+```javascript
+import escape from 'pg-escape'
+
+const QueryRoot = new GraphQLObjectType({
+  name: 'Query',
+  fields: () => ({
+    user: {
+      type: User,
+      args: {
+        lastName: GraphQLString
+      },
+      where: (usersTable, args, context) => {
+        return escape(`${usersTable}.last_name = %L`, args.lastName)
+      },
+      // ...
+    }
+  })
+})
+```
+
 ## Adding Context
 
 The `joinMonster` function has a second parameter which is basically an arbitrary object with useful contextual information that your `where` functions might depend on. For example, if you want to get the **logged in** user, the ID of the logged in user could be passed in the second argument.
