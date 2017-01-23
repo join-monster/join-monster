@@ -13,9 +13,9 @@ const User = new GraphQLObjectType({
       joinTable: 'relationships', // this is the name of our join table
       sqlJoins: [
         // first the parent table to the join table
-        (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
+        (followerTable, relationTable, args) => `${followerTable}.id = ${relationTable}.follower_id`,
         // then the join table to the child
-        (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
+        (relationTable, followeeTable, args) => `${relationTable}.followee_id = ${followeeTable}.id`
       ]
     },
   })

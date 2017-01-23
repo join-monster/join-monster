@@ -34,7 +34,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     // generate the join or joins
     // this condition is for single joins (one-to-one or one-to-many relations)
     if (node.sqlJoin) {
-      const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`)
+      const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {})
 
       joins.push(
         `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
@@ -42,8 +42,8 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     // this condition is through a join table (many-to-many relations)
     } else if (node.joinTable) {
       if (!node.sqlJoins) throw new Error('Must set "sqlJoins" for a join table.')
-      const joinCondition1 = node.sqlJoins[0](`"${parent.as}"`, `"${node.joinTableAs}"`)
-      const joinCondition2 = node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`)
+      const joinCondition1 = node.sqlJoins[0](`"${parent.as}"`, `"${node.joinTableAs}"`, node.args || {})
+      const joinCondition2 = node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`, node.args || {})
 
       joins.push(
         `LEFT JOIN ${node.joinTable} AS "${node.joinTableAs}" ON ${joinCondition1}`,

@@ -123,4 +123,5 @@ Function for generating a `JOIN` condition.
 | --- | --- | --- |
 | parentTable | <code>String</code> | The alias generated for the parent's table. Already double-quoted. |
 | childTable | <code>String</code> | The alias for the child's table. Already double-quoted. |
+| args | <code>Object</code> | The GraphQL arguments for this field. |
 
