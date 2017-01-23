@@ -167,7 +167,7 @@ $ npm start
 # go to http://localhost:3000/graphql
 ```
 
-Explore the schema, try out some queries, and see what the resulting SQL queries and responses look like in our custom version of GraphiQL!
+Explore the schema, try out some queries, and see what the resulting SQL queries and responses look like in [our custom version of GraphiQL](https://github.com/acarl005/graphsiql)!
 
 ![graphsiql](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/graphsiql.png)
 
