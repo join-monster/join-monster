@@ -1,4 +1,10 @@
-### v0.9.3 (Jan. g, 2017)
+### v0.9.5 (Jan. 24, 2017)
+- Fix bug for Postgres where `CONCAT` returns `''` instead of `NULL`.
+
+### v0.9.4 (Jan. 22, 2017)
+- Expose GraphQL args to `sqlJoin` function.
+
+### v0.9.3 (Jan. 14, 2017)
 - Add support for fragments on interface types.
 
 ### v0.9.2 (Jan. 5, 2017)
