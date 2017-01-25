@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "A GraphQL-to-SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -65,7 +65,7 @@
   },
   "homepage": "https://github.com/stems/join-monster#readme",
   "peerDependencies": {
-    "graphql": "0.6 || 0.7 || 0.8"
+    "graphql": "0.6 || 0.7 || 0.8 || 0.9"
   },
   "devDependencies": {
     "ava": "^0.17.0",
