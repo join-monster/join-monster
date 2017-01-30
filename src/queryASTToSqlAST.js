@@ -60,7 +60,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
   // if list then mark flag true & get the type inside the GraphQLList container type
   if (gqlType.constructor.name === 'GraphQLList') {
-    gqlType = gqlType.ofType
+    gqlType = stripNonNullType(gqlType.ofType)
     grabMany = true
   }
 

@@ -1,6 +1,7 @@
 import {
   GraphQLObjectType,
   GraphQLList,
+  GraphQLNonNull,
   GraphQLString,
   GraphQLInt
 } from 'graphql'
@@ -52,7 +53,7 @@ const User = new GraphQLObjectType({
     },
     comments: {
       description: 'Comments the user has written on people\'s posts',
-      type: new GraphQLList(Comment),
+      type: new GraphQLList(new GraphQLNonNull(Comment)),
       sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
     },
     posts: {
