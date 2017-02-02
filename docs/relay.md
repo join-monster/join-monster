@@ -251,9 +251,10 @@ Because the cursor is predictable, you get another interesting capability. You c
             node {
               id, body
               comments(first: 5, after: "YXJyYXljb25uZWN0aW9uOjk=") {
-                edges
-                node {
-                  id, body
+                edges {
+                  node {
+                    id, body
+                  }
                 }
               }
             }
@@ -353,9 +354,10 @@ Because the cursor identifies it's object by a key, it will not be tripped up by
             node {
               id, body
               comments(first: 5) {
-                edges
-                node {
-                  id, body
+                edges {
+                  node {
+                    id, body
+                  }
                 }
               }
             }
