@@ -12,7 +12,7 @@ export default async function stringifySqlAST(topNode, context) {
   // GraphQL does not prevent queries with duplicate fields
   selections = [ ...new Set(selections) ]
 
-  // bail out if they made no selections 
+  // bail out if they made no selections
   if (!selections.length) return ''
 
   // put together the SQL query
@@ -33,7 +33,11 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     if (node.where && !node.paginate) {
       const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context)
       if (whereCondition) {
-        wheres.push(`${whereCondition}`)
+        if( whereCondition instanceof Array ) {
+          wheres = wheres.concat( whereCondition )
+        } else {
+          wheres.push(`${whereCondition}`)
+        }
       }
     }
 
@@ -46,7 +50,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
       if (node.paginate) {
         let whereCondition = node.sqlJoin(`"${parent.as}"`, node.name, node.args || {})
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context)
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -95,7 +99,7 @@ LEFT JOIN LATERAL (
           `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
         )
       }
-    
+
     // this branch is for many-to-many relations, needs two joins
     } else if (node.joinTable) {
       if (!node.sqlJoins) throw new Error('Must set "sqlJoins" for a join table.')
@@ -105,7 +109,7 @@ LEFT JOIN LATERAL (
       if (node.paginate) {
         let whereCondition = node.sqlJoins[0](`"${parent.as}"`, node.joinTable, node.args || {})
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context)
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -162,7 +166,7 @@ LEFT JOIN LATERAL (
         let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
         whereCondition = whereCondition || 'TRUE'
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context)
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -183,7 +187,7 @@ FROM (
         const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
         let whereCondition = 'TRUE'
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context)
           if (filterCondition) {
             whereCondition = filterCondition
           }
@@ -367,4 +371,3 @@ function validateCursor(cursorObj, expectedKeys) {
     }
   }
 }
-
