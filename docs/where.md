@@ -2,7 +2,7 @@
 
 We of course don't always want every row from every table. We need a way to place a `WHERE` clause in the query.
 
-In a similar manner to the `sqlJoin` function, you can define a `where` function on a field. Its parameters are the table alias (generated automatically by `joinMonster`), the GraphQL arguments on that field, and the "context" mentioned earlier. The string returned is the `WHERE` condition. If a falsy value is returned, there will be no `WHERE` condition. We'll add another top-level field that just returns one user.
+In a similar manner to the `sqlJoin` function, you can define a `where` function on a field. Its parameters are the table alias (generated automatically by `joinMonster`), the GraphQL arguments on that field, the "context" mentioned earlier, and the parent table aliases. The string returned is the `WHERE` condition. If a falsy value is returned, there will be no `WHERE` condition. We'll add another top-level field that just returns one user.
 
 ```javascript
 const QueryRoot = new GraphQLObjectType({
@@ -81,4 +81,8 @@ The `joinMonster` function has a second parameter which is basically an arbitrar
 ```
 
 Again, don't forget to double-quote case sensitive column names.
+
+## Referencing Related Tables
+
+Does your `WHERE` condition need to reference columns on the table from the parent field? You can reference its table alias with the fourth parameter. It's an array of the table aliases for all fields antecedent of this one, starting with the direct parent.
 

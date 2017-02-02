@@ -30,6 +30,7 @@ import { emphasize, inspect, buildWhereFunction } from './util'
  * @param {String} tableAlias - The alias generated for this table. Already double-quoted.
  * @param {Object} args - The GraphQL arguments for this field.
  * @param {Object} context - An Object with arbitrary contextual information.
+ * @param {Array.<String>} parentAliases - List of aliases of the antecedent tables, starting with the parent field.
  * @returns {String} The condition for the `WHERE` clause.
  */
 /**

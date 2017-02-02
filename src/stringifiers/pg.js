@@ -1,11 +1,12 @@
-import { validateSqlAST, inspect, cursorToObj, wrap, maybeQuote } from '../util'
 import { cursorToOffset } from 'graphql-relay'
+import { validateSqlAST, inspect, cursorToObj, wrap, maybeQuote } from '../util'
+import { joinPrefix } from './shared'
 
 export default async function stringifySqlAST(topNode, context) {
   validateSqlAST(topNode)
 
   // recursively figure out all the selections, joins, and where conditions that we need
-  let { selections, joins, wheres, orders } = await _stringifySqlAST(null, topNode, '', context, [], [], [], [])
+  let { selections, joins, wheres, orders } = await _stringifySqlAST(null, topNode, [], context, [], [], [], [])
 
   // make sure these are unique by converting to a set and then back to an array
   // e.g. we want to get rid of things like `SELECT user.id as id, user.id as id, ...`
@@ -31,7 +32,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
   case 'table':
     // generate the "where" condition, if applicable
     if (node.where && !node.paginate) {
-      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context)
+      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context, prefix)
       if (whereCondition) {
         wheres.push(`${whereCondition}`)
       }
@@ -46,7 +47,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
       if (node.paginate) {
         let whereCondition = node.sqlJoin(`"${parent.as}"`, node.name, node.args || {})
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -105,7 +106,7 @@ LEFT JOIN LATERAL (
       if (node.paginate) {
         let whereCondition = node.sqlJoins[0](`"${parent.as}"`, node.joinTable, node.args || {})
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -162,7 +163,7 @@ LEFT JOIN LATERAL (
         let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
         whereCondition = whereCondition || 'TRUE'
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -183,7 +184,7 @@ FROM (
         const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
         let whereCondition = 'TRUE'
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
           if (filterCondition) {
             whereCondition = filterCondition
           }
@@ -211,34 +212,34 @@ FROM (
 
     // recurse thru nodes
     for (let child of node.children) {
-      _stringifySqlAST(node, child, parent ? prefix + node.as + '__' : prefix, context, selections, joins, wheres, orders)
+      _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres, orders)
     }
 
     break
   case 'column':
     let parentTable = node.fromOtherTable || parent.as
     selections.push(
-      `"${parentTable}"."${node.name}" AS "${prefix + node.as}"`
+      `"${parentTable}"."${node.name}" AS "${joinPrefix(prefix) + node.as}"`
     )
     break
   case 'columnDeps':
     // grab the dependant columns
     for (let name in node.names) {
       selections.push(
-        `"${parent.as}"."${name}" AS "${prefix + node.names[name]}"`
+        `"${parent.as}"."${name}" AS "${joinPrefix(prefix) + node.names[name]}"`
       )
     }
     break
   case 'composite':
     const keys = node.name.map(key => `"${parent.as}"."${key}"`)
     selections.push(
-      `NULLIF(CONCAT(${keys.join(', ')}), '') AS "${prefix + node.fieldName}"`
+      `NULLIF(CONCAT(${keys.join(', ')}), '') AS "${joinPrefix(prefix) + node.fieldName}"`
     )
     break
   case 'expression':
     const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context)
     selections.push(
-      `${expr} AS "${prefix + node.as}"`
+      `${expr} AS "${joinPrefix(prefix) + node.as}"`
     )
     break
   case 'noop':

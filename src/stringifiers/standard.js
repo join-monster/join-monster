@@ -1,9 +1,10 @@
 import { validateSqlAST, inspect } from '../util'
+import { joinPrefix } from './shared'
 
 export default async function stringifySqlAST(topNode, context) {
   validateSqlAST(topNode)
   // recursively determine the selections, joins, and where conditions that we need
-  let { selections, joins, wheres } = await _stringifySqlAST(null, topNode, '', context, [], [], [])
+  let { selections, joins, wheres } = await _stringifySqlAST(null, topNode, [], context, [], [], [])
 
   // make sure these are unique by converting to a set and then back to an array
   // defend against things like `SELECT user.id AS id, user.id AS id...`
@@ -25,7 +26,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
   case 'table':
     // generate the "where" condition, if applicable
     if (node.where) {
-      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context)
+      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context, prefix)
       if (whereCondition) {
         wheres.push(`${whereCondition}`)
       }
@@ -58,19 +59,19 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
 
     // recurse thru nodes
     for (let child of node.children) {
-      _stringifySqlAST(node, child, parent ? prefix + node.as + '__' : prefix, context, selections, joins, wheres)
+      _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres)
     }
 
     break
   case 'column':
     selections.push(
-      `"${parent.as}"."${node.name}" AS "${prefix + node.as}"`
+      `"${parent.as}"."${node.name}" AS "${joinPrefix(prefix) + node.as}"`
     )
     break
   case 'columnDeps':
     for (let name in node.names) {
       selections.push(
-        `"${parent.as}"."${name}" AS "${prefix + node.names[name]}"`
+        `"${parent.as}"."${name}" AS "${joinPrefix(prefix) + node.names[name]}"`
       )
     }
     break
@@ -79,13 +80,13 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     // use the || operator for concatenation.
     // this is NOT supported in all SQL databases, e.g. some use a CONCAT function instead...
     selections.push(
-      `${keys.join(' || ')} AS "${prefix + node.fieldName}"`
+      `${keys.join(' || ')} AS "${joinPrefix(prefix) + node.fieldName}"`
     )
     break
   case 'expression':
     const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context)
     selections.push(
-      `${expr} AS "${prefix + node.as}"`
+      `${expr} AS "${joinPrefix(prefix) + node.as}"`
     )
     break
   case 'noop':

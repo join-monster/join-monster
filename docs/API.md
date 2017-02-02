@@ -111,6 +111,7 @@ Function for generating a `WHERE` condition.
 | tableAlias | <code>String</code> | The alias generated for this table. Already double-quoted. |
 | args | <code>Object</code> | The GraphQL arguments for this field. |
 | context | <code>Object</code> | An Object with arbitrary contextual information. |
+| parentAliases | <code>Array.&lt;String&gt;</code> | List of aliases of the antecedent tables, starting with the parent field. |
 
 <a name="sqlJoin"></a>
 

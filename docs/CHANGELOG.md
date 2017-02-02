@@ -1,3 +1,6 @@
+### v0.9.8 (Feb. 2, 2017)
+- Expose parent table aliases to `where` function.
+
 ### v0.9.5 (Jan. 24, 2017)
 - Fix bug for Postgres where `CONCAT` returns `''` instead of `NULL`.
 
