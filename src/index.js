@@ -38,6 +38,7 @@ import { emphasize, inspect, buildWhereFunction } from './util'
  * @callback sqlJoin
  * @param {String} parentTable - The alias generated for the parent's table. Already double-quoted.
  * @param {String} childTable - The alias for the child's table. Already double-quoted.
+ * @param {Object} context - An Object with arbitrary contextual information.
  * @returns {String} The condition for the `LEFT JOIN`.
  */
 

@@ -1,3 +1,7 @@
+### v0.9.9 (Feb. 3, 2017)
+- Add `context` to the `sqlJoin` parameters.
+- Support async in `sqlJoin`.
+
 ### v0.9.8 (Feb. 2, 2017)
 - Expose parent table aliases to `where` function.
 

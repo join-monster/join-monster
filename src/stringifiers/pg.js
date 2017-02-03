@@ -41,11 +41,11 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     // generate the join or joins
     // this condition is for single joins (one-to-one or one-to-many relations)
     if (node.sqlJoin) {
-      const joinCondition = node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {})
+      const joinCondition = await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context)
 
       // do we need to paginate? if so this will be a lateral join
       if (node.paginate) {
-        let whereCondition = node.sqlJoin(`"${parent.as}"`, node.name, node.args || {})
+        let whereCondition = await node.sqlJoin(`"${parent.as}"`, node.name, node.args || {}, context)
         if (node.where) {
           const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
           if (filterCondition) {
@@ -100,11 +100,11 @@ LEFT JOIN LATERAL (
     // this branch is for many-to-many relations, needs two joins
     } else if (node.joinTable) {
       if (!node.sqlJoins) throw new Error('Must set "sqlJoins" for a join table.')
-      const joinCondition1 = node.sqlJoins[0](`"${parent.as}"`, `"${node.joinTableAs}"`, node.args || {})
-      const joinCondition2 = node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`, node.args || {})
+      const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.joinTableAs}"`, node.args || {}, context)
+      const joinCondition2 = await node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`, node.args || {}, context)
 
       if (node.paginate) {
-        let whereCondition = node.sqlJoins[0](`"${parent.as}"`, node.joinTable, node.args || {})
+        let whereCondition = await node.sqlJoins[0](`"${parent.as}"`, node.joinTable, node.args || {}, context)
         if (node.where) {
           const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
           if (filterCondition) {
@@ -212,7 +212,7 @@ FROM (
 
     // recurse thru nodes
     for (let child of node.children) {
-      _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres, orders)
+      await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres, orders)
     }
 
     break

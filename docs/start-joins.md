@@ -23,7 +23,7 @@ We need to add a field to our `User`, and tell `joinMonster` how to grab these c
 
 ## Writing the JOIN Condition
 
-This can be done with a `sqlJoin` property with a function. It will take the parent table and child table names (actually the aliases that `joinMonster` will generate) as parameters respectively and return the join condition.
+This can be done with a `sqlJoin` property with a function. It will take the parent table and child table names (actually the aliases that `joinMonster` will generate) and GraphQL args as parameters respectively and return the join condition.
 
 ```javascript
 const User = new GraphQLObjectType({

@@ -19,7 +19,7 @@ const Post = new GraphQLObjectType({
     author: {
       description: 'The user that created the post',
       type: User,
-      sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id`
+      sqlJoin: (postTable, userTable, args, context) => `${postTable}.author_id = ${userTable}.id`
     }
   })
 })
