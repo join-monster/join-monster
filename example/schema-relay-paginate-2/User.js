@@ -64,7 +64,11 @@ const User = new GraphQLObjectType({
       where: (table, args) => {
         if (args.search) return `${table}.body ilike '%${args.search}%'`
       },
-      sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
+      sqlBatch: {
+        thisKey: 'author_id',
+        parentKey: 'id'
+      }
+      //sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
     },
     following: {
       description: 'Users that this user is following',

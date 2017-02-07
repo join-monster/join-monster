@@ -164,10 +164,60 @@ LEFT JOIN LATERAL (
           `"${parent.as}"."${node.sqlBatch.parentKey.name}" AS "${joinPrefix(prefix) + node.sqlBatch.parentKey.as}"`
         )
       } else {
-        joins.push(
-          `FROM ${node.name} AS "${node.as}"`
-        )
-        wheres.push(`"${node.as}"."${node.sqlBatch.thisKey.name}" IN (${batchScope.join(',')})`)
+        if (node.paginate) {
+          if (node.sortKey) {
+            let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
+            whereCondition = whereCondition || 'TRUE'
+            whereCondition += ' AND ' + `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+            if (node.where) {
+              const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
+              if (filterCondition) {
+                whereCondition += ' AND ' + filterCondition
+              }
+            }
+            const join = `\
+FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")
+LEFT JOIN LATERAL (
+  SELECT * FROM ${node.name}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns)}
+  LIMIT ${limit}
+) AS "${node.as}" ON "${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+            joins.push(join)
+            orders.push({
+              table: node.as,
+              columns: orderColumns
+            })
+          } else if (node.orderBy) {
+            const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
+            let whereCondition = 'TRUE'
+            if (node.where) {
+              const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
+              if (filterCondition) {
+                whereCondition = filterCondition
+              }
+            }
+            whereCondition += ' AND ' + `"${node.as}"."${node.sqlBatch.thisKey.name}" IN (${batchScope.join(',')})`
+            const join = `\
+FROM (
+  SELECT *, count(*) OVER () AS "$total"
+  FROM ${node.name}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns)}
+  LIMIT ${limit} OFFSET ${offset}
+) AS "${node.as}"`
+            joins.push(join)
+            orders.push({
+              table: node.as,
+              columns: orderColumns
+            })
+          }
+        } else {
+          joins.push(
+            `FROM ${node.name} AS "${node.as}"`
+          )
+          wheres.push(`"${node.as}"."${node.sqlBatch.thisKey.name}" IN (${batchScope.join(',')})`)
+        }
       }
     } else if (node.paginate) {
       if (node.sortKey) {

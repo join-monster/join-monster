@@ -18,6 +18,13 @@ const options = {
   dialect: process.env.PG_URL ? 'pg' : 'standard'
 }
 
+function dbCall(sql, context) {
+  if (context) {
+    context.set('X-SQL-Preview', context.response.get('X-SQL-Preview') + '%0A%0A' + sql.replace(/\n/g, '%0A'))
+  }
+  return knex.raw(sql)
+}
+
 export default new GraphQLObjectType({
   description: 'global query object',
   name: 'Query',
@@ -43,13 +50,7 @@ export default new GraphQLObjectType({
         if (args.search) return `(${table}.first_name ilike '%${args.search}%' OR ${table}.last_name ilike '%${args.search}%')`
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => {
-          // place the SQL query in the response headers. ONLY for debugging. Don't do this in production
-          if (context) {
-            context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
-          }
-          return knex.raw(sql)
-        }, options)
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, context), options)
       }
     },
     user: {
@@ -64,12 +65,7 @@ export default new GraphQLObjectType({
         if (args.id) return `${usersTable}.id = ${args.id}`
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => {
-          if (context) {
-            context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
-          }
-          return knex.raw(sql)
-        }, options)
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, context), options)
       }
     },
     sponsors: {

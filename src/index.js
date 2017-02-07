@@ -81,7 +81,11 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
         if (Array.isArray(data)) {
           const batchScope = uniq(data.map(obj => maybeQuote(obj[parentField])))
           const { sql, shapeDefinition } = await compileSqlAST(child, context, { ...options, batchScope } )
-          const newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition), child)
+          let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition), child)
+          //if (child.paginate) {
+            //newData = map(newData.edges, 'node')
+          //}
+          console.log({ newData })
           const indexed = groupBy(newData, obj => obj[thisField])
           if (child.grabMany) {
             for (let obj of data) {
@@ -97,7 +101,7 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
         } else {
           const batchScope = [ data[parentField] ]
           const { sql, shapeDefinition } = await compileSqlAST(child, context, { ...options, batchScope } )
-          const newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition), child)
+          let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition), child)
           const indexed = groupBy(newData, obj => obj[thisField])
           const fieldName = child.fieldName
           if (child.grabMany) {
