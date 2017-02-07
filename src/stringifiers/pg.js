@@ -2,11 +2,11 @@ import { cursorToOffset } from 'graphql-relay'
 import { validateSqlAST, inspect, cursorToObj, wrap, maybeQuote } from '../util'
 import { joinPrefix } from './shared'
 
-export default async function stringifySqlAST(topNode, context) {
+export default async function stringifySqlAST(topNode, context, batchScope) {
   validateSqlAST(topNode)
 
   // recursively figure out all the selections, joins, and where conditions that we need
-  let { selections, joins, wheres, orders } = await _stringifySqlAST(null, topNode, [], context, [], [], [], [])
+  let { selections, joins, wheres, orders } = await _stringifySqlAST(null, topNode, [], context, [], [], [], [], batchScope)
 
   // make sure these are unique by converting to a set and then back to an array
   // e.g. we want to get rid of things like `SELECT user.id as id, user.id as id, ...`
@@ -27,7 +27,7 @@ export default async function stringifySqlAST(topNode, context) {
   return sql
 }
 
-async function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres, orders) {
+async function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres, orders, batchScope) {
   switch(node.type) {
   case 'table':
     // generate the "where" condition, if applicable
@@ -158,6 +158,17 @@ LEFT JOIN LATERAL (
       )
 
     // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause
+    } else if (node.sqlBatch) {
+      if (parent) {
+        selections.push(
+          `"${parent.as}"."${node.sqlBatch.parentKey.name}" AS "${joinPrefix(prefix) + node.sqlBatch.parentKey.as}"`
+        )
+      } else {
+        joins.push(
+          `FROM ${node.name} AS "${node.as}"`
+        )
+        wheres.push(`"${node.as}"."${node.sqlBatch.thisKey.name}" IN (${batchScope.join(',')})`)
+      }
     } else if (node.paginate) {
       if (node.sortKey) {
         let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
@@ -211,8 +222,10 @@ FROM (
     }
 
     // recurse thru nodes
-    for (let child of node.children) {
-      await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres, orders)
+    if (!node.sqlBatch || !parent) {
+      for (let child of node.children) {
+        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres, orders)
+      }
     }
 
     break

@@ -1,10 +1,10 @@
-import { validateSqlAST, inspect } from '../util'
+import { validateSqlAST, inspect, maybeQuote } from '../util'
 import { joinPrefix } from './shared'
 
-export default async function stringifySqlAST(topNode, context) {
+export default async function stringifySqlAST(topNode, context, batchScope) {
   validateSqlAST(topNode)
   // recursively determine the selections, joins, and where conditions that we need
-  let { selections, joins, wheres } = await _stringifySqlAST(null, topNode, [], context, [], [], [])
+  let { selections, joins, wheres } = await _stringifySqlAST(null, topNode, [], context, [], [], [], batchScope)
 
   // make sure these are unique by converting to a set and then back to an array
   // defend against things like `SELECT user.id AS id, user.id AS id...`
@@ -21,7 +21,7 @@ export default async function stringifySqlAST(topNode, context) {
   return sql
 }
 
-async function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres) {
+async function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres, batchScope) {
   switch(node.type) {
   case 'table':
     // generate the "where" condition, if applicable
@@ -50,6 +50,17 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
         `LEFT JOIN ${node.joinTable} AS ${quote(node.joinTableAs)} ON ${joinCondition1}`,
         `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition2}`
       )
+    } else if (node.sqlBatch) {
+      if (parent) {
+        selections.push(
+          `${quote(parent.as)}.${quote(node.sqlBatch.parentKey.name)} AS ${quote(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`
+        )
+      } else {
+        joins.push(
+          `FROM ${node.name} AS ${quote(node.as)}`
+        )
+        wheres.push(`${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} IN (${batchScope.map(maybeQuote).join(',')})`)
+      }
     } else {
       // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
       joins.push(
@@ -58,8 +69,10 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     }
 
     // recurse thru nodes
-    for (let child of node.children) {
-      await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres)
+    if (!node.sqlBatch || !parent) {
+      for (let child of node.children) {
+        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres)
+      }
     }
 
     break

@@ -54,12 +54,18 @@ const User = new GraphQLObjectType({
     comments: {
       description: 'Comments the user has written on people\'s posts',
       type: new GraphQLList(new GraphQLNonNull(Comment)),
-      sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
+      sqlBatch: {
+        thisKey: 'author_id',
+        parentKey: 'id'
+      }
     },
     posts: {
       description: 'A list of Posts the user has written',
       type: new GraphQLList(Post),
-      sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
+      sqlBatch: {
+        thisKey: 'author_id',
+        parentKey: 'id'
+      }
     },
     following: {
       description: 'Users that this user is following',

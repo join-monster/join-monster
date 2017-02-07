@@ -47,3 +47,4 @@ app.use(router.routes())
 app.use(koaStatic(path.join(__dirname, '../node_modules/graphsiql')))
 
 app.listen(3000, () => console.log('server listening at http://localhost:3000/graphql and http://localhost:3000/graphql-relay'))
+

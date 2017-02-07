@@ -20,10 +20,18 @@ export default new GraphQLObjectType({
       description: 'The content of the comment',
       type: GraphQLString
     },
+    postId: {
+      type: GraphQLInt,
+      sqlColumn: 'post_id'
+    },
     post: {
       description: 'The post that the comment belongs to',
       type: Post,
       sqlJoin: (commentTable, postTable) => `${commentTable}.post_id = ${postTable}.id`
+    },
+    authorId: {
+      type: GraphQLInt,
+      sqlColumn: 'author_id'
     },
     author: {
       description: 'The user who wrote the comment',

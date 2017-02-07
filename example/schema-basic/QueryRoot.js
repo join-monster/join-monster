@@ -22,6 +22,18 @@ if (knex.client.config.client === 'mysql') {
   options.dialect = 'pg'
 }
 
+function dbCall(sql, context) {
+  if (context) {
+    context.set('X-SQL-Preview', context.response.get('X-SQL-Preview') + '%0A%0A' + sql.replace(/\n/g, '%0A'))
+  }
+  return knex.raw(sql).then(result => {
+    if (options.dialect === 'mysql') {
+      return result[0]
+    }
+    return result
+  })
+}
+
 export default new GraphQLObjectType({
   description: 'global query object',
   name: 'Query',
@@ -33,19 +45,7 @@ export default new GraphQLObjectType({
     users: {
       type: new GraphQLList(User),
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => {
-          // place the SQL query in the response headers. ONLY for debugging. Don't do this in production
-          if (context) {
-            context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
-          }
-          return knex.raw(sql).then(result => {
-            // knex returns different objects based on the dialect...
-            if (options.dialect === 'mysql') {
-              return result[0]
-            }
-            return result
-          })
-        }, options)
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, context), options)
       }
     },
     user: {
@@ -70,17 +70,7 @@ export default new GraphQLObjectType({
         if (args.idAsync) return Promise.resolve(`${usersTable}.id = ${args.idAsync}`)
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => {
-          if (context) {
-            context.set('X-SQL-Preview', sql.replace(/\n/g, '%0A'))
-          }
-          return knex.raw(sql).then(result => {
-            if (options.dialect === 'mysql') {
-              return result[0]
-            }
-            return result
-          })
-        }, options)
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, context), options)
       }
     },
     sponsors: {

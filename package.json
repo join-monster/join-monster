@@ -28,8 +28,8 @@
   },
   "ava": {
     "concurrency": 10,
-    "verbose": true,
     "failFast": true,
+    "verbose": true,
     "require": "babel-register",
     "babel": {
       "babelrc": true
@@ -85,7 +85,7 @@
     "koa-cors": "0.0.16",
     "koa-custom-graphiql": "0.0.3",
     "koa-graphql": "^0.6.0",
-    "koa-router": "^7.1.0",
+    "koa-router": "^5.4.0",
     "koa-static": "^2.0.0",
     "mysql": "^2.12.0",
     "nyc": "^10.0.0",
@@ -96,6 +96,6 @@
   "dependencies": {
     "generatorics": "^1.0.8",
     "graphql-relay": "^0.5.0",
-    "nesthydrationjs": "^0.4.0"
+    "nesthydrationjs": "0.4.0"
   }
 }

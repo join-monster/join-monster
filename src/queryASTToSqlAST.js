@@ -133,10 +133,27 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   if (field.sqlJoin) {
     sqlASTNode.sqlJoin = field.sqlJoin
   }
-  if (field.joinTable) {
+  else if (field.joinTable) {
+    assert(field.sqlJoins, 'Must define `sqlJoins` (plural) for a many-to-many.')
     sqlASTNode.sqlJoins = field.sqlJoins
     sqlASTNode.joinTable = field.joinTable
     sqlASTNode.joinTableAs = namespace.generate('table', field.joinTable)
+  }
+  else if (field.sqlBatch) {
+    sqlASTNode.sqlBatch = {
+      thisKey: {
+        type: 'column',
+        name: field.sqlBatch.thisKey,
+        fieldName: field.sqlBatch.thisKey,
+        as: namespace.generate('column', field.sqlBatch.thisKey)
+      },
+      parentKey: {
+        type: 'column',
+        name: field.sqlBatch.parentKey,
+        fieldName: field.sqlBatch.parentKey,
+        as: namespace.generate('column', field.sqlBatch.parentKey)
+      },
+    }
   }
 
   // tables have child fields, lets push them to an array

@@ -21,15 +21,25 @@ export default new GraphQLObjectType({
       description: 'The content of the post',
       type: GraphQLString
     },
+    authorId: {
+      type: GraphQLInt,
+      sqlColumn: 'author_id'
+    },
     author: {
       description: 'The user that created the post',
       type: User,
-      sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id`
+      sqlBatch: {
+        thisKey: 'id',
+        parentKey: 'author_id'
+      }
     },
     comments: {
       description: 'The comments on this post',
       type: new GraphQLList(Comment),
-      sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
+      sqlBatch: {
+        thisKey: 'post_id',
+        parentKey: 'id'
+      }
     }
   })
 })

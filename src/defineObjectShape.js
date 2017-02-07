@@ -31,8 +31,12 @@ function _defineObjectShape(parent, prefix, node) {
         fieldDefinition[child.fieldName] = prefixToPass + child.as
         break
       case 'table':
-        const definition = _defineObjectShape(node, prefixToPass, child)
-        fieldDefinition[child.fieldName] = definition
+        if (child.sqlBatch) {
+          fieldDefinition[child.sqlBatch.parentKey.fieldName] = prefixToPass + child.sqlBatch.parentKey.as
+        } else {
+          const definition = _defineObjectShape(node, prefixToPass, child)
+          fieldDefinition[child.fieldName] = definition
+        }
       }
     }
 

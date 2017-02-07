@@ -1,12 +1,13 @@
 import util from 'util'
 import { nest } from 'nesthydrationjs'
+import { groupBy, map, flatMap, uniq } from 'lodash'
 const debug = require('debug')('join-monster')
 
 import * as queryAST from './queryASTToSqlAST'
 import defineObjectShape from './defineObjectShape'
 import postProcess from './postProcess'
 import AliasNamespace from './aliasNamespace'
-import { emphasize, inspect, buildWhereFunction } from './util'
+import { emphasize, inspect, buildWhereFunction, wrap, maybeQuote } from './util'
 
 
 /**
@@ -61,25 +62,63 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   if (!sql) return {}
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
-  return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST)
+  const data = await handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST)
+  await nextBatch(sqlAST, data, dbCall, context, options)
+  return data
 }
 
-
-/**
- * Takes the GraphQL resolveInfo and returns only the SQL query.
- * @param {Object} resolveInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
- * @param {Object} context - An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization.
- * @param {Object} [options] - Same as `joinMonster` function's options.
- * @returns {Promise.<string>} The SQL query generated
- */
-async function getSQL(resolveInfo, context, options = {}) {
-  // same as above
-  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options)
-  const { sql } = await compileSqlAST(sqlAST, context, options)
-  return sql
+async function nextBatch(sqlAST, data, dbCall, context, options) {
+  if (sqlAST.paginate) {
+    data = map(data.edges, 'node')
+  }
+  for (let child of sqlAST.children) {
+    if (child.type === 'table') {
+      const fieldName = child.fieldName
+      if (child.sqlBatch) {
+        child.children.push(child.sqlBatch.thisKey)
+        const thisField = child.sqlBatch.thisKey.fieldName
+        const parentField = child.sqlBatch.parentKey.fieldName
+        if (Array.isArray(data)) {
+          const batchScope = uniq(data.map(obj => maybeQuote(obj[parentField])))
+          const { sql, shapeDefinition } = await compileSqlAST(child, context, { ...options, batchScope } )
+          const newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition), child)
+          const indexed = groupBy(newData, obj => obj[thisField])
+          if (child.grabMany) {
+            for (let obj of data) {
+              obj[fieldName] = indexed[obj[parentField]] || []
+            }
+          } else {
+            for (let obj of data) {
+              obj[fieldName] = indexed[obj[parentField]][0]
+            }
+          }
+          const nextLevelData = flatMap(data, obj => obj[fieldName])
+          await nextBatch(child, nextLevelData, dbCall, context, options)
+        } else {
+          const batchScope = [ data[parentField] ]
+          const { sql, shapeDefinition } = await compileSqlAST(child, context, { ...options, batchScope } )
+          const newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition), child)
+          const indexed = groupBy(newData, obj => obj[thisField])
+          const fieldName = child.fieldName
+          if (child.grabMany) {
+            data[fieldName] = indexed[data[parentField]] || []
+          } else {
+            data[fieldName] = indexed[data[parentField]][0]
+          }
+          await nextBatch(child, data[fieldName], dbCall, context, options)
+        }
+      } else {
+        if (Array.isArray(data)) {
+          const nextLevelData = flatMap(data, obj => obj[fieldName])
+          await nextBatch(child, nextLevelData, dbCall, context, options)
+        } else {
+          await nextBatch(child, data[fieldName], dbCall, context, options)
+        }
+      }
+    }
+  }
 }
 
-joinMonster.getSQL = getSQL
 
 
 async function compileSqlAST(sqlAST, context, options) {
@@ -88,7 +127,7 @@ async function compileSqlAST(sqlAST, context, options) {
   // now convert the "SQL AST" to sql
   const dialect = options.dialect || 'standard'
   const stringify = require('./stringifiers/' + dialect).default
-  const sql = await stringify(sqlAST, context)
+  const sql = await stringify(sqlAST, context, options.batchScope)
   debug(emphasize('SQL'), sql)
 
 // figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
