@@ -1,6 +1,6 @@
 import util from 'util'
 import { nest } from 'nesthydrationjs'
-import { groupBy, map, flatMap, uniq } from 'lodash'
+import { groupBy, map, flatMap, uniq, forIn, chain } from 'lodash'
 const debug = require('debug')('join-monster')
 
 import * as queryAST from './queryASTToSqlAST'
@@ -62,61 +62,69 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   if (!sql) return {}
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
-  const data = await handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST)
+  const data = postProcess(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)
   await nextBatch(sqlAST, data, dbCall, context, options)
   return data
 }
 
 async function nextBatch(sqlAST, data, dbCall, context, options) {
   if (sqlAST.paginate) {
-    data = map(data.edges, 'node')
+    if (Array.isArray(data)) {
+      data = chain(data).flatMap('edges').map('node').value()
+    } else {
+      data = map(data.edges, 'node')
+    }
   }
-  for (let child of sqlAST.children) {
-    if (child.type === 'table') {
-      const fieldName = child.fieldName
-      if (child.sqlBatch) {
-        child.children.push(child.sqlBatch.thisKey)
-        const thisField = child.sqlBatch.thisKey.fieldName
-        const parentField = child.sqlBatch.parentKey.fieldName
+  for (let childAST of sqlAST.children) {
+    if (childAST.type === 'table') {
+      const fieldName = childAST.fieldName
+      if (childAST.sqlBatch) {
+        childAST.children.push(childAST.sqlBatch.thisKey)
+        const thisField = childAST.sqlBatch.thisKey.fieldName
+        const parentField = childAST.sqlBatch.parentKey.fieldName
         if (Array.isArray(data)) {
           const batchScope = uniq(data.map(obj => maybeQuote(obj[parentField])))
-          const { sql, shapeDefinition } = await compileSqlAST(child, context, { ...options, batchScope } )
-          let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition), child)
-          //if (child.paginate) {
-            //newData = map(newData.edges, 'node')
-          //}
-          console.log({ newData })
-          const indexed = groupBy(newData, obj => obj[thisField])
-          if (child.grabMany) {
+          const { sql, shapeDefinition } = await compileSqlAST(childAST, context, { ...options, batchScope } )
+          let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition))
+          newData = groupBy(newData, thisField)
+          if (childAST.paginate) {
+            forIn(newData, (group, key, obj) => {
+              obj[key] = postProcess(group, childAST)
+            })
+          }
+          if (childAST.grabMany) {
             for (let obj of data) {
-              obj[fieldName] = indexed[obj[parentField]] || []
+              obj[fieldName] = newData[obj[parentField]] || []
             }
           } else {
             for (let obj of data) {
-              obj[fieldName] = indexed[obj[parentField]][0]
+              obj[fieldName] = newData[obj[parentField]][0]
             }
           }
           const nextLevelData = flatMap(data, obj => obj[fieldName])
-          await nextBatch(child, nextLevelData, dbCall, context, options)
+          await nextBatch(childAST, nextLevelData, dbCall, context, options)
         } else {
           const batchScope = [ data[parentField] ]
-          const { sql, shapeDefinition } = await compileSqlAST(child, context, { ...options, batchScope } )
-          let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition), child)
-          const indexed = groupBy(newData, obj => obj[thisField])
-          const fieldName = child.fieldName
-          if (child.grabMany) {
-            data[fieldName] = indexed[data[parentField]] || []
+          const { sql, shapeDefinition } = await compileSqlAST(childAST, context, { ...options, batchScope } )
+          let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition))
+          newData = groupBy(newData, thisField)
+          if (childAST.paginate){
+            data[fieldName] = postProcess(newData[data[parentField]], childAST)
           } else {
-            data[fieldName] = indexed[data[parentField]][0]
+            if (childAST.grabMany) {
+              data[fieldName] = newData[data[parentField]] || []
+            } else {
+              data[fieldName] = newData[data[parentField]][0]
+            }
           }
-          await nextBatch(child, data[fieldName], dbCall, context, options)
+          await nextBatch(childAST, data[fieldName], dbCall, context, options)
         }
       } else {
         if (Array.isArray(data)) {
           const nextLevelData = flatMap(data, obj => obj[fieldName])
-          await nextBatch(child, nextLevelData, dbCall, context, options)
+          await nextBatch(childAST, nextLevelData, dbCall, context, options)
         } else {
-          await nextBatch(child, data[fieldName], dbCall, context, options)
+          await nextBatch(childAST, data[fieldName], dbCall, context, options)
         }
       }
     }
@@ -175,21 +183,17 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   queryAST.getGraphQLType(fieldNodes[0], fakeParentNode, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, options)
   queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
-  return handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST).then(obj => {
-    // if no data is returned, just return the null response
-    if (!obj) {
-      return obj
-    }
-    // after we get the data, slap the Type on there to assist with determining the type
-    obj.__type__ = type
-    return obj
-  })
+  const data = postProcess(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)
+  await nextBatch(sqlAST, data, dbCall, context, options)
+  if (!data) return data
+  data.__type__ = type
+  return data
 }
 
 joinMonster.getNode = getNode
 
 // handles the different callback signatures and return values.
-function handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST) {
+function handleUserDbCall(dbCall, sql, shapeDefinition) {
   // if there are two args, we're in "callback mode"
   if (dbCall.length === 2) {
     // wrap it in a promise
@@ -202,8 +206,7 @@ function handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST) {
           rows = validate(rows)
           debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
           debug(`${rows.length} rows...`)
-          const nested = nest(rows, shapeDefinition)
-          resolve(postProcess(nested, sqlAST))
+          resolve(nest(rows, shapeDefinition))
         }
       })
     })
@@ -216,12 +219,10 @@ function handleUserDbCall(dbCall, sql, shapeDefinition, sqlAST) {
       rows = validate(rows)
       debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
       debug(`${rows.length} rows...`)
-      const nested = nest(rows, shapeDefinition)
-      return postProcess(nested, sqlAST)
+      return nest(rows, shapeDefinition)
     })
-  // otherwise, they were supposed to give us the data directly
   } else {
-    return Promise.resolve(nest(validate(result), shapeDefinition))
+    throw new Error('must return a promise of the data or use the callback')
   }
 }
 

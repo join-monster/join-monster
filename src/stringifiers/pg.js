@@ -168,7 +168,7 @@ LEFT JOIN LATERAL (
           if (node.sortKey) {
             let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
             whereCondition = whereCondition || 'TRUE'
-            whereCondition += ' AND ' + `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+            whereCondition += ' AND ' + `"${node.name}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
             if (node.where) {
               const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
               if (filterCondition) {
@@ -177,7 +177,7 @@ LEFT JOIN LATERAL (
             }
             const join = `\
 FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")
-LEFT JOIN LATERAL (
+JOIN LATERAL (
   SELECT * FROM ${node.name}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns)}
