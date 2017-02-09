@@ -43,7 +43,11 @@ export const Post = new GraphQLObjectType({
         order: 'DESC',
         key: 'id'
       },
-      sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
+      sqlBatch: {
+        thisKey: 'post_id',
+        parentKey: 'id'
+      }
+      //sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
     }
   })
 })

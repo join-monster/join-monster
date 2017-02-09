@@ -197,15 +197,16 @@ JOIN LATERAL (
                 whereCondition = filterCondition
               }
             }
-            whereCondition += ' AND ' + `"${node.as}"."${node.sqlBatch.thisKey.name}" IN (${batchScope.join(',')})`
+            whereCondition += ' AND ' + `"${node.name}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
             const join = `\
-FROM (
+FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")
+JOIN LATERAL (
   SELECT *, count(*) OVER () AS "$total"
   FROM ${node.name}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns)}
   LIMIT ${limit} OFFSET ${offset}
-) AS "${node.as}"`
+) AS "${node.as}" ON "${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
             joins.push(join)
             orders.push({
               table: node.as,

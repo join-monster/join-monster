@@ -40,7 +40,11 @@ export const Post = new GraphQLObjectType({
       args: forwardConnectionArgs,
       sqlPaginate: true,
       orderBy: 'id',
-      sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
+      //sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id`
+      sqlBatch: {
+        thisKey: 'post_id',
+        parentKey: 'id'
+      }
     }
   })
 })
