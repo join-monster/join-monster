@@ -5,7 +5,10 @@ import {
   GraphQLInt
 } from 'graphql'
 
-import { connectionArgs } from 'graphql-relay'
+import {
+  connectionArgs,
+  connectionFromArray
+} from 'graphql-relay'
 
 import knex from './database'
 import { User, UserConnection } from './User'
@@ -13,16 +16,10 @@ import Sponsor from './Sponsor'
 import { nodeField } from './Node'
 
 import joinMonster from '../../src/index'
+import dbCall from '../data/fetch'
 const options = {
   minify: process.env.MINIFY == 1,
   dialect: process.env.PG_URL ? 'pg' : 'standard'
-}
-
-function dbCall(sql, context) {
-  if (context) {
-    context.set('X-SQL-Preview', context.response.get('X-SQL-Preview') + '%0A%0A' + sql.replace(/\n/g, '%0A'))
-  }
-  return knex.raw(sql)
 }
 
 export default new GraphQLObjectType({
@@ -40,17 +37,21 @@ export default new GraphQLObjectType({
         ...connectionArgs,
         search: { type: GraphQLString }
       },
-      sqlPaginate: true,
-      sortKey: {
-        order: 'asc',
-        key: 'id'
-      },
+      sqlPaginate: !!process.env.PAGINATE,
+      ...process.env.PAGINATE === 'offset' ?
+        { orderBy: 'id' } :
+        process.env.PAGINATE === 'keyset' ?
+          { sortKey:
+            { order: 'asc',
+              key: 'id' } } :
+        {},
       where: (table, args) => {
         // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
         if (args.search) return `(${table}.first_name ilike '%${args.search}%' OR ${table}.last_name ilike '%${args.search}%')`
       },
-      resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, context), options)
+      resolve: async (parent, args, context, resolveInfo) => {
+        const data = await joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return process.env.PAGINATE ? data : connectionFromArray(data, args)
       }
     },
     user: {
@@ -65,7 +66,7 @@ export default new GraphQLObjectType({
         if (args.id) return `${usersTable}.id = ${args.id}`
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, context), options)
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },
     sponsors: {

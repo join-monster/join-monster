@@ -1,5 +1,5 @@
 import { validateSqlAST, inspect } from '../util'
-import { joinPrefix } from './shared'
+import { joinPrefix, quotePrefix } from './shared'
 
 export default async function stringifySqlAST(topNode, context, batchScope) {
   validateSqlAST(topNode)
@@ -25,8 +25,8 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
   switch(node.type) {
   case 'table':
     // generate the "where" condition, if applicable
-    if (node.where) {
-      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context, prefix)
+    if (node.where && (!node.sqlBatch || !parent)) {
+      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix))
       if (whereCondition) {
         wheres.push(`${whereCondition}`)
       }
@@ -97,7 +97,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     )
     break
   case 'expression':
-    const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context)
+    const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context, quotePrefix(prefix))
     selections.push(
       `${expr} AS "${joinPrefix(prefix) + node.as}"`
     )

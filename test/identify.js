@@ -54,6 +54,11 @@ test('a query with a sqlDeps as the first requested field should not mess it up'
         numFeet: 2,
         fullName: 'matt elder',
         id: 2
+      },
+      {
+        numFeet: 2,
+        fullName: 'foo bar',
+        id: 3
       }
     ]
   }

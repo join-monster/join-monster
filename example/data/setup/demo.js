@@ -11,6 +11,7 @@ const numUsers = 5
 const numPosts = 50
 const numComments = 300
 const numRelationships = 15
+const numLikes = 300
 
 module.exports = async () => {
   const knex = require('../schema/setup')('demo')
@@ -33,6 +34,7 @@ module.exports = async () => {
     posts[i] = {
       body: faker.lorem.sentences(faker.random.number({ min: 2, max: 4 })),
       author_id: faker.random.number({ min: 1, max: numUsers }),
+      archived: i % 5 === 0,
       created_at: faker.date.past()
     }
   }
@@ -45,6 +47,7 @@ module.exports = async () => {
       body: faker.hacker.phrase(),
       post_id: faker.random.number({ min: 1, max: numPosts }),
       author_id: faker.random.number({ min: 1, max: numUsers }),
+      archived: i % 10 === 0,
       created_at: faker.date.past()
     }
   }
@@ -61,6 +64,7 @@ module.exports = async () => {
       relationships.push({
         follower_id,
         followee_id,
+        closeness: Math.random() > 0.66 ? 'best' : 'acquaintance',
         created_at: faker.date.past()
       })
     }
@@ -68,6 +72,23 @@ module.exports = async () => {
   }
   await knex.batchInsert('relationships', relationships, 50)
 
+  console.log('creating likes...')
+  const likes = []
+  const usedLikes = new Set
+  for (let i of count(numLikes)) {
+    const account_id = faker.random.number({ min: 1, max: numUsers })
+    const comment_id = faker.random.number({ min: 1, max: numComments })
+    const key = `${account_id}-${comment_id}`
+    if (!usedLikes.has(key)) {
+      likes.push({
+        account_id,
+        comment_id,
+        created_at: faker.date.past()
+      })
+    }
+    usedLikes.add(key)
+  }
+  await knex.batchInsert('likes', likes, 50)
 
   await knex.batchInsert('sponsors', [
     {
@@ -99,3 +120,4 @@ module.exports = async () => {
 
   await knex.destroy()
 }
+

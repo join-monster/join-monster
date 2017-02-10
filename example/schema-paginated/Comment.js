@@ -1,6 +1,7 @@
 import {
   GraphQLObjectType,
-  GraphQLString
+  GraphQLString,
+  GraphQLBoolean
 } from 'graphql'
 
 import {
@@ -36,6 +37,23 @@ export const Comment = new GraphQLObjectType({
       description: 'The user who wrote the comment',
       type: User,
       sqlJoin: (commentTable, userTable) => `${commentTable}.author_id = ${userTable}.id`
+    },
+    archived: {
+      type: GraphQLBoolean
+    },
+    likers: {
+      description: 'Which users have liked this comment',
+      joinTable: 'likes',
+      type: User,
+      sqlJoins: [
+        (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,
+        (likesTable, userTable) => `${likesTable}.account_id = ${userTable}.id`
+      ]
+    },
+    createdAt: {
+      description: 'When this was created',
+      type: GraphQLString,
+      sqlColumn: 'created_at'
     }
   })
 })

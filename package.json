@@ -13,7 +13,7 @@
     "build": "babel src --no-comments --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
     "test": "npm run lint && npm run teststandard && npm run testmysql && npm run testpg && MINIFY=1 npm run testpg",
-    "teststandard": "NODE_ENV=test ava test/*.js test/unit-tests/*.js",
+    "teststandard": "NODE_ENV=test ava test/*.js",
     "testpg": "NODE_ENV=test DB=PG ava test/*.js test/pg/*.js",
     "testmysql": "NODE_ENV=test DB=MYSQL ava test/*.js",
     "coverage": "nyc --reporter=html npm run test",

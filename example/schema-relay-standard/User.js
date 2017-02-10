@@ -63,7 +63,6 @@ const User = new GraphQLObjectType({
       type: UserConnection, 
       args: connectionArgs,
       resolve: (user, args) => {
-        console.log(user.following)
         return connectionFromArray(user.following, args)
       },
       joinTable: 'relationships',

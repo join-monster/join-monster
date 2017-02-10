@@ -14,6 +14,7 @@ CREATE TABLE comments (
   body TEXT NOT NULL,
   post_id INTEGER NOT NULL,
   author_id INTEGER NOT NULL,
+  archived BOOLEAN DEFAULT 0,
   created_at DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -22,6 +23,7 @@ CREATE TABLE posts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   body TEXT NOT NULL,
   author_id INTEGER NOT NULL,
+  archived BOOLEAN DEFAULT 0,
   created_at DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -29,8 +31,17 @@ DROP TABLE IF EXISTS relationships;
 CREATE TABLE relationships (
   follower_id INTEGER NOT NULL,
   followee_id INTEGER NOT NULL,
+  closeness VARCHAR(255),
   created_at DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (follower_id, followee_id) ON CONFLICT REPLACE
+);
+
+DROP TABLE IF EXISTS likes;
+CREATE TABLE likes (
+  account_id INTEGER NOT NULL,
+  comment_id INTEGER NOT NULL,
+  created_at DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (account_id, comment_id) ON CONFLICT REPLACE
 );
 
 DROP TABLE IF EXISTS sponsors;

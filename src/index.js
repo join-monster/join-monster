@@ -10,6 +10,19 @@ import AliasNamespace from './aliasNamespace'
 import { emphasize, inspect, buildWhereFunction, wrap, maybeQuote } from './util'
 
 
+/*         _ _ _                _    
+  ___ __ _| | | |__   __ _  ___| | __
+ / __/ _` | | | '_ \ / _` |/ __| |/ /
+| (_| (_| | | | |_) | (_| | (__|   < 
+ \___\__,_|_|_|_.__/ \__,_|\___|_|\_\
+                                     
+     _       __ _       _ _   _                 
+  __| | ___ / _(_)_ __ (_) |_(_) ___  _ __  ___ 
+ / _` |/ _ \ |_| | '_ \| | __| |/ _ \| '_ \/ __|
+| (_| |  __/  _| | | | | | |_| | (_) | | | \__ \
+ \__,_|\___|_| |_|_| |_|_|\__|_|\___/|_| |_|___/
+*/
+
 /**
  * User-defined function that sends a raw SQL query to the databse.
  * @callback dbCall
@@ -23,6 +36,7 @@ import { emphasize, inspect, buildWhereFunction, wrap, maybeQuote } from './util
  * @param {String} tableAlias - The alias generated for this table. Already double-quoted.
  * @param {Object} args - The GraphQL arguments for this field.
  * @param {Object} context - An Object with arbitrary contextual information.
+ * @param {Array.<String>} parentAliases - List of aliases of the antecedent tables, starting with the parent field.
  * @returns {String} The expression interpolated into the query to compute the column.
  */
 /**
@@ -43,6 +57,14 @@ import { emphasize, inspect, buildWhereFunction, wrap, maybeQuote } from './util
  * @returns {String} The condition for the `LEFT JOIN`.
  */
 
+
+/* _                _                                      
+  | |__   ___  __ _(_)_ __    ___  ___  _   _ _ __ ___ ___ 
+  | '_ \ / _ \/ _` | | '_ \  / __|/ _ \| | | | '__/ __/ _ \
+  | |_) |  __/ (_| | | | | | \__ \ (_) | |_| | | | (_|  __/
+  |_.__/ \___|\__, |_|_| |_| |___/\___/ \__,_|_|  \___\___|
+              |___/                                        
+*/
 
 
 /**
@@ -68,6 +90,7 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
 }
 
 async function nextBatch(sqlAST, data, dbCall, context, options) {
+  // paginated fields are wrapped in connections. strip those off for the batching
   if (sqlAST.paginate) {
     if (Array.isArray(data)) {
       data = chain(data).flatMap('edges').map('node').value()
@@ -75,9 +98,12 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
       data = map(data.edges, 'node')
     }
   }
+
+  // loop through all the child fields that are tables
   for (let childAST of sqlAST.children) {
     if (childAST.type === 'table') {
       const fieldName = childAST.fieldName
+      // see if any begin a new batch
       if (childAST.sqlBatch) {
         childAST.children.push(childAST.sqlBatch.thisKey)
         const thisField = childAST.sqlBatch.thisKey.fieldName
@@ -124,7 +150,9 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
           const nextLevelData = flatMap(data, obj => obj[fieldName])
           await nextBatch(childAST, nextLevelData, dbCall, context, options)
         } else {
-          await nextBatch(childAST, data[fieldName], dbCall, context, options)
+          if (data) {
+            await nextBatch(childAST, data[fieldName], dbCall, context, options)
+          }
         }
       }
     }

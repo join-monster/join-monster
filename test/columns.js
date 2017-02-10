@@ -19,7 +19,8 @@ test('get a field with the same name as the SQL column', async t => {
   t.deepEqual(data, {
     users: [
       { id: 1 },
-      { id: 2 }
+      { id: 2 },
+      { id: 3 }
     ]
   })
 })
@@ -31,7 +32,8 @@ test('get a field with a different SQL column name and field name', async t => {
   t.deepEqual(data, {
     users: [
       { email: 'andrew@stem.is' },
-      { email: 'matt@stem.is' }
+      { email: 'matt@stem.is' },
+      { email: 'foo@example.org' }
     ]
   })
 })
@@ -43,7 +45,8 @@ test('get a field that has a resolver on top of the SQL column', async t => {
   t.deepEqual(data, {
     users: [
       { idEncoded: 'MQ==' },
-      { idEncoded: 'Mg==' }
+      { idEncoded: 'Mg==' },
+      { idEncoded: 'Mw==' }
     ]
   })
 })
@@ -55,7 +58,8 @@ test('get a globalID field', async t => {
   t.deepEqual(data, {
     users: [
       { globalId: toGlobalId('User', 1) },
-      { globalId: toGlobalId('User', 2) }
+      { globalId: toGlobalId('User', 2) },
+      { globalId: toGlobalId('User', 3) }
     ]
   })
 })
@@ -67,7 +71,8 @@ test('get a field that depends on multiple sql columns', async t => {
   t.deepEqual(data, {
     users: [
       { fullName: 'andrew carlson' },
-      { fullName: 'matt elder' }
+      { fullName: 'matt elder' },
+      { fullName: 'foo bar' }
     ]
   })
 })
@@ -79,7 +84,8 @@ test('it should disambiguate two entities with identical fields', async t => {
   const expect = {
     users: [
       { numLegs: 2 }, // andy
-      { numLegs: 2 }  // matt
+      { numLegs: 2 },  // matt
+      { numLegs: 2 }
     ]
   }
   t.deepEqual(data, expect)
@@ -99,7 +105,8 @@ test('it should handle fragments at the top level', async t => {
   const expect = {
     users: [
       { id: 1 },
-      { id: 2 }
+      { id: 2 },
+      { id: 3 }
     ]
   }
   t.deepEqual(data, expect)
@@ -119,7 +126,8 @@ test('it should handle an inline fragment', async t => {
   const expect = {
     users: [
       { fullName: 'andrew carlson' },
-      { fullName: 'matt elder' }
+      { fullName: 'matt elder' },
+      { fullName: 'foo bar' }
     ]
   }
   t.deepEqual(data, expect)
@@ -143,7 +151,8 @@ test('it should handle nested fragments', async t => {
   const expect = {
     users: [
       { id: 1, fullName: 'andrew carlson', email: 'andrew@stem.is' },
-      { id: 2, fullName: 'matt elder', email: 'matt@stem.is' }
+      { id: 2, fullName: 'matt elder', email: 'matt@stem.is' },
+      { id: 3, fullName: 'foo bar', email: 'foo@example.org' }
     ]
   }
   t.deepEqual(expect, data)
@@ -236,7 +245,8 @@ test('it should handle a column that resolves independantly of SQL', async t => 
   const expect = {
     users: [
       { id: 1, favNums: [1, 2, 3] },
-      { id: 2, favNums: [1, 2, 3] }
+      { id: 2, favNums: [1, 2, 3] },
+      { id: 3, favNums: [1, 2, 3] }
     ]
   }
   t.deepEqual(data, expect)
@@ -263,7 +273,8 @@ test('it should handle duplicate fields', async t => {
   const expect = {
     users: [
       { id: 1, idEncoded: 'MQ==', fullName: 'andrew carlson' },
-      { id: 2, idEncoded: 'Mg==', fullName: 'matt elder' }
+      { id: 2, idEncoded: 'Mg==', fullName: 'matt elder' },
+      { id: 3, idEncoded: 'Mw==', fullName: 'foo bar' }
     ]
   }
   t.deepEqual(data, expect)
@@ -275,6 +286,7 @@ test('it should not be tripped up by the introspection queries', async t => {
   t.is(errors, undefined)
   const expect = {
     users: [
+      { __typename: 'User' },
       { __typename: 'User' },
       { __typename: 'User' }
     ]

@@ -1,6 +1,6 @@
 import { cursorToOffset } from 'graphql-relay'
 import { validateSqlAST, inspect, cursorToObj, wrap, maybeQuote } from '../util'
-import { joinPrefix } from './shared'
+import { joinPrefix, quotePrefix } from './shared'
 
 export default async function stringifySqlAST(topNode, context, batchScope) {
   validateSqlAST(topNode)
@@ -31,8 +31,8 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
   switch(node.type) {
   case 'table':
     // generate the "where" condition, if applicable
-    if (node.where && !node.paginate) {
-      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context, prefix)
+    if (node.where && !node.paginate && (!node.sqlBatch || !parent)) {
+      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix))
       if (whereCondition) {
         wheres.push(`${whereCondition}`)
       }
@@ -47,7 +47,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
       if (node.paginate) {
         let whereCondition = await node.sqlJoin(`"${parent.as}"`, node.name, node.args || {}, context)
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -106,7 +106,7 @@ LEFT JOIN LATERAL (
       if (node.paginate) {
         let whereCondition = await node.sqlJoins[0](`"${parent.as}"`, node.joinTable, node.args || {}, context)
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -170,7 +170,7 @@ LEFT JOIN LATERAL (
             whereCondition = whereCondition || 'TRUE'
             whereCondition += ' AND ' + `"${node.name}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
             if (node.where) {
-              const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
+              const filterCondition = await node.where(`${node.name}`, node.args || {}, context, []) 
               if (filterCondition) {
                 whereCondition += ' AND ' + filterCondition
               }
@@ -192,7 +192,7 @@ JOIN LATERAL (
             const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
             let whereCondition = 'TRUE'
             if (node.where) {
-              const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
+              const filterCondition = await node.where(`${node.name}`, node.args || {}, context, []) 
               if (filterCondition) {
                 whereCondition = filterCondition
               }
@@ -225,7 +225,7 @@ JOIN LATERAL (
         let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
         whereCondition = whereCondition || 'TRUE'
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
           if (filterCondition) {
             whereCondition += ' AND ' + filterCondition
           }
@@ -246,7 +246,7 @@ FROM (
         const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
         let whereCondition = 'TRUE'
         if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, prefix) 
+          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
           if (filterCondition) {
             whereCondition = filterCondition
           }
@@ -301,7 +301,7 @@ FROM (
     )
     break
   case 'expression':
-    const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context)
+    const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context, quotePrefix(prefix))
     selections.push(
       `${expr} AS "${joinPrefix(prefix) + node.as}"`
     )

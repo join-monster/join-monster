@@ -7,6 +7,7 @@ import {
 } from 'graphql'
 
 import knex from './database'
+import dbCall from '../data/fetch'
 
 import User from './User'
 import Sponsor from './Sponsor'
@@ -22,17 +23,6 @@ if (knex.client.config.client === 'mysql') {
   options.dialect = 'pg'
 }
 
-function dbCall(sql, context) {
-  if (context) {
-    context.set('X-SQL-Preview', context.response.get('X-SQL-Preview') + '%0A%0A' + sql.replace(/\n/g, '%0A'))
-  }
-  return knex.raw(sql).then(result => {
-    if (options.dialect === 'mysql') {
-      return result[0]
-    }
-    return result
-  })
-}
 
 export default new GraphQLObjectType({
   description: 'global query object',
@@ -45,7 +35,7 @@ export default new GraphQLObjectType({
     users: {
       type: new GraphQLList(User),
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, context), options)
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },
     user: {
@@ -70,7 +60,7 @@ export default new GraphQLObjectType({
         if (args.idAsync) return Promise.resolve(`${usersTable}.id = ${args.idAsync}`)
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, context), options)
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },
     sponsors: {
@@ -101,3 +91,4 @@ export default new GraphQLObjectType({
     }
   })
 })
+

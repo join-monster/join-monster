@@ -1,0 +1,4 @@
+better test data:
+data in cross table friendship to test retrieval
+likers on comments for one more level of depth
+archived comments for fancier where conditions

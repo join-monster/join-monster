@@ -1,46 +1,62 @@
 import {
   GraphQLObjectType,
-  GraphQLList,
   GraphQLString,
   GraphQLInt,
   GraphQLBoolean
 } from 'graphql'
 
-import User from './User'
-import Comment from './Comment'
+import {
+  globalIdField,
+  connectionDefinitions,
+  connectionFromArray,
+  forwardConnectionArgs
+} from 'graphql-relay'
 
-export default new GraphQLObjectType({
+import { User } from './User'
+import { CommentConnection } from './Comment'
+import { nodeInterface } from './Node'
+
+
+export const Post = new GraphQLObjectType({
   description: 'A post from a user',
   name: 'Post',
   sqlTable: 'posts',
   uniqueKey: 'id',
+  interfaces: [ nodeInterface ],
   fields: () => ({
     id: {
-      type: GraphQLInt
+      ...globalIdField(),
+      sqlDeps: [ 'id' ]
     },
     body: {
       description: 'The content of the post',
       type: GraphQLString
     },
-    authorId: {
-      type: GraphQLInt,
-      sqlColumn: 'author_id'
-    },
     author: {
       description: 'The user that created the post',
       type: User,
-      ...process.env.STRATEGY === 'batch' ?
-        { sqlBatch:
-          { thisKey: 'id',
-            parentKey: 'author_id' } } :
-        { sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id` }
+      sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id`
     },
     comments: {
       description: 'The comments on this post',
-      type: new GraphQLList(Comment),
+      type: CommentConnection,
       args: {
+        ...forwardConnectionArgs,
         active: { type: GraphQLBoolean }
       },
+      sqlPaginate: !!process.env.PAGINATE,
+      ...process.env.PAGINATE === 'offset' ?
+        { orderBy: 'id' } :
+        process.env.PAGINATE === 'keyset' ?
+          { sortKey:
+            { order: 'DESC',
+              key: 'id' } } :
+          {
+            resolve: (user, args) => {
+              user.comments.sort((a, b) => a.id - b.id)
+              return connectionFromArray(user.comments, args)
+            }
+          },
       ...[ 'batch', 'mix' ].includes(process.env.STRATEGY) ?
         { sqlBatch:
           { thisKey: 'post_id',
@@ -59,4 +75,7 @@ export default new GraphQLObjectType({
     }
   })
 })
+
+const { connectionType: PostConnection } = connectionDefinitions({ nodeType: Post })
+export { PostConnection }
 

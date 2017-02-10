@@ -14,6 +14,7 @@ CREATE TABLE comments (
   body TEXT NOT NULL,
   post_id INT NOT NULL,
   author_id INT NOT NULL,
+  archived BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -22,6 +23,7 @@ CREATE TABLE posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   body TEXT NOT NULL,
   author_id INT NOT NULL,
+  archived BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -29,8 +31,17 @@ DROP TABLE IF EXISTS relationships;
 CREATE TABLE relationships (
   follower_id INT NOT NULL,
   followee_id INT NOT NULL,
+  closeness VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (follower_id, followee_id)
+);
+
+DROP TABLE IF EXISTS likes;
+CREATE TABLE likes (
+  account_id INTEGER NOT NULL,
+  comment_id INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (account_id, comment_id)
 );
 
 DROP TABLE IF EXISTS sponsors;

@@ -3,7 +3,8 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLInt
+  GraphQLInt,
+  GraphQLBoolean
 } from 'graphql'
 
 import {
@@ -54,18 +55,34 @@ const User = new GraphQLObjectType({
     comments: {
       description: 'Comments the user has written on people\'s posts',
       type: new GraphQLList(new GraphQLNonNull(Comment)),
-      sqlBatch: {
-        thisKey: 'author_id',
-        parentKey: 'id'
-      }
+      args: {
+        active: {
+          description: 'Get only comments not archived',
+          type: GraphQLBoolean
+        }
+      },
+      ...[ 'batch', 'mix' ].includes(process.env.STRATEGY) ?
+        { sqlBatch:
+          { thisKey: 'author_id',
+            parentKey: 'id' },
+          where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null } :
+        { sqlJoin: (userTable, commentTable, args) => `${commentTable}.author_id = ${userTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` }
     },
     posts: {
       description: 'A list of Posts the user has written',
       type: new GraphQLList(Post),
-      sqlBatch: {
-        thisKey: 'author_id',
-        parentKey: 'id'
-      }
+      args: {
+        active: {
+          description: 'Get only posts not archived',
+          type: GraphQLBoolean
+        }
+      },
+      where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null,
+      ...process.env.STRATEGY === 'batch' ?
+        { sqlBatch:
+          { thisKey: 'author_id',
+            parentKey: 'id' } } :
+        { sqlJoin: (userTable, postTable) => `${postTable}.author_id = ${userTable}.id` }
     },
     following: {
       description: 'Users that this user is following',

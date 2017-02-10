@@ -8,7 +8,7 @@ import koaStatic from 'koa-static'
 import cors from 'koa-cors'
 
 import schemaBasic from './schema-basic/index'
-import schemaRelay from './schema-relay-paginate-2/index'
+import schemaRelay from './schema-paginated/index'
 
 const app = koa()
 const router = koaRouter()

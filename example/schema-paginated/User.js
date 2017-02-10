@@ -2,13 +2,15 @@ import {
   GraphQLObjectType,
   GraphQLList,
   GraphQLString,
-  GraphQLInt
+  GraphQLInt,
+  GraphQLBoolean
 } from 'graphql'
 
 import {
   globalIdField,
   connectionArgs,
-  connectionDefinitions
+  connectionDefinitions,
+  connectionFromArray
 } from 'graphql-relay'
 
 import { PostConnection } from './Post'
@@ -41,10 +43,29 @@ const User = new GraphQLObjectType({
     comments: {
       description: 'Comments the user has written on people\'s posts',
       type: CommentConnection,
-      args: connectionArgs,
-      sqlPaginate: true,
-      orderBy: 'id',
-      sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
+      args: {
+        ...connectionArgs,
+        active: { type: GraphQLBoolean }
+      },
+      sqlPaginate: !!process.env.PAGINATE,
+      ...process.env.PAGINATE === 'offset' ?
+        { orderBy: 'id' } :
+        process.env.PAGINATE === 'keyset' ?
+          { sortKey:
+            { order: 'desc',
+              key: 'id' } } :
+          {
+            resolve: (user, args) => {
+              user.comments.sort((a, b) => a.id - b.id)
+              return connectionFromArray(user.comments, args)
+            }
+          },
+      ...[ 'batch', 'mix' ].includes(process.env.STRATEGY) ?
+        { sqlBatch:
+          { thisKey: 'author_id',
+            parentKey: 'id' },
+          where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null } :
+        { sqlJoin: (userTable, commentTable, args) => `${commentTable}.author_id = ${userTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` }
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -53,33 +74,50 @@ const User = new GraphQLObjectType({
         ...connectionArgs,
         search: { type: GraphQLString }
       },
-      sqlPaginate: true,
+      sqlPaginate: !!process.env.PAGINATE,
       // sortKey could be an object... or a function that returns an object
-      sortKey: args => {
-        return {
-          order: 'desc',
-          key: [ 'created_at', 'id' ]
-        }
-      },
+      ...process.env.PAGINATE === 'offset' ?
+        { orderBy: args => (
+          { created_at: 'desc',
+            id: 'asc' } ) } :
+        process.env.PAGINATE === 'keyset' ?
+          { sortKey: args => (
+            { order: 'desc',
+              key: [ 'created_at', 'id' ] } ) } :
+          {
+            resolve: (user, args) => {
+              user.posts.sort((a, b) => a.id - b.id)
+              return connectionFromArray(user.posts, args)
+            }
+          },
       where: (table, args) => {
         if (args.search) return `${table}.body ilike '%${args.search}%'`
       },
-      sqlBatch: {
-        thisKey: 'author_id',
-        parentKey: 'id'
-      }
-      //sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
+      ...process.env.STRATEGY === 'batch' ?
+        { sqlBatch:
+          { thisKey: 'author_id',
+            parentKey: 'id' } } :
+        { sqlJoin: (userTable, postTable) => `${postTable}.author_id = ${userTable}.id` }
     },
     following: {
       description: 'Users that this user is following',
       type: UserConnection,
       args: connectionArgs,
       joinTable: 'relationships',
-      sqlPaginate: true,
-      sortKey: {
-        order: 'ASC',
-        key: [ 'created_at', 'followee_id' ]
-      },
+      sqlPaginate: !!process.env.PAGINATE,
+      ...process.env.PAGINATE === 'offset' ?
+        { orderBy:
+          { created_at: 'DESC',
+            followee_id: 'ASC' } } :
+        process.env.PAGINATE === 'keyset' ?
+          { sortKey:
+            { order: 'ASC',
+              key: [ 'created_at', 'followee_id' ] } } :
+          {
+            resolve: (user, args) => {
+              return connectionFromArray(user.following, args)
+            }
+          },
       sqlJoins: [
         (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
         (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`

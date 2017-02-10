@@ -1,7 +1,8 @@
 import {
   GraphQLObjectType,
   GraphQLString,
-  GraphQLInt
+  GraphQLInt,
+  GraphQLBoolean
 } from 'graphql'
 
 import Post from './Post'
@@ -27,7 +28,11 @@ export default new GraphQLObjectType({
     post: {
       description: 'The post that the comment belongs to',
       type: Post,
-      sqlJoin: (commentTable, postTable) => `${commentTable}.post_id = ${postTable}.id`
+      ...process.env.STRATEGY === 'batch' ?
+        { sqlBatch: 
+          { thisKey: 'id',
+            parentKey: 'post_id' } } :
+        { sqlJoin: (commentTable, postTable) => `${commentTable}.post_id = ${postTable}.id` }
     },
     authorId: {
       type: GraphQLInt,
@@ -36,7 +41,23 @@ export default new GraphQLObjectType({
     author: {
       description: 'The user who wrote the comment',
       type: User,
-      sqlJoin: (commentTable, userTable) => `${commentTable}.author_id = ${userTable}.id`
+      ...process.env.STRATEGY === 'batch' ?
+        { sqlBatch:
+          { thisKey: 'id',
+            parentKey: 'author_id' } } :
+        { sqlJoin: (commentTable, userTable) => `${commentTable}.author_id = ${userTable}.id` }
+    },
+    likers: {
+      description: 'Which users have liked this comment',
+      joinTable: 'likes',
+      type: User,
+      sqlJoins: [
+        (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,
+        (likesTable, userTable) => `${likesTable}.account_id = ${userTable}.id`
+      ]
+    },
+    archived: {
+      type: GraphQLBoolean
     },
     createdAt: {
       description: 'When this was created',
@@ -45,3 +66,4 @@ export default new GraphQLObjectType({
     }
   })
 })
+
