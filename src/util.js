@@ -1,5 +1,9 @@
 import util from 'util'
 import assert from 'assert'
+import { nest } from 'nesthydrationjs'
+const debug = require('debug')('join-monster')
+
+import defineObjectShape from './defineObjectShape'
 
 export function emphasize(str, colorCode = 33) {
   return `\n\x1b[1;${colorCode}m${str}\x1b[0m\n`
@@ -89,3 +93,64 @@ export function buildWhereFunction(type, condition, options) {
     }
   }
 }
+
+// handles the different callback signatures and return values.
+export function handleUserDbCall(dbCall, sql, shapeDefinition) {
+  // if there are two args, we're in "callback mode"
+  if (dbCall.length === 2) {
+    // wrap it in a promise
+    return new Promise((resolve, reject) => {
+      // wait for them to call "done"
+      dbCall(sql, (err, rows) => {
+        if (err) {
+          reject(err)
+        } else {
+          rows = validate(rows)
+          debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
+          debug(`${rows.length} rows...`)
+          resolve(nest(rows, shapeDefinition))
+        }
+      })
+    })
+  }
+
+  const result = dbCall(sql)
+  // if their func gave us a promise for the data, wait for the data
+  if (typeof result.then === 'function') {
+    return result.then(rows => {
+      rows = validate(rows)
+      debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
+      debug(`${rows.length} rows...`)
+      return nest(rows, shapeDefinition)
+    })
+  } else {
+    throw new Error('must return a promise of the data or use the callback')
+  }
+}
+
+// validate the data they gave us
+function validate(rows) {
+  // its supposed to be an array of objects
+  if (Array.isArray(rows)) return rows
+  // a check for the most common error. a lot of ORMs return an object with the desired data on the `rows` property
+  else if (rows && rows.rows) return rows.rows
+  else {
+    throw new Error(`"dbCall" function must return/resolve an array of objects where each object is a row from the result set. Instead got ${util.inspect(rows, { depth: 3 })}`)
+  }
+}
+
+export async function compileSqlAST(sqlAST, context, options) {
+  debug(emphasize('SQL_AST'), inspect(sqlAST))
+
+  // now convert the "SQL AST" to sql
+  const dialect = options.dialect || 'standard'
+  const stringify = require('./stringifiers/' + dialect).default
+  const sql = await stringify(sqlAST, context, options.batchScope)
+  debug(emphasize('SQL'), sql)
+
+// figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
+  const shapeDefinition = defineObjectShape(sqlAST)
+  debug(emphasize('SHAPE_DEFINITION'), inspect(shapeDefinition))
+  return { sql, shapeDefinition }
+}
+
