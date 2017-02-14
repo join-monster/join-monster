@@ -99,13 +99,13 @@ LEFT JOIN LATERAL (
       }
     
     // this branch is for many-to-many relations, needs two joins
-    } else if (node.joinTable) {
+    } else if (node.junctionTable) {
       assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
-      const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.joinTableAs}"`, node.args || {}, context)
-      const joinCondition2 = await node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`, node.args || {}, context)
+      const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
+      const joinCondition2 = await node.sqlJoins[1](`"${node.junctionTableAs}"`, `"${node.as}"`, node.args || {}, context)
 
       if (node.paginate) {
-        let whereCondition = await node.sqlJoins[0](`"${parent.as}"`, node.joinTable, node.args || {}, context)
+        let whereCondition = await node.sqlJoins[0](`"${parent.as}"`, node.junctionTable, node.args || {}, context)
         if (node.where) {
           const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
           if (filterCondition) {
@@ -120,14 +120,14 @@ LEFT JOIN LATERAL (
           }
           const join = `\
 LEFT JOIN LATERAL (
-  SELECT * FROM ${node.joinTable}
+  SELECT * FROM ${node.junctionTable}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns)}
   LIMIT ${limit}
-) AS "${node.joinTableAs}" ON ${joinCondition1}`
+) AS "${node.junctionTableAs}" ON ${joinCondition1}`
           joins.push(join)
           orders.push({
-            table: node.joinTableAs,
+            table: node.junctionTableAs,
             columns: orderColumns
           })
 
@@ -137,21 +137,21 @@ LEFT JOIN LATERAL (
           const join = `\
 LEFT JOIN LATERAL (
   SELECT *, count(*) OVER () AS "$total"
-  FROM ${node.joinTable}
+  FROM ${node.junctionTable}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns)}
   LIMIT ${limit} OFFSET ${offset}
-) AS "${node.joinTableAs}" ON ${joinCondition1}`
+) AS "${node.junctionTableAs}" ON ${joinCondition1}`
           joins.push(join)
           orders.push({
-            table: node.joinTableAs,
+            table: node.junctionTableAs,
             columns: orderColumns
           })
         }
 
       } else {
         joins.push(
-          `LEFT JOIN ${node.joinTable} AS "${node.joinTableAs}" ON ${joinCondition1}`
+          `LEFT JOIN ${node.junctionTable} AS "${node.junctionTableAs}" ON ${joinCondition1}`
         )
       }
       joins.push(

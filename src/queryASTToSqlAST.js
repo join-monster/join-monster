@@ -133,11 +133,11 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   if (field.sqlJoin) {
     sqlASTNode.sqlJoin = field.sqlJoin
   }
-  else if (field.joinTable) {
+  else if (field.junctionTable) {
     assert(field.sqlJoins, 'Must define `sqlJoins` (plural) for a many-to-many.')
     sqlASTNode.sqlJoins = field.sqlJoins
-    sqlASTNode.joinTable = field.joinTable
-    sqlASTNode.joinTableAs = namespace.generate('table', field.joinTable)
+    sqlASTNode.junctionTable = field.junctionTable
+    sqlASTNode.junctionTableAs = namespace.generate('table', field.junctionTable)
   }
   else if (field.sqlBatch) {
     sqlASTNode.sqlBatch = {
@@ -248,8 +248,8 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
         as: namespace.generate('column', column)
       }
       // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
-      if (sqlASTNode.joinTable) {
-        newChild.fromOtherTable = sqlASTNode.joinTableAs
+      if (sqlASTNode.junctionTable) {
+        newChild.fromOtherTable = sqlASTNode.junctionTableAs
       }
       sqlASTNode.children.push(newChild)
     }
@@ -262,8 +262,8 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
       fieldName: '$total',
       as: namespace.generate('column', '$total')
     }
-    if (sqlASTNode.joinTable) {
-      newChild.fromOtherTable = sqlASTNode.joinTableAs
+    if (sqlASTNode.junctionTable) {
+      newChild.fromOtherTable = sqlASTNode.junctionTableAs
     }
     sqlASTNode.children.push(newChild)
   }

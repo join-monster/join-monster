@@ -92,7 +92,7 @@ const User = new GraphQLObjectType({
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
-      joinTable: 'relationships',
+      junctionTable: 'relationships',
       sqlJoins: [
         (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
         (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`

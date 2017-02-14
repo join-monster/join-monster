@@ -42,13 +42,13 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
         `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
       )
     // this condition is through a join table (many-to-many relations)
-    } else if (node.joinTable) {
+    } else if (node.junctionTable) {
       assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
-      const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.joinTableAs}"`, node.args || {}, context)
-      const joinCondition2 = await node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`, node.args || {}, context)
+      const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
+      const joinCondition2 = await node.sqlJoins[1](`"${node.junctionTableAs}"`, `"${node.as}"`, node.args || {}, context)
 
       joins.push(
-        `LEFT JOIN ${node.joinTable} AS "${node.joinTableAs}" ON ${joinCondition1}`,
+        `LEFT JOIN ${node.junctionTable} AS "${node.junctionTableAs}" ON ${joinCondition1}`,
         `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition2}`
       )
     } else if (node.sqlBatch) {

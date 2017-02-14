@@ -43,7 +43,7 @@ export const Comment = new GraphQLObjectType({
     },
     likers: {
       description: 'Which users have liked this comment',
-      joinTable: 'likes',
+      junctionTable: 'likes',
       type: User,
       sqlJoins: [
         (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,

@@ -1,11 +1,14 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import { toGlobalId } from 'graphql-relay'
+import { toGlobalId, offsetToCursor } from 'graphql-relay'
 import schemaRelay from '../example/schema-paginated/index'
 import { partial } from 'lodash'
 
 
 const run = partial(graphql, schemaRelay)
+
+const user1Id = toGlobalId('User', 1)
+const cursor0 = offsetToCursor(0)
 
 test('it should get a globalId', async t => {
   const query = `{
@@ -13,13 +16,13 @@ test('it should get a globalId', async t => {
   }`
   const { data, errors } = await run(query)
   t.is(errors, undefined)
-  const expect = { user: { id: 'VXNlcjox' } }
+  const expect = { user: { id: user1Id } }
   t.deepEqual(expect, data)
 })
 
 test('it should fetch a Node type with inline fragments', async t => {
   const query = `{
-    node(id: "UG9zdDox") {
+    node(id: "${toGlobalId('Post', 1)}") {
       ... on Post { body }
     }
   }`
@@ -32,7 +35,7 @@ test('it should fetch a Node type with inline fragments', async t => {
 test('it should fetch a Node type with named fragments', async t => {
   const query = `
     {
-      node(id: "VXNlcjox") {
+      node(id: "${user1Id}") {
         ...F0
       }
     }
@@ -66,7 +69,7 @@ test('it should fetch a Node type with a variable', async t => {
       }
     }
   `
-  const variables = { id: 'VXNlcjox' }
+  const variables = { id: user1Id }
   const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
   t.is(errors, undefined)
   const expect = {
@@ -114,7 +117,7 @@ test('it should handle the relay connection type', async t => {
           }
         }
       }
-      comments(first: 2, after: "YXJyYXljb25uZWN0aW9uOjA=") {
+      comments(first: 2, after: "${cursor0}") {
         pageInfo {
           hasNextPage
           hasPreviousPage
@@ -139,13 +142,13 @@ test('it should handle the relay connection type', async t => {
         pageInfo: {
           hasNextPage: false,
           hasPreviousPage: false,
-          startCursor: 'YXJyYXljb25uZWN0aW9uOjA=',
-          endCursor: 'YXJyYXljb25uZWN0aW9uOjA='
+          startCursor: cursor0,
+          endCursor: cursor0
         },
         edges: [
           {
             node: {
-              id: 'UG9zdDoy',
+              id: toGlobalId('Post', 2),
               body: 'Check out this cool new GraphQL library, Join Monster.'
             }
           }
@@ -155,19 +158,19 @@ test('it should handle the relay connection type', async t => {
         pageInfo: {
           hasNextPage: true,
           hasPreviousPage: false,
-          startCursor: 'YXJyYXljb25uZWN0aW9uOjE=',
-          endCursor: 'YXJyYXljb25uZWN0aW9uOjI='
+          startCursor: offsetToCursor(1),
+          endCursor: offsetToCursor(2)
         },
         edges: [
           {
             node: {
-              id: 'Q29tbWVudDo0',
+              id: toGlobalId('Comment', 4),
               body: 'Do not forget to check out the demo.'
             }
           },
           {
             node: {
-              id: 'Q29tbWVudDo2',
+              id: toGlobalId('Comment', 6),
               body: 'Also, submit a PR if you have a feature you want to add.'
             }
           }
@@ -219,14 +222,14 @@ test('it should handle nested connection types', async t => {
         pageInfo: {
           hasPreviousPage: false,
           hasNextPage: false,
-          startCursor: 'YXJyYXljb25uZWN0aW9uOjA=',
-          endCursor: 'YXJyYXljb25uZWN0aW9uOjA='
+          startCursor: cursor0,
+          endCursor: cursor0
         },
         edges: [
           {
-            cursor: 'YXJyYXljb25uZWN0aW9uOjA=',
+            cursor: cursor0,
             node: {
-              id: 'UG9zdDoy',
+              id: toGlobalId('Post', 2),
               body: 'Check out this cool new GraphQL library, Join Monster.',
               comments: {
                 pageInfo: {
@@ -235,13 +238,13 @@ test('it should handle nested connection types', async t => {
                 edges: [
                   {
                     node: {
-                      id: 'Q29tbWVudDo0',
+                      id: toGlobalId('Comment', 4),
                       body: 'Do not forget to check out the demo.'
                     }
                   },
                   {
                     node: {
-                      id: 'Q29tbWVudDo1',
+                      id: toGlobalId('Comment', 5),
                       body: 'This sucks. Go use REST you scrub.'
                     }
                   }
@@ -258,7 +261,7 @@ test('it should handle nested connection types', async t => {
 
 test('should handle a post without an author', async t => {
   const query = `{
-    node(id: "UG9zdDo0") {
+    node(id: "${toGlobalId('Post', 4)}") {
       id
       ... on Post {
         body

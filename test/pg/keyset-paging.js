@@ -2,7 +2,7 @@ import test from 'ava'
 import { graphql } from 'graphql'
 import schemaRelay from '../../example/schema-paginated/index'
 import { partial } from 'lodash'
-import { toGlobalId } from 'graphql-relay'
+import { toGlobalId, fromGlobalId } from 'graphql-relay'
 import { objToCursor } from '../../src/util'
 
 // monkey-patch the array prototype because these are tests and IDGAF
@@ -517,3 +517,56 @@ test('should handle emptiness', async t => {
   }
   t.deepEqual(expect, data)
 })
+
+test('should handle a "where" condition on a paginated field', async t => {
+  const query = `{
+    users(first: 1) {
+      edges {
+        node {
+          ...info
+        }
+      }
+    }
+  }
+
+  fragment info on User {
+    id
+    fullName
+    comments(first: 4, active: false, after: "${objToCursor({id:287})}") {
+      edges {
+        node {
+          id
+          archived
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  t.is(data.users.edges.length, 1)
+  t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
+  const comments = data.users.edges[0].node.comments.edges.map(edge => ({
+    id: parseInt(fromGlobalId(edge.node.id).id),
+    archived: edge.node.archived
+  }))
+  const expect = [
+    {
+      id: 278,
+      archived: false
+    },
+    {
+      id: 273,
+      archived: false
+    },
+    {
+      id: 266,
+      archived: false
+    },
+    {
+      id: 244,
+      archived: false
+    }
+  ]
+  t.deepEqual(expect, comments)
+})
+
