@@ -88,7 +88,7 @@ test('it should disambiguate two entities with identical fields', async t => {
       { numLegs: 2 }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle fragments at the top level', async t => {
@@ -109,7 +109,7 @@ test('it should handle fragments at the top level', async t => {
       { id: 3 }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 
@@ -130,7 +130,7 @@ test('it should handle an inline fragment', async t => {
       { fullName: 'foo bar' }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle nested fragments', async t => {
@@ -181,7 +181,6 @@ test('it should handle named fragments on an interface', async t => {
   `
   const { data, errors } = await run(query)
   t.is(errors, undefined)
-  //console.log(require('util').inspect(data, { depth: null }))
   const expect = {
     sponsors: [
       { fullName: 'erlich bachman', generation: 1 },
@@ -192,7 +191,7 @@ test('it should handle named fragments on an interface', async t => {
     ],
     user: { fullName: 'andrew carlson', email: 'andrew@stem.is' }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle inline fragments on an interface', async t => {
@@ -224,7 +223,6 @@ test('it should handle inline fragments on an interface', async t => {
   `
   const { data, errors } = await run(query)
   t.is(errors, undefined)
-  //console.log(require('util').inspect(data, { depth: null }))
   const expect = {
     sponsors: [
       { fullName: 'erlich bachman', generation: 1 },
@@ -235,7 +233,7 @@ test('it should handle inline fragments on an interface', async t => {
     ],
     user: { fullName: 'andrew carlson', email: 'andrew@stem.is' }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle a column that resolves independantly of SQL', async t => {
@@ -249,7 +247,7 @@ test('it should handle a column that resolves independantly of SQL', async t => 
       { id: 3, favNums: [1, 2, 3] }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle a query that gets nothing from the database', async t => {
@@ -263,7 +261,7 @@ test('it should handle a query that gets nothing from the database', async t => 
   const expect = {
     user: { favNums: [1, 2, 3] }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle duplicate fields', async t => {
@@ -277,7 +275,7 @@ test('it should handle duplicate fields', async t => {
       { id: 3, idEncoded: 'Mw==', fullName: 'foo bar' }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should not be tripped up by the introspection queries', async t => {
@@ -291,7 +289,7 @@ test('it should not be tripped up by the introspection queries', async t => {
       { __typename: 'User' }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle numeric variables', async t => {
@@ -312,7 +310,7 @@ test('it should handle numeric variables', async t => {
       fullName: 'andrew carlson'
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle string variables', async t => {
@@ -333,7 +331,7 @@ test('it should handle string variables', async t => {
       fullName: 'andrew carlson'
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle boolean variables', async t => {
@@ -350,7 +348,7 @@ test('it should handle boolean variables', async t => {
   const expect = {
     sponsors: []
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle raw SQL expressions', async t => {

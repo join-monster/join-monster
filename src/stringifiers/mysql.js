@@ -1,3 +1,4 @@
+import assert from 'assert'
 import { validateSqlAST, inspect, maybeQuote } from '../util'
 import { joinPrefix, quotePrefix } from './shared'
 
@@ -42,7 +43,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
       )
     // this condition is through a join table (many-to-many relations)
     } else if (node.joinTable) {
-      if (!node.sqlJoins) throw new Error('Must set "sqlJoins" for a join table.')
+      assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
       const joinCondition1 = await node.sqlJoins[0](`${quote(parent.as)}`, `${quote(node.joinTableAs)}`, node.args || {}, context)
       const joinCondition2 = await node.sqlJoins[1](`${quote(node.joinTableAs)}`, `${quote(node.as)}`, node.args || {}, context)
 
@@ -63,6 +64,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
       }
     } else {
       // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
+      assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
       joins.push(
         `FROM ${node.name} AS ${quote(node.as)}`
       )

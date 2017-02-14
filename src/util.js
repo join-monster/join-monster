@@ -23,8 +23,7 @@ export function wrap(maybeArr) {
 
 export function validateSqlAST(topNode) {
   // TODO: this could be a bit more comprehensive
-  // topNode should not have a sqlJoin entry...
-  assert(topNode.sqlJoin == null)
+  assert(topNode.sqlJoin == null, 'root level field can not have "sqlJoin"')
 }
 
 export function objToCursor(obj) {
@@ -82,9 +81,7 @@ export function buildWhereFunction(type, condition, options) {
     // handle composite keys
     if (Array.isArray(uniqueKey)) {
       // it must have a corresponding array of values
-      if (condition.length !== uniqueKey.length) {
-        throw new Error(`The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`)
-      }
+      assert.equal(condition.length, uniqueKey.length, `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`)
       return table => uniqueKey.map((key, i) => `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`).join(' AND ')
     // single keys are simple
     } else {

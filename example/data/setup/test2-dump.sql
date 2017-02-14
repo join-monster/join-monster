@@ -823,7 +823,7 @@ COPY posts (id, body, author_id, created_at, archived) FROM stdin;
 16	Velit deleniti et et. Officia aut quo molestiae saepe est quia et nesciunt. Cum non et. Sequi esse ex.	4	2016-07-17 17:22:06.315-07	f
 17	Rem iure eligendi voluptatem tempore a a assumenda et aliquid. Nihil nesciunt nam alias possimus magni magnam quia. Impedit enim quam sed quis incidunt sapiente amet.	5	2015-12-19 16:23:14.005-08	f
 18	Qui sunt culpa iure ut distinctio non qui rerum aut. Dolor consequatur blanditiis reprehenderit natus hic aut amet.	5	2015-11-03 09:09:13.682-08	f
-19	Fugit error et. Unde in iure.	4	2016-08-08 16:11:55.957-07	f
+19	Fugit error et. Unde in iure.	14	2016-08-08 16:11:55.957-07	f
 21	Voluptatem magnam autem veniam culpa a in. Expedita officia laboriosam ut est quae accusantium. Cum quia laborum sit laudantium est consequatur. Quae voluptas eos rem mollitia.	5	2016-09-06 14:41:04.911-07	f
 22	Dolores est fugiat laboriosam. Voluptas qui cumque adipisci officia iste quibusdam. Perspiciatis alias deserunt quia accusantium.	2	2016-02-12 21:23:32.621-08	f
 23	Labore magnam est voluptatem eum qui ad voluptas. Doloremque quisquam rerum nihil voluptas enim.	3	2016-03-11 13:08:33.599-08	f
@@ -880,8 +880,9 @@ COPY relationships (follower_id, followee_id, created_at, closeness) FROM stdin;
 2	3	2016-05-18 14:35:54.601-07	acquaintence
 2	1	2016-01-01 08:28:00.051-08	acquaintence
 3	2	2016-10-09 23:43:33.874-07	best
-3	3	2016-07-25 15:12:34.67-07	best
+3	3	2016-07-25 15:12:34.670-07	best
 3	4	2016-04-21 00:17:32.344-07	best
+1	4	2016-04-21 00:17:33.344-07	best
 \.
 
 

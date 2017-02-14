@@ -32,6 +32,10 @@ module.exports = async () => {
       body: 'Here is who to contact if your brain has been ruined by Java.',
       author_id: 2,
       archived: true
+    },
+    {
+      body: 'I have no valid author...',
+      author_id: 12
     }
   ])
 

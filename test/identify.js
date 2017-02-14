@@ -22,7 +22,7 @@ test('it should handle a where condition', async t => {
   const expect = {
     user: { fullName: 'andrew carlson' }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle an async where condition', async t => {
@@ -36,7 +36,7 @@ test('it should handle an async where condition', async t => {
   const expect = {
     user: { fullName: 'andrew carlson' }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('a query with a sqlDeps as the first requested field should not mess it up', async t => {
@@ -62,7 +62,7 @@ test('a query with a sqlDeps as the first requested field should not mess it up'
       }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle a single object in which the first requested field is a list', async t => {
@@ -87,7 +87,7 @@ test('it should handle a single object in which the first requested field is a l
       ]
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle composite keys', async t => {
@@ -107,6 +107,6 @@ test('it should handle composite keys', async t => {
       { numLegs: 2, lastName: 'daemon' },
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 

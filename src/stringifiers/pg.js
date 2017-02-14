@@ -1,3 +1,4 @@
+import assert from 'assert'
 import { cursorToOffset } from 'graphql-relay'
 import { validateSqlAST, inspect, cursorToObj, wrap, maybeQuote } from '../util'
 import { joinPrefix, quotePrefix } from './shared'
@@ -99,7 +100,7 @@ LEFT JOIN LATERAL (
     
     // this branch is for many-to-many relations, needs two joins
     } else if (node.joinTable) {
-      if (!node.sqlJoins) throw new Error('Must set "sqlJoins" for a join table.')
+      assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
       const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.joinTableAs}"`, node.args || {}, context)
       const joinCondition2 = await node.sqlJoins[1](`"${node.joinTableAs}"`, `"${node.as}"`, node.args || {}, context)
 
@@ -267,6 +268,7 @@ FROM (
       }
     } else {
       // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
+      assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
       joins.push(
         `FROM ${node.name} AS "${node.as}"`
       )

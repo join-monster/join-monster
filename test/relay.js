@@ -14,7 +14,7 @@ test('it should get a globalId', async t => {
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = { user: { id: 'VXNlcjox' } }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should fetch a Node type with inline fragments', async t => {
@@ -26,7 +26,7 @@ test('it should fetch a Node type with inline fragments', async t => {
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = { node: { body: 'If I could marry a programming language, it would be Haskell.' } }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should fetch a Node type with named fragments', async t => {
@@ -53,7 +53,7 @@ test('it should fetch a Node type with named fragments', async t => {
       }
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should fetch a Node type with a variable', async t => {
@@ -74,7 +74,7 @@ test('it should fetch a Node type with a variable', async t => {
       fullName: 'andrew carlson',
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should not error when no record is returned ', async t => {
@@ -93,7 +93,7 @@ test('it should not error when no record is returned ', async t => {
   const expect = {
     node: null
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle the relay connection type', async t => {
@@ -175,7 +175,7 @@ test('it should handle the relay connection type', async t => {
       }
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle nested connection types', async t => {
@@ -253,6 +253,30 @@ test('it should handle nested connection types', async t => {
       }
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
+})
+
+test('should handle a post without an author', async t => {
+  const query = `{
+    node(id: "UG9zdDo0") {
+      id
+      ... on Post {
+        body
+        author {
+          id
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    node: {
+      id: toGlobalId('Post', 4),
+      body: 'I have no valid author...',
+      author: null
+    }
+  }
+  t.deepEqual(expect, data)
 })
 

@@ -70,7 +70,7 @@ test('should join a one-to-many relation', async t => {
       }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('should join on a nested relation', async t => {
@@ -162,7 +162,7 @@ test('should join on a nested relation', async t => {
       }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('should handle where conditions on the relations', async t => {
@@ -213,7 +213,7 @@ test('should handle where conditions on the relations', async t => {
       comments: []
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('should handle joins with the same table name', async t => {
@@ -389,7 +389,7 @@ test('should handle joins with the same table name', async t => {
       }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle many to many relationship', async t => {
@@ -534,7 +534,7 @@ test('it should handle fragments nested lower', async t => {
       }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('should handle a correlated subquery', async t => {
@@ -568,6 +568,6 @@ test('should handle a correlated subquery', async t => {
       ]
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 

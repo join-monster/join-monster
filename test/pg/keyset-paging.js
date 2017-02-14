@@ -49,11 +49,12 @@ test('should handle pagination at the root', async t => {
     hasNextPage: false,
     hasPreviousPage: false,
     startCursor: objToCursor({ id: 1 }),
-    endCursor: objToCursor({ id: 5 })
+    endCursor: objToCursor({ id: 6 })
   })
   // generate globalIds for users 1 thru 5
-  const ids = Array.apply(null, Array(5)).map((_, i) => toGlobalId('User', i + 1))
-  t.deepEqual(data.users.edges.map(edge => edge.node.id), ids)
+  const expectedIds = Array.apply(null, Array(6)).map((_, i) => toGlobalId('User', i + 1))
+  const ids = data.users.edges.map(edge => edge.node.id)
+  t.deepEqual(expectedIds, ids)
   t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor)
 })
 
@@ -107,29 +108,29 @@ test('should handle root pagination with "first" and "after" args', async t => {
 })
 
 test('should handle the last page of root pagination', async t => {
-  const query = makeUsersQuery({ first: 2, after: objToCursor({ id: 4 }) })
+  const query = makeUsersQuery({ first: 2, after: objToCursor({ id: 5 }) })
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: false,
     hasPreviousPage: false,
-    startCursor: objToCursor({ id: 5 }),
-    endCursor: objToCursor({ id: 5 })
+    startCursor: objToCursor({ id: 6 }),
+    endCursor: objToCursor({ id: 6 })
   }, 'page info is accurate')
   t.is(data.users.edges.length, 1)
   t.deepEqual(data.users.edges[0], {
-    cursor: objToCursor({ id: 5 }),
+    cursor: objToCursor({ id: 6 }),
     node: {
-      id: toGlobalId('User', 5),
-      fullName: 'Ocie Ruecker',
-      email: 'Wayne85@gmail.com'
+      id: toGlobalId('User', 6),
+      email: 'andrew@stem.is',
+      fullName: 'Andrew Carlson'
     }
   }, 'the first node is accurate')
   t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
 })
 
 test('should return nothing after the end of root pagination', async t => {
-  const query = makeUsersQuery({ first: 3, after: objToCursor({ id: 5 }) })
+  const query = makeUsersQuery({ first: 3, after: objToCursor({ id: 6 }) })
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   t.deepEqual(data.users, {
@@ -150,11 +151,11 @@ test('should handle backward pagination at root with "last" arg', async t => {
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: false,
     hasPreviousPage: true,
-    startCursor: objToCursor({ id: 4 }),
-    endCursor: objToCursor({ id: 5 })
+    startCursor: objToCursor({ id: 5 }),
+    endCursor: objToCursor({ id: 6 })
   })
-  t.is(data.users.edges[0].node.id, toGlobalId('User', 4))
-  t.is(data.users.edges[1].node.id, toGlobalId('User', 5))
+  t.is(data.users.edges[0].node.id, toGlobalId('User', 5))
+  t.is(data.users.edges[1].node.id, toGlobalId('User', 6))
 })
 
 test('should handle backward pagination at root with "last" and "before" args', async t => {
@@ -419,7 +420,7 @@ test('should handle pagination with duplicate objects', async t => {
       }
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('handle filtered pagination at the root', async t => {
@@ -476,3 +477,43 @@ test('filtering on one-to-many-nested field', async t => {
   ])
 })
 
+test('should handle emptiness', async t => {
+  const query = `{
+    user(id: 6) {
+      following {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+      posts {
+        edges {
+          node {
+            id
+            comments {
+              edges {
+                node {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      following: {
+        edges: []
+      },
+      posts: {
+        edges: []
+      }
+    }
+  }
+  t.deepEqual(expect, data)
+})

@@ -4,7 +4,7 @@ import { objToCursor, wrap, last } from './util'
 // a function for data manipulation AFTER its nested.
 // this is only necessary when using the SQL pagination
 // we have to interpret the slice that comes back and generate the connection object
-function postProcess(data, sqlAST) {
+function arrToConnection(data, sqlAST) {
   // use "post-order" tree traversal
   for (let astChild of sqlAST.children || []) {
     if (Array.isArray(data)) {
@@ -15,16 +15,26 @@ function postProcess(data, sqlAST) {
       recurseOnObjInData(data, astChild)
     }
   }
+  const pageInfo = {
+    hasNextPage: false,
+    hasPreviousPage: false
+  }
+  if (!data) {
+    if (sqlAST.paginate) {
+      return {
+        pageInfo,
+        edges: []
+      }
+    } else {
+      return null
+    }
+  }
   // is cases where pagination was done, take the data and convert to the connection object
   // if any two fields happen to become a reference to the same object (when their `uniqueKey`s are the same),
   // we must prevent the recursive processing from visting the same object twice, because mutating the object the first
   // time changes it everywhere. we'll set the `_paginated` property to true to prevent this
   if (sqlAST.paginate && !data._paginated) {
     if (sqlAST.sortKey) {
-      const pageInfo = {
-        hasNextPage: false,
-        hasPreviousPage: false
-      }
       if (sqlAST.args && sqlAST.args.first) {
         // we fetched an extra one in order to determine if there is a next page, if there is one, pop off that extra
         if (data.length > sqlAST.args.first) {
@@ -70,12 +80,12 @@ function postProcess(data, sqlAST) {
   return data
 }
 
-export default postProcess
+export default arrToConnection
 
 function recurseOnObjInData(dataObj, astChild) {
   const dataChild = dataObj[astChild.fieldName]
   if (dataChild) {
-    dataObj[astChild.fieldName] = postProcess(dataObj[astChild.fieldName], astChild)
+    dataObj[astChild.fieldName] = arrToConnection(dataObj[astChild.fieldName], astChild)
   }
 }
 

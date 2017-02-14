@@ -47,7 +47,7 @@ test('should handle pagination at the root', async t => {
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: false,
     startCursor: offsetToCursor(0),
-    endCursor: offsetToCursor(4)
+    endCursor: offsetToCursor(5)
   })
   t.deepEqual(data.users.edges[0], {
     cursor: offsetToCursor(0),
@@ -101,28 +101,28 @@ test('should handle root pagination with "first" and "after" args', async t => {
 })
 
 test('should handle the last page of root pagination', async t => {
-  const query = makeUsersQuery({ first: 2, after: offsetToCursor(3) })
+  const query = makeUsersQuery({ first: 2, after: offsetToCursor(4) })
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: false,
-    startCursor: offsetToCursor(4),
-    endCursor: offsetToCursor(4)
+    startCursor: offsetToCursor(5),
+    endCursor: offsetToCursor(5)
   }, 'page info is accurate')
   t.is(data.users.edges.length, 1)
   t.deepEqual(data.users.edges[0], {
-    cursor: offsetToCursor(4),
+    cursor: offsetToCursor(5),
     node: {
-      id: toGlobalId('User', 5),
-      fullName: 'Ocie Ruecker',
-      email: 'Wayne85@gmail.com'
+      id: toGlobalId('User', 6),
+      fullName: 'Andrew Carlson',
+      email: 'andrew@stem.is'
     }
   }, 'the first node is accurate')
   t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
 })
 
 test('should return nothing after the end of root pagination', async t => {
-  const query = makeUsersQuery({ first: 3, after: offsetToCursor(4) })
+  const query = makeUsersQuery({ first: 3, after: offsetToCursor(5) })
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   t.deepEqual(data.users, {
@@ -383,6 +383,71 @@ test('filtering on one-to-many-nested field', async t => {
       }
     }
   ])
+})
+
+test('should handle emptiness', async t => {
+  const query = `{
+    user(id: 6) {
+      following {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+      posts {
+        edges {
+          node {
+            id
+            comments {
+              edges {
+                node {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      following: {
+        edges: []
+      },
+      posts: {
+        edges: []
+      }
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('should handle a post without an author', async t => {
+  const query = `{
+    node(id: "${toGlobalId('Post', 19)}") {
+      id
+      ... on Post {
+        body
+        author {
+          id
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    node: {
+      id: toGlobalId('Post', 19),
+      body: 'Fugit error et. Unde in iure.',
+      author: null
+    }
+  }
+  t.deepEqual(expect, data)
 })
 
 

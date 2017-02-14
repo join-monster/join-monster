@@ -15,6 +15,7 @@ import Comment from './Comment'
 import Post from './Post'
 import Person from './Person'
 import { toBase64 } from './utils'
+import { sortBy } from 'lodash'
 
 const { STRATEGY } = process.env
 
@@ -95,7 +96,8 @@ const User = new GraphQLObjectType({
       sqlJoins: [
         (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
         (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
-      ]
+      ],
+      resolve: user => sortBy(user.following, 'first_name') 
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),

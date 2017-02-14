@@ -36,7 +36,11 @@ export const Post = new GraphQLObjectType({
     author: {
       description: 'The user that created the post',
       type: User,
-      sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id`
+      ...STRATEGY === 'batch' ?
+        { sqlBatch:
+          { thisKey: 'id',
+            parentKey: 'author_id' } } :
+        { sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id` }
     },
     comments: {
       description: 'The comments on this post',
@@ -70,7 +74,7 @@ export const Post = new GraphQLObjectType({
           ({
             sqlBatch: {
               thisKey: 'post_id',
-              parenyKey: 'id'
+              parentKey: 'id'
             },
             where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null
           })

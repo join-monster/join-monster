@@ -1,11 +1,12 @@
 import util from 'util'
+import assert from 'assert'
 import { nest } from 'nesthydrationjs'
 import { groupBy, map, flatMap, uniq, forIn, chain } from 'lodash'
 const debug = require('debug')('join-monster')
 
 import * as queryAST from './queryASTToSqlAST'
 import defineObjectShape from './defineObjectShape'
-import postProcess from './postProcess'
+import arrToConnection from './arrToConnection'
 import AliasNamespace from './aliasNamespace'
 import { emphasize, inspect, buildWhereFunction, wrap, maybeQuote } from './util'
 
@@ -84,7 +85,7 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   if (!sql) return {}
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
-  const data = postProcess(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)
+  const data = arrToConnection(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)
   await nextBatch(sqlAST, data, dbCall, context, options)
   return data
 }
@@ -97,6 +98,9 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
     } else {
       data = map(data.edges, 'node')
     }
+  }
+  if (!data || (Array.isArray(data) && data.length === 0)) {
+    return 
   }
 
   // loop through all the child fields that are tables
@@ -115,7 +119,7 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
           newData = groupBy(newData, thisField)
           if (childAST.paginate) {
             forIn(newData, (group, key, obj) => {
-              obj[key] = postProcess(group, childAST)
+              obj[key] = arrToConnection(group, childAST)
             })
           }
           if (childAST.grabMany) {
@@ -124,7 +128,7 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
             }
           } else {
             for (let obj of data) {
-              obj[fieldName] = newData[obj[parentField]][0]
+              obj[fieldName] = arrToConnection(newData[obj[parentField]][0], childAST)
             }
           }
           const nextLevelData = flatMap(data, obj => obj[fieldName])
@@ -135,12 +139,14 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
           let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition))
           newData = groupBy(newData, thisField)
           if (childAST.paginate){
-            data[fieldName] = postProcess(newData[data[parentField]], childAST)
+            const targets = newData[data[parentField]]
+            data[fieldName] = arrToConnection(targets, childAST)
           } else {
             if (childAST.grabMany) {
               data[fieldName] = newData[data[parentField]] || []
             } else {
-              data[fieldName] = newData[data[parentField]][0]
+              const targets = newData[data[parentField]] || []
+              data[fieldName] = targets[0]
             }
           }
           await nextBatch(childAST, data[fieldName], dbCall, context, options)
@@ -190,6 +196,7 @@ async function compileSqlAST(sqlAST, context, options) {
 async function getNode(typeName, resolveInfo, context, condition, dbCall, options = {}) {
   // get the GraphQL type from the schema using the name
   const type = resolveInfo.schema.getType(typeName)
+  assert(type, `Type "${typeName}" not found in your schema.`)
 
   // we need to determine what the WHERE function should be
   let where = buildWhereFunction(type, condition, options)
@@ -211,7 +218,7 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   queryAST.getGraphQLType(fieldNodes[0], fakeParentNode, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, options)
   queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
-  const data = postProcess(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)
+  const data = arrToConnection(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)
   await nextBatch(sqlAST, data, dbCall, context, options)
   if (!data) return data
   data.__type__ = type
