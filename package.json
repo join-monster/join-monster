@@ -29,7 +29,6 @@
   "ava": {
     "concurrency": 10,
     "failFast": true,
-    "verbose": true,
     "require": "babel-register",
     "babel": {
       "babelrc": true

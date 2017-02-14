@@ -79,6 +79,10 @@ test('it should handle a single object in which the first requested field is a l
         {
           id: 1,
           body: 'If I could marry a programming language, it would be Haskell.'
+        },
+        {
+          id: 3,
+          body: 'Here is who to contact if your brain has been ruined by Java.'
         }
       ]
     }

@@ -1,7 +1,7 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import { toGlobalId } from 'graphql-relay'
-import schemaRelay from '../example/schema-relay-standard/index'
+import schemaRelay from '../example/schema-paginated/index'
 import { partial } from 'lodash'
 
 
@@ -9,11 +9,11 @@ const run = partial(graphql, schemaRelay)
 
 test('it should get a globalId', async t => {
   const query = `{
-    users { id }
+    user(id:1) { id }
   }`
   const { data, errors } = await run(query)
   t.is(errors, undefined)
-  const expect = { users: [ { id: 'VXNlcjox' }, { id: 'VXNlcjoy' } ] }
+  const expect = { user: { id: 'VXNlcjox' } }
   t.deepEqual(data, expect)
 })
 
@@ -161,13 +161,13 @@ test('it should handle the relay connection type', async t => {
         edges: [
           {
             node: {
-              id: 'Q29tbWVudDoy',
+              id: 'Q29tbWVudDo0',
               body: 'Do not forget to check out the demo.'
             }
           },
           {
             node: {
-              id: 'Q29tbWVudDoz',
+              id: 'Q29tbWVudDo2',
               body: 'Also, submit a PR if you have a feature you want to add.'
             }
           }
@@ -235,14 +235,14 @@ test('it should handle nested connection types', async t => {
                 edges: [
                   {
                     node: {
-                      id: 'Q29tbWVudDoy',
+                      id: 'Q29tbWVudDo0',
                       body: 'Do not forget to check out the demo.'
                     }
                   },
                   {
                     node: {
-                      id: 'Q29tbWVudDoz',
-                      body: 'Also, submit a PR if you have a feature you want to add.'
+                      id: 'Q29tbWVudDo1',
+                      body: 'This sucks. Go use REST you scrub.'
                     }
                   }
                 ]

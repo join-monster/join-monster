@@ -18,9 +18,15 @@ import { nodeField } from './Node'
 import joinMonster from '../../src/index'
 import dbCall from '../data/fetch'
 const options = {
-  minify: process.env.MINIFY == 1,
-  dialect: process.env.PG_URL ? 'pg' : 'standard'
+  minify: process.env.MINIFY == 1
 }
+if (knex.client.config.client === 'mysql') {
+  options.dialect = 'mysql'
+} else if (knex.client.config.client === 'pg') {
+  options.dialect = 'pg'
+}
+
+const { PAGINATE } = process.env
 
 export default new GraphQLObjectType({
   description: 'global query object',
@@ -30,6 +36,10 @@ export default new GraphQLObjectType({
       type: GraphQLString,
       resolve: () => joinMonster.version
     },
+    database: {
+      type: GraphQLString,
+      resolve: () => knex.client.config.client + ' ' + JSON.stringify(knex.client.config.connection).replace(/"/g, '  ')
+    },
     node: nodeField,
     users: {
       type: UserConnection,
@@ -37,21 +47,26 @@ export default new GraphQLObjectType({
         ...connectionArgs,
         search: { type: GraphQLString }
       },
-      sqlPaginate: !!process.env.PAGINATE,
-      ...process.env.PAGINATE === 'offset' ?
-        { orderBy: 'id' } :
-        process.env.PAGINATE === 'keyset' ?
-          { sortKey:
-            { order: 'asc',
-              key: 'id' } } :
-        {},
+      sqlPaginate: !!PAGINATE,
+      ... do {
+        if (PAGINATE === 'offset') {
+          ({ orderBy: 'id' })
+        } else if (PAGINATE === 'keyset') {
+          ({
+            sortKey: {
+              order: 'asc',
+              key: 'id'
+            }
+          })
+        }
+      },
       where: (table, args) => {
         // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
         if (args.search) return `(${table}.first_name ilike '%${args.search}%' OR ${table}.last_name ilike '%${args.search}%')`
       },
       resolve: async (parent, args, context, resolveInfo) => {
         const data = await joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
-        return process.env.PAGINATE ? data : connectionFromArray(data, args)
+        return PAGINATE ? data : connectionFromArray(data, args)
       }
     },
     user: {

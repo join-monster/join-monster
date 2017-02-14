@@ -9,6 +9,8 @@ import {
 import User from './User'
 import Comment from './Comment'
 
+const { STRATEGY } = process.env
+
 export default new GraphQLObjectType({
   description: 'A post from a user',
   name: 'Post',
@@ -29,7 +31,7 @@ export default new GraphQLObjectType({
     author: {
       description: 'The user that created the post',
       type: User,
-      ...process.env.STRATEGY === 'batch' ?
+      ...STRATEGY === 'batch' ?
         { sqlBatch:
           { thisKey: 'id',
             parentKey: 'author_id' } } :
@@ -41,12 +43,13 @@ export default new GraphQLObjectType({
       args: {
         active: { type: GraphQLBoolean }
       },
-      ...[ 'batch', 'mix' ].includes(process.env.STRATEGY) ?
+      ...[ 'batch', 'mix' ].includes(STRATEGY) ?
         { sqlBatch:
           { thisKey: 'post_id',
             parentKey: 'id' },
           where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null } :
-        { sqlJoin: (postTable, commentTable, args) => `${commentTable}.post_id = ${postTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` }
+        { sqlJoin: (postTable, commentTable, args) => `${commentTable}.post_id = ${postTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` },
+      resolve: post => post.comments.sort((a, b) => a.id - b.id)
     },
     numComments: {
       description: 'How many comments this post has',

@@ -8,6 +8,8 @@ import {
 import Post from './Post'
 import User from './User'
 
+const { STRATEGY } = process.env
+
 export default new GraphQLObjectType({
   description: 'Comments on posts',
   name: 'Comment',
@@ -28,7 +30,7 @@ export default new GraphQLObjectType({
     post: {
       description: 'The post that the comment belongs to',
       type: Post,
-      ...process.env.STRATEGY === 'batch' ?
+      ...STRATEGY === 'batch' ?
         { sqlBatch: 
           { thisKey: 'id',
             parentKey: 'post_id' } } :
@@ -41,7 +43,7 @@ export default new GraphQLObjectType({
     author: {
       description: 'The user who wrote the comment',
       type: User,
-      ...process.env.STRATEGY === 'batch' ?
+      ...STRATEGY === 'batch' ?
         { sqlBatch:
           { thisKey: 'id',
             parentKey: 'author_id' } } :

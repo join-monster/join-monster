@@ -16,6 +16,7 @@ import { User } from './User'
 import { CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
 
+const { PAGINATE, STRATEGY } = process.env
 
 export const Post = new GraphQLObjectType({
   description: 'A post from a user',
@@ -44,25 +45,41 @@ export const Post = new GraphQLObjectType({
         ...forwardConnectionArgs,
         active: { type: GraphQLBoolean }
       },
-      sqlPaginate: !!process.env.PAGINATE,
-      ...process.env.PAGINATE === 'offset' ?
-        { orderBy: 'id' } :
-        process.env.PAGINATE === 'keyset' ?
-          { sortKey:
-            { order: 'DESC',
-              key: 'id' } } :
-          {
+      sqlPaginate: !!PAGINATE,
+      ... do {
+        if (PAGINATE === 'offset') {
+          ({ orderBy: 'id' })
+        } else if (PAGINATE === 'keyset') {
+          ({
+            sortKey: {
+              order: 'DESC',
+              key: 'id'
+            }
+          })
+        } else {
+          ({
             resolve: (user, args) => {
               user.comments.sort((a, b) => a.id - b.id)
               return connectionFromArray(user.comments, args)
             }
-          },
-      ...[ 'batch', 'mix' ].includes(process.env.STRATEGY) ?
-        { sqlBatch:
-          { thisKey: 'post_id',
-            parentKey: 'id' },
-          where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null } :
-        { sqlJoin: (postTable, commentTable, args) => `${commentTable}.post_id = ${postTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` }
+          })
+        }
+      },
+      ... do {
+        if (STRATEGY === 'batch' || STRATEGY === 'mix') {
+          ({
+            sqlBatch: {
+              thisKey: 'post_id',
+              parenyKey: 'id'
+            },
+            where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null
+          })
+        } else {
+          ({
+            sqlJoin: (postTable, commentTable, args) => `${commentTable}.post_id = ${postTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` 
+          })
+        }
+      }
     },
     numComments: {
       description: 'How many comments this post has',

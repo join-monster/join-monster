@@ -16,6 +16,8 @@ import Post from './Post'
 import Person from './Person'
 import { toBase64 } from './utils'
 
+const { STRATEGY } = process.env
+
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
@@ -50,7 +52,7 @@ const User = new GraphQLObjectType({
     capitalizedLastName: {
       description: 'The last name WITH CAPS LOCK',
       type: GraphQLString,
-      sqlExpr: (table, args, context) => `upper(${table}.last_name)`
+      sqlExpr: (table, args, context) => `upper(${table}.last_name)` // eslint-disable-line no-unused-vars
     },
     comments: {
       description: 'Comments the user has written on people\'s posts',
@@ -61,12 +63,13 @@ const User = new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
-      ...[ 'batch', 'mix' ].includes(process.env.STRATEGY) ?
+      ...[ 'batch', 'mix' ].includes(STRATEGY) ?
         { sqlBatch:
           { thisKey: 'author_id',
             parentKey: 'id' },
           where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null } :
-        { sqlJoin: (userTable, commentTable, args) => `${commentTable}.author_id = ${userTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` }
+        { sqlJoin: (userTable, commentTable, args) => `${commentTable}.author_id = ${userTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` },
+      resolve: user => user.comments.sort((a, b) => a.id - b.id) 
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -78,11 +81,12 @@ const User = new GraphQLObjectType({
         }
       },
       where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null,
-      ...process.env.STRATEGY === 'batch' ?
+      ...STRATEGY === 'batch' ?
         { sqlBatch:
           { thisKey: 'author_id',
             parentKey: 'id' } } :
-        { sqlJoin: (userTable, postTable) => `${postTable}.author_id = ${userTable}.id` }
+        { sqlJoin: (userTable, postTable) => `${postTable}.author_id = ${userTable}.id` },
+      resolve: user => user.posts.sort((a, b) => a.id - b.id)
     },
     following: {
       description: 'Users that this user is following',

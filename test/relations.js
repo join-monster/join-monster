@@ -21,20 +21,20 @@ test('should join a one-to-many relation', async t => {
         id: 1,
         comments: [
           {
-            id: 6,
-            body: 'Also, submit a PR if you have a feature you want to add.'
+            id: 1,
+            body: 'Wow this is a great post, Matt.'
           },
           {
             id: 4,
             body: 'Do not forget to check out the demo.'
           },
           {
-            id: 8,
-            body: 'Somebody please help me with this library. It is so much work.'
+            id: 6,
+            body: 'Also, submit a PR if you have a feature you want to add.'
           },
           {
-            id: 1,
-            body: 'Wow this is a great post, Matt.'
+            id: 8,
+            body: 'Somebody please help me with this library. It is so much work.'
           }
         ]
       },
@@ -88,8 +88,8 @@ test('should join on a nested relation', async t => {
       {
         comments: [
           {
-            id: 6,
-            body: 'Also, submit a PR if you have a feature you want to add.',
+            id: 1,
+            body: 'Wow this is a great post, Matt.',
             author: {
               fullName: 'andrew carlson'
             }
@@ -102,15 +102,15 @@ test('should join on a nested relation', async t => {
             }
           },
           {
-            id: 8,
-            body: 'Somebody please help me with this library. It is so much work.',
+            id: 6,
+            body: 'Also, submit a PR if you have a feature you want to add.',
             author: {
               fullName: 'andrew carlson'
             }
           },
           {
-            id: 1,
-            body: 'Wow this is a great post, Matt.',
+            id: 8,
+            body: 'Somebody please help me with this library. It is so much work.',
             author: {
               fullName: 'andrew carlson'
             }
@@ -198,13 +198,13 @@ test('should handle where conditions on the relations', async t => {
           numComments: 3,
           comments: [
             {
-              id: 3,
-              body: 'That\'s ultra weird bro.',
+              id: 1,
+              body: 'Wow this is a great post, Matt.',
               archived: false
             },
             {
-              id: 1,
-              body: 'Wow this is a great post, Matt.',
+              id: 3,
+              body: 'That\'s ultra weird bro.',
               archived: false
             }
           ]
@@ -244,8 +244,22 @@ test('should handle joins with the same table name', async t => {
         fullName: 'andrew carlson',
         comments: [
           {
-            id: 6,
-            body: 'Also, submit a PR if you have a feature you want to add.',
+            id: 1,
+            body: 'Wow this is a great post, Matt.',
+            author: {
+              fullName: 'andrew carlson'
+            },
+            post: {
+              id: 1,
+              body: 'If I could marry a programming language, it would be Haskell.',
+              author: {
+                fullName: 'matt elder'
+              }
+            }
+          },
+          {
+            id: 4,
+            body: 'Do not forget to check out the demo.',
             author: {
               fullName: 'andrew carlson'
             },
@@ -258,8 +272,8 @@ test('should handle joins with the same table name', async t => {
             }
           },
           {
-            id: 4,
-            body: 'Do not forget to check out the demo.',
+            id: 6,
+            body: 'Also, submit a PR if you have a feature you want to add.',
             author: {
               fullName: 'andrew carlson'
             },
@@ -282,20 +296,6 @@ test('should handle joins with the same table name', async t => {
               body: 'Check out this cool new GraphQL library, Join Monster.',
               author: {
                 fullName: 'andrew carlson'
-              }
-            }
-          },
-          {
-            id: 1,
-            body: 'Wow this is a great post, Matt.',
-            author: {
-              fullName: 'andrew carlson'
-            },
-            post: {
-              id: 1,
-              body: 'If I could marry a programming language, it would be Haskell.',
-              author: {
-                fullName: 'matt elder'
               }
             }
           }
@@ -394,6 +394,7 @@ test('should handle joins with the same table name', async t => {
 
 test('it should handle many to many relationship', async t => {
   const query = wrap(`
+    id
     fullName
     following { fullName }
   `)
@@ -402,6 +403,7 @@ test('it should handle many to many relationship', async t => {
   const expect = {
     users: [
       {
+        id: 1,
         fullName: 'andrew carlson',
         following: [
           {
@@ -410,10 +412,12 @@ test('it should handle many to many relationship', async t => {
         ]
       },
       {
+        id: 2,
         fullName: 'matt elder',
         following: []
       },
       {
+        id: 3,
         fullName: 'foo bar',
         following: [
           {
@@ -426,7 +430,7 @@ test('it should handle many to many relationship', async t => {
       }
     ]
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should handle fragments nested lower', async t => {
@@ -454,10 +458,10 @@ test('it should handle fragments nested lower', async t => {
         id: 1,
         comments: [
           {
-            id: 6,
-            body: 'Also, submit a PR if you have a feature you want to add.',
+            id: 1,
+            body: 'Wow this is a great post, Matt.',
             post: {
-              body: 'Check out this cool new GraphQL library, Join Monster.'
+              body: 'If I could marry a programming language, it would be Haskell.'
             }
           },
           {
@@ -468,17 +472,17 @@ test('it should handle fragments nested lower', async t => {
             }
           },
           {
-            id: 8,
-            body: 'Somebody please help me with this library. It is so much work.',
+            id: 6,
+            body: 'Also, submit a PR if you have a feature you want to add.',
             post: {
               body: 'Check out this cool new GraphQL library, Join Monster.'
             }
           },
           {
-            id: 1,
-            body: 'Wow this is a great post, Matt.',
+            id: 8,
+            body: 'Somebody please help me with this library. It is so much work.',
             post: {
-              body: 'If I could marry a programming language, it would be Haskell.'
+              body: 'Check out this cool new GraphQL library, Join Monster.'
             }
           }
         ]
@@ -547,23 +551,21 @@ test('should handle a correlated subquery', async t => {
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
-    data: {
-      user: {
-        posts: [
-          {
-            id: 1,
-            body: 'If I could marry a programming language, it would be Haskell.',
-            archived: false,
-            numComments: 3
-          },
-          {
-            id: 3,
-            body: 'Here is who to contact if your brain has been ruined by Java.',
-            archived: true,
-            numComments: 1
-          }
-        ]
-      }
+    user: {
+      posts: [
+        {
+          id: 1,
+          body: 'If I could marry a programming language, it would be Haskell.',
+          archived: false,
+          numComments: 3
+        },
+        {
+          id: 3,
+          body: 'Here is who to contact if your brain has been ruined by Java.',
+          archived: true,
+          numComments: 1
+        }
+      ]
     }
   }
   t.deepEqual(data, expect)

@@ -5,8 +5,12 @@ import {
 
 import joinMonster from '../../src/index'
 const options = {
-  minify: process.env.MINIFY == 1,
-  dialect: process.env.PG_URL ? 'pg' : 'standard'
+  minify: process.env.MINIFY == 1
+}
+if (knex.client.config.client === 'mysql') {
+  options.dialect = 'mysql'
+} else if (knex.client.config.client === 'pg') {
+  options.dialect = 'pg'
 }
 
 import dbCall from '../data/fetch'

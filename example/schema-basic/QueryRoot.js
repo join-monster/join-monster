@@ -32,10 +32,15 @@ export default new GraphQLObjectType({
       type: GraphQLString,
       resolve: () => joinMonster.version
     },
+    database: {
+      type: GraphQLString,
+      resolve: () => knex.client.config.client + ' ' + JSON.stringify(knex.client.config.connection).replace(/"/g, '  ')
+    },
     users: {
       type: new GraphQLList(User),
-      resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+      resolve: async (parent, args, context, resolveInfo) => {
+        const users = await joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return users.sort((a, b) => a.id - b.id)
       }
     },
     user: {
