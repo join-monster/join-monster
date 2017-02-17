@@ -173,7 +173,7 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
         const sameType = selectionNameOfType === gqlType.name
         const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(selectionNameOfType) >= 0
         if (sameType || interfaceType) {
-          handleSelections(children, selection.selectionSet.selections, gqlType, fragments, variables, namespace, options)
+          handleSelections(children, selection.selectionSet.selections, gqlType, fragments, variables, namespace, depth + 1, options)
         }
       }
       break
@@ -187,7 +187,7 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
         const sameType = fragmentNameOfType === gqlType.name
         const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
         if (sameType || interfaceType) {
-          handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, variables, namespace, options)
+          handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, variables, namespace, depth + 1, options)
         }
       }
       break
