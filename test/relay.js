@@ -333,7 +333,7 @@ test('should handle fragments recursively', async t => {
         edges: [
           {
             node: {
-              id: 'Q29tbWVudDoy',
+              id: 'Q29tbWVudDo0',
               body: 'Do not forget to check out the demo.',
               author: {
                 fullName: 'andrew carlson'
@@ -342,7 +342,7 @@ test('should handle fragments recursively', async t => {
           },
           {
             node: {
-              id: 'Q29tbWVudDoz',
+              id: 'Q29tbWVudDo2',
               body: 'Also, submit a PR if you have a feature you want to add.',
               author: {
                 fullName: 'andrew carlson'

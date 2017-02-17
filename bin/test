@@ -1,10 +1,17 @@
 #!/bin/bash
 set -e
 
+GREEN='\033[102m'
+BLUE='\033[104m'
+NC='\033[0m'
+
+echo -e "${BLUE} running with all joins ${NC}"
 npm run testall
+
+echo -e "${BLUE} running with all batches ${NC}"
 STRATEGY=batch npm run testall
+
+echo -e "${BLUE} running with mixture ${NC}"
 STRATEGY=mix npm run testall
 
-GREEN='\033[102m'
-NC='\033[0m'
 echo -e "${GREEN} PASSED ${NC}"

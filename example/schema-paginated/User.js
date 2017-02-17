@@ -138,7 +138,6 @@ const User = new GraphQLObjectType({
       description: 'Users that this user is following',
       type: UserConnection,
       args: connectionArgs,
-      junctionTable: 'relationships',
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {
@@ -163,10 +162,26 @@ const User = new GraphQLObjectType({
           })
         }
       },
-      sqlJoins: [
-        (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
-        (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
-      ]
+      junctionTable: 'relationships',
+      ... do {
+        if (STRATEGY === 'batch' || STRATEGY === 'mix') {
+          ({
+            junctionTableKey: [ 'follower_id', 'followee_id' ],
+            junctionBatch: {
+              thisKey: 'follower_id',
+              parentKey: 'id',
+              sqlJoin: (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
+            }
+          })
+        } else {
+          ({
+            sqlJoins: [
+              (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
+              (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
+            ]
+          })
+        }
+      }
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),

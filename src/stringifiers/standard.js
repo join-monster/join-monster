@@ -93,7 +93,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     break
   case 'column':
     selections.push(
-      `"${parent.as}"."${node.name}" AS "${joinPrefix(prefix) + node.as}"`
+      `"${node.fromOtherTable || parent.as}"."${node.name}" AS "${joinPrefix(prefix) + node.as}"`
     )
     break
   case 'columnDeps':
@@ -104,7 +104,8 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     }
     break
   case 'composite':
-    const keys = node.name.map(key => `"${parent.as}"."${key}"`)
+    const parentTable = node.fromOtherTable || parent.as
+    const keys = node.name.map(key => `"${parentTable}"."${key}"`)
     // use the || operator for concatenation.
     // this is NOT supported in all SQL databases, e.g. some use a CONCAT function instead...
     selections.push(

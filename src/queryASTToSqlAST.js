@@ -125,6 +125,9 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
 
+  // tables have child fields, lets push them to an array
+  const children = sqlASTNode.children = []
+
   sqlASTNode.fieldName = field.name
   sqlASTNode.grabMany = grabMany
 
@@ -145,12 +148,31 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
     if (field.sqlJoins) {
       sqlASTNode.sqlJoins = field.sqlJoins
     } else {
+      if (typeof field.junctionTableKey === 'string') {
+        children.push({
+          type: 'column',
+          name: field.junctionTableKey,
+          fieldName: field.junctionTableKey,
+          fromOtherTable: sqlASTNode.junctionTableAs,
+          as: namespace.generate('column', field.junctionTableKey)
+        })
+      } else if (Array.isArray(field.junctionTableKey)) {
+        const clumsyName = field.junctionTableKey.join('#') // need a name for this column, smash the individual column names together
+        children.push({
+          type: 'composite',
+          name: field.junctionTableKey,
+          fieldName: clumsyName,
+          fromOtherTable: sqlASTNode.junctionTableAs,
+          as: namespace.generate('column', clumsyName)
+        })
+      }
       sqlASTNode.junctionBatch = {
         sqlJoin: field.junctionBatch.sqlJoin,
         thisKey: {
           type: 'column',
           name: field.junctionBatch.thisKey,
           fieldName: field.junctionBatch.thisKey,
+          fromOtherTable: sqlASTNode.junctionTableAs,
           as: namespace.generate('column', field.junctionBatch.thisKey)
         },
         parentKey: {
@@ -178,9 +200,6 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
       },
     }
   }
-
-  // tables have child fields, lets push them to an array
-  const children = sqlASTNode.children = []
 
   handleUniqueKey(config, children, namespace)
 

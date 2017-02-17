@@ -93,15 +93,15 @@ const User = new GraphQLObjectType({
       description: 'Users that this user is following',
       type: new GraphQLList(User),
       junctionTable: 'relationships',
-      //sqlJoins: [
-        //(followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
-        //(relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
-      //],
-      junctionBatch: {
-        thisKey: 'follower_id',
-        parentKey: 'id',
-        sqlJoin: (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
-      },
+      ...[ 'batch', 'mix' ].includes(STRATEGY) ?
+        { junctionTableKey: [ 'follower_id', 'followee_id' ],
+          junctionBatch:
+            { thisKey: 'follower_id',
+              parentKey: 'id',
+              sqlJoin: (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id` } } :
+        { sqlJoins:
+          [ (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
+            (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id` ] },
       resolve: user => sortBy(user.following, 'first_name') 
     },
     favNums: {

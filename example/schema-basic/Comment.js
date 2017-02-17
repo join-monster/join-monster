@@ -2,6 +2,7 @@ import {
   GraphQLObjectType,
   GraphQLString,
   GraphQLInt,
+  GraphQLList,
   GraphQLBoolean
 } from 'graphql'
 
@@ -52,7 +53,7 @@ export default new GraphQLObjectType({
     likers: {
       description: 'Which users have liked this comment',
       junctionTable: 'likes',
-      type: User,
+      type: new GraphQLList(User),
       sqlJoins: [
         (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,
         (likesTable, userTable) => `${likesTable}.account_id = ${userTable}.id`

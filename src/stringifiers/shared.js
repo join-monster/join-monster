@@ -3,5 +3,5 @@ export function joinPrefix(prefix) {
 }
 
 export function quotePrefix(prefix, quote = '"') {
-  return prefix.map(name => quote.concat(name, quote)).reverse().slice(1)
+  return prefix.map(name => quote.concat(name, quote))
 }

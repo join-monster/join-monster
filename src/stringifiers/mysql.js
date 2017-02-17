@@ -42,6 +42,19 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
         `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`
       )
     // this condition is through a join table (many-to-many relations)
+    } else if (node.junctionTable && node.junctionBatch) {
+      if (parent) {
+        selections.push(
+          `${quote(parent.as)}.${quote(node.junctionBatch.parentKey.name)} AS ${quote(joinPrefix(prefix) + node.junctionBatch.parentKey.as)}`
+        )
+      } else {
+        const joinCondition = await node.junctionBatch.sqlJoin(`${quote(node.junctionTableAs)}`, `${quote(node.as)}`, node.args || {}, context)
+        joins.push(
+          `FROM ${node.junctionTable} AS ${quote(node.junctionTableAs)}`,
+          `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`
+        )
+        wheres.push(`${quote(node.junctionTableAs)}.${quote(node.junctionBatch.thisKey.name)} IN (${batchScope.join(',')})`)
+      }
     } else if (node.junctionTable) {
       assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
       const joinCondition1 = await node.sqlJoins[0](`${quote(parent.as)}`, `${quote(node.junctionTableAs)}`, node.args || {}, context)
@@ -71,7 +84,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     }
 
     // recurse thru nodes
-    if (!node.sqlBatch || !parent) {
+    if ((!node.sqlBatch && !node.junctionBatch) || !parent) {
       for (let child of node.children) {
         await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres)
       }
@@ -80,7 +93,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     break
   case 'column':
     selections.push(
-      `${quote(parent.as)}.${quote(node.name)} AS ${quote(joinPrefix(prefix) + node.as)}`
+      `${quote(node.fromOtherTable || parent.as)}.${quote(node.name)} AS ${quote(joinPrefix(prefix) + node.as)}`
     )
     break
   case 'columnDeps':
@@ -91,7 +104,8 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     }
     break
   case 'composite':
-    const keys = node.name.map(key => `${quote(parent.as)}.${quote(key)}`)
+    const parentTable = node.fromOtherTable || parent.as
+    const keys = node.name.map(key => `${quote(parentTable)}.${quote(key)}`)
     // use the || operator for concatenation.
     // this is NOT supported in all SQL databases, e.g. some use a CONCAT function instead...
     selections.push(

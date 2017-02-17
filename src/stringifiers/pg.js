@@ -99,6 +99,75 @@ LEFT JOIN LATERAL (
       }
     
     // this branch is for many-to-many relations, needs two joins
+    } else if (node.junctionTable && node.junctionBatch) {
+      if (parent) {
+        selections.push(
+          `"${parent.as}"."${node.junctionBatch.parentKey.name}" AS "${joinPrefix(prefix) + node.junctionBatch.parentKey.as}"`
+        )
+      } else {
+        if (node.paginate) {
+          //let whereCondition = await node.junctionBatch.sqlJoin(`"${parent.as}"`, node.junctionTable, node.args || {}, context)
+          let whereCondition = 'TRUE'
+          if (node.where) {
+            whereCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
+            //const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
+            //if (filterCondition) {
+              //whereCondition += ' AND ' + filterCondition
+            //}
+          }
+
+          whereCondition += ' AND ' + `${node.junctionTable}."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
+          if (node.sortKey) {
+            const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node)
+            if (whereAddendum) {
+              whereCondition += ' AND ' + whereAddendum
+            }
+            const join = `\
+FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junctionBatch.parentKey.name}")
+LEFT JOIN LATERAL (
+  SELECT * FROM ${node.junctionTable}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns)}
+  LIMIT ${limit}
+) AS "${node.junctionTableAs}" ON "${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
+            joins.push(join)
+            const joinCondition = await node.junctionBatch.sqlJoin(`"${node.junctionTableAs}"`, node.as, node.args || {}, context)
+            joins.push(`LEFT JOIN ${node.name} AS ${node.as} ON ${joinCondition}`)
+            orders.push({
+              table: node.junctionTableAs,
+              columns: orderColumns
+            })
+
+          } else if (node.orderBy) {
+
+            const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
+            const join = `\
+FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junctionBatch.parentKey.name}")
+LEFT JOIN LATERAL (
+  SELECT *, count(*) OVER () AS "$total"
+  FROM ${node.junctionTable}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns)}
+  LIMIT ${limit} OFFSET ${offset}
+) AS "${node.junctionTableAs}" ON "${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
+            joins.push(join)
+            const joinCondition = await node.junctionBatch.sqlJoin(`"${node.junctionTableAs}"`, node.as, node.args || {}, context)
+            joins.push(`LEFT JOIN ${node.name} AS ${node.as} ON ${joinCondition}`)
+            orders.push({
+              table: node.junctionTableAs,
+              columns: orderColumns
+            })
+          }
+
+        } else {
+          const joinCondition = await node.junctionBatch.sqlJoin(`"${node.junctionTableAs}"`, `"${node.as}"`, node.args || {}, context)
+          joins.push(
+            `FROM ${node.junctionTable} AS "${node.junctionTableAs}"`,
+            `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
+          )
+          wheres.push(`"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" IN (${batchScope.join(',')})`)
+        }
+      }
     } else if (node.junctionTable) {
       assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
       const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
@@ -275,7 +344,7 @@ FROM (
     }
 
     // recurse thru nodes
-    if (!node.sqlBatch || !parent) {
+    if ((!node.sqlBatch && !node.junctionBatch) || !parent) {
       for (let child of node.children) {
         await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres, orders)
       }
@@ -283,9 +352,8 @@ FROM (
 
     break
   case 'column':
-    let parentTable = node.fromOtherTable || parent.as
     selections.push(
-      `"${parentTable}"."${node.name}" AS "${joinPrefix(prefix) + node.as}"`
+      `"${node.fromOtherTable || parent.as}"."${node.name}" AS "${joinPrefix(prefix) + node.as}"`
     )
     break
   case 'columnDeps':
@@ -297,7 +365,8 @@ FROM (
     }
     break
   case 'composite':
-    const keys = node.name.map(key => `"${parent.as}"."${key}"`)
+    const parentTable = node.fromOtherTable || parent.as
+    const keys = node.name.map(key => `"${parentTable}"."${key}"`)
     selections.push(
       `NULLIF(CONCAT(${keys.join(', ')}), '') AS "${joinPrefix(prefix) + node.fieldName}"`
     )
