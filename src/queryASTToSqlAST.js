@@ -1,4 +1,5 @@
 import assert from 'assert'
+import { flatMap } from 'lodash'
 import AliasNamespace from './aliasNamespace'
 import { wrap } from './util'
 
@@ -21,7 +22,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = resolveInfo.parentType
-  getGraphQLType(queryAST, parentType, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, options)
+  getGraphQLType(queryAST, parentType, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, 0, options)
 
   // make sure each "sqlDep" is only specified once at each level. also assign it an alias
   pruneDuplicateSqlDeps(sqlAST, namespace)
@@ -29,7 +30,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   return sqlAST
 }
 
-export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, variables, namespace, options) {
+export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, variables, namespace, depth, options) {
   // first, get the name of the field being queried
   const fieldName = queryASTNode.name.value
 
@@ -63,12 +64,12 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
     gqlType = stripNonNullType(gqlType.ofType)
     grabMany = true
   }
-
+  
   // if its a relay connection, there are several things we need to do
   if (gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
     // grab the types and fields inside the connection
-    const stripped = stripRelayConnection(field, queryASTNode)
+    const stripped = stripRelayConnection(field, queryASTNode, fragments)
     // reassign those
     gqlType = stripped.gqlType
     queryASTNode = stripped.queryASTNode
@@ -91,7 +92,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
   // is this a table in SQL?
   if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
-    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, options)
+    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, depth, options)
   // is this a raw expression?
   } else if (field.sqlExpr) {
     sqlASTNode.type = 'expression'
@@ -114,7 +115,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   }
 }
 
-function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, options) {
+function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, depth, options) {
   const config = gqlType._typeConfig
 
   sqlASTNode.type = 'table'
@@ -149,12 +150,12 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   }
 
   if (queryASTNode.selectionSet) {
-    handleSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, options)
+    handleSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
   }
 }
 
 // the selections could be several types, recursively handle each type here
-function handleSelections(children, selections, gqlType, fragments, variables, namespace, options) {
+function handleSelections(children, selections, gqlType, fragments, variables, namespace, depth, options) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
@@ -162,7 +163,7 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
     case 'Field':
       const newNode = {}
       children.push(newNode)
-      getGraphQLType(selection, gqlType, newNode, fragments, variables, namespace, options)
+      getGraphQLType(selection, gqlType, newNode, fragments, variables, namespace, depth + 1, options)
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
@@ -252,15 +253,17 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
   }
 }
 
-function stripRelayConnection(field, queryASTNode) {
+function stripRelayConnection(field, queryASTNode, fragments) {
   // get the GraphQL Type inside the list of edges inside the Node from the schema definition
   const gqlType = field.type._fields.edges.type.ofType._fields.node.type
   // let's remember those arguments on the connection
   const args = queryASTNode.arguments
   // and then find the fields being selected on the underlying type, also buried within edges and Node
-  const edges = queryASTNode.selectionSet.selections.find(selection => selection.name.value === 'edges')
+  const edges = spreadFragments(queryASTNode.selectionSet.selections, fragments)
+    .find(selection => selection.name.value === 'edges')
   if (edges) {
-    queryASTNode = edges.selectionSet.selections.find(selection => selection.name.value === 'node') || {}
+    queryASTNode = spreadFragments(edges.selectionSet.selections, fragments)
+      .find(selection => selection.name.value === 'node') || {}
   } else {
     queryASTNode = {}
   }
@@ -331,5 +334,17 @@ function getSortColumns(field, sqlASTNode) {
       sqlASTNode.orderBy = field.orderBy
     }
   }
+}
+
+function spreadFragments(selections, fragments) {
+  return flatMap(selections, selection => {
+    if (selection.kind === 'FragmentSpread') {
+      const fragmentName = selection.name.value
+      const fragment = fragments[fragmentName]
+      return spreadFragments(fragment.selectionSet.selections, fragments)
+    } else {
+      return selection
+    }
+  })
 }
 

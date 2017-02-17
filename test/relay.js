@@ -256,3 +256,78 @@ test('it should handle nested connection types', async t => {
   t.deepEqual(data, expect)
 })
 
+test('should handle fragments recursively', async t => {
+  const query = `
+    {
+      user(id: 1) {
+        fullName
+        comments(first: 2, after: "YXJyYXljb25uZWN0aW9uOjA=") {
+          ...commentInfo
+        }
+      }
+    }
+
+    fragment commentInfo on CommentConnection {
+      ...commentInfo2
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+
+    fragment commentInfo2 on CommentConnection {
+      edges {
+        ...commentInfo3
+      }
+    }
+
+    fragment commentInfo3 on CommentEdge {
+      node {
+        id
+        body
+        author {
+          ...userInfo
+        }
+      }
+    }
+
+    fragment userInfo on User {
+      fullName
+    }
+  `
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'andrew carlson',
+      comments: {
+        edges: [
+          {
+            node: {
+              id: 'Q29tbWVudDoy',
+              body: 'Do not forget to check out the demo.',
+              author: {
+                fullName: 'andrew carlson'
+              }
+            }
+          },
+          {
+            node: {
+              id: 'Q29tbWVudDoz',
+              body: 'Also, submit a PR if you have a feature you want to add.',
+              author: {
+                fullName: 'andrew carlson'
+              }
+            }
+          }
+        ],
+        pageInfo: {
+          hasNextPage: true,
+          hasPreviousPage: false
+        }
+      }
+    }
+  }
+  t.deepEqual(data, expect)
+})
+
