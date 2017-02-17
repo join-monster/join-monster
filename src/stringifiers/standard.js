@@ -42,6 +42,19 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
         `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
       )
     // this condition is through a join table (many-to-many relations)
+    } else if (node.junctionTable && node.junctionBatch) {
+      if (parent) {
+        selections.push(
+          `"${parent.as}"."${node.junctionBatch.parentKey.name}" AS "${joinPrefix(prefix) + node.junctionBatch.parentKey.as}"`
+        )
+      } else {
+        const joinCondition = await node.junctionBatch.sqlJoin(`"${node.junctionTableAs}"`, `"${node.as}"`, node.args || {}, context)
+        joins.push(
+          `FROM ${node.junctionTable} AS "${node.junctionTableAs}"`,
+          `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
+        )
+        wheres.push(`"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" IN (${batchScope.join(',')})`)
+      }
     } else if (node.junctionTable) {
       assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
       const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
@@ -71,7 +84,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     }
 
     // recurse thru nodes
-    if (!node.sqlBatch || !parent) {
+    if ((!node.sqlBatch && !node.junctionBatch) || !parent) {
       for (let child of node.children) {
         await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres)
       }

@@ -4,3 +4,7 @@ set -e
 npm run testall
 STRATEGY=batch npm run testall
 STRATEGY=mix npm run testall
+
+GREEN='\033[102m'
+NC='\033[0m'
+echo -e "${GREEN} PASSED ${NC}"

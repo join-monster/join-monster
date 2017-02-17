@@ -133,11 +133,33 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   if (field.sqlJoin) {
     sqlASTNode.sqlJoin = field.sqlJoin
   }
-  else if (field.junctionTable) {
-    assert(field.sqlJoins, 'Must define `sqlJoins` (plural) for a many-to-many.')
-    sqlASTNode.sqlJoins = field.sqlJoins
-    sqlASTNode.junctionTable = field.junctionTable
-    sqlASTNode.junctionTableAs = namespace.generate('table', field.junctionTable)
+  else if (field.junctionTable || field.joinTable) {
+    assert(field.sqlJoins || field.junctionBatch, 'Must define `sqlJoins` (plural) or `junctionBatch` for a many-to-many.')
+    if (field.joinTable) {
+      console.warn('The `joinTable` is deprecated. Rename to `junctionTable`.')
+    }
+    const junctionTable = field.junctionTable || field.joinTable
+    sqlASTNode.junctionTable = junctionTable
+    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable)
+    if (field.sqlJoins) {
+      sqlASTNode.sqlJoins = field.sqlJoins
+    } else {
+      sqlASTNode.junctionBatch = {
+        sqlJoin: field.junctionBatch.sqlJoin,
+        thisKey: {
+          type: 'column',
+          name: field.junctionBatch.thisKey,
+          fieldName: field.junctionBatch.thisKey,
+          as: namespace.generate('column', field.junctionBatch.thisKey)
+        },
+        parentKey: {
+          type: 'column',
+          name: field.junctionBatch.parentKey,
+          fieldName: field.junctionBatch.parentKey,
+          as: namespace.generate('column', field.junctionBatch.parentKey)
+        }
+      }
+    }
   }
   else if (field.sqlBatch) {
     sqlASTNode.sqlBatch = {
