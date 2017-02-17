@@ -259,10 +259,10 @@ function stripRelayConnection(field, queryASTNode, fragments) {
   // let's remember those arguments on the connection
   const args = queryASTNode.arguments
   // and then find the fields being selected on the underlying type, also buried within edges and Node
-  const edges = spreadFragments(queryASTNode.selectionSet.selections, fragments)
+  const edges = spreadFragments(queryASTNode.selectionSet.selections, fragments, field.type.name)
     .find(selection => selection.name.value === 'edges')
   if (edges) {
-    queryASTNode = spreadFragments(edges.selectionSet.selections, fragments)
+    queryASTNode = spreadFragments(edges.selectionSet.selections, fragments, field.type.name)
       .find(selection => selection.name.value === 'node') || {}
   } else {
     queryASTNode = {}
@@ -340,13 +340,20 @@ function getSortColumns(field, sqlASTNode) {
   }
 }
 
-function spreadFragments(selections, fragments) {
+function spreadFragments(selections, fragments, typeName) {
   return flatMap(selections, selection => {
-    if (selection.kind === 'FragmentSpread') {
+    switch(selection.kind) {
+    case 'FragmentSpread':
       const fragmentName = selection.name.value
       const fragment = fragments[fragmentName]
-      return spreadFragments(fragment.selectionSet.selections, fragments)
-    } else {
+      return spreadFragments(fragment.selectionSet.selections, fragments, typeName)
+    case 'InlineFragment':
+      if (selection.typeCondition.name.value === typeName) {
+        return spreadFragments(selection.selectionSet.selections, fragments, typeName)
+      } else {
+        return []
+      }
+    default:
       return selection
     }
   })

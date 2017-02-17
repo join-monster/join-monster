@@ -262,7 +262,9 @@ test('should handle fragments recursively', async t => {
       user(id: 1) {
         fullName
         comments(first: 2, after: "YXJyYXljb25uZWN0aW9uOjA=") {
-          ...commentInfo
+          ... on CommentConnection {
+            ...commentInfo
+          }
         }
       }
     }
