@@ -1,3 +1,6 @@
+### v0.9.10 (Feb. 16, 2017)
+- Bug fixes with recursive fragments and argument parsing.
+
 ### v0.9.9 (Feb. 3, 2017)
 - Add `context` to the `sqlJoin` parameters.
 - Support async in `sqlJoin`.
