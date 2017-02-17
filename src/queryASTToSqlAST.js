@@ -312,12 +312,16 @@ function parseArgValue(value, variableValues) {
     return variableValues[variableName]
   }
   
-  let primitive = value.value
-  // TODO parse other kinds of variables
-  if (value.kind === 'IntValue') {
-    primitive = parseInt(primitive)
+  switch(value.kind) {
+  case 'IntValue':
+    return parseInt(value.value)
+  case 'FloatValue':
+    return parseFloat(value.value)
+  case 'ListValue':
+    return value.values.map(value => parseArgValue(value, variableValues))
+  default:
+    return value.value
   }
-  return primitive
 }
 
 function getSortColumns(field, sqlASTNode) {

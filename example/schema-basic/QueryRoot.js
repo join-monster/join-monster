@@ -32,6 +32,10 @@ export default new GraphQLObjectType({
     },
     users: {
       type: new GraphQLList(User),
+      args: {
+        ids: { type: new GraphQLList(GraphQLInt) }
+      },
+      where: (table, args) => args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, context, sql => {
           // place the SQL query in the response headers. ONLY for debugging. Don't do this in production
