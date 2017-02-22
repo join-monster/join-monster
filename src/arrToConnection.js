@@ -72,7 +72,7 @@ function arrToConnection(data, sqlAST) {
       // $total was a special column for determining the total number of items
       const arrayLength = data[0] && parseInt(data[0].$total)
       const connection = connectionFromArraySlice(data, sqlAST.args || {}, { sliceStart: offset, arrayLength })
-      connection.pageInfo.total = arrayLength
+      connection.total = arrayLength || 0
       connection._paginated = true
       return connection
     }

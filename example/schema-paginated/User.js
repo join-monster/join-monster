@@ -9,6 +9,7 @@ import {
 import {
   globalIdField,
   connectionArgs,
+  forwardConnectionArgs,
   connectionDefinitions,
   connectionFromArray
 } from 'graphql-relay'
@@ -45,8 +46,8 @@ const User = new GraphQLObjectType({
       description: 'Comments the user has written on people\'s posts',
       type: CommentConnection,
       args: {
-        ...connectionArgs,
-        active: { type: GraphQLBoolean }
+        active: { type: GraphQLBoolean },
+        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
       },
       sqlPaginate: !!PAGINATE,
       ... do {
@@ -88,8 +89,8 @@ const User = new GraphQLObjectType({
       description: 'A list of Posts the user has written',
       type: PostConnection, 
       args: {
-        ...connectionArgs,
-        search: { type: GraphQLString }
+        search: { type: GraphQLString },
+        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
       },
       sqlPaginate: !!PAGINATE,
       ... do {
@@ -137,7 +138,7 @@ const User = new GraphQLObjectType({
     following: {
       description: 'Users that this user is following',
       type: UserConnection,
-      args: connectionArgs,
+      args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {
@@ -201,7 +202,13 @@ const User = new GraphQLObjectType({
   })
 })
 
-const { connectionType: UserConnection } = connectionDefinitions({ nodeType: User })
+const connectionConfig = { nodeType: User }
+if (PAGINATE === 'offset') {
+  connectionConfig.connectionFields = {
+    total: { type: GraphQLInt }
+  }
+}
+const { connectionType: UserConnection } = connectionDefinitions(connectionConfig)
 
 export { User, UserConnection }
 

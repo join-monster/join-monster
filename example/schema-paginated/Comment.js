@@ -2,6 +2,7 @@ import {
   GraphQLObjectType,
   GraphQLString,
   GraphQLList,
+  GraphQLInt,
   GraphQLBoolean
 } from 'graphql'
 
@@ -13,6 +14,8 @@ import {
 import { Post } from './Post'
 import { User } from './User'
 import { nodeInterface } from './Node'
+
+const { PAGINATE } = process.env
 
 export const Comment = new GraphQLObjectType({
   description: 'Comments on posts',
@@ -59,6 +62,12 @@ export const Comment = new GraphQLObjectType({
   })
 })
 
-const { connectionType: CommentConnection } = connectionDefinitions({ nodeType: Comment })
+const connectionConfig = { nodeType: Comment }
+if (PAGINATE === 'offset') {
+  connectionConfig.connectionFields = {
+    total: { type: GraphQLInt }
+  }
+}
+const { connectionType: CommentConnection } = connectionDefinitions(connectionConfig)
 export { CommentConnection }
 

@@ -31,6 +31,7 @@ function makeUsersQuery(args) {
   let argString = stringifyArgs(args)
   return `{
     users${argString} {
+      total
       ${pageInfo}
       edges {
         cursor
@@ -126,6 +127,7 @@ test('should return nothing after the end of root pagination', async t => {
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   t.deepEqual(data.users, {
+    total: 0,
     pageInfo: {
       hasNextPage: false,
       startCursor: null,
@@ -141,6 +143,7 @@ function makePostsQuery(args) {
   return `{
     user(id: 1) {
       posts${argString} {
+        total
         ${pageInfo}
         edges {
           cursor
@@ -156,6 +159,7 @@ test('should handle pagination in a nested field', async t => {
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const posts = data.user.posts
+  t.is(posts.total, 8)
   t.deepEqual(posts.pageInfo, {
     hasNextPage: false,
     startCursor: offsetToCursor(0),
@@ -177,6 +181,7 @@ test('nested paging should handle "first" arg', async t => {
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const posts = data.user.posts
+  t.is(posts.total, 8)
   t.deepEqual(posts.pageInfo, {
     hasNextPage: true,
     startCursor: offsetToCursor(0),
@@ -191,6 +196,7 @@ test('nested paging should handle "first" and "after" args that reaches the last
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const posts = data.user.posts
+  t.is(posts.total, 8)
   t.deepEqual(posts.pageInfo, {
     hasNextPage: false,
     startCursor: offsetToCursor(4),
@@ -207,6 +213,7 @@ test('can handle nested pagination', async t => {
         node {
           fullName,
           posts(first: 2) {
+            total
             edges {
               node { body }
             }
@@ -216,6 +223,7 @@ test('can handle nested pagination', async t => {
     }
   }`
   const { data, errors } = await run(query)
+  t.deepEqual(data.users.edges.map(edge => edge.node.posts.total), [ 8, 13 ])
   t.is(errors, undefined)
   t.is(data.users.edges.length, 2)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
@@ -257,6 +265,7 @@ test('can handle deeply nested pagination', async t => {
             edges {
               node {
                 comments(first: 3) {
+                  total
                   pageInfo {
                     hasNextPage
                     startCursor
@@ -465,6 +474,7 @@ test('should handle a "where" condition on a paginated field', async t => {
     id
     fullName
     comments(first: 4, active: false, after: "${offsetToCursor(0)}") {
+      total
       edges {
         node {
           id
@@ -481,6 +491,7 @@ test('should handle a "where" condition on a paginated field', async t => {
     id: parseInt(fromGlobalId(edge.node.id).id),
     archived: edge.node.archived
   }))
+  t.is(data.users.edges[0].node.comments.total, 47)
   const expect = [
     {
       id: 3,

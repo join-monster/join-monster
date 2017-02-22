@@ -9,6 +9,7 @@ import {
   globalIdField,
   connectionDefinitions,
   connectionFromArray,
+  connectionArgs,
   forwardConnectionArgs
 } from 'graphql-relay'
 
@@ -46,8 +47,8 @@ export const Post = new GraphQLObjectType({
       description: 'The comments on this post',
       type: CommentConnection,
       args: {
-        ...forwardConnectionArgs,
-        active: { type: GraphQLBoolean }
+        active: { type: GraphQLBoolean },
+        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
       },
       sqlPaginate: !!PAGINATE,
       ... do {
@@ -97,6 +98,12 @@ export const Post = new GraphQLObjectType({
   })
 })
 
-const { connectionType: PostConnection } = connectionDefinitions({ nodeType: Post })
+const connectionConfig = { nodeType: Post }
+if (PAGINATE === 'offset') {
+  connectionConfig.connectionFields = {
+    total: { type: GraphQLInt }
+  }
+}
+const { connectionType: PostConnection } = connectionDefinitions(connectionConfig)
 export { PostConnection }
 

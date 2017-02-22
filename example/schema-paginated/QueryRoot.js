@@ -7,6 +7,7 @@ import {
 
 import {
   connectionArgs,
+  forwardConnectionArgs,
   connectionFromArray
 } from 'graphql-relay'
 
@@ -44,8 +45,8 @@ export default new GraphQLObjectType({
     users: {
       type: UserConnection,
       args: {
-        ...connectionArgs,
-        search: { type: GraphQLString }
+        search: { type: GraphQLString },
+        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
       },
       sqlPaginate: !!PAGINATE,
       ... do {
