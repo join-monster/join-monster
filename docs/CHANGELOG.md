@@ -1,3 +1,12 @@
+### v1.0.0 (Feb. 23, 2017)
+**Breaking changes:
+- `getSQL` method removed. No longer makes sense in he new multiple-query paradigm.
+- `joinTable` is deprecated. It was renamed to `junctionTable` to avoid over-use of the word "join".
+- Offset pagination adds the `total` to the connection object instead of the `pageInfo`.
+
+- Batching capabilities added.
+- `sqlExpr` can now be asynchronous.
+
 ### v0.9.10 (Feb. 16, 2017)
 - Bug fixes with recursive fragments and argument parsing.
 

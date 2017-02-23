@@ -1,7 +1,7 @@
 {
   "name": "join-monster",
-  "version": "1.0.0-alpha.3",
-  "description": "A GraphQL-to-SQL query execution layer for batch data fetching.",
+  "version": "1.0.0-beta.1",
+  "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
     "node": ">=6.0.0"
@@ -21,7 +21,7 @@
     "lint": "eslint src test",
     "start": "babel-watch ./example/server.js",
     "docs": "mkdocs serve",
-    "jsdoc": "jsdoc2md src/index.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md",
+    "jsdoc": "babel src/index.js -o temp.js && (jsdoc2md temp.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md) && rm temp.js",
     "prepublish": "in-publish && /bin/sh ./scripts/prepublish.sh && npm run build || not-in-publish",
     "preversion": ". ./scripts/checkgit.sh && npm test",
     "db-build": "babel-node example/data/build.js",

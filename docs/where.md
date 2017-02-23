@@ -1,8 +1,13 @@
 ## The Where Function
 
-We of course don't always want every row from every table. We need a way to place a `WHERE` clause in the query.
+We of course don't want every single user in the database.
+We need a way to place a `WHERE` clause in the query.
 
-In a similar manner to the `sqlJoin` function, you can define a `where` function on a field. Its parameters are the table alias (generated automatically by `joinMonster`), the GraphQL arguments on that field, the "context" mentioned earlier, and the parent table aliases. The string returned is the `WHERE` condition. If a falsy value is returned, there will be no `WHERE` condition. We'll add another top-level field that just returns one user.
+You can define a `where` function on a field that generates the `WHERE` condition.
+Its parameters are the table alias (generated automatically by `joinMonster`), the GraphQL arguments on that field, the "context" mentioned earlier, and the parent table aliases.
+The (Promise of) string returned is the `WHERE` condition.
+If a falsy value is returned, there will be no `WHERE` condition.
+We'll add another top-level field that just returns one user.
 
 ```javascript
 const QueryRoot = new GraphQLObjectType({
@@ -11,11 +16,12 @@ const QueryRoot = new GraphQLObjectType({
     users: { /*...*/ },
     user: {
       type: User,
+      // allow them to search for a specific  user
       args: {
-        id: { type: GraphQLInt }
+        id: { type: new GraphQLNonNull(GraphQLInt) }
       },
       where: (usersTable, args, context) => {
-        if (args.id) return `${usersTable}.id = ${args.id}`
+        return `${usersTable}.id = ${args.id}`
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, {}, sql => {
@@ -27,17 +33,22 @@ const QueryRoot = new GraphQLObjectType({
 })
 ```
 
+Now you can handle queries like this, which return a single user.
+
 ```graphql
 {
   user(id: 1) { 
-    id, idEncoded, email, fullName
-    following { fullName }
-    comments { id, body }
+    id
+    email
+    fullName
   }
 }
 ```
 
-This `where` function directly interpolates user input into its clause. This if fine for integers, as the GraphQL validation will prevent malicious input. However, for strings, this is not recommended in production due to SQL injection risk. Instead, you should **escape the input** yourself or use an established library like [sqlstring](https://github.com/mysqljs/sqlstring), [pg-format](https://github.com/datalanche/node-pg-format), or [pg-escape](https://github.com/segmentio/pg-escape).
+This `where` function directly interpolates user input into its clause.
+This if fine for integers, as the GraphQL validation will prevent malicious input.
+However, for strings, this is not recommended in production due to SQL injection risk.
+Instead, you should **escape the input** yourself or use an established library like [sqlstring](https://github.com/mysqljs/sqlstring), [pg-format](https://github.com/datalanche/node-pg-format), or [pg-escape](https://github.com/segmentio/pg-escape).
 
 ```javascript
 import escape from 'pg-escape'
@@ -61,7 +72,9 @@ const QueryRoot = new GraphQLObjectType({
 
 ## Adding Context
 
-The `joinMonster` function has a second parameter which is basically an arbitrary object with useful contextual information that your `where` functions might depend on. For example, if you want to get the **logged in** user, the ID of the logged in user could be passed in the second argument.
+Most often, we'll be asking for the *logged-in* user.
+The `joinMonster` function has a second parameter which is basically an arbitrary object with useful contextual information that your `where` functions might depend on.
+For example, you can pass in the ID of the logged in user to incorporate it into the `WHERE` condition.
 
 ```javascript
 {
@@ -82,7 +95,5 @@ The `joinMonster` function has a second parameter which is basically an arbitrar
 
 Again, don't forget to double-quote case sensitive column names.
 
-## Referencing Related Tables
-
-Does your `WHERE` condition need to reference columns on the table from the parent field? You can reference its table alias with the fourth parameter. It's an array of the table aliases for all fields antecedent of this one, starting with the direct parent.
+See [API](/API/#where) for more details on this callback.
 

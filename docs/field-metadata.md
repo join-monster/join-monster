@@ -35,7 +35,7 @@ In the case of the `id` field, the `sqlColumn` was omitted. Since it has no reso
 
 ## Computed Columns
 
-You can manipulate the data in your query without losing the benefit of a single request.
+You can manipulate the data in your query without losing the benefit of batched requests.
 
 Maybe your field(s) needs a SQL column to compute a value. If there isn't a simple one-to-one correspondence of columns to field, you can use `sqlDeps`. `sqlDeps` is an array of columns that will get retrieved if the GraphQL field is requested. These are exposed to your resolver, so you can write a `resolve` function to compute a value in JavaScript. For example, a `first_name` and `last_name` column can be *depended on* for a `fullName` field in your API.
 
@@ -65,7 +65,12 @@ const User = new GraphQLObjectType({
       type: GraphQLString,
       // do a computed column in SQL with raw expression
       sqlExpr: (table, args) => `UPPER(${table}.last_name)`
-    }
+    },
+    fullNameAnotherWay: {
+      description: 'Another way we can get the full name.',
+      type: GraphQLString,
+      sqlExpr: table => `${table}.first_name || ' ' || ${table}.last_name`
+    },
   })
 })
 ```

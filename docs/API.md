@@ -4,9 +4,6 @@
 <dt><a href="#joinMonster">joinMonster</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>Takes the GraphQL resolveInfo and returns a hydrated Object with the data.</p>
 </dd>
-<dt><a href="#getSQL">getSQL</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
-<dd><p>Takes the GraphQL resolveInfo and returns only the SQL query.</p>
-</dd>
 <dt><a href="#getNode">getNode</a> ⇒ <code>Promise.&lt;Object&gt;</code></dt>
 <dd><p>A helper for resolving the Node type in Relay.</p>
 </dd>
@@ -15,13 +12,13 @@
 ## Typedefs
 
 <dl>
-<dt><a href="#dbCall">dbCall</a> ⇒ <code>Array</code> | <code>Promise.&lt;Array&gt;</code></dt>
+<dt><a href="#dbCall">dbCall</a> ⇒ <code>Promise.&lt;Array&gt;</code></dt>
 <dd><p>User-defined function that sends a raw SQL query to the databse.</p>
 </dd>
-<dt><a href="#sqlExpr">sqlExpr</a> ⇒ <code>String</code></dt>
+<dt><a href="#sqlExpr">sqlExpr</a> ⇒ <code>String</code> | <code>Promise.&lt;String&gt;</code></dt>
 <dd><p>Function for generating a SQL expression.</p>
 </dd>
-<dt><a href="#where">where</a> ⇒ <code>String</code></dt>
+<dt><a href="#where">where</a> ⇒ <code>String</code> | <code>Promise.&lt;String&gt;</code></dt>
 <dd><p>Function for generating a <code>WHERE</code> condition.</p>
 </dd>
 <dt><a href="#sqlJoin">sqlJoin</a> ⇒ <code>String</code></dt>
@@ -40,23 +37,10 @@ Takes the GraphQL resolveInfo and returns a hydrated Object with the data.
 | --- | --- | --- |
 | resolveInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
 | context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization. |
-| dbCall | <code>[dbCall](#dbCall)</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
+| dbCall | <code>[dbCall](#dbCall)</code> | A function that is passed the compiled SQL that calls the database and returns a promise of the data. |
 | [options] | <code>Object</code> |  |
 | options.minify | <code>Boolean</code> | Generate minimum-length column names in the results table. |
 | options.dialect | <code>String</code> | The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'standard'` are supported. |
-
-<a name="getSQL"></a>
-
-## getSQL ⇒ <code>Promise.&lt;string&gt;</code>
-Takes the GraphQL resolveInfo and returns only the SQL query.
-
-**Returns**: <code>Promise.&lt;string&gt;</code> - The SQL query generated  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| resolveInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
-| context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization. |
-| [options] | <code>Object</code> | Same as `joinMonster` function's options. |
 
 <a name="getNode"></a>
 
@@ -76,10 +60,10 @@ A helper for resolving the Node type in Relay.
 
 <a name="dbCall"></a>
 
-## dbCall ⇒ <code>Array</code> &#124; <code>Promise.&lt;Array&gt;</code>
+## dbCall ⇒ <code>Promise.&lt;Array&gt;</code>
 User-defined function that sends a raw SQL query to the databse.
 
-**Returns**: <code>Array</code> &#124; <code>Promise.&lt;Array&gt;</code> - The raw data as a flat array of objects. Each object must represent a row from the result set.  
+**Returns**: <code>Promise.&lt;Array&gt;</code> - The raw data as a flat array of objects. Each object must represent a row from the result set.  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -88,37 +72,38 @@ User-defined function that sends a raw SQL query to the databse.
 
 <a name="sqlExpr"></a>
 
-## sqlExpr ⇒ <code>String</code>
+## sqlExpr ⇒ <code>String</code> &#124; <code>Promise.&lt;String&gt;</code>
 Function for generating a SQL expression.
 
-**Returns**: <code>String</code> - The expression interpolated into the query to compute the column.  
+**Returns**: <code>String</code> &#124; <code>Promise.&lt;String&gt;</code> - The RAW expression interpolated into the query to compute the column. Unsafe user input must be scrubbed.  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | tableAlias | <code>String</code> | The alias generated for this table. Already double-quoted. |
 | args | <code>Object</code> | The GraphQL arguments for this field. |
 | context | <code>Object</code> | An Object with arbitrary contextual information. |
+| parentAliases | <code>Array.&lt;String&gt;</code> | List of aliases of the antecedent tables, starting with the top-level. |
 
 <a name="where"></a>
 
-## where ⇒ <code>String</code>
+## where ⇒ <code>String</code> &#124; <code>Promise.&lt;String&gt;</code>
 Function for generating a `WHERE` condition.
 
-**Returns**: <code>String</code> - The condition for the `WHERE` clause.  
+**Returns**: <code>String</code> &#124; <code>Promise.&lt;String&gt;</code> - The RAW condition for the `WHERE` clause. Omitted if falsy value returned. Unsafe user input must be scrubbed.  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | tableAlias | <code>String</code> | The alias generated for this table. Already double-quoted. |
 | args | <code>Object</code> | The GraphQL arguments for this field. |
 | context | <code>Object</code> | An Object with arbitrary contextual information. |
-| parentAliases | <code>Array.&lt;String&gt;</code> | List of aliases of the antecedent tables, starting with the parent field. |
+| parentAliases | <code>Array.&lt;String&gt;</code> | List of aliases of the antecedent tables, starting with the top-level. |
 
 <a name="sqlJoin"></a>
 
 ## sqlJoin ⇒ <code>String</code>
 Function for generating a `JOIN` condition.
 
-**Returns**: <code>String</code> - The condition for the `LEFT JOIN`.  
+**Returns**: <code>String</code> - The RAW condition for the `LEFT JOIN`. Unsafe user input must be scrubbed.  
 
 | Param | Type | Description |
 | --- | --- | --- |

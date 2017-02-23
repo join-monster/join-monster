@@ -2,16 +2,23 @@ We'll set up the example API in [the demo](https://join-monster.herokuapp.com/gr
 
 ## Defining SQL Schema
 
-We'll set up a little API for a simple blog site for `Users` that can make `Posts` as well as `Comments` on people's posts. We will also let them follow other users. Here is a picture of the schema.
+We'll set up a little API for a simple blog site built on SQLite3. It will have `Users` that can make `Posts` as well as `Comments` on people's posts.
+We will also let them follow other users and like comments.
+Here is a picture of the SQL schema.
 
-![schema-example](img/schema-example.png)
+![schema-example](img/schema-sql.png)
 
-I'll omit the code to set up the SQL tables. You can find the implementation [here](https://github.com/stems/join-monster-demo/blob/master/data/schema.sql). Now let's take a look at the application layer.
+I'll omit the code to set up the SQL tables.
+[Here](https://github.com/stems/join-monster/blob/master/example/data/schema/sqlite3.sql) is an example of how it might be done.
+Now let's look at how the GraphQL API inteface on top of this will look.
 
+![schema-graphql](img/schema-graphql.png)
+
+The `User` is the top-level object type. It has a list of posts and comments the user has authored, as well as a list of users they are following. `Post` has a list of comments on the post, and the `Comment` has a list of the users that like it.
 
 ## Declaring GraphQL Schema
 
-Here is how the [graphql-js](https://github.com/graphql/graphql-js) schema would look.
+Here is how the [graphql-js](https://github.com/graphql/graphql-js) schema would look, beginning with the top-level `User`.
 
 ```javascript
 import { GraphQLSchema } from 'graphql'
@@ -54,5 +61,6 @@ export default new GraphQLSchema({
 })
 ```
 
+For now, we'll just provide a list of *all the users*. We'll fix this later.
 This won't work yet. There are several things missing. Next, we'll map this object type to our `accounts` table in SQL.
 

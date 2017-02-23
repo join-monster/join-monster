@@ -26,12 +26,12 @@ const User = new GraphQLObjectType({
 })
 ```
 
-The `sqlTable` can generalize to any **table expression**. You could choose a VIEW instead of an actual TABLE. In fact, you can make it a whole subquery!
+The `sqlTable` can generalize to any **table expression**. Instead of a physical table, it could be a VIEW or a *derived table*.
 
 ```javascript
 const User = new GraphQLObjectType({
   name: 'User',
-  sqlTable: '(SELECT * FROM accounts)', // this can be an expression that generates a TABLE
+  sqlTable: '(SELECT * FROM accounts WHERE active = 1)', // this can be an expression that generates a TABLE
   uniqueKey: 'id',
   fields: () => ({ /*...*/ })
 })

@@ -372,7 +372,7 @@ FROM (
     )
     break
   case 'expression':
-    const expr = node.sqlExpr(`"${parent.as}"`, node.args || {}, context, quotePrefix(prefix))
+    const expr = await node.sqlExpr(`"${parent.as}"`, node.args || {}, context, quotePrefix(prefix))
     selections.push(
       `${expr} AS "${joinPrefix(prefix) + node.as}"`
     )

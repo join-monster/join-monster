@@ -5,7 +5,7 @@ site_favicon: img/join_monster.ico
 theme: readthedocs
 extra_javascript:
   # MkDocs includes an old version of highlight.js, but it doesn't recognize all modern JS syntax, import a newer version
-  - //cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js
+  - //cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js
   - custom.js
 extra_css: 
   - custom.css
@@ -13,18 +13,24 @@ pages:
   - Introduction: index.md
   - "The Problem We Solve": problem.md
   - "How It Works": how-it-works.md
-  - "Usage":
+  - "Basic Usage":
     - "1. Declare Data Model": data-model.md
     - "2. Map Objects to Tables": map-to-table.md
     - "3. Add Metadata to Fields": field-metadata.md
     - "4. Calling Join Monster": call-function.md
-    - "5. Joining Objects": start-joins.md
-    - "6. Arbitrary Depth": arbitrary-depth.md
-    - "7. Many-to-Many Joins": many-to-many.md
-    - "8. Where Conditions": where.md
-    - "9. Relay Support & Pagination": relay.md
-    - "SQL Dialects": dialects.md
-  - "Pros and Cons": pros-cons.md
+    - "5. Where Conditions": where.md
+    - "6. Joining Objects": start-joins.md
+    - "7. Arbitrary Depth": arbitrary-depth.md
+    - "8. Many-to-Many Joins": many-to-many.md
+  - "Query Planning":
+    - "What & Why": query-planning.md
+    - "One-to-many Batch": batch-one-many.md
+    - "Many-to-many Batch": batch-many-many.md
+  - "Advanced Usage":
+    - "Aggregation Tricks": aggregation.md
+    - "Pagination": pagination.md
+    - "Relay Support": relay.md
+  - "SQL Dialects": dialects.md
   - Warnings: warnings.md
   - API: API.md
   - "Internal Workings": internals.md

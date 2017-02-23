@@ -33,8 +33,8 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {String} tableAlias - The alias generated for this table. Already double-quoted.
  * @param {Object} args - The GraphQL arguments for this field.
  * @param {Object} context - An Object with arbitrary contextual information.
- * @param {Array.<String>} parentAliases - List of aliases of the antecedent tables, starting with the parent field.
- * @returns {String} The expression interpolated into the query to compute the column.
+ * @param {Array.<String>} parentAliases - List of aliases of the antecedent tables, starting with the top-level.
+ * @returns {String|Promise.<String>} The RAW expression interpolated into the query to compute the column. Unsafe user input must be scrubbed.
  */
 /**
  * Function for generating a `WHERE` condition.
@@ -42,8 +42,8 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {String} tableAlias - The alias generated for this table. Already double-quoted.
  * @param {Object} args - The GraphQL arguments for this field.
  * @param {Object} context - An Object with arbitrary contextual information.
- * @param {Array.<String>} parentAliases - List of aliases of the antecedent tables, starting with the parent field.
- * @returns {String} The condition for the `WHERE` clause.
+ * @param {Array.<String>} parentAliases - List of aliases of the antecedent tables, starting with the top-level.
+ * @returns {String|Promise.<String>} The RAW condition for the `WHERE` clause. Omitted if falsy value returned. Unsafe user input must be scrubbed.
  */
 /**
  * Function for generating a `JOIN` condition.
@@ -52,7 +52,7 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {String} childTable - The alias for the child's table. Already double-quoted.
  * @param {Object} args - The GraphQL arguments for this field.
  * @param {Object} context - An Object with arbitrary contextual information.
- * @returns {String} The condition for the `LEFT JOIN`.
+ * @returns {String} The RAW condition for the `LEFT JOIN`. Unsafe user input must be scrubbed.
  */
 
 
@@ -69,7 +69,7 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * Takes the GraphQL resolveInfo and returns a hydrated Object with the data.
  * @param {Object} resolveInfo - Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver.
  * @param {Object} context - An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization.
- * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns (a promise of) the data.
+ * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns a promise of the data.
  * @param {Object} [options]
  * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
  * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'standard'` are supported.

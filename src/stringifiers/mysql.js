@@ -113,7 +113,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     )
     break
   case 'expression':
-    const expr = node.sqlExpr(`${quote(parent.as)}`, node.args || {}, context, quotePrefix(prefix, '`'))
+    const expr = await node.sqlExpr(`${quote(parent.as)}`, node.args || {}, context, quotePrefix(prefix, '`'))
     selections.push(
       `${expr} AS ${quote(joinPrefix(prefix) + node.as)}`
     )
