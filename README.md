@@ -82,7 +82,8 @@ WHERE "comments".archived = FALSE AND "comments"."post_id" IN (2,8,11,12)
             "author": { "fullName": "Ole Barrows" }
           },
         ]
-      }
+      },
+      // other posts omitted for clarity...
     ]
   }
 }
