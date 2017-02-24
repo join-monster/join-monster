@@ -1,7 +1,8 @@
 import assert from 'assert'
 import { cursorToOffset } from 'graphql-relay'
+import { filter } from 'lodash'
 import { validateSqlAST, inspect, cursorToObj, wrap, maybeQuote } from '../util'
-import { joinPrefix, quotePrefix } from './shared'
+import { joinPrefix, quotePrefix, thisIsNotTheEndOfThisBatch } from './shared'
 
 export default async function stringifySqlAST(topNode, context, batchScope) {
   validateSqlAST(topNode)
@@ -19,332 +20,26 @@ export default async function stringifySqlAST(topNode, context, batchScope) {
 
   // put together the SQL query
   let sql = 'SELECT\n  ' + selections.join(',\n  ') + '\n' + joins.join('\n')
+
+  wheres = filter(wheres)
   if (wheres.length) {
     sql += '\nWHERE ' + wheres.join(' AND ')
   }
+
   if (orders.length) {
     sql += '\nORDER BY ' + stringifyOuterOrder(orders)
   }
+
   return sql
 }
 
 async function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres, orders, batchScope) {
   switch(node.type) {
   case 'table':
-    // generate the "where" condition, if applicable
-    if (node.where && !node.paginate && (!node.sqlBatch || !parent)) {
-      const whereCondition = await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix))
-      if (whereCondition) {
-        wheres.push(`${whereCondition}`)
-      }
-    }
-
-    // generate the join or joins
-    // this condition is for single joins (one-to-one or one-to-many relations)
-    if (node.sqlJoin) {
-      const joinCondition = await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context)
-
-      // do we need to paginate? if so this will be a lateral join
-      if (node.paginate) {
-        let whereCondition = await node.sqlJoin(`"${parent.as}"`, node.name, node.args || {}, context)
-        if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
-          if (filterCondition) {
-            whereCondition += ' AND ' + filterCondition
-          }
-        }
-
-        if (node.sortKey) {
-
-          const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node)
-          if (whereAddendum) {
-            whereCondition += ' AND ' + whereAddendum
-          }
-          const join = `\
-LEFT JOIN LATERAL (
-  SELECT * FROM ${node.name}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit}
-) AS "${node.as}" ON ${joinCondition}`
-          joins.push(join)
-          orders.push({
-            table: node.as,
-            columns: orderColumns
-          })
-
-        } else if (node.orderBy) {
-
-          const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
-          const join = `\
-LEFT JOIN LATERAL (
-  SELECT *, count(*) OVER () AS "$total"
-  FROM ${node.name}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit} OFFSET ${offset}
-) AS "${node.as}" ON ${joinCondition}`
-          joins.push(join)
-          orders.push({
-            table: node.as,
-            columns: orderColumns
-          })
-        }
-
-      // otherwite, just a regular left join on the table
-      } else {
-        joins.push(
-          `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
-        )
-      }
-    
-    // this branch is for many-to-many relations, needs two joins
-    } else if (node.junctionTable && node.junctionBatch) {
-      if (parent) {
-        selections.push(
-          `"${parent.as}"."${node.junctionBatch.parentKey.name}" AS "${joinPrefix(prefix) + node.junctionBatch.parentKey.as}"`
-        )
-      } else {
-        if (node.paginate) {
-          //let whereCondition = await node.junctionBatch.sqlJoin(`"${parent.as}"`, node.junctionTable, node.args || {}, context)
-          let whereCondition = 'TRUE'
-          if (node.where) {
-            whereCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
-            //const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
-            //if (filterCondition) {
-              //whereCondition += ' AND ' + filterCondition
-            //}
-          }
-
-          whereCondition += ' AND ' + `${node.junctionTable}."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
-          if (node.sortKey) {
-            const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node)
-            if (whereAddendum) {
-              whereCondition += ' AND ' + whereAddendum
-            }
-            const join = `\
-FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junctionBatch.parentKey.name}")
-LEFT JOIN LATERAL (
-  SELECT * FROM ${node.junctionTable}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit}
-) AS "${node.junctionTableAs}" ON "${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
-            joins.push(join)
-            const joinCondition = await node.junctionBatch.sqlJoin(`"${node.junctionTableAs}"`, node.as, node.args || {}, context)
-            joins.push(`LEFT JOIN ${node.name} AS ${node.as} ON ${joinCondition}`)
-            orders.push({
-              table: node.junctionTableAs,
-              columns: orderColumns
-            })
-
-          } else if (node.orderBy) {
-
-            const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
-            const join = `\
-FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junctionBatch.parentKey.name}")
-LEFT JOIN LATERAL (
-  SELECT *, count(*) OVER () AS "$total"
-  FROM ${node.junctionTable}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit} OFFSET ${offset}
-) AS "${node.junctionTableAs}" ON "${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
-            joins.push(join)
-            const joinCondition = await node.junctionBatch.sqlJoin(`"${node.junctionTableAs}"`, node.as, node.args || {}, context)
-            joins.push(`LEFT JOIN ${node.name} AS ${node.as} ON ${joinCondition}`)
-            orders.push({
-              table: node.junctionTableAs,
-              columns: orderColumns
-            })
-          }
-
-        } else {
-          const joinCondition = await node.junctionBatch.sqlJoin(`"${node.junctionTableAs}"`, `"${node.as}"`, node.args || {}, context)
-          joins.push(
-            `FROM ${node.junctionTable} AS "${node.junctionTableAs}"`,
-            `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
-          )
-          wheres.push(`"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" IN (${batchScope.join(',')})`)
-        }
-      }
-    } else if (node.junctionTable) {
-      assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
-      const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
-      const joinCondition2 = await node.sqlJoins[1](`"${node.junctionTableAs}"`, `"${node.as}"`, node.args || {}, context)
-
-      if (node.paginate) {
-        let whereCondition = await node.sqlJoins[0](`"${parent.as}"`, node.junctionTable, node.args || {}, context)
-        if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
-          if (filterCondition) {
-            whereCondition += ' AND ' + filterCondition
-          }
-        }
-
-        if (node.sortKey) {
-          const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node)
-          if (whereAddendum) {
-            whereCondition += ' AND ' + whereAddendum
-          }
-          const join = `\
-LEFT JOIN LATERAL (
-  SELECT * FROM ${node.junctionTable}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit}
-) AS "${node.junctionTableAs}" ON ${joinCondition1}`
-          joins.push(join)
-          orders.push({
-            table: node.junctionTableAs,
-            columns: orderColumns
-          })
-
-        } else if (node.orderBy) {
-
-          const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
-          const join = `\
-LEFT JOIN LATERAL (
-  SELECT *, count(*) OVER () AS "$total"
-  FROM ${node.junctionTable}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit} OFFSET ${offset}
-) AS "${node.junctionTableAs}" ON ${joinCondition1}`
-          joins.push(join)
-          orders.push({
-            table: node.junctionTableAs,
-            columns: orderColumns
-          })
-        }
-
-      } else {
-        joins.push(
-          `LEFT JOIN ${node.junctionTable} AS "${node.junctionTableAs}" ON ${joinCondition1}`
-        )
-      }
-      joins.push(
-        `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition2}`
-      )
-
-    // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause
-    } else if (node.sqlBatch) {
-      if (parent) {
-        selections.push(
-          `"${parent.as}"."${node.sqlBatch.parentKey.name}" AS "${joinPrefix(prefix) + node.sqlBatch.parentKey.as}"`
-        )
-      } else {
-        if (node.paginate) {
-          if (node.sortKey) {
-            let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
-            whereCondition = whereCondition || 'TRUE'
-            whereCondition += ' AND ' + `"${node.name}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
-            if (node.where) {
-              const filterCondition = await node.where(`${node.name}`, node.args || {}, context, []) 
-              if (filterCondition) {
-                whereCondition += ' AND ' + filterCondition
-              }
-            }
-            const join = `\
-FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")
-JOIN LATERAL (
-  SELECT * FROM ${node.name}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit}
-) AS "${node.as}" ON "${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
-            joins.push(join)
-            orders.push({
-              table: node.as,
-              columns: orderColumns
-            })
-          } else if (node.orderBy) {
-            const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
-            let whereCondition = 'TRUE'
-            if (node.where) {
-              const filterCondition = await node.where(`${node.name}`, node.args || {}, context, []) 
-              if (filterCondition) {
-                whereCondition = filterCondition
-              }
-            }
-            whereCondition += ' AND ' + `"${node.name}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
-            const join = `\
-FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")
-JOIN LATERAL (
-  SELECT *, count(*) OVER () AS "$total"
-  FROM ${node.name}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit} OFFSET ${offset}
-) AS "${node.as}" ON "${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
-            joins.push(join)
-            orders.push({
-              table: node.as,
-              columns: orderColumns
-            })
-          }
-        } else {
-          joins.push(
-            `FROM ${node.name} AS "${node.as}"`
-          )
-          wheres.push(`"${node.as}"."${node.sqlBatch.thisKey.name}" IN (${batchScope.join(',')})`)
-        }
-      }
-    } else if (node.paginate) {
-      if (node.sortKey) {
-        let { limit, orderColumns, whereCondition } = interpretForKeysetPaging(node)
-        whereCondition = whereCondition || 'TRUE'
-        if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
-          if (filterCondition) {
-            whereCondition += ' AND ' + filterCondition
-          }
-        }
-        const join = `\
-FROM (
-  SELECT * FROM ${node.name}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit}
-) AS "${node.as}"`
-        joins.push(join)
-        orders.push({
-          table: node.as,
-          columns: orderColumns
-        })
-      } else if (node.orderBy) {
-        const { limit, offset, orderColumns } = interpretForOffsetPaging(node)
-        let whereCondition = 'TRUE'
-        if (node.where) {
-          const filterCondition = await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)) 
-          if (filterCondition) {
-            whereCondition = filterCondition
-          }
-        }
-        const join = `\
-FROM (
-  SELECT *, count(*) OVER () AS "$total"
-  FROM ${node.name}
-  WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns)}
-  LIMIT ${limit} OFFSET ${offset}
-) AS "${node.as}"`
-        joins.push(join)
-        orders.push({
-          table: node.as,
-          columns: orderColumns
-        })
-      }
-    } else {
-      // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
-      assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
-      joins.push(
-        `FROM ${node.name} AS "${node.as}"`
-      )
-    }
+    await handleTable(parent, node, prefix, context, selections, joins, wheres, orders, batchScope)
 
     // recurse thru nodes
-    if ((!node.sqlBatch && !node.junctionBatch) || !parent) {
+    if (thisIsNotTheEndOfThisBatch(node, parent)) {
       for (let child of node.children) {
         await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres, orders)
       }
@@ -384,6 +79,273 @@ FROM (
     throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
   return { selections, joins, wheres, orders }
+}
+
+async function handleTable(parent, node, prefix, context, selections, joins, wheres, orders, batchScope) {
+  // generate the "where" condition, if applicable
+  if (node.where && !node.paginate && (!node.sqlBatch || !parent)) {
+    wheres.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
+  }
+
+  // one-to-many using JOIN
+  if (node.sqlJoin) {
+    const joinCondition = await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context)
+
+    // do we need to paginate? if so this will be a lateral join
+    if (node.paginate) {
+      await handleJoinedOneToManyPaginated(parent, node, prefix, context, selections, joins, wheres, orders, joinCondition)
+
+    // otherwite, just a regular left join on the table
+    } else {
+      joins.push(
+        `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
+      )
+    }
+  
+  // many-to-many using batching
+  } else if (node.junctionTable && node.junctionBatch) {
+    if (parent) {
+      selections.push(
+        `"${parent.as}"."${node.junctionBatch.parentKey.name}" AS "${joinPrefix(prefix) + node.junctionBatch.parentKey.as}"`
+      )
+    } else {
+      const joinCondition = await node.junctionBatch.sqlJoin(`"${node.junctionTableAs}"`, node.as, node.args || {}, context)
+      if (node.paginate) {
+        await handleBatchedManyToManyPaginated(parent, node, prefix, context, selections, joins, wheres, orders, batchScope, joinCondition)
+
+      } else {
+        joins.push(
+          `FROM ${node.junctionTable} AS "${node.junctionTableAs}"`,
+          `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`
+        )
+        // ensures only the correct records are fetched using the value of the parent key
+        wheres.push(`"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" IN (${batchScope.join(',')})`)
+      }
+    }
+
+  // many-to-many using JOINs
+  } else if (node.junctionTable) {
+    assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
+    const joinCondition1 = await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
+    const joinCondition2 = await node.sqlJoins[1](`"${node.junctionTableAs}"`, `"${node.as}"`, node.args || {}, context)
+
+    if (node.paginate) {
+      await handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, joins, wheres, orders, joinCondition1)
+
+    } else {
+      joins.push(
+        `LEFT JOIN ${node.junctionTable} AS "${node.junctionTableAs}" ON ${joinCondition1}`
+      )
+    }
+    joins.push(
+      `LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition2}`
+    )
+
+  // one-to-many with batching
+  } else if (node.sqlBatch) {
+    if (parent) {
+      selections.push(
+        `"${parent.as}"."${node.sqlBatch.parentKey.name}" AS "${joinPrefix(prefix) + node.sqlBatch.parentKey.as}"`
+      )
+    } else {
+      if (node.paginate) {
+        await handleBatchedOneToManyPaginated(parent, node, prefix, context, selections, joins, wheres, orders, batchScope)
+
+      } else {
+        joins.push(
+          `FROM ${node.name} AS "${node.as}"`
+        )
+        wheres.push(`"${node.as}"."${node.sqlBatch.thisKey.name}" IN (${batchScope.join(',')})`)
+      }
+    }
+  // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause
+  } else if (node.paginate) {
+    await handlePaginationAtRoot(parent, node, prefix, context, selections, joins, wheres, orders)
+  } else {
+    assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
+    joins.push(
+      `FROM ${node.name} AS "${node.as}"`
+    )
+  }
+}
+
+async function handlePaginationAtRoot(parent, node, prefix, context, selections, joins, wheres, orders) {
+  const pagingWhereConditions = []
+  if (node.sortKey) {
+    var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node) // eslint-disable-line no-redeclare
+    pagingWhereConditions.push(whereAddendum)
+    if (node.where) {
+      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+    }
+    joins.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as))
+  } else if (node.orderBy) {
+    var { limit, offset, orderColumns } = interpretForOffsetPaging(node) // eslint-disable-line no-redeclare
+    if (node.where) {
+      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+    }
+    joins.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as))
+  } else {
+    throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
+  }
+
+  orders.push({
+    table: node.as,
+    columns: orderColumns
+  })
+
+}
+
+async function handleJoinedOneToManyPaginated(parent, node, prefix, context, selections, joins, wheres, orders, joinCondition) {
+  const pagingWhereConditions = [
+    await node.sqlJoin(`"${parent.as}"`, node.name, node.args || {}, context),
+  ]
+  if (node.where) {
+    pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+  }
+
+  // which type of pagination are they using?
+  if (node.sortKey) {
+    var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node)
+    pagingWhereConditions.push(whereAddendum)
+    joins.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as, joinCondition, 'LEFT'))
+  } else if (node.orderBy) {
+    var { limit, offset, orderColumns } = interpretForOffsetPaging(node) // eslint-disable-line no-redeclare
+    joins.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as, joinCondition, 'LEFT'))
+  } else {
+    throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
+  }
+
+  orders.push({
+    table: node.as,
+    columns: orderColumns
+  })
+}
+
+async function handleBatchedOneToManyPaginated(parent, node, prefix, context, selections, joins, wheres, orders, batchScope) {
+  const pagingWhereConditions = [
+    `"${node.name}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+  ]
+  if (node.where) {
+    pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, []))
+  }
+  const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")`
+  joins.push(tempTable)
+  const lateralJoinCondition = `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+  if (node.sortKey) {
+    var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node) // eslint-disable-line no-redeclare
+    pagingWhereConditions.push(whereAddendum)
+    joins.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as, lateralJoinCondition))
+  } else if (node.orderBy) {
+    var { limit, offset, orderColumns } = interpretForOffsetPaging(node) // eslint-disable-line no-redeclare
+    joins.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as, lateralJoinCondition))
+  } else {
+    throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
+  }
+
+  orders.push({
+    table: node.as,
+    columns: orderColumns
+  })
+}
+
+async function handleBatchedManyToManyPaginated(parent, node, prefix, context, selections, joins, wheres, orders, batchScope, joinCondition) {
+  const pagingWhereConditions = [
+    `${node.junctionTable}."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
+  ]
+  if (node.where) {
+    pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+  }
+
+  const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junctionBatch.parentKey.name}")`
+  joins.push(tempTable)
+  const lateralJoinCondition = `"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
+
+  if (node.sortKey) {
+    var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node) // eslint-disable-line no-redeclare
+    pagingWhereConditions.push(whereAddendum)
+    joins.push(keysetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, node.junctionTableAs, lateralJoinCondition, 'LEFT'))
+  } else if (node.orderBy) {
+    var { limit, offset, orderColumns } = interpretForOffsetPaging(node) // eslint-disable-line no-redeclare
+    joins.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, lateralJoinCondition, 'LEFT'))
+  } else {
+    throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
+  }
+
+  joins.push(`LEFT JOIN ${node.name} AS ${node.as} ON ${joinCondition}`)
+
+  orders.push({
+    table: node.junctionTableAs,
+    columns: orderColumns
+  })
+}
+
+async function handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, joins, wheres, orders, joinCondition1) {
+  const pagingWhereConditions = [
+    await node.sqlJoins[0](`"${parent.as}"`, node.junctionTable, node.args || {}, context)
+  ]
+  if (node.where) {
+    pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+  }
+
+  if (node.sortKey) {
+    var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node) // eslint-disable-line no-redeclare
+    pagingWhereConditions.push(whereAddendum)
+    joins.push(keysetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, node.junctionTableAs, joinCondition1, 'LEFT'))
+  } else if (node.orderBy) {
+    var { limit, offset, orderColumns } = interpretForOffsetPaging(node) // eslint-disable-line no-redeclare
+    joins.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, joinCondition1, 'LEFT'))
+  } else {
+    throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
+  }
+
+  orders.push({
+    table: node.junctionTableAs,
+    columns: orderColumns
+  })
+}
+
+function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, joinCondition, joinType = '') {
+  whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
+  if (joinCondition) {
+    return `
+${joinType} JOIN LATERAL (
+  SELECT * FROM ${table}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns)}
+  LIMIT ${limit}
+) AS "${as}" ON ${joinCondition}`
+  } else {
+    return `
+FROM (
+  SELECT * FROM ${table}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns)}
+  LIMIT ${limit}
+) AS "${as}"`
+  }
+}
+
+function offsetPagingSelect(table, pagingWhereConditions, orderColumns, limit, offset, as, joinCondition, joinType = '') {
+  const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
+  if (joinCondition) {
+    return `
+${joinType} JOIN LATERAL (
+  SELECT *, count(*) OVER () AS "$total"
+  FROM ${table}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns)}
+  LIMIT ${limit} OFFSET ${offset}
+) AS "${as}" ON ${joinCondition}`
+  } else {
+    return `
+FROM (
+  SELECT *, count(*) OVER () AS "$total"
+  FROM ${table}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns)}
+  LIMIT ${limit} OFFSET ${offset}
+) AS "${as}"`
+  }
 }
 
 // find out what the limit, offset, order by parts should be from the relay connection args if we're paginating

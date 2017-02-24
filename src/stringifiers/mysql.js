@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { validateSqlAST, inspect, maybeQuote } from '../util'
-import { joinPrefix, quotePrefix } from './shared'
+import { joinPrefix, quotePrefix, thisIsNotTheEndOfThisBatch } from './shared'
 
 export default async function stringifySqlAST(topNode, context, batchScope) {
   validateSqlAST(topNode)
@@ -25,66 +25,10 @@ export default async function stringifySqlAST(topNode, context, batchScope) {
 async function _stringifySqlAST(parent, node, prefix, context, selections, joins, wheres, batchScope) {
   switch(node.type) {
   case 'table':
-    // generate the "where" condition, if applicable
-    if (node.where && (!node.sqlBatch || !parent)) {
-      const whereCondition = await node.where(`${quote(node.as)}`, node.args || {}, context, quotePrefix(prefix, '`')) 
-      if (whereCondition) {
-        wheres.push(`${whereCondition}`)
-      }
-    }
-
-    // generate the join or joins
-    // this condition is for single joins (one-to-one or one-to-many relations)
-    if (node.sqlJoin) {
-      const joinCondition = await node.sqlJoin(`${quote(parent.as)}`, `${quote(node.as)}`, node.args || {}, context)
-
-      joins.push(
-        `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`
-      )
-    // this condition is through a join table (many-to-many relations)
-    } else if (node.junctionTable && node.junctionBatch) {
-      if (parent) {
-        selections.push(
-          `${quote(parent.as)}.${quote(node.junctionBatch.parentKey.name)} AS ${quote(joinPrefix(prefix) + node.junctionBatch.parentKey.as)}`
-        )
-      } else {
-        const joinCondition = await node.junctionBatch.sqlJoin(`${quote(node.junctionTableAs)}`, `${quote(node.as)}`, node.args || {}, context)
-        joins.push(
-          `FROM ${node.junctionTable} AS ${quote(node.junctionTableAs)}`,
-          `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`
-        )
-        wheres.push(`${quote(node.junctionTableAs)}.${quote(node.junctionBatch.thisKey.name)} IN (${batchScope.join(',')})`)
-      }
-    } else if (node.junctionTable) {
-      assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
-      const joinCondition1 = await node.sqlJoins[0](`${quote(parent.as)}`, `${quote(node.junctionTableAs)}`, node.args || {}, context)
-      const joinCondition2 = await node.sqlJoins[1](`${quote(node.junctionTableAs)}`, `${quote(node.as)}`, node.args || {}, context)
-
-      joins.push(
-        `LEFT JOIN ${node.junctionTable} AS ${quote(node.junctionTableAs)} ON ${joinCondition1}`,
-        `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition2}`
-      )
-    } else if (node.sqlBatch) {
-      if (parent) {
-        selections.push(
-          `${quote(parent.as)}.${quote(node.sqlBatch.parentKey.name)} AS ${quote(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`
-        )
-      } else {
-        joins.push(
-          `FROM ${node.name} AS ${quote(node.as)}`
-        )
-        wheres.push(`${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} IN (${batchScope.map(maybeQuote).join(',')})`)
-      }
-    } else {
-      // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
-      assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
-      joins.push(
-        `FROM ${node.name} AS ${quote(node.as)}`
-      )
-    }
+    await handleTable(parent, node, prefix, context, selections, joins, wheres, batchScope)
 
     // recurse thru nodes
-    if ((!node.sqlBatch && !node.junctionBatch) || !parent) {
+    if (thisIsNotTheEndOfThisBatch(node, parent)) {
       for (let child of node.children) {
         await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres)
       }
@@ -125,6 +69,71 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
   return { selections, joins, wheres }
+}
+
+async function handleTable(parent, node, prefix, context, selections, joins, wheres, batchScope) {
+  // generate the "where" condition, if applicable
+  if (node.where && (!node.sqlBatch || !parent)) {
+    const whereCondition = await node.where(`${quote(node.as)}`, node.args || {}, context, quotePrefix(prefix, '`')) 
+    if (whereCondition) {
+      wheres.push(`${whereCondition}`)
+    }
+  }
+
+  // this branch is for one-to-many using JOIN
+  if (node.sqlJoin) {
+    const joinCondition = await node.sqlJoin(`${quote(parent.as)}`, `${quote(node.as)}`, node.args || {}, context)
+
+    joins.push(
+      `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`
+    )
+
+  // this is for many-to-many with batching
+  } else if (node.junctionTable && node.junctionBatch) {
+    if (parent) {
+      selections.push(
+        `${quote(parent.as)}.${quote(node.junctionBatch.parentKey.name)} AS ${quote(joinPrefix(prefix) + node.junctionBatch.parentKey.as)}`
+      )
+    } else {
+      const joinCondition = await node.junctionBatch.sqlJoin(`${quote(node.junctionTableAs)}`, `${quote(node.as)}`, node.args || {}, context)
+      joins.push(
+        `FROM ${node.junctionTable} AS ${quote(node.junctionTableAs)}`,
+        `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`
+      )
+      wheres.push(`${quote(node.junctionTableAs)}.${quote(node.junctionBatch.thisKey.name)} IN (${batchScope.join(',')})`)
+    }
+
+  // many-to-many using JOINs
+  } else if (node.junctionTable) {
+    assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
+    const joinCondition1 = await node.sqlJoins[0](`${quote(parent.as)}`, `${quote(node.junctionTableAs)}`, node.args || {}, context)
+    const joinCondition2 = await node.sqlJoins[1](`${quote(node.junctionTableAs)}`, `${quote(node.as)}`, node.args || {}, context)
+
+    joins.push(
+      `LEFT JOIN ${node.junctionTable} AS ${quote(node.junctionTableAs)} ON ${joinCondition1}`,
+      `LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition2}`
+    )
+
+  // one-to-many using batching
+  } else if (node.sqlBatch) {
+    if (parent) {
+      selections.push(
+        `${quote(parent.as)}.${quote(node.sqlBatch.parentKey.name)} AS ${quote(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`
+      )
+    } else {
+      joins.push(
+        `FROM ${node.name} AS ${quote(node.as)}`
+      )
+      wheres.push(`${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} IN (${batchScope.map(maybeQuote).join(',')})`)
+    }
+
+  // otherwise, this table is not being joined, its the first one and it goes in the "FROM" clause
+  } else {
+    assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
+    joins.push(
+      `FROM ${node.name} AS ${quote(node.as)}`
+    )
+  }
 }
 
 function quote(str) {

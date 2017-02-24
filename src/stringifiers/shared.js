@@ -5,3 +5,8 @@ export function joinPrefix(prefix) {
 export function quotePrefix(prefix, quote = '"') {
   return prefix.map(name => quote.concat(name, quote))
 }
+
+export function thisIsNotTheEndOfThisBatch(node, parent) {
+  return (!node.sqlBatch && !node.junctionBatch) || !parent
+}
+
