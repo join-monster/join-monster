@@ -1,6 +1,11 @@
 import assert from 'assert'
 import { validateSqlAST, inspect, maybeQuote } from '../util'
-import { joinPrefix, quotePrefix, thisIsNotTheEndOfThisBatch } from './shared'
+import {
+  joinPrefix,
+  quotePrefix,
+  thisIsNotTheEndOfThisBatch,
+  whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
+} from './shared'
 
 export default async function stringifySqlAST(topNode, context, batchScope) {
   validateSqlAST(topNode)
@@ -73,7 +78,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
 
 async function handleTable(parent, node, prefix, context, selections, joins, wheres, batchScope) {
   // generate the "where" condition, if applicable
-  if (node.where && (!node.sqlBatch || !parent)) {
+  if (node.where && whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent)) {
     const whereCondition = await node.where(`${quote(node.as)}`, node.args || {}, context, quotePrefix(prefix, '`')) 
     if (whereCondition) {
       wheres.push(`${whereCondition}`)

@@ -2,7 +2,12 @@ import assert from 'assert'
 import { cursorToOffset } from 'graphql-relay'
 import { filter } from 'lodash'
 import { validateSqlAST, inspect, cursorToObj, wrap, maybeQuote } from '../util'
-import { joinPrefix, quotePrefix, thisIsNotTheEndOfThisBatch } from './shared'
+import {
+  joinPrefix,
+  quotePrefix,
+  thisIsNotTheEndOfThisBatch,
+  whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
+} from './shared'
 
 export default async function stringifySqlAST(topNode, context, batchScope) {
   validateSqlAST(topNode)
@@ -83,7 +88,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
 
 async function handleTable(parent, node, prefix, context, selections, joins, wheres, orders, batchScope) {
   // generate the "where" condition, if applicable
-  if (node.where && !node.paginate && (!node.sqlBatch || !parent)) {
+  if (node.where && whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent)) {
     wheres.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
   }
 

@@ -10,3 +10,7 @@ export function thisIsNotTheEndOfThisBatch(node, parent) {
   return (!node.sqlBatch && !node.junctionBatch) || !parent
 }
 
+export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent) {
+  return !node.paginate && (!node.sqlBatch || !parent)
+}
+
