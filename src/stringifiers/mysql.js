@@ -54,7 +54,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, joins
     // recurse thru nodes
     if (thisIsNotTheEndOfThisBatch(node, parent)) {
       for (let child of node.children) {
-        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, orders, wheres)
+        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, joins, wheres, orders)
       }
     }
 

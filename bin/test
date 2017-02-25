@@ -1,17 +1,34 @@
 #!/bin/bash
 set -e
 
+export TZ=UTC
+
 GREEN='\033[102m'
 BLUE='\033[104m'
 NC='\033[0m'
-
 echo -e "${BLUE} running with all joins ${NC}"
-npm run testall
+npm run teststandard
+npm run testmysql
+npm run testpg
+npm run testpg-paging
+MINIFY=1 npm run testpg
+MINIFY=1 npm run testpg-paging
 
 echo -e "${BLUE} running with all batches ${NC}"
-STRATEGY=batch npm run testall
+STRATEGY=batch npm run teststandard
+STRATEGY=batch npm run testmysql
+STRATEGY=batch npm run testmysql-paging
+STRATEGY=batch npm run testpg
+STRATEGY=batch npm run testpg-paging
+STRATEGY=batch MINIFY=1 npm run testpg
+STRATEGY=batch MINIFY=1 npm run testpg-paging
 
 echo -e "${BLUE} running with mixture ${NC}"
-STRATEGY=mix npm run testall
+STRATEGY=mix npm run teststandard
+STRATEGY=mix npm run testmysql
+STRATEGY=mix npm run testpg
+STRATEGY=mix npm run testpg-paging
+STRATEGY=mix MINIFY=1 npm run testpg
+STRATEGY=mix MINIFY=1 npm run testpg-paging
 
 echo -e "${GREEN} PASSED ${NC}"

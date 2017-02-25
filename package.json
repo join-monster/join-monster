@@ -13,10 +13,11 @@
     "build": "babel src --no-comments --out-dir dist",
     "watch": "babel src --watch --out-dir dist",
     "test": "npm run lint && bin/test",
-    "testall": "npm run teststandard && npm run testmysql && npm run testpg && MINIFY=1 npm run testpg",
     "teststandard": "NODE_ENV=test ava test/*.js",
-    "testpg": "NODE_ENV=test DB=PG ava test/*.js && NODE_ENV=test DB=PG PAGINATE=keyset ava test/pg/keyset-paging.js && NODE_ENV=test DB=PG PAGINATE=offset ava test/pg/offset-paging.js",
-    "testmysql": "NODE_ENV=test DB=MYSQL ava test/*.js && NODE_ENV=test DB=MYSQL PAGINATE=offset ava test/pg/offset-paging.js && NODE_ENV=test DB=MYSQL PAGINATE=keyset ava test/pg/keyset-paging.js",
+    "testpg": "NODE_ENV=test DB=PG ava test/*.js",
+    "testpg-paging": "NODE_ENV=test DB=PG PAGINATE=keyset ava test/pagination/keyset-paging.js && NODE_ENV=test DB=PG PAGINATE=offset ava test/pagination/offset-paging.js",
+    "testmysql": "NODE_ENV=test DB=MYSQL ava test/*.js",
+    "testmysql-paging": "NODE_ENV=test DB=MYSQL PAGINATE=offset ava test/pagination/offset-paging.js && NODE_ENV=test DB=MYSQL PAGINATE=keyset ava test/pagination/keyset-paging.js",
     "coverage": "nyc --reporter=html npm run test",
     "lint": "eslint src test",
     "start": "babel-watch ./example/server.js",
@@ -29,6 +30,7 @@
   },
   "ava": {
     "concurrency": 10,
+    "verbose": false,
     "failFast": true,
     "require": "babel-register",
     "babel": {
