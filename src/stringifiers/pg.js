@@ -276,7 +276,7 @@ async function handleBatchedManyToManyPaginated(parent, node, prefix, context, s
     throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
   }
 
-  joins.push(`LEFT JOIN ${node.name} AS ${node.as} ON ${joinCondition}`)
+  joins.push(`LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`)
 
   orders.push({
     table: node.junctionTableAs,
@@ -312,7 +312,7 @@ async function handleJoinedManyToManyPaginated(parent, node, prefix, context, se
 function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, joinCondition, joinType = '') {
   whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
   if (joinCondition) {
-    return `
+    return `\
 ${joinType} JOIN LATERAL (
   SELECT * FROM ${table}
   WHERE ${whereCondition}
@@ -320,7 +320,7 @@ ${joinType} JOIN LATERAL (
   LIMIT ${limit}
 ) AS "${as}" ON ${joinCondition}`
   } else {
-    return `
+    return `\
 FROM (
   SELECT * FROM ${table}
   WHERE ${whereCondition}
@@ -333,7 +333,7 @@ FROM (
 function offsetPagingSelect(table, pagingWhereConditions, orderColumns, limit, offset, as, joinCondition, joinType = '') {
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
   if (joinCondition) {
-    return `
+    return `\
 ${joinType} JOIN LATERAL (
   SELECT *, count(*) OVER () AS "$total"
   FROM ${table}
@@ -342,7 +342,7 @@ ${joinType} JOIN LATERAL (
   LIMIT ${limit} OFFSET ${offset}
 ) AS "${as}" ON ${joinCondition}`
   } else {
-    return `
+    return `\
 FROM (
   SELECT *, count(*) OVER () AS "$total"
   FROM ${table}
