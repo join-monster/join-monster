@@ -81,7 +81,7 @@
     "in-publish": "^2.0.0",
     "jsdoc-to-markdown": "^3.0.0",
     "knex": "^0.12.0",
-    "koa": "^1.2.4",
+    "koa": "^2.0.1",
     "koa-cors": "0.0.16",
     "koa-custom-graphiql": "0.0.3",
     "koa-graphql": "^0.6.0",
