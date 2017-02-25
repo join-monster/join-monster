@@ -118,7 +118,7 @@ const User = new GraphQLObjectType({
         }
       },
       where: (table, args) => {
-        if (args.search) return `${table}.body ilike '%${args.search}%'`
+        if (args.search) return `lower(${table}.body) LIKE lower('%${args.search}%')`
       },
       ... do {
         if (STRATEGY === 'batch') {

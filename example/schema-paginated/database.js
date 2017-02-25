@@ -8,7 +8,7 @@ const connection = process.env.NODE_ENV !== 'test' ?
   dbType === 'PG' ?
     pgUrl(process.env.PAGINATE ? 'test2': 'test1') :
     dbType === 'MYSQL' ?
-      mysqlUrl('test1') :
+      mysqlUrl(process.env.PAGINATE ? 'test2': 'test1') :
       { filename: path.join(__dirname, '../data/db/test1-data.sl3') }
 
 let client = 'sqlite3'
