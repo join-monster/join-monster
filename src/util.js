@@ -28,6 +28,8 @@ export function wrap(maybeArr) {
 export function validateSqlAST(topNode) {
   // TODO: this could be a bit more comprehensive
   assert(topNode.sqlJoin == null, 'root level field can not have "sqlJoin"')
+  assert(topNode.sqlBatch == null, 'root level field can not have "sqlBatch"')
+  assert(topNode.junctionTable == null, 'root level field can not have "junctionTable"')
 }
 
 export function objToCursor(obj) {
