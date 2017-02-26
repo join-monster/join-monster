@@ -7,8 +7,9 @@ import joinMonster from '../../src/index'
 const options = {
   minify: process.env.MINIFY == 1
 }
+const { PAGINATE } = process.env
 if (knex.client.config.client === 'mysql') {
-  options.dialect = 'mysql'
+  options.dialect = PAGINATE ? 'mariadb' : 'mysql'
 } else if (knex.client.config.client === 'pg') {
   options.dialect = 'pg'
 }

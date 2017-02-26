@@ -1,6 +1,7 @@
 import util from 'util'
 import assert from 'assert'
 import { nest } from 'nesthydrationjs'
+import stringifySQL from './stringifiers/dispatcher'
 const debug = require('debug')('join-monster')
 
 import defineObjectShape from './defineObjectShape'
@@ -28,8 +29,6 @@ export function wrap(maybeArr) {
 export function validateSqlAST(topNode) {
   // TODO: this could be a bit more comprehensive
   assert(topNode.sqlJoin == null, 'root level field can not have "sqlJoin"')
-  assert(topNode.sqlBatch == null, 'root level field can not have "sqlBatch"')
-  assert(topNode.junctionTable == null, 'root level field can not have "junctionTable"')
 }
 
 export function objToCursor(obj) {
@@ -79,7 +78,7 @@ export function buildWhereFunction(type, condition, options) {
   // otherwise, we'll assume they gave us the value(s) of the unique key.
   } else {
     // determine the type of quotes necessary to escape the uniqueKey column
-    const quote = options.dialect === 'mysql' ? '`' : '"'
+    const quote = [ 'mysql', 'mariadb' ].includes(options.dialect) ? '`' : '"'
 
     // determine the unique key so we know what to search by
     const uniqueKey = type._typeConfig.uniqueKey
@@ -145,9 +144,12 @@ export async function compileSqlAST(sqlAST, context, options) {
   debug(emphasize('SQL_AST'), inspect(sqlAST))
 
   // now convert the "SQL AST" to sql
-  const dialect = options.dialect || 'standard'
-  const stringify = require('./stringifiers/' + dialect).default
-  const sql = await stringify(sqlAST, context, options.batchScope)
+  options.dialect = options.dialect || 'sqlite3'
+  if (options.dialect === 'standard') {
+    console.warn('dialect "standard" is deprecated, because there is no true implementation of the SQL standard')
+    console.warn('"sqlite3" is the default')
+  }
+  const sql = await stringifySQL(sqlAST, context, options)
   debug(emphasize('SQL'), sql)
 
 // figure out the shape of the object and define it for the NestHydration library so it can build the object nesting

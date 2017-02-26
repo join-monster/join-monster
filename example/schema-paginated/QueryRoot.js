@@ -18,16 +18,17 @@ import { nodeField } from './Node'
 
 import joinMonster from '../../src/index'
 import dbCall from '../data/fetch'
+const { PAGINATE } = process.env
+
 const options = {
   minify: process.env.MINIFY == 1
 }
 if (knex.client.config.client === 'mysql') {
-  options.dialect = 'mysql'
+  options.dialect = PAGINATE ? 'mariadb' : 'mysql'
 } else if (knex.client.config.client === 'pg') {
   options.dialect = 'pg'
 }
 
-const { PAGINATE } = process.env
 
 export default new GraphQLObjectType({
   description: 'global query object',
@@ -40,6 +41,10 @@ export default new GraphQLObjectType({
     database: {
       type: GraphQLString,
       resolve: () => knex.client.config.client + ' ' + JSON.stringify(knex.client.config.connection).replace(/"/g, '  ')
+    },
+    dialect: {
+      type: GraphQLString,
+      resolve: () => options.dialect
     },
     node: nodeField,
     users: {
