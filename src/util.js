@@ -148,6 +148,7 @@ export async function compileSqlAST(sqlAST, context, options) {
   if (options.dialect === 'standard') {
     console.warn('dialect "standard" is deprecated, because there is no true implementation of the SQL standard')
     console.warn('"sqlite3" is the default')
+    options.dialect = 'sqlite3'
   }
   const sql = await stringifySQL(sqlAST, context, options)
   debug(emphasize('SQL'), sql)

@@ -5,8 +5,12 @@
 **Breaking changes:**
 
 - `getSQL` method removed. No longer makes sense in he new multiple-query paradigm.
-- `joinTable` is deprecated. It was renamed to `junctionTable` to avoid over-use of the word "join".
 - Offset pagination adds the `total` to the connection object instead of the `pageInfo`.
+
+**Deprecated:**
+
+- `joinTable` is deprecated. It was renamed to `junctionTable` to avoid over-use of the word "join".
+- `'standard'` dialect is deprecated because nothing really implements the standard. The new default is `'sqlite3'`.
 
 
 
