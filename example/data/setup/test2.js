@@ -1,5 +1,5 @@
-module.exports = async () => {
-  const knex = require('../schema/setup')('test2')
+module.exports = async db => {
+  const knex = await require('../schema/setup')(db, 'test2')
   await knex.batchInsert('accounts', [
 {"id":1,"email_address":"Mohammed.Hayes@hotmail.com","first_name":"Alivia","last_name":"Waelchi","num_legs":2,"created_at":new Date('2015-11-20T09:42:03.274Z')},
 {"id":2,"email_address":"Rebekah_Larson30@hotmail.com","first_name":"Hudson","last_name":"Hyatt","num_legs":2,"created_at":new Date('2015-12-11T08:52:51.326Z')},

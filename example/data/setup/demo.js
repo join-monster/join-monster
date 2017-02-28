@@ -13,8 +13,8 @@ const numComments = 300
 const numRelationships = 15
 const numLikes = 300
 
-module.exports = async () => {
-  const knex = require('../schema/setup')('demo')
+module.exports = async db => {
+  const knex = await require('../schema/setup')(db, 'demo')
 
   console.log('creating accounts...')
   const accounts = new Array(numUsers)

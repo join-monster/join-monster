@@ -1,24 +1,22 @@
-const { execSync } = require('child_process')
 const assert = require('assert')
 
 assert(process.env.MYSQL_URL, 'Environment variable MYSQL_URL must be defined, e.g. "mysql://user:pass@localhost/"')
 assert(process.env.PG_URL, 'Environment variable PG_URL must be defined, e.g. "postgres://user:pass@localhost/"')
 
 ;(async () => {
-  console.log('building sqlite3')
-  await require('./setup/test1')()
-  await require('./setup/demo')()
+  await require('./setup/test1')('oracle')
+
+  await require('./setup/test1')('sqlite3')
+  await require('./setup/demo')('sqlite3')
 
   console.log('building mysql')
-  process.env.DB = 'MYSQL'
-  await require('./setup/test1')()
-  await require('./setup/test2')()
+  await require('./setup/test1')('mysql')
+  await require('./setup/test2')('mysql')
 
   console.log('building postgres')
-  process.env.DB = 'PG'
-  await require('./setup/test1')()
-  await require('./setup/test2')()
-  await require('./setup/demo')()
+  await require('./setup/test1')('pg')
+  await require('./setup/test2')('pg')
+  await require('./setup/demo')('pg')
 })()
 .catch(err => {
   console.error(err)
