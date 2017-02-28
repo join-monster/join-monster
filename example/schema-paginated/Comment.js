@@ -14,13 +14,14 @@ import {
 import { Post } from './Post'
 import { User } from './User'
 import { nodeInterface } from './Node'
+import { q } from '../shared'
 
-const { PAGINATE } = process.env
+const { PAGINATE, DB } = process.env
 
 export const Comment = new GraphQLObjectType({
   description: 'Comments on posts',
   name: 'Comment',
-  sqlTable: 'comments',
+  sqlTable: q('comments', DB),
   uniqueKey: 'id',
   interfaces: [ nodeInterface ],
   fields: () => ({
@@ -35,12 +36,12 @@ export const Comment = new GraphQLObjectType({
     post: {
       description: 'The post that the comment belongs to',
       type: Post,
-      sqlJoin: (commentTable, postTable) => `${commentTable}.post_id = ${postTable}.id`
+      sqlJoin: (commentTable, postTable) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)}`
     },
     author: {
       description: 'The user who wrote the comment',
       type: User,
-      sqlJoin: (commentTable, userTable) => `${commentTable}.author_id = ${userTable}.id`
+      sqlJoin: (commentTable, userTable) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
     },
     archived: {
       type: GraphQLBoolean
@@ -50,8 +51,8 @@ export const Comment = new GraphQLObjectType({
       junctionTable: 'likes',
       type: new GraphQLList(User),
       sqlJoins: [
-        (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,
-        (likesTable, userTable) => `${likesTable}.account_id = ${userTable}.id`
+        (commentTable, likesTable) => `${commentTable}.${q('id', DB)} = ${likesTable}.${q('comment_id', DB)}`,
+        (likesTable, userTable) => `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
       ]
     },
     createdAt: {

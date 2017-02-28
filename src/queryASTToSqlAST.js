@@ -7,7 +7,8 @@ import { wrap } from './util'
 export function queryASTToSqlAST(resolveInfo, options) {
   // this is responsible for all the logic regarding creating SQL aliases
   // we need varying degrees of uniqueness and readability
-  const namespace = new AliasNamespace(options.minify)
+  // force oracle to minify, because it has this 30-character limit on column identifiers
+  const namespace = new AliasNamespace(options.dialect === 'oracle' ? true : options.minify)
 
   // we'll build up the AST representing the SQL recursively
   const sqlAST = {}
@@ -153,7 +154,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
           as: namespace.generate('column', field.junctionTableKey)
         })
       } else if (Array.isArray(field.junctionTableKey)) {
-        const clumsyName = field.junctionTableKey.join('#') // need a name for this column, smash the individual column names together
+        const clumsyName = toClumsyName(field.junctionTableKey)
         children.push({
           type: 'composite',
           name: field.junctionTableKey,
@@ -265,7 +266,7 @@ function handleUniqueKey(config, children, namespace) {
       as: namespace.generate('column', config.uniqueKey)
     })
   } else if (Array.isArray(config.uniqueKey)) {
-    const clumsyName = config.uniqueKey.join('#') // need a name for this column, smash the individual column names together
+    const clumsyName = toClumsyName(config.uniqueKey)
     children.push({
       type: 'composite',
       name: config.uniqueKey,
@@ -273,6 +274,12 @@ function handleUniqueKey(config, children, namespace) {
       as: namespace.generate('column', clumsyName)
     })
   }
+}
+
+// generate a name for a composite key based on the individual column names smashed together
+// slice them to help prevent exceeding oracle's 30-char identifier limit
+function toClumsyName(keyArr) {
+  return keyArr.map(name => name.slice(0, 3)).join('#')
 }
 
 function handleColumnsRequiredForPagination(sqlASTNode, namespace) {

@@ -16,13 +16,14 @@ import {
 import { User } from './User'
 import { CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
+import { q, bool } from '../shared'
 
-const { PAGINATE, STRATEGY } = process.env
+const { PAGINATE, STRATEGY, DB } = process.env
 
 export const Post = new GraphQLObjectType({
   description: 'A post from a user',
   name: 'Post',
-  sqlTable: 'posts',
+  sqlTable: q('posts', DB),
   uniqueKey: 'id',
   interfaces: [ nodeInterface ],
   fields: () => ({
@@ -41,7 +42,7 @@ export const Post = new GraphQLObjectType({
         { sqlBatch:
           { thisKey: 'id',
             parentKey: 'author_id' } } :
-        { sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id` }
+        { sqlJoin: (postTable, userTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}` }
     },
     comments: {
       description: 'The comments on this post',
@@ -77,11 +78,11 @@ export const Post = new GraphQLObjectType({
               thisKey: 'post_id',
               parentKey: 'id'
             },
-            where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null
+            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
           })
         } else {
           ({
-            sqlJoin: (postTable, commentTable, args) => `${commentTable}.post_id = ${postTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` 
+            sqlJoin: (postTable, commentTable, args) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}` 
           })
         }
       }
@@ -90,7 +91,7 @@ export const Post = new GraphQLObjectType({
       description: 'How many comments this post has',
       type: GraphQLInt,
       // you can info from a correlated subquery
-      sqlExpr: table => `(SELECT count(*) from comments where ${table}.id = comments.post_id)`
+      sqlExpr: table => `(SELECT count(*) from ${q('comments', DB)} WHERE ${table}.${q('id', DB)} = comments.${q('post_id', DB)})`
     },
     archived: {
       type: GraphQLBoolean

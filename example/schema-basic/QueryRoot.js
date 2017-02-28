@@ -11,17 +11,20 @@ import dbCall from '../data/fetch'
 
 import User from './User'
 import Sponsor from './Sponsor'
-import { fromBase64 } from './utils'
+import { fromBase64, q } from '../shared'
 
 import joinMonster from '../../src/index'
+
+const { MINIFY, DB } = process.env
 const options = {
-  dialect: 'oracle',
-  minify: process.env.MINIFY == 1
+  minify: MINIFY == 1
 }
 if (knex.client.config.client === 'mysql') {
   options.dialect = 'mysql'
 } else if (knex.client.config.client === 'pg') {
   options.dialect = 'pg'
+} else if (knex.client.config.client === 'oracle') {
+  options.dialect = 'oracle'
 }
 
 
@@ -65,9 +68,9 @@ export default new GraphQLObjectType({
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}."id" = ${args.id}`
-        if (args.idEncoded) return `${usersTable}."id" = ${fromBase64(args.idEncoded)}`
-        if (args.idAsync) return Promise.resolve(`${usersTable}."id" = ${args.idAsync}`)
+        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
+        if (args.idEncoded) return `${usersTable}.${q('id', DB)} = ${fromBase64(args.idEncoded)}`
+        if (args.idAsync) return Promise.resolve(`${usersTable}.${q('id', DB)} = ${args.idAsync}`)
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
@@ -82,7 +85,7 @@ export default new GraphQLObjectType({
         }
       },
       where: (sponsorsTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.filterLegless) return `${sponsorsTable}.num_legs IS NULL`
+        if (args.filterLegless) return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
       },
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time

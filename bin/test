@@ -11,6 +11,7 @@ npm run teststandard
 npm run testmysql
 npm run testpg
 npm run testpg-paging
+npm run testoracle
 MINIFY=1 npm run testpg
 MINIFY=1 npm run testpg-paging
 
@@ -20,6 +21,7 @@ STRATEGY=batch npm run testmysql
 STRATEGY=batch npm run testmysql-paging
 STRATEGY=batch npm run testpg
 STRATEGY=batch npm run testpg-paging
+STRATEGY=batch npm run testoracle
 STRATEGY=batch MINIFY=1 npm run testpg
 STRATEGY=batch MINIFY=1 npm run testpg-paging
 
@@ -28,6 +30,7 @@ STRATEGY=mix npm run teststandard
 STRATEGY=mix npm run testmysql
 STRATEGY=mix npm run testpg
 STRATEGY=mix npm run testpg-paging
+STRATEGY=mix npm run testoracle
 STRATEGY=mix MINIFY=1 npm run testpg
 STRATEGY=mix MINIFY=1 npm run testpg-paging
 

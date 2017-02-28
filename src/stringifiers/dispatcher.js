@@ -70,7 +70,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
   case 'composite':
     const parentTable = node.fromOtherTable || parent.as
     selections.push(
-      `${dialect.compositeKey(parentTable, node.name)} AS ${q(joinPrefix(prefix) + node.fieldName)}`
+      `${dialect.compositeKey(parentTable, node.name)} AS ${q(joinPrefix(prefix) + node.as)}`
     )
     break
   case 'expression':
@@ -97,7 +97,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
   // one-to-many using JOIN
   if (node.sqlJoin) {
-    const joinCondition = await node.sqlJoin(`${q(parent.as)}`, `${q(node.as)}`, node.args || {}, context)
+    const joinCondition = await node.sqlJoin(`${q(parent.as)}`, q(node.as), node.args || {}, context)
 
     // do we need to paginate? if so this will be a lateral join
     if (node.paginate) {
@@ -106,7 +106,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     // otherwite, just a regular left join on the table
     } else {
       tables.push(
-        `LEFT JOIN ${node.name} AS ${q(node.as)} ON ${joinCondition}`
+        `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
       )
     }
   
@@ -117,14 +117,14 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
         `${q(parent.as)}.${q(node.junctionBatch.parentKey.name)} AS ${q(joinPrefix(prefix) + node.junctionBatch.parentKey.as)}`
       )
     } else {
-      const joinCondition = await node.junctionBatch.sqlJoin(`${q(node.junctionTableAs)}`, node.as, node.args || {}, context)
+      const joinCondition = await node.junctionBatch.sqlJoin(`${q(node.junctionTableAs)}`, q(node.as), node.args || {}, context)
       if (node.paginate) {
         await dialect.handleBatchedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, joinCondition)
 
       } else {
         tables.push(
-          `FROM ${node.junctionTable} AS ${q(node.junctionTableAs)}`,
-          `LEFT JOIN ${node.name} AS ${q(node.as)} ON ${joinCondition}`
+          `FROM ${node.junctionTable} ${q(node.junctionTableAs)}`,
+          `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
         )
         // ensures only the correct records are fetched using the value of the parent key
         wheres.push(`${q(node.junctionTableAs)}.${q(node.junctionBatch.thisKey.name)} IN (${batchScope.join(',')})`)
@@ -134,19 +134,19 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   // many-to-many using JOINs
   } else if (node.junctionTable) {
     assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
-    const joinCondition1 = await node.sqlJoins[0](`${q(parent.as)}`, `${q(node.junctionTableAs)}`, node.args || {}, context)
-    const joinCondition2 = await node.sqlJoins[1](`${q(node.junctionTableAs)}`, `${q(node.as)}`, node.args || {}, context)
+    const joinCondition1 = await node.sqlJoins[0](`${q(parent.as)}`, q(node.junctionTableAs), node.args || {}, context)
+    const joinCondition2 = await node.sqlJoins[1](`${q(node.junctionTableAs)}`, q(node.as), node.args || {}, context)
 
     if (node.paginate) {
       await dialect.handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1)
 
     } else {
       tables.push(
-        `LEFT JOIN ${node.junctionTable} AS ${q(node.junctionTableAs)} ON ${joinCondition1}`
+        `LEFT JOIN ${node.junctionTable} ${q(node.junctionTableAs)} ON ${joinCondition1}`
       )
     }
     tables.push(
-      `LEFT JOIN ${node.name} AS ${q(node.as)} ON ${joinCondition2}`
+      `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition2}`
     )
 
   // one-to-many with batching
@@ -161,7 +161,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
       } else {
         tables.push(
-          `FROM ${node.name} AS ${q(node.as)}`
+          `FROM ${node.name} ${q(node.as)}`
         )
         wheres.push(`${q(node.as)}.${q(node.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`)
       }

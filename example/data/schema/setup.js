@@ -9,12 +9,13 @@ module.exports = function(db, name) {
 
   if (db === 'oracle') {
     console.log('building oracle')
+    const [ password, connectString ] = process.env.ORACLE_URL.split('@')
     const knex = require('knex')({
       client: 'oracledb',
       connection: {
-        user: 'system',
-        password: 'oracle',
-        connectString: 'localhost:1521/XE',
+        user: name,
+        password,
+        connectString,
         stmtCacheSize: 0
       }
     })

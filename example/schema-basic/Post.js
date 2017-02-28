@@ -8,13 +8,14 @@ import {
 
 import User from './User'
 import Comment from './Comment'
+import { q, bool } from '../shared'
 
-const { STRATEGY } = process.env
+const { STRATEGY, DB } = process.env
 
 export default new GraphQLObjectType({
   description: 'A post from a user',
   name: 'Post',
-  sqlTable: 'posts',
+  sqlTable: q('posts', DB),
   uniqueKey: 'id',
   fields: () => ({
     id: {
@@ -35,7 +36,7 @@ export default new GraphQLObjectType({
         { sqlBatch:
           { thisKey: 'id',
             parentKey: 'author_id' } } :
-        { sqlJoin: (postTable, userTable) => `${postTable}.author_id = ${userTable}.id` }
+        { sqlJoin: (postTable, userTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}` }
     },
     comments: {
       description: 'The comments on this post',
@@ -47,15 +48,15 @@ export default new GraphQLObjectType({
         { sqlBatch:
           { thisKey: 'post_id',
             parentKey: 'id' },
-          where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null } :
-        { sqlJoin: (postTable, commentTable, args) => `${commentTable}.post_id = ${postTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` },
+          where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null } :
+        { sqlJoin: (postTable, commentTable, args) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}` },
       resolve: post => post.comments.sort((a, b) => a.id - b.id)
     },
     numComments: {
       description: 'How many comments this post has',
       type: GraphQLInt,
       // you can info from a correlated subquery
-      sqlExpr: table => `(SELECT count(*) from comments where ${table}.id = comments.post_id)`
+      sqlExpr: table => `(SELECT count(*) from ${q('comments', DB)} WHERE ${table}.${q('id', DB)} = ${q('comments', DB)}.${q('post_id', DB)})`
     },
     archived: {
       type: GraphQLBoolean

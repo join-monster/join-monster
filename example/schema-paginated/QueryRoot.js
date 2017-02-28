@@ -18,7 +18,9 @@ import { nodeField } from './Node'
 
 import joinMonster from '../../src/index'
 import dbCall from '../data/fetch'
-const { PAGINATE } = process.env
+import { q } from '../shared'
+
+const { PAGINATE, DB } = process.env
 
 const options = {
   minify: process.env.MINIFY == 1
@@ -68,7 +70,7 @@ export default new GraphQLObjectType({
       },
       where: (table, args) => {
         // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
-        if (args.search) return `(lower(${table}.first_name) LIKE lower('%${args.search}%') OR lower(${table}.last_name) LIKE lower('%${args.search}%'))`
+        if (args.search) return `(lower(${table}."first_name") LIKE lower('%${args.search}%') OR lower(${table}."last_name") LIKE lower('%${args.search}%'))`
       },
       resolve: async (parent, args, context, resolveInfo) => {
         const data = await joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
@@ -84,7 +86,7 @@ export default new GraphQLObjectType({
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.id = ${args.id}`
+        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)

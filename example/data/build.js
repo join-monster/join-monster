@@ -5,6 +5,7 @@ assert(process.env.PG_URL, 'Environment variable PG_URL must be defined, e.g. "p
 
 ;(async () => {
   await require('./setup/test1')('oracle')
+  await require('./setup/test2')('oracle')
 
   await require('./setup/test1')('sqlite3')
   await require('./setup/demo')('sqlite3')

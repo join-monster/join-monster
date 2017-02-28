@@ -8,13 +8,14 @@ import {
 
 import Post from './Post'
 import User from './User'
+import { q } from '../shared'
 
-const { STRATEGY } = process.env
+const { STRATEGY, DB } = process.env
 
 export default new GraphQLObjectType({
   description: 'Comments on posts',
   name: 'Comment',
-  sqlTable: 'comments',
+  sqlTable: q('comments', DB),
   uniqueKey: 'id',
   fields: () => ({
     id: {
@@ -35,7 +36,7 @@ export default new GraphQLObjectType({
         { sqlBatch: 
           { thisKey: 'id',
             parentKey: 'post_id' } } :
-        { sqlJoin: (commentTable, postTable) => `${commentTable}.post_id = ${postTable}.id` }
+        { sqlJoin: (commentTable, postTable) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)}` }
     },
     authorId: {
       type: GraphQLInt,
@@ -48,15 +49,15 @@ export default new GraphQLObjectType({
         { sqlBatch:
           { thisKey: 'id',
             parentKey: 'author_id' } } :
-        { sqlJoin: (commentTable, userTable) => `${commentTable}.author_id = ${userTable}.id` }
+        { sqlJoin: (commentTable, userTable) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}` }
     },
     likers: {
       description: 'Which users have liked this comment',
       type: new GraphQLList(User),
       junctionTable: 'likes',
       sqlJoins: [
-        (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,
-        (likesTable, userTable) => `${likesTable}.account_id = ${userTable}.id`
+        (commentTable, likesTable) => `${commentTable}.${q('id', DB)} = ${likesTable}.${q('comment_id', DB)}`,
+        (likesTable, userTable) => `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
       ]
     },
     archived: {

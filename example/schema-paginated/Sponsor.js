@@ -8,7 +8,7 @@ import {
 const Sponsor = new GraphQLObjectType({
   description: 'people who have given money',
   name: 'Sponsor',
-  sqlTable: 'sponsors',
+  sqlTable: '"sponsors"',
   uniqueKey: [ 'generation', 'first_name', 'last_name' ],
   fields: () => ({
     firstName: {

@@ -14,15 +14,15 @@ import {
 import Comment from './Comment'
 import Post from './Post'
 import Person from './Person'
-import { toBase64 } from './utils'
+import { toBase64, q, bool } from '../shared'
 import { sortBy } from 'lodash'
 
-const { STRATEGY } = process.env
+const { STRATEGY, DB } = process.env
 
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
-  sqlTable: '"accounts"',
+  sqlTable: q('accounts', DB),
   uniqueKey: 'id',
   interfaces: [ Person ],
   fields: () => ({
@@ -53,7 +53,7 @@ const User = new GraphQLObjectType({
     capitalizedLastName: {
       description: 'The last name WITH CAPS LOCK',
       type: GraphQLString,
-      sqlExpr: (table, args, context) => `upper(${table}.last_name)` // eslint-disable-line no-unused-vars
+      sqlExpr: (table, args, context) => `upper(${table}.${q('last_name', DB)})` // eslint-disable-line no-unused-vars
     },
     comments: {
       description: 'Comments the user has written on people\'s posts',
@@ -68,8 +68,8 @@ const User = new GraphQLObjectType({
         { sqlBatch:
           { thisKey: 'author_id',
             parentKey: 'id' },
-          where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null } :
-        { sqlJoin: (userTable, commentTable, args) => `${commentTable}.author_id = ${userTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` },
+          where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null } :
+        { sqlJoin: (userTable, commentTable, args) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}` },
       resolve: user => user.comments.sort((a, b) => a.id - b.id) 
     },
     posts: {
@@ -81,27 +81,27 @@ const User = new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
-      where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null,
+      where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null,
       ...STRATEGY === 'batch' ?
         { sqlBatch:
           { thisKey: 'author_id',
             parentKey: 'id' } } :
-        { sqlJoin: (userTable, postTable) => `${postTable}.author_id = ${userTable}.id` },
+        { sqlJoin: (userTable, postTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}` },
       resolve: user => user.posts.sort((a, b) => a.id - b.id)
     },
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
-      junctionTable: 'relationships',
+      junctionTable: q('relationships', DB),
       ...[ 'batch', 'mix' ].includes(STRATEGY) ?
         { junctionTableKey: [ 'follower_id', 'followee_id' ],
           junctionBatch:
             { thisKey: 'follower_id',
               parentKey: 'id',
-              sqlJoin: (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id` } } :
+              sqlJoin: (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}` } } :
         { sqlJoins:
-          [ (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
-            (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id` ] },
+          [ (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)}`,
+            (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}` ] },
       resolve: user => sortBy(user.following, 'first_name') 
     },
     favNums: {

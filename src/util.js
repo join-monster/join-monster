@@ -44,7 +44,7 @@ export function cursorToObj(cursor) {
 // wrap in a pair of single quotes for the SQL if needed
 export function maybeQuote(value) {
   if (typeof value === 'number') return value
-  if (typeof value.toSQL === 'function') return value.toSQL()
+  if (value && typeof value.toSQL === 'function') return value.toSQL()
 
   // Picked from https://github.com/brianc/node-postgres/blob/876018/lib/client.js#L235..L260
   // Ported from PostgreSQL 9.2.4 source code in src/interfaces/libpq/fe-exec.c

@@ -17,13 +17,14 @@ import {
 import { PostConnection } from './Post'
 import { CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
+import { q, bool } from '../shared'
 
-const { PAGINATE, STRATEGY } = process.env
+const { PAGINATE, STRATEGY, DB } = process.env
 
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
-  sqlTable: 'accounts',
+  sqlTable: q('accounts', DB),
   uniqueKey: 'id',
   interfaces: [ nodeInterface ],
   fields: () => ({
@@ -76,11 +77,11 @@ const User = new GraphQLObjectType({
               thisKey: 'author_id',
               parentKey: 'id'
             },
-            where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null 
+            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null 
           })
         } else {
           ({
-            sqlJoin: (userTable, commentTable, args) => `${commentTable}.author_id = ${userTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}`
+            sqlJoin: (userTable, commentTable, args) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}`
           })
         }
       }
@@ -130,7 +131,7 @@ const User = new GraphQLObjectType({
           })
         } else {
           ({
-            sqlJoin: (userTable, postTable) => `${postTable}.author_id = ${userTable}.id`
+            sqlJoin: (userTable, postTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
           })
         }
       }
@@ -163,7 +164,7 @@ const User = new GraphQLObjectType({
           })
         }
       },
-      junctionTable: 'relationships',
+      junctionTable: q('relationships', DB),
       ... do {
         if (STRATEGY === 'batch' || STRATEGY === 'mix') {
           ({
@@ -171,14 +172,14 @@ const User = new GraphQLObjectType({
             junctionBatch: {
               thisKey: 'follower_id',
               parentKey: 'id',
-              sqlJoin: (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
+              sqlJoin: (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)})`
             }
           })
         } else {
           ({
             sqlJoins: [
-              (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
-              (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id`
+              (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)})`,
+              (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)})`
             ]
           })
         }

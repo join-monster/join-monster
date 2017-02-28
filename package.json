@@ -16,6 +16,8 @@
     "teststandard": "NODE_ENV=test ava test/*.js",
     "testpg": "NODE_ENV=test DB=PG ava test/*.js",
     "testpg-paging": "NODE_ENV=test DB=PG PAGINATE=keyset ava test/pagination/keyset-paging.js && NODE_ENV=test DB=PG PAGINATE=offset ava test/pagination/offset-paging.js",
+    "oracle": "NODE_ENV=test DB=ORACLE ava test/*.js",
+    "oracle-paging": "NODE_ENV=test DB=ORACLE PAGINATE=offset ava test/pagination/offset-paging.js && NODE_ENV=test DB=ORACLE PAGINATE=keyset ava test/pagination/keyset-paging.js",
     "testmysql": "NODE_ENV=test DB=MYSQL ava test/*.js",
     "testmysql-paging": "NODE_ENV=test DB=MYSQL PAGINATE=offset ava test/pagination/offset-paging.js && NODE_ENV=test DB=MYSQL PAGINATE=keyset ava test/pagination/keyset-paging.js",
     "coverage": "nyc --reporter=html npm run test",

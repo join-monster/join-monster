@@ -5,11 +5,14 @@ import {
 } from 'graphql'
 
 import Person from './Person'
+import { q } from '../shared'
+
+const { DB } = process.env
 
 const Sponsor = new GraphQLObjectType({
   description: 'people who have given money',
   name: 'Sponsor',
-  sqlTable: 'sponsors',
+  sqlTable: q('sponsors', DB),
   uniqueKey: [ 'generation', 'first_name', 'last_name' ],
   interfaces: [ Person ],
   fields: () => ({
