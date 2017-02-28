@@ -128,7 +128,7 @@ const dialect = module.exports = {
 
   handleBatchedOneToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, batchScope) {
     const pagingWhereConditions = [
-      `"${node.name}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+      `${node.name}."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
     ]
     if (node.where) {
       pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, []))

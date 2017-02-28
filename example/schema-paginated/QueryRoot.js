@@ -70,7 +70,7 @@ export default new GraphQLObjectType({
       },
       where: (table, args) => {
         // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
-        if (args.search) return `(lower(${table}."first_name") LIKE lower('%${args.search}%') OR lower(${table}."last_name") LIKE lower('%${args.search}%'))`
+        if (args.search) return `(lower(${table}.${q('first_name', DB)}) LIKE lower('%${args.search}%') OR lower(${table}.${q('last_name', DB)}) LIKE lower('%${args.search}%'))`
       },
       resolve: async (parent, args, context, resolveInfo) => {
         const data = await joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
