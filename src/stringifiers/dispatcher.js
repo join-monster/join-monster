@@ -172,7 +172,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   } else {
     assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
     tables.push(
-      `FROM ${node.name} AS ${q(node.as)}`
+      `FROM ${node.name} ${q(node.as)}`
     )
   }
 }

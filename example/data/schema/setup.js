@@ -14,15 +14,15 @@ module.exports = function(db, name) {
       connection: {
         user: 'system',
         password: 'oracle',
-        connectString: '138.68.28.158:49161/XE',
+        connectString: 'localhost:1521/XE',
         stmtCacheSize: 0
       }
     })
 
-    let schema = fs.readFileSync(path.join(__dirname, 'oracle.sql'), 'utf8')
-    schema = schema.split('\n\n')
-    console.log(schema)
+    let schema = fs.readFileSync(path.join(__dirname, 'oracle.sql')).toString()
+    schema = schema.split(/\r?\n\r?\n/)
     return Promise.mapSeries(schema.filter(i => i), stmt => {
+      console.log(stmt.trim())
       return knex.raw(stmt.trim())
     })
     .then(() => knex)

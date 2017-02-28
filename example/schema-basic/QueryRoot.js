@@ -15,6 +15,7 @@ import { fromBase64 } from './utils'
 
 import joinMonster from '../../src/index'
 const options = {
+  dialect: 'oracle',
   minify: process.env.MINIFY == 1
 }
 if (knex.client.config.client === 'mysql') {
@@ -64,9 +65,9 @@ export default new GraphQLObjectType({
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.id = ${args.id}`
-        if (args.idEncoded) return `${usersTable}.id = ${fromBase64(args.idEncoded)}`
-        if (args.idAsync) return Promise.resolve(`${usersTable}.id = ${args.idAsync}`)
+        if (args.id) return `${usersTable}."id" = ${args.id}`
+        if (args.idEncoded) return `${usersTable}."id" = ${fromBase64(args.idEncoded)}`
+        if (args.idAsync) return Promise.resolve(`${usersTable}."id" = ${args.idAsync}`)
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)

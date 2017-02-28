@@ -3,27 +3,32 @@ import assert from 'assert'
 
 const dbType = process.env.DB
 
-const connection = process.env.NODE_ENV !== 'test' ?
-  { filename: path.join(__dirname, '../data/db/test1-data.sl3') } :
-  dbType === 'PG' ?
-    pgUrl('test1') :
-    dbType === 'MYSQL' ?
-      mysqlUrl('test1') :
-      { filename: path.join(__dirname, '../data/db/test1-data.sl3') }
+//const connection = process.env.NODE_ENV !== 'test' ?
+  //{ filename: path.join(__dirname, '../data/db/test1-data.sl3') } :
+  //dbType === 'PG' ?
+    //pgUrl('test1') :
+    //dbType === 'MYSQL' ?
+      //mysqlUrl('test1') :
+      //{ filename: path.join(__dirname, '../data/db/test1-data.sl3') }
 
-let client = 'sqlite3'
-if (dbType === 'PG') {
-  client = 'pg'
-} else if (dbType === 'MYSQL') {
-  client = 'mysql'
-}
+//let client = 'sqlite3'
+//if (dbType === 'PG') {
+  //client = 'pg'
+//} else if (dbType === 'MYSQL') {
+  //client = 'mysql'
+//}
 
-console.log('connection to', { client, connection })
-export default require('knex')({
-  client,
-  connection,
-  useNullAsDefault: true
-})
+//console.log('connection to', { client, connection })
+    const knex = require('knex')({
+      client: 'oracledb',
+      connection: {
+        user: 'system',
+        password: 'oracle',
+        connectString: 'localhost:1521/XE',
+        stmtCacheSize: 0
+      }
+    })
+export default knex
 
 function pgUrl(dbName) {
   assert(process.env.PG_URL, 'Environment variable PG_URL must be defined, e.g. "postgres://user:pass@localhost/"')

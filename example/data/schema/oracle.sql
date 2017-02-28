@@ -1,7 +1,5 @@
-select * from foo;
-
 begin
-execute immediate 'drop table "accounts"';
+execute immediate 'drop table "accounts" purge';
 exception when others then null;
 end;
 
@@ -12,104 +10,127 @@ CREATE TABLE "accounts" (
   "last_name" VARCHAR(255),
   "num_legs" NUMBER(10) DEFAULT 2,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+)
 
 ALTER TABLE "accounts" ADD (
-  CONSTRAINT accounts_pk PRIMARY KEY ("id"));
+  CONSTRAINT accounts_pk PRIMARY KEY ("id"))
 
-CREATE SEQUENCE accounts_seq START WITH 1;
+begin
+execute immediate 'drop sequence accounts_seq';
+exception when others then null;
+end;
 
-CREATE OR REPLACE TRIGGER dept_bir 
+CREATE SEQUENCE accounts_seq START WITH 1
+
+CREATE OR REPLACE TRIGGER accounts_bir 
 BEFORE INSERT ON "accounts" 
 FOR EACH ROW
 BEGIN
-  SELECT dept_seq.NEXTVAL
+  SELECT accounts_seq.NEXTVAL
   INTO   :new."id"
   FROM   dual;
 END;
 
+begin
+execute immediate 'drop table "comments" purge';
+exception when others then null;
+end;
+
+CREATE TABLE "comments" (
+  "id" NUMBER ,
+  "body" VARCHAR2(4000) NOT NULL,
+  "post_id" NUMBER NOT NULL,
+  "author_id" NUMBER NOT NULL,
+  "archived" NUMBER(1) DEFAULT 0,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
+ALTER TABLE "comments" ADD (
+  CONSTRAINT comments_pk PRIMARY KEY ("id"))
+
+begin
+execute immediate 'drop sequence comments_seq';
+exception when others then null;
+end;
+
+CREATE SEQUENCE comments_seq START WITH 1
+
+CREATE OR REPLACE TRIGGER comments_bir 
+BEFORE INSERT ON "comments" 
+FOR EACH ROW
 BEGIN
-   EXECUTE IMMEDIATE 'DROP TABLE comments';
-EXCEPTION
-   WHEN OTHERS THEN
-      IF SQLCODE != -942 THEN
-         RAISE;
-      END IF;
+  SELECT comments_seq.NEXTVAL
+  INTO   :new."id"
+  FROM   dual;
 END;
 
-CREATE TABLE comments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  body TEXT NOT NULL,
-  post_id INTEGER NOT NULL,
-  author_id INTEGER NOT NULL,
-  archived BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+begin
+execute immediate 'drop table "posts" purge';
+exception when others then null;
+end;
 
+CREATE TABLE "posts" (
+  "id" NUMBER ,
+  "body" VARCHAR2(4000) NOT NULL,
+  "author_id" NUMBER NOT NULL,
+  "archived" NUMBER(1) DEFAULT 0,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
+ALTER TABLE "posts" ADD (
+  CONSTRAINT posts_pk PRIMARY KEY ("id"))
+
+begin
+execute immediate 'drop sequence posts_seq';
+exception when others then null;
+end;
+
+CREATE SEQUENCE posts_seq START WITH 1
+
+CREATE OR REPLACE TRIGGER posts_bir 
+BEFORE INSERT ON "posts" 
+FOR EACH ROW
 BEGIN
-   EXECUTE IMMEDIATE 'DROP TABLE posts';
-EXCEPTION
-   WHEN OTHERS THEN
-      IF SQLCODE != -942 THEN
-         RAISE;
-      END IF;
+  SELECT posts_seq.NEXTVAL
+  INTO   :new."id"
+  FROM   dual;
 END;
 
-CREATE TABLE posts (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  body TEXT NOT NULL,
-  author_id INTEGER NOT NULL,
-  archived BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+begin
+execute immediate 'drop table "relationships" purge';
+exception when others then null;
+end;
 
-BEGIN
-   EXECUTE IMMEDIATE 'DROP TABLE relationships';
-EXCEPTION
-   WHEN OTHERS THEN
-      IF SQLCODE != -942 THEN
-         RAISE;
-      END IF;
-END;
+CREATE TABLE "relationships" (
+  "follower_id" NUMBER NOT NULL,
+  "followee_id" NUMBER NOT NULL,
+  "closeness" VARCHAR(255),
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE ("follower_id", "followee_id")
+)
 
-CREATE TABLE relationships (
-  follower_id INTEGER NOT NULL,
-  followee_id INTEGER NOT NULL,
-  closeness VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (follower_id, followee_id)
-);
+begin
+execute immediate 'drop table "likes" purge';
+exception when others then null;
+end;
 
-BEGIN
-   EXECUTE IMMEDIATE 'DROP TABLE likes';
-EXCEPTION
-   WHEN OTHERS THEN
-      IF SQLCODE != -942 THEN
-         RAISE;
-      END IF;
-END;
+CREATE TABLE "likes" (
+  "account_id" NUMBER NOT NULL,
+  "comment_id" NUMBER NOT NULL,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE ("account_id", "comment_id")
+)
 
-CREATE TABLE likes (
-  account_id INTEGER NOT NULL,
-  comment_id INTEGER NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (account_id, comment_id)
-);
+begin
+execute immediate 'drop table "sponsors" purge';
+exception when others then null;
+end;
 
-BEGIN
-   EXECUTE IMMEDIATE 'DROP TABLE sponsors';
-EXCEPTION
-   WHEN OTHERS THEN
-      IF SQLCODE != -942 THEN
-         RAISE;
-      END IF;
-END;
-
-CREATE TABLE sponsors (
-  generation INTEGER NOT NULL,
-  first_name VARCHAR(255),
-  last_name VARCHAR(255),
-  num_legs INTEGER DEFAULT 2,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE "sponsors" (
+  "generation" NUMBER NOT NULL,
+  "first_name" VARCHAR(255),
+  "last_name" VARCHAR(255),
+  "num_legs" NUMBER DEFAULT 2,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
 
