@@ -33,7 +33,7 @@ ${joinType || ''} JOIN LATERAL (
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q)}
   LIMIT ${limit}
-) AS ${q(as)} ON ${joinCondition}`
+) ${q(as)} ON ${joinCondition}`
   } else {
     return `\
 FROM (
@@ -41,7 +41,7 @@ FROM (
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q)}
   LIMIT ${limit}
-) AS ${q(as)}`
+) ${q(as)}`
   }
 }
 
@@ -57,7 +57,7 @@ ${joinType || ''} JOIN LATERAL (
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q)}
   LIMIT ${limit} OFFSET ${offset}
-) AS ${q(as)} ON ${joinCondition}`
+) ${q(as)} ON ${joinCondition}`
   } else {
     return `\
 FROM (
@@ -66,7 +66,7 @@ FROM (
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q)}
   LIMIT ${limit} OFFSET ${offset}
-) AS ${q(as)}`
+) ${q(as)}`
   }
 }
 

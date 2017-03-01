@@ -72,7 +72,7 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns a promise of the data.
  * @param {Object} [options]
  * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
- * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'standard'` are supported.
+ * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'sqlite3'` are supported.
  * @returns {Promise.<Object>} The correctly nested data from the database.
  */
 async function joinMonster(resolveInfo, context, dbCall, options = {}) {

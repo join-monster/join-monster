@@ -40,7 +40,7 @@ Takes the GraphQL resolveInfo and returns a hydrated Object with the data.
 | dbCall | <code>[dbCall](#dbCall)</code> | A function that is passed the compiled SQL that calls the database and returns a promise of the data. |
 | [options] | <code>Object</code> |  |
 | options.minify | <code>Boolean</code> | Generate minimum-length column names in the results table. |
-| options.dialect | <code>String</code> | The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'standard'` are supported. |
+| options.dialect | <code>String</code> | The dialect of SQL your Database uses. Currently `'pg'`, `'mysql'`, and `'sqlite3'` are supported. |
 
 <a name="getNode"></a>
 

@@ -106,7 +106,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     // otherwite, just a regular left join on the table
     } else {
       tables.push(
-        `LEFT JOIN ${node.name} AS ${q(node.as)} ON ${joinCondition}`
+        `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
       )
     }
   
@@ -123,8 +123,8 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
       } else {
         tables.push(
-          `FROM ${node.junctionTable} AS ${q(node.junctionTableAs)}`,
-          `LEFT JOIN ${node.name} AS ${q(node.as)} ON ${joinCondition}`
+          `FROM ${node.junctionTable} ${q(node.junctionTableAs)}`,
+          `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
         )
         // ensures only the correct records are fetched using the value of the parent key
         wheres.push(`${q(node.junctionTableAs)}.${q(node.junctionBatch.thisKey.name)} IN (${batchScope.join(',')})`)
@@ -142,11 +142,11 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
     } else {
       tables.push(
-        `LEFT JOIN ${node.junctionTable} AS ${q(node.junctionTableAs)} ON ${joinCondition1}`
+        `LEFT JOIN ${node.junctionTable} ${q(node.junctionTableAs)} ON ${joinCondition1}`
       )
     }
     tables.push(
-      `LEFT JOIN ${node.name} AS ${q(node.as)} ON ${joinCondition2}`
+      `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition2}`
     )
 
   // one-to-many with batching
@@ -161,7 +161,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
       } else {
         tables.push(
-          `FROM ${node.name} AS ${q(node.as)}`
+          `FROM ${node.name} ${q(node.as)}`
         )
         wheres.push(`${q(node.as)}.${q(node.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`)
       }
@@ -172,7 +172,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   } else {
     assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
     tables.push(
-      `FROM ${node.name} AS ${q(node.as)}`
+      `FROM ${node.name} ${q(node.as)}`
     )
   }
 }
