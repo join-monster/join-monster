@@ -3,12 +3,14 @@
 Check out the paginated [version of the demo](https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A).
 Source code can be found [here](https://github.com/stems/join-monster-demo/tree/master/schema-paginated).
 
-Join Monster supports three different implementations of pagination.
-Each one expects paginated lists to be wrapped in a **Connection** object type.
+Join Monster supports three different implementations of pagination, each of which can be combined with either `sqlJoin` or `sqlBatch` strategies to fetch the paginated field.
+Paginated fields are expected to be `GraphQLList` types wrapped in a **Connection** object type.
 This is the same as the [Relay Connection spec](https://facebook.github.io/relay/graphql/connections.htm) for paginated fields.
 You certainly do not have to use Relay on the client.
 Join Monster happens to use this interface because it's a convenient standard.
 It also allows us to leverage [graphql-relay-js](https://github.com/graphql/graphql-relay-js). Again, this package is **does not require** you to use Relay on the client. It's simply a module for helping to set up Relay-compliant GraphQL APIs—of which pagination is a part of.
+
+**Not all dialects support every type of pagination.** Check the [dialects](/dialects) page for current pagination support for each dialect.
 
 
 ### 1. Application-layer Paging
@@ -54,7 +56,7 @@ const User = new GraphQLObjectType({
       type: CommentConnection,
       // accept the standard args for connections, e.g. `first`, `after`...
       args: connectionArgs,
-      // write the JOIN as you normally would
+      // write the JOIN as you normally would. you can do a `sqlBatch` instead
       sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`,
       // joinMonster give us an array, use the helper to slice the array based on the args
       resolve: (user, args) => {
@@ -109,6 +111,11 @@ const User = new GraphQLObjectType({
       orderBy: 'id',
       // join is the same as before
       sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
+      // or you could have used batching
+      //sqlBatch: {
+      //  thisKey: 'author_id',
+      //  parentKey: 'id'
+      //}
     }
   })
 })

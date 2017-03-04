@@ -1,6 +1,8 @@
-### v1.0.0 (Feb. 23, 2017)
+### v1.0.0 (Feb. 28, 2017)
 - Batching capabilities added.
+- MariaDB can do pagination on batches.
 - `sqlExpr` can now be asynchronous.
+- Remove unecessary "AS" from table alias in generated SQL.
 
 **Breaking changes:**
 
