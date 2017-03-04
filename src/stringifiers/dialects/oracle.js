@@ -1,5 +1,4 @@
 import {
-  offsetPagingSelect,
   interpretForOffsetPaging,
   interpretForKeysetPaging,
   quotePrefix,
@@ -20,25 +19,43 @@ function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, opti
   whereCondition = filter(whereCondition).join(' AND ')
   if (joinCondition) {
     return `\
-  ,LATERAL (
-  SELECT * FROM (
-    SELECT ${table}.*, rownum as row_num
-    FROM ${table}
-    ${whereCondition? `WHERE ${whereCondition}` : '' }
-    ORDER BY ${orderColumnsToString(orderColumns, q)}
-  ) ${table}
-  WHERE ${table}.row_num < ${limit}
+${ joinType === 'LEFT' ? 'OUTER' : 'CROSS' } APPLY (
+  SELECT * FROM ${table}
+  ${whereCondition? `WHERE ${whereCondition}` : '' }
+  ORDER BY ${orderColumnsToString(orderColumns, q)}
 ) ${q(as)} ON ${joinCondition}`
   } else {
     return `\
 FROM (
-  SELECT * FROM (
-    SELECT ${table}.*, rownum as row_num
-    FROM ${table}
-    ${whereCondition? `WHERE ${whereCondition}` : '' }
-    ORDER BY ${orderColumnsToString(orderColumns, q)}
-  ) ${table}
-  WHERE ${table}.row_num < ${limit}
+  SELECT * FROM ${table}
+  ${whereCondition? `WHERE ${whereCondition}` : '' }
+  ORDER BY ${orderColumnsToString(orderColumns, q)}
+
+) ${q(as)}`
+  }
+}
+
+function offsetPagingSelect(table, pagingWhereConditions, orderColumns, limit, offset, as, options = {}) {
+  let { joinCondition, joinType } = options
+  const q = str => `"${str}"`
+  const whereCondition = filter(pagingWhereConditions).join(' AND ') || '1 = 1'
+  if (joinCondition) {
+    return `\
+${joinType === 'LEFT' ? 'OUTER': 'CROSS'} APPLY (
+  SELECT ${table}.*, count(*) OVER () AS ${q('$total')}
+  FROM ${table}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
+)`
+  } else {
+    return `\
+FROM (
+  SELECT ${table}.*, count(*) OVER () AS ${q('$total')}
+  FROM ${table}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
 ) ${q(as)}`
   }
 }

@@ -32,7 +32,6 @@ if (knex.client.config.client === 'mysql') {
 } else if (knex.client.config.client === 'oracledb') {
   options.dialect = 'oracle'
 }
-console.log(options)
 
 
 export default new GraphQLObjectType({

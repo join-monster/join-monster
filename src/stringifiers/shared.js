@@ -29,7 +29,8 @@ export function keysetPagingSelect(table, whereCondition, orderColumns, limit, a
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
-  SELECT * FROM ${table}
+  SELECT *
+  FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q)}
   LIMIT ${limit}
@@ -37,7 +38,8 @@ ${joinType || ''} JOIN LATERAL (
   } else {
     return `\
 FROM (
-  SELECT * FROM ${table}
+  SELECT *
+  FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q)}
   LIMIT ${limit}
@@ -53,7 +55,7 @@ export function offsetPagingSelect(table, pagingWhereConditions, orderColumns, l
     return `\
 ${joinType || ''} JOIN LATERAL (
   SELECT *, count(*) OVER () AS ${q('$total')}
-  FROM ${table}
+  FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q)}
   LIMIT ${limit} OFFSET ${offset}
@@ -62,7 +64,7 @@ ${joinType || ''} JOIN LATERAL (
     return `\
 FROM (
   SELECT *, count(*) OVER () AS ${q('$total')}
-  FROM ${table}
+  FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q)}
   LIMIT ${limit} OFFSET ${offset}
@@ -70,18 +72,17 @@ FROM (
   }
 }
 
-export function orderColumnsToString(orderColumns, q) {
-  q = q || doubleQuote
+export function orderColumnsToString(orderColumns) {
   const conditions = []
   for (let column in orderColumns) {
-    conditions.push(`${q(column)} ${orderColumns[column]}`)
+    conditions.push(`${column} ${orderColumns[column]}`)
   }
   return conditions.join(', ')
 }
 
 // find out what the limit, offset, order by parts should be from the relay connection args if we're paginating
 export function interpretForOffsetPaging(node, dialect) {
-  const { name } = dialect
+  const { name, quote: q } = dialect
   if (node.args && node.args.last) {
     throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
   }
@@ -92,14 +93,14 @@ export function interpretForOffsetPaging(node, dialect) {
       if (direction !== 'ASC' && direction !== 'DESC') {
         throw new Error (direction + ' is not a valid sorting direction')
       }
-      orderColumns[column] = direction
+      orderColumns[q(node.as) + '.' + column] = direction
     }
   } else if (typeof node.orderBy === 'string') {
-    orderColumns[node.orderBy] = 'ASC'
+    orderColumns[q(node.as) + '.' + node.orderBy] = 'ASC'
   } else {
     throw new Error('"orderBy" is required for pagination')
   }
-  let limit = [ 'mariadb', 'mysql' ].includes(name) ? '18446744073709551615' : 'ALL'
+  let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
   let offset = 0
   if (node.args && node.args.first) {
     // we'll get one extra item (hence the +1). this is to determine if there is a next page or not
@@ -112,7 +113,7 @@ export function interpretForOffsetPaging(node, dialect) {
 }
 
 export function interpretForKeysetPaging(node, dialect) {
-  const { name, quote } = dialect
+  const { name, quote: q } = dialect
   const orderColumns = {}
   let descending = node.sortKey.order.toUpperCase() === 'DESC'
   // flip the sort order if doing backwards paging
@@ -120,17 +121,17 @@ export function interpretForKeysetPaging(node, dialect) {
     descending = !descending
   }
   for (let column of wrap(node.sortKey.key)) {
-    orderColumns[column] = descending ? 'DESC' : 'ASC'
+    orderColumns[q(node.as) + '.' + column] = descending ? 'DESC' : 'ASC'
   }
 
-  let limit = [ 'mariadb', 'mysql' ].includes(name) ? '18446744073709551615' : 'ALL'
+  let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
   let whereCondition = ''
   if (node.args && node.args.first) {
     limit = parseInt(node.args.first) + 1
     if (node.args.after) {
       const cursorObj = cursorToObj(node.args.after)
       validateCursor(cursorObj, wrap(node.sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, quote)
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending, q)
     }
     if (node.args.before) {
       throw new Error('Using "before" with "first" is nonsensical.')
@@ -140,7 +141,7 @@ export function interpretForKeysetPaging(node, dialect) {
     if (node.args.before) {
       const cursorObj = cursorToObj(node.args.before)
       validateCursor(cursorObj, wrap(node.sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, quote)
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending, q)
     }
     if (node.args.after) {
       throw new Error('Using "after" with "last" is nonsensical.')
