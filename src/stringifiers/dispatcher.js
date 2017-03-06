@@ -34,7 +34,7 @@ export default async function stringifySqlAST(topNode, context, options) {
   }
 
   if (orders.length) {
-    sql += '\nORDER BY ' + stringifyOuterOrder(orders)
+    sql += '\nORDER BY ' + stringifyOuterOrder(orders, dialect.quote)
   }
 
   return sql
@@ -180,12 +180,12 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
 // we need one ORDER BY clause on at the very end to make sure everything comes back in the correct order
 // ordering inner(sub) queries DOES NOT guarantee the order of those results in the outer query
-function stringifyOuterOrder(orders) {
+function stringifyOuterOrder(orders, q) {
   const conditions = []
   for (let condition of orders) {
     for (let column in condition.columns) {
       const direction = condition.columns[column]
-      conditions.push(`${column} ${direction}`)
+      conditions.push(`${q(condition.table)}.${q(column)} ${direction}`)
     }
   }
   return conditions.join(', ')

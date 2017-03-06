@@ -32,7 +32,7 @@ ${joinType || ''} JOIN LATERAL (
   SELECT *
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
   LIMIT ${limit}
 ) ${q(as)} ON ${joinCondition}`
   } else {
@@ -41,7 +41,7 @@ FROM (
   SELECT *
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
   LIMIT ${limit}
 ) ${q(as)}`
   }
@@ -57,7 +57,7 @@ ${joinType || ''} JOIN LATERAL (
   SELECT *, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)} ON ${joinCondition}`
   } else {
@@ -66,23 +66,23 @@ FROM (
   SELECT *, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)}`
   }
 }
 
-export function orderColumnsToString(orderColumns) {
+export function orderColumnsToString(orderColumns, q, as) {
   const conditions = []
   for (let column in orderColumns) {
-    conditions.push(`${column} ${orderColumns[column]}`)
+    conditions.push(`${as ? q(as) + '.' : ''}${q(column)} ${orderColumns[column]}`)
   }
   return conditions.join(', ')
 }
 
 // find out what the limit, offset, order by parts should be from the relay connection args if we're paginating
 export function interpretForOffsetPaging(node, dialect) {
-  const { name, quote: q } = dialect
+  const { name } = dialect
   if (node.args && node.args.last) {
     throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
   }
@@ -93,10 +93,10 @@ export function interpretForOffsetPaging(node, dialect) {
       if (direction !== 'ASC' && direction !== 'DESC') {
         throw new Error (direction + ' is not a valid sorting direction')
       }
-      orderColumns[q(node.as) + '.' + column] = direction
+      orderColumns[column] = direction
     }
   } else if (typeof node.orderBy === 'string') {
-    orderColumns[q(node.as) + '.' + node.orderBy] = 'ASC'
+    orderColumns[node.orderBy] = 'ASC'
   } else {
     throw new Error('"orderBy" is required for pagination')
   }
@@ -121,7 +121,7 @@ export function interpretForKeysetPaging(node, dialect) {
     descending = !descending
   }
   for (let column of wrap(node.sortKey.key)) {
-    orderColumns[q(node.as) + '.' + column] = descending ? 'DESC' : 'ASC'
+    orderColumns[column] = descending ? 'DESC' : 'ASC'
   }
 
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'

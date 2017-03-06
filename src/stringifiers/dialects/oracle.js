@@ -13,6 +13,8 @@ function recursiveConcat(keys) {
   return recursiveConcat([ `CONCAT(${keys[0]}, ${keys[1]})`, ...keys.slice(2) ])
 }
 
+const q = str => `"${str}"`
+
 function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, options = {}) {
   let { joinCondition, joinType } = options
   const q = str => `"${str}"`
@@ -22,14 +24,14 @@ function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, opti
 ${ joinType === 'LEFT' ? 'OUTER' : 'CROSS' } APPLY (
   SELECT * FROM ${table}
   ${whereCondition? `WHERE ${whereCondition}` : '' }
-  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
 ) ${q(as)} ON ${joinCondition}`
   } else {
     return `\
 FROM (
   SELECT * FROM ${table}
   ${whereCondition? `WHERE ${whereCondition}` : '' }
-  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
 
 ) ${q(as)}`
   }
@@ -37,24 +39,23 @@ FROM (
 
 function offsetPagingSelect(table, pagingWhereConditions, orderColumns, limit, offset, as, options = {}) {
   let { joinCondition, joinType } = options
-  const q = str => `"${str}"`
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || '1 = 1'
   if (joinCondition) {
     return `\
 ${joinType === 'LEFT' ? 'OUTER': 'CROSS'} APPLY (
-  SELECT ${table}.*, count(*) OVER () AS ${q('$total')}
-  FROM ${table}
+  SELECT "${as}".*, count(*) OVER () AS ${q('$total')}
+  FROM ${table} "${as}"
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
   OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
-)`
+) ${q(as)}`
   } else {
     return `\
 FROM (
-  SELECT ${table}.*, count(*) OVER () AS ${q('$total')}
-  FROM ${table}
+  SELECT "${as}".*, count(*) OVER () AS ${q('$total')}
+  FROM ${table} "${as}"
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q)}
+  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
   OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
 ) ${q(as)}`
   }
@@ -75,13 +76,13 @@ const dialect = module.exports = {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+        pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
       }
       tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+        pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
       }
       tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as))
     } else {
@@ -97,10 +98,10 @@ const dialect = module.exports = {
 
   handleJoinedOneToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition) {
     const pagingWhereConditions = [
-      await node.sqlJoin(`"${parent.as}"`, node.name, node.args || {}, context),
+      await node.sqlJoin(`"${parent.as}"`, q(node.as), node.args || {}, context),
     ]
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
     }
 
     // which type of pagination are they using?
@@ -120,5 +121,30 @@ const dialect = module.exports = {
       columns: orderColumns
     })
   },
+
+  handleJoinedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1) {
+    const pagingWhereConditions = [
+      await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
+    ]
+    if (node.where) {
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
+    }
+
+    if (node.sortKey) {
+      var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
+      pagingWhereConditions.push(whereAddendum)
+      tables.push(keysetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, node.junctionTableAs, { joinCondition: joinCondition1, joinType: 'LEFT' }))
+    } else if (node.orderBy) {
+      var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
+      tables.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, { joinCondition: joinCondition1, joinType: 'LEFT' }))
+    } else {
+      throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
+    }
+
+    orders.push({
+      table: node.junctionTableAs,
+      columns: orderColumns
+    })
+  }
 }
 

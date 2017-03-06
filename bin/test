@@ -1,42 +1,108 @@
 #!/bin/bash
 set -e
-echo $1
 
 export TZ=UTC
 
 GREEN='\033[102m'
 BLUE='\033[104m'
+YELLOW='\033[33m'
 NC='\033[0m'
+
+ORACLE=1
+PG=1
+MYSQL=1
+SQLITE=1
+
+while [[ $# -gt 0 ]]
+do
+  case $1 in
+    -o|--no-oracle)
+      ORACLE=0
+    ;;
+    -p|--no-pg)
+      PG=0
+    ;;
+    -m|--no-mysql)
+      MYSQL=0
+    ;;
+    -s|--no-sqlite)
+      SQLITE=0
+    ;;
+    *)
+      echo unrecognized option $1
+      exit 1
+    ;;
+  esac
+  shift # past argument or value
+done
+
+
 echo -e "${BLUE} running with all joins ${NC}"
-npm run testsqlite3
-npm run testmysql
-npm run testpg
-npm run testpg-paging
-npm run testoracle
-npm run testoracle-paging
-MINIFY=1 npm run testpg
-MINIFY=1 npm run testpg-paging
+if [ $SQLITE = 1 ]; then
+  echo -e "${YELLOW} testing sqlite3${NC}"
+  npm run testsqlite3
+fi
+if [ $MYSQL = 1 ]; then
+  echo -e "${YELLOW} testing mysql${NC}"
+  npm run testmysql
+fi
+if [ $ORACLE = 1 ]; then
+  echo -e "${YELLOW} testing oracle${NC}"
+  npm run testoracle
+  npm run testoracle-paging
+fi
+if [ $PG = 1 ]; then
+  echo -e "${YELLOW} testing postgres${NC}"
+  npm run testpg
+  npm run testpg-paging
+  MINIFY=1 npm run testpg
+  MINIFY=1 npm run testpg-paging
+fi
 
 echo -e "${BLUE} running with all batches ${NC}"
-STRATEGY=batch npm run testsqlite3
-STRATEGY=batch npm run testmysql
-STRATEGY=batch npm run testmysql-paging
-STRATEGY=batch npm run testpg
-STRATEGY=batch npm run testpg-paging
-STRATEGY=batch npm run testoracle
-STRATEGY=batch npm run testoracle-paging
-STRATEGY=batch MINIFY=1 npm run testpg
-STRATEGY=batch MINIFY=1 npm run testpg-paging
+if [ $SQLITE = 1 ]; then
+  echo -e "${YELLOW} testing sqlite3${NC}"
+  STRATEGY=batch npm run testsqlite3
+fi
+if [ $MYSQL = 1 ]; then
+  echo -e "${YELLOW} testing mysql${NC}"
+  STRATEGY=batch npm run testmysql
+  STRATEGY=batch npm run testmysql-paging
+fi
+if [ $ORACLE = 1 ]; then
+  echo -e "${YELLOW} testing oracle${NC}"
+  STRATEGY=batch npm run testoracle
+  STRATEGY=batch npm run testoracle-paging
+fi
+if [ $PG = 1 ]; then
+  echo -e "${YELLOW} testing postgres${NC}"
+  STRATEGY=batch npm run testpg
+  STRATEGY=batch npm run testpg-paging
+  STRATEGY=batch MINIFY=1 npm run testpg
+  STRATEGY=batch MINIFY=1 npm run testpg-paging
+fi
 
 echo -e "${BLUE} running with mixture ${NC}"
-STRATEGY=mix npm run testsqlite3
-STRATEGY=mix npm run testmysql
-STRATEGY=mix npm run testpg
-STRATEGY=mix npm run testpg-paging
-STRATEGY=mix npm run testoracle
-STRATEGY=mix npm run testoracle-paging
-STRATEGY=mix MINIFY=1 npm run testpg
-STRATEGY=mix MINIFY=1 npm run testpg-paging
+if [ $SQLITE = 1 ]; then
+  echo -e "${YELLOW} testing sqlite3${NC}"
+  STRATEGY=mix npm run testsqlite3
+fi
+if [ $MYSQL = 1 ]; then
+  echo -e "${YELLOW} testing mysql${NC}"
+  STRATEGY=mix npm run testmysql
+fi
+if [ $ORACLE = 1 ]; then
+  echo -e "${YELLOW} testing oracle${NC}"
+  STRATEGY=mix npm run testoracle
+  STRATEGY=mix npm run testoracle-paging
+fi
+if [ $PG = 1 ]; then
+  echo -e "${YELLOW} testing postgres${NC}"
+  STRATEGY=mix npm run testpg
+  STRATEGY=mix npm run testpg-paging
+  STRATEGY=mix MINIFY=1 npm run testpg
+  STRATEGY=mix MINIFY=1 npm run testpg-paging
+fi
 
 echo -e "${GREEN} PASSED ${NC}"
 

@@ -16,22 +16,6 @@ ALTER TABLE "accounts" ADD (
   CONSTRAINT accounts_pk PRIMARY KEY ("id"))
 
 begin
-execute immediate 'drop sequence accounts_seq';
-exception when others then null;
-end;
-
-CREATE SEQUENCE accounts_seq START WITH 1
-
-CREATE OR REPLACE TRIGGER accounts_bir 
-BEFORE INSERT ON "accounts" 
-FOR EACH ROW
-BEGIN
-  SELECT accounts_seq.NEXTVAL
-  INTO   :new."id"
-  FROM   dual;
-END;
-
-begin
 execute immediate 'drop table "comments" purge';
 exception when others then null;
 end;
@@ -49,22 +33,6 @@ ALTER TABLE "comments" ADD (
   CONSTRAINT comments_pk PRIMARY KEY ("id"))
 
 begin
-execute immediate 'drop sequence comments_seq';
-exception when others then null;
-end;
-
-CREATE SEQUENCE comments_seq START WITH 1
-
-CREATE OR REPLACE TRIGGER comments_bir 
-BEFORE INSERT ON "comments" 
-FOR EACH ROW
-BEGIN
-  SELECT comments_seq.NEXTVAL
-  INTO   :new."id"
-  FROM   dual;
-END;
-
-begin
 execute immediate 'drop table "posts" purge';
 exception when others then null;
 end;
@@ -79,22 +47,6 @@ CREATE TABLE "posts" (
 
 ALTER TABLE "posts" ADD (
   CONSTRAINT posts_pk PRIMARY KEY ("id"))
-
-begin
-execute immediate 'drop sequence posts_seq';
-exception when others then null;
-end;
-
-CREATE SEQUENCE posts_seq START WITH 1
-
-CREATE OR REPLACE TRIGGER posts_bir 
-BEFORE INSERT ON "posts" 
-FOR EACH ROW
-BEGIN
-  SELECT posts_seq.NEXTVAL
-  INTO   :new."id"
-  FROM   dual;
-END;
 
 begin
 execute immediate 'drop table "relationships" purge';

@@ -24,7 +24,7 @@ const { PAGINATE, STRATEGY, DB } = process.env
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
-  sqlTable: q('accounts', DB),
+  sqlTable: `(SELECT * FROM ${q('accounts', DB)})`,
   uniqueKey: 'id',
   interfaces: [ nodeInterface ],
   fields: () => ({
@@ -119,7 +119,7 @@ const User = new GraphQLObjectType({
         }
       },
       where: (table, args) => {
-        if (args.search) return `lower(${table}.body) LIKE lower('%${args.search}%')`
+        if (args.search) return `lower(${table}.${q('body', DB)}) LIKE lower('%${args.search}%')`
       },
       ... do {
         if (STRATEGY === 'batch') {
@@ -164,7 +164,8 @@ const User = new GraphQLObjectType({
           })
         }
       },
-      junctionTable: q('relationships', DB),
+      //junctionTable: q('relationships', DB),
+      junctionTable: `(SELECT * FROM ${q('relationships', DB)})`,
       ... do {
         if (STRATEGY === 'batch' || STRATEGY === 'mix') {
           ({

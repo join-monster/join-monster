@@ -20,10 +20,10 @@ ${unions.join('\nUNION\n')}
 ) AS ${quote(as)}`
 }
 
-function paginatedSelect(table, whereConditions, orderColumns, limit, offset, withTotal = false) {
+function paginatedSelect(table, as, whereConditions, orderColumns, limit, offset, withTotal = false) {
   return `\
   (SELECT *${withTotal ? ', count(*) OVER () AS `$total`': '' }
-  FROM ${table}
+  FROM ${table} ${quote(as)}
   WHERE ${whereConditions}
   ORDER BY ${orderColumnsToString(orderColumns, quote)}
   LIMIT ${limit}${offset ? ' OFFSET ' + offset : ''})`
@@ -47,13 +47,13 @@ const dialect = module.exports = {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix, quote)))
+        pagingWhereConditions.push(await node.where(`${quote(node.as)}`, node.args || {}, context, quotePrefix(prefix, quote)))
       }
       joins.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as, { q: quote }))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix, quote)))
+        pagingWhereConditions.push(await node.where(`${quote(node.as)}`, node.args || {}, context, quotePrefix(prefix, quote)))
       }
       joins.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as, { q: quote }))
     }
@@ -66,23 +66,23 @@ const dialect = module.exports = {
   handleBatchedOneToManyPaginated: async function(parent, node, prefix, context, selections, joins, wheres, orders, batchScope) {
     const pagingWhereConditions = []
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix, quote)))
+      pagingWhereConditions.push(await node.where(`${quote(node.as)}`, node.args || {}, context, quotePrefix(prefix, quote)))
     }
     if (node.sortKey) {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
       const unions = batchScope.map(val => {
-        let whereConditions = [ ...pagingWhereConditions, `${node.name}.${quote(node.sqlBatch.thisKey.name)} = ${val}` ]
+        let whereConditions = [ ...pagingWhereConditions, `${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} = ${val}` ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.name, whereConditions, orderColumns, limit, offset, true)
+        return paginatedSelect(node.name, node.as, whereConditions, orderColumns, limit, offset, true)
       })
       joins.push(joinUnions(unions, node.as))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       const unions = batchScope.map(val => {
-        let whereConditions = [ ...pagingWhereConditions, `${node.name}.${quote(node.sqlBatch.thisKey.name)} = ${val}` ]
+        let whereConditions = [ ...pagingWhereConditions, `${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} = ${val}` ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.name, whereConditions, orderColumns, limit, offset, true)
+        return paginatedSelect(node.name, node.as, whereConditions, orderColumns, limit, offset, true)
       })
       joins.push(joinUnions(unions, node.as))
     }
@@ -95,23 +95,23 @@ const dialect = module.exports = {
   handleBatchedManyToManyPaginated: async function(parent, node, prefix, context, selections, joins, wheres, orders, batchScope, joinCondition) {
     const pagingWhereConditions = []
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix, quote)))
+      pagingWhereConditions.push(await node.where(`${quote(node.as)}`, node.args || {}, context, quotePrefix(prefix, quote)))
     }
     if (node.sortKey) {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
       const unions = batchScope.map(val => {
-        let whereConditions = [ ...pagingWhereConditions, `${node.junctionTable}.${quote(node.junctionBatch.thisKey.name)} = ${val}` ]
+        let whereConditions = [ ...pagingWhereConditions, `${quote(node.junctionTableAs)}.${quote(node.junctionBatch.thisKey.name)} = ${val}` ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.junctionTable, whereConditions, orderColumns, limit, offset, true)
+        return paginatedSelect(node.junctionTable, node.junctionTableAs, whereConditions, orderColumns, limit, offset, true)
       })
       joins.push(joinUnions(unions, node.junctionTableAs))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       const unions = batchScope.map(val => {
-        let whereConditions = [ ...pagingWhereConditions, `${node.junctionTable}.${quote(node.junctionBatch.thisKey.name)} = ${val}` ]
+        let whereConditions = [ ...pagingWhereConditions, `${quote(node.junctionTableAs)}.${quote(node.junctionBatch.thisKey.name)} = ${val}` ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.junctionTable, whereConditions, orderColumns, limit, offset, true)
+        return paginatedSelect(node.junctionTable, node.junctionTableAs, whereConditions, orderColumns, limit, offset, true)
       })
       joins.push(joinUnions(unions, node.junctionTableAs))
     }

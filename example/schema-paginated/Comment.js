@@ -21,7 +21,8 @@ const { PAGINATE, DB } = process.env
 export const Comment = new GraphQLObjectType({
   description: 'Comments on posts',
   name: 'Comment',
-  sqlTable: q('comments', DB),
+  //sqlTable: q('comments', DB),
+  sqlTable: `(SELECT * FROM ${q('comments', DB)})`,
   uniqueKey: 'id',
   interfaces: [ nodeInterface ],
   fields: () => ({

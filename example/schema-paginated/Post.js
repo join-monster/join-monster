@@ -23,7 +23,8 @@ const { PAGINATE, STRATEGY, DB } = process.env
 export const Post = new GraphQLObjectType({
   description: 'A post from a user',
   name: 'Post',
-  sqlTable: q('posts', DB),
+  sqlTable: `(SELECT * FROM ${q('posts', DB)})`,
+  //sqlTable: q('posts', DB),
   uniqueKey: 'id',
   interfaces: [ nodeInterface ],
   fields: () => ({

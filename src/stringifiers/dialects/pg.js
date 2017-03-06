@@ -20,10 +20,10 @@ const dialect = module.exports = {
 
   handleJoinedOneToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition) {
     const pagingWhereConditions = [
-      await node.sqlJoin(`"${parent.as}"`, node.name, node.args || {}, context),
+      await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context),
     ]
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
     }
 
     // which type of pagination are they using?
@@ -46,10 +46,10 @@ const dialect = module.exports = {
 
   handleBatchedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, joinCondition) {
     const pagingWhereConditions = [
-      `${node.junctionTable}."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
+      `"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
     ]
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
     }
 
     const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junctionBatch.parentKey.name}")`
@@ -77,10 +77,10 @@ const dialect = module.exports = {
 
   handleJoinedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1) {
     const pagingWhereConditions = [
-      await node.sqlJoins[0](`"${parent.as}"`, node.junctionTable, node.args || {}, context)
+      await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
     ]
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
     }
 
     if (node.sortKey) {
@@ -106,13 +106,13 @@ const dialect = module.exports = {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+        pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
       }
       tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, quotePrefix(prefix)))
+        pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
       }
       tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as))
     } else {
@@ -128,10 +128,10 @@ const dialect = module.exports = {
 
   handleBatchedOneToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, batchScope) {
     const pagingWhereConditions = [
-      `${node.name}."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+      `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
     ]
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${node.name}`, node.args || {}, context, []))
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, []))
     }
     const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")`
     tables.push(tempTable)
