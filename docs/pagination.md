@@ -6,9 +6,11 @@ Source code can be found [here](https://github.com/stems/join-monster-demo/tree/
 Join Monster supports three different implementations of pagination, each of which can be combined with either `sqlJoin` or `sqlBatch` strategies to fetch the paginated field.
 Paginated fields are expected to be `GraphQLList` types wrapped in a **Connection** object type.
 This is the same as the [Relay Connection spec](https://facebook.github.io/relay/graphql/connections.htm) for paginated fields.
+This [Stack Overflow Answer](http://stackoverflow.com/questions/42622912/in-graphql-whats-the-meaning-of-edges-and-node) summarizes this nicely.
 You certainly do not have to use Relay on the client.
 Join Monster happens to use this interface because it's a convenient standard.
 It also allows us to leverage [graphql-relay-js](https://github.com/graphql/graphql-relay-js). Again, this package is **does not require** you to use Relay on the client. It's simply a module for helping to set up Relay-compliant GraphQL APIs—of which pagination is a part of.
+
 
 **Not all dialects support every type of pagination.** Check the [dialects](/dialects) page for current pagination support for each dialect.
 
@@ -222,11 +224,11 @@ Because the cursor is predictable, you get another interesting capability. You c
 
 This is possible because the 10th post *always* has the same cursor value, regardless of which user it belongs too. This is also true for comments or any other type. But because offsets work by skipping rows from the beginning, backward pagination is not possible.
 
-This approach relies on the `LATERAL` keyword in the SQL standard. Despite being in the standard, it is not supported on all implementations. To use it, you must opt-in to the `pg` dialect in the [options](/API/#joinMonster).
+This implementation is not supported on all dialects. See the [dialects](/dialects) page for details.
 
 | Pros | Cons |
 | ---- | ---- |
-| only fetch the current page from the database | only supported in the `pg` dialect |
+| only fetch the current page from the database | only supported in some dialects |
 | total number of pages can be known | unstable - shifts the items if insertions are made at the beginning |
 | jump to arbitrary pages in the middle | requires sorting the table, which can be expensive for very large data sets |
 | able to "recursively" page through multiple nested connections | unable to do backward paging |
@@ -330,11 +332,10 @@ You can still get the beginning or end of nested connections though.
 }
 ```
 
-This also uses the `LATERAL` keyword. Using it requires opting in to the `pg` dialect.
 
 | Pros | Cons |
 | ---- | ---- |
-| only fetch the current page from the database | only supported in the `pg` dialect |
+| only fetch the current page from the database | only supported in some dialects |
 | most scalable with proper index scans on sort key | no jumping to middle pages |
 | stable - handles insertions in the middle of the list | total page number not known |
 | both forward and backward paging | unable to do "recursive paging" |
