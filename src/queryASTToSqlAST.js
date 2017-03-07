@@ -91,6 +91,9 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
   // is this a table in SQL?
   if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
+    if (depth >= 1) {
+      assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
+    }
     handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, depth, options)
   // is this a raw expression?
   } else if (field.sqlExpr) {
