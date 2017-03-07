@@ -24,6 +24,9 @@ export function queryASTToSqlAST(resolveInfo, options) {
   const parentType = resolveInfo.parentType
   getGraphQLType(queryAST, parentType, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, 0, options)
 
+  // make sure they started this party on a table
+  assert.equal(sqlAST.type, 'table', 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".')
+
   // make sure each "sqlDep" is only specified once at each level. also assign it an alias
   pruneDuplicateSqlDeps(sqlAST, namespace)
 
@@ -333,7 +336,7 @@ function stripNonNullType(type) {
 export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   // keep track of all the dependent columns at this depth in a Set (for uniqueness)
   const deps = new Set
-  const children = sqlAST.children
+  const children = sqlAST.children || []
 
   // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
   for (let i = children.length - 1; i >= 0; i--) {
