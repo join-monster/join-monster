@@ -102,6 +102,7 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   // get the GraphQL type from the schema using the name
   const type = resolveInfo.schema.getType(typeName)
   assert(type, `Type "${typeName}" not found in your schema.`)
+  assert(type._typeConfig.sqlTable, `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`)
 
   // we need to determine what the WHERE function should be
   let where = buildWhereFunction(type, condition, options)

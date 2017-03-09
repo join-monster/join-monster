@@ -146,7 +146,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
     }
     const junctionTable = field.junctionTable || field.joinTable
     sqlASTNode.junctionTable = junctionTable
-    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable)
+    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable.replace(/[^a-zA-Z0-9]/g, '_'))
     if (field.sqlJoins) {
       sqlASTNode.sqlJoins = field.sqlJoins
     } else {
