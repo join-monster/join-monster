@@ -273,7 +273,7 @@ Detailed instructions for set up are found in the [docs](http://join-monster.rea
 
 ### Using with Apollo Server
 
-The GraphQL schema language doesn't let you add arbitrary properties to the type definitions. If you're using something like [graphql-tools](https://github.com/apollographql/graphql-tools), you'll need an **adapter**. See the [graph-tools-adapter](https://github.com/acarl005/join-monster-graphql-tools-adapter) if you want to use this with Apollo.
+The GraphQL schema language doesn't let you add arbitrary properties to the type definitions. If you're using something like [graphql-tools](https://github.com/apollographql/graphql-tools), you'll need an **adapter**. See the [join-monster-graph-tools-adapter](https://github.com/acarl005/join-monster-graphql-tools-adapter) if you want to use this with Apollo.
 
 ## Running the Demo
 
