@@ -1,3 +1,6 @@
+### v1.0.1 (Mar. 8, 2017)
+- Add `ORDER BY` support for non-paginated fields.
+
 ### v1.0.0 (Feb. 28, 2017)
 - Batching capabilities added.
 - MariaDB can do pagination on batches.

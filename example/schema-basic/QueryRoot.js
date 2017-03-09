@@ -42,9 +42,9 @@ export default new GraphQLObjectType({
         ids: { type: new GraphQLList(GraphQLInt) }
       },
       where: (table, args) => args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
+      orderBy: 'id',
       resolve: async (parent, args, context, resolveInfo) => {
-        const users = await joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
-        return users.sort((a, b) => a.id - b.id)
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },
     user: {

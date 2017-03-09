@@ -22,6 +22,7 @@ pages:
     - "6. Joining Objects": start-joins.md
     - "7. Arbitrary Depth": arbitrary-depth.md
     - "8. Many-to-Many Joins": many-to-many.md
+    - "9. Order By": order-by.md
   - "Query Planning":
     - "What & Why": query-planning.md
     - "One-to-many Batch": batch-one-many.md

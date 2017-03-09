@@ -198,13 +198,13 @@ test('should handle where conditions on the relations', async t => {
           numComments: 3,
           comments: [
             {
-              id: 1,
-              body: 'Wow this is a great post, Matt.',
+              id: 3,
+              body: 'That\'s ultra weird bro.',
               archived: false
             },
             {
-              id: 3,
-              body: 'That\'s ultra weird bro.',
+              id: 1,
+              body: 'Wow this is a great post, Matt.',
               archived: false
             }
           ]

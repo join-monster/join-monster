@@ -127,6 +127,10 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
 
+  if (field.orderBy && !sqlASTNode.orderBy) {
+    handleOrderBy(sqlASTNode, field)
+  }
+
   // tables have child fields, lets push them to an array
   const children = sqlASTNode.children = []
 
@@ -392,11 +396,17 @@ function getSortColumns(field, sqlASTNode) {
       sqlASTNode.sortKey = field.sortKey
     }
   } else if (field.orderBy) {
-    if (typeof field.orderBy === 'function') {
-      sqlASTNode.orderBy = field.orderBy(sqlASTNode.args)
-    } else {
-      sqlASTNode.orderBy = field.orderBy
-    }
+    handleOrderBy(sqlASTNode, field)
+  } else {
+    throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
+  }
+}
+
+function handleOrderBy(sqlASTNode, field) {
+  if (typeof field.orderBy === 'function') {
+    sqlASTNode.orderBy = field.orderBy(sqlASTNode.args || {})
+  } else {
+    sqlASTNode.orderBy = field.orderBy
   }
 }
 

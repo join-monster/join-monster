@@ -64,13 +64,13 @@ const User = new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
+      orderBy: { id: 'asc' },
       ...[ 'batch', 'mix' ].includes(STRATEGY) ?
         { sqlBatch:
           { thisKey: 'author_id',
             parentKey: 'id' },
           where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null } :
-        { sqlJoin: (userTable, commentTable, args) => `${commentTable}.author_id = ${userTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` },
-      resolve: user => user.comments.sort((a, b) => a.id - b.id) 
+        { sqlJoin: (userTable, commentTable, args) => `${commentTable}.author_id = ${userTable}.id ${args.active ? `AND ${commentTable}.archived = (0 = 1)` : ''}` }
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -81,17 +81,18 @@ const User = new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
+      orderBy: { body: 'desc' },
       where: (table, args) => args.active ? `${table}.archived = (0 = 1)` : null,
       ...STRATEGY === 'batch' ?
         { sqlBatch:
           { thisKey: 'author_id',
             parentKey: 'id' } } :
-        { sqlJoin: (userTable, postTable) => `${postTable}.author_id = ${userTable}.id` },
-      resolve: user => user.posts.sort((a, b) => a.id - b.id)
+        { sqlJoin: (userTable, postTable) => `${postTable}.author_id = ${userTable}.id` }
     },
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
+      orderBy: 'first_name',
       junctionTable: 'relationships',
       ...[ 'batch', 'mix' ].includes(STRATEGY) ?
         { junctionTableKey: [ 'follower_id', 'followee_id' ],
@@ -102,7 +103,6 @@ const User = new GraphQLObjectType({
         { sqlJoins:
           [ (followerTable, relationTable) => `${followerTable}.id = ${relationTable}.follower_id`,
             (relationTable, followeeTable) => `${relationTable}.followee_id = ${followeeTable}.id` ] },
-      resolve: user => sortBy(user.following, 'first_name') 
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),
