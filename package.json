@@ -79,7 +79,7 @@
     "eslint": "^3.9.0",
     "faker": "^4.1.0",
     "graphql": "^0.9.0",
-    "graphsiql": "0.0.3",
+    "graphsiql": "0.0.4",
     "in-publish": "^2.0.0",
     "jsdoc-to-markdown": "^3.0.0",
     "knex": "^0.12.0",
