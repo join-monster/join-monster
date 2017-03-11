@@ -42,15 +42,16 @@ export default new GraphQLObjectType({
       description: 'The comments on this post',
       type: new GraphQLList(Comment),
       args: {
-        active: { type: GraphQLBoolean }
+        active: { type: GraphQLBoolean },
+        asc: { type: GraphQLBoolean }
       },
+      orderBy: args => ({ id: args.asc ? 'asc' : 'desc' }),
       ...[ 'batch', 'mix' ].includes(STRATEGY) ?
         { sqlBatch:
           { thisKey: 'post_id',
             parentKey: 'id' },
           where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null } :
         { sqlJoin: (postTable, commentTable, args) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}` },
-      resolve: post => post.comments.sort((a, b) => a.id - b.id)
     },
     numComments: {
       description: 'How many comments this post has',

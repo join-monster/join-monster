@@ -64,13 +64,13 @@ const User = new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
+      orderBy: { id: 'asc' },
       ...[ 'batch', 'mix' ].includes(STRATEGY) ?
         { sqlBatch:
           { thisKey: 'author_id',
             parentKey: 'id' },
           where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null } :
         { sqlJoin: (userTable, commentTable, args) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}` },
-      resolve: user => user.comments.sort((a, b) => a.id - b.id) 
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -82,17 +82,18 @@ const User = new GraphQLObjectType({
         }
       },
       where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null,
+      orderBy: { body: 'desc' },
       ...STRATEGY === 'batch' ?
         { sqlBatch:
           { thisKey: 'author_id',
             parentKey: 'id' } } :
         { sqlJoin: (userTable, postTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}` },
-      resolve: user => user.posts.sort((a, b) => a.id - b.id)
     },
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
       junctionTable: q('relationships', DB),
+      orderBy: 'first_name',
       ...[ 'batch', 'mix' ].includes(STRATEGY) ?
         { junctionTableKey: [ 'follower_id', 'followee_id' ],
           junctionBatch:
@@ -102,7 +103,6 @@ const User = new GraphQLObjectType({
         { sqlJoins:
           [ (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)}`,
             (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}` ] },
-      resolve: user => sortBy(user.following, 'first_name') 
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),

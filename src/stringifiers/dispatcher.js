@@ -5,6 +5,7 @@ import {
   joinPrefix,
   quotePrefix,
   thisIsNotTheEndOfThisBatch,
+  handleOrderBy,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
 
@@ -93,6 +94,13 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   // generate the "where" condition, if applicable
   if (node.where && whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent)) {
     wheres.push(await node.where(`${q(node.as)}`, node.args || {}, context, quotePrefix(prefix, q)))
+  }
+
+  if (!node.paginate && node.orderBy && thisIsNotTheEndOfThisBatch(node, parent)) {
+    orders.push({
+      table: node.as,
+      columns: handleOrderBy(node.orderBy)
+    })
   }
 
   // one-to-many using JOIN

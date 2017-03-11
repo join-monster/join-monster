@@ -271,6 +271,10 @@ export const QueryRoot = new GraphQLObjectType({
 
 Detailed instructions for set up are found in the [docs](http://join-monster.readthedocs.io/en/latest/data-model).
 
+### Using with Apollo Server
+
+The GraphQL schema language doesn't let you add arbitrary properties to the type definitions. If you're using something like [graphql-tools](https://github.com/apollographql/graphql-tools), you'll need an **adapter**. See the [join-monster-graph-tools-adapter](https://github.com/acarl005/join-monster-graphql-tools-adapter) if you want to use this with Apollo.
+
 ## Running the Demo
 
 ```shell
@@ -294,12 +298,11 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 
 ## TODO
 
-- [ ] Port to other JavaScript implementations of GraphQL (only the reference implementation currently supported)
+- [ ] Aggregate functions
+- [ ] Port to other JavaScript implementations of GraphQL
 - [ ] Add other SQL dialects (Microsoft SQL server, for example, uses `CROSS APPLY` instead of `LATERAL`)
 - [ ] Much better error messages in cases of mistakes (like missing sql properties)
 - [ ] Figure out a way to handle Interface and Union types
-- [ ] Figure out a way to support the schema language
-- [ ] Aggregate functions
 
 ## NON-GOALS
 

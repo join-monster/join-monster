@@ -25,6 +25,9 @@ export function queryASTToSqlAST(resolveInfo, options) {
   const parentType = resolveInfo.parentType
   getGraphQLType(queryAST, parentType, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, 0, options)
 
+  // make sure they started this party on a table
+  assert.equal(sqlAST.type, 'table', 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".')
+
   // make sure each "sqlDep" is only specified once at each level. also assign it an alias
   pruneDuplicateSqlDeps(sqlAST, namespace)
 
@@ -89,6 +92,9 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
   // is this a table in SQL?
   if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
+    if (depth >= 1) {
+      assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
+    }
     handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, depth, options)
   // is this a raw expression?
   } else if (field.sqlExpr) {
@@ -122,6 +128,10 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
 
+  if (field.orderBy && !sqlASTNode.orderBy) {
+    handleOrderBy(sqlASTNode, field)
+  }
+
   // tables have child fields, lets push them to an array
   const children = sqlASTNode.children = []
 
@@ -141,7 +151,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
     }
     const junctionTable = field.junctionTable || field.joinTable
     sqlASTNode.junctionTable = junctionTable
-    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable.slice(0, 10))
+    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable.replace(/[^a-zA-Z0-9]/g, '_'))
     if (field.sqlJoins) {
       sqlASTNode.sqlJoins = field.sqlJoins
     } else {
@@ -340,7 +350,7 @@ function stripNonNullType(type) {
 export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   // keep track of all the dependent columns at this depth in a Set (for uniqueness)
   const deps = new Set
-  const children = sqlAST.children
+  const children = sqlAST.children || []
 
   // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
   for (let i = children.length - 1; i >= 0; i--) {
@@ -393,11 +403,17 @@ function getSortColumns(field, sqlASTNode) {
       sqlASTNode.sortKey = field.sortKey
     }
   } else if (field.orderBy) {
-    if (typeof field.orderBy === 'function') {
-      sqlASTNode.orderBy = field.orderBy(sqlASTNode.args)
-    } else {
-      sqlASTNode.orderBy = field.orderBy
-    }
+    handleOrderBy(sqlASTNode, field)
+  } else {
+    throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
+  }
+}
+
+function handleOrderBy(sqlASTNode, field) {
+  if (typeof field.orderBy === 'function') {
+    sqlASTNode.orderBy = field.orderBy(sqlASTNode.args || {})
+  } else {
+    sqlASTNode.orderBy = field.orderBy
   }
 }
 
