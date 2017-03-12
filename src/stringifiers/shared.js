@@ -123,7 +123,7 @@ export function interpretForOffsetPaging(node, dialect) {
 }
 
 export function interpretForKeysetPaging(node, dialect) {
-  const { name, quote: q } = dialect
+  const { name } = dialect
   const orderColumns = {}
   let descending = node.sortKey.order.toUpperCase() === 'DESC'
   // flip the sort order if doing backwards paging
@@ -141,7 +141,7 @@ export function interpretForKeysetPaging(node, dialect) {
     if (node.args.after) {
       const cursorObj = cursorToObj(node.args.after)
       validateCursor(cursorObj, wrap(node.sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, q)
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending, dialect)
     }
     if (node.args.before) {
       throw new Error('Using "before" with "first" is nonsensical.')
@@ -151,7 +151,7 @@ export function interpretForKeysetPaging(node, dialect) {
     if (node.args.before) {
       const cursorObj = cursorToObj(node.args.before)
       validateCursor(cursorObj, wrap(node.sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, q)
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending, dialect)
     }
     if (node.args.after) {
       throw new Error('Using "after" with "last" is nonsensical.')
@@ -179,14 +179,32 @@ export function validateCursor(cursorObj, expectedKeys) {
 }
 
 // take the sort key and translate that for the where clause
-function sortKeyToWhereCondition(keyObj, descending, q) {
+function sortKeyToWhereCondition(keyObj, descending, dialect) {
+  const { name, quote: q } = dialect
   const sortColumns = []
   const sortValues = []
   for (let key in keyObj) {
     sortColumns.push(`${q(key)}`)
-    sortValues.push(maybeQuote(keyObj[key]))
+    sortValues.push(maybeQuote(keyObj[key], name))
   }
   const operator = descending ? '<' : '>'
-  return `(${sortColumns.join(', ')}) ${operator} (${sortValues.join(', ')})`
+  return name === 'oracle' ?
+    recursiveWhereJoin(sortColumns, sortValues, operator) :
+    `(${sortColumns.join(', ')}) ${operator} (${sortValues.join(', ')})`
+}
+
+function recursiveWhereJoin(columns, values, op) {
+  const condition = `${columns.pop()} ${op} ${values.pop()}`
+  return _recursiveWhereJoin(columns, values, op, condition)
+}
+
+function _recursiveWhereJoin(columns, values, op, condition) {
+  if (!columns.length) {
+    return condition
+  }
+  const column = columns.pop()
+  const value = values.pop()
+  condition = `(${column} ${op} ${value} OR (${column} = ${value} AND ${condition}))`
+  return _recursiveWhereJoin(columns, values, op, condition)
 }
 

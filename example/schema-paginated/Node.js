@@ -12,6 +12,8 @@ if (knex.client.config.client === 'mysql') {
   options.dialect = PAGINATE ? 'mariadb' : 'mysql'
 } else if (knex.client.config.client === 'pg') {
   options.dialect = 'pg'
+} else if (knex.client.config.client === 'oracledb') {
+  options.dialect = 'oracle'
 }
 
 import dbCall from '../data/fetch'

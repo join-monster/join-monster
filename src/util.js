@@ -42,9 +42,13 @@ export function cursorToObj(cursor) {
 }
 
 // wrap in a pair of single quotes for the SQL if needed
-export function maybeQuote(value) {
+export function maybeQuote(value, dialectName) {
   if (typeof value === 'number') return value
   if (value && typeof value.toSQL === 'function') return value.toSQL()
+
+  if (dialectName === 'oracle' && value.match(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(.\d+)?Z?/)) {
+    return value.replace(/(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)(.\d+)?Z?/, "TIMESTAMP '$1 $2$3 UTC'") // eslint-disable-line quotes
+  }
 
   // Picked from https://github.com/brianc/node-postgres/blob/876018/lib/client.js#L235..L260
   // Ported from PostgreSQL 9.2.4 source code in src/interfaces/libpq/fe-exec.c

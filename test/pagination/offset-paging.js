@@ -447,7 +447,6 @@ test('should handle a post without an author', async t => {
       }
     }
   }`
-  console.log(query)
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {

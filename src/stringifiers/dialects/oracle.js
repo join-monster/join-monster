@@ -22,17 +22,20 @@ function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, opti
   if (joinCondition) {
     return `\
 ${ joinType === 'LEFT' ? 'OUTER' : 'CROSS' } APPLY (
-  SELECT * FROM ${table}
+  SELECT *
+  FROM ${table} "${as}"
   ${whereCondition? `WHERE ${whereCondition}` : '' }
   ORDER BY ${orderColumnsToString(orderColumns, q, as)}
-) ${q(as)} ON ${joinCondition}`
+  FETCH FIRST ${limit} ROWS ONLY
+) ${q(as)}`
   } else {
     return `\
 FROM (
-  SELECT * FROM ${table}
+  SELECT *
+  FROM ${table} "${as}"
   ${whereCondition? `WHERE ${whereCondition}` : '' }
   ORDER BY ${orderColumnsToString(orderColumns, q, as)}
-
+  FETCH FIRST ${limit} ROWS ONLY
 ) ${q(as)}`
   }
 }
@@ -145,6 +148,68 @@ const dialect = module.exports = {
       table: node.junctionTableAs,
       columns: orderColumns
     })
-  }
+  },
+
+  handleBatchedOneToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, batchScope) {
+    const pagingWhereConditions = [
+      `"${node.as}"."${node.sqlBatch.thisKey.name}" = "temp"."value"`
+    ]
+    if (node.where) {
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, []))
+    }
+    tables.push(`FROM (${arrToTableUnion(batchScope)}) "temp"`)
+    const lateralJoinCondition = `"${node.as}"."${node.sqlBatch.thisKey.name}" = "temp"."value"`
+    if (node.sortKey) {
+      var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
+      pagingWhereConditions.push(whereAddendum)
+      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as, { joinCondition: lateralJoinCondition }))
+    } else if (node.orderBy) {
+      var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
+      tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as, { joinCondition: lateralJoinCondition }))
+    } else {
+      throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
+    }
+
+    orders.push({
+      table: node.as,
+      columns: orderColumns
+    })
+  },
+
+  handleBatchedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, joinCondition) {
+    const pagingWhereConditions = [
+      `"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = "temp"."value"`
+    ]
+    if (node.where) {
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
+    }
+
+    tables.push(`FROM (${arrToTableUnion(batchScope)}) "temp"`)
+    const lateralJoinCondition = `"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = "temp"."value"`
+
+    if (node.sortKey) {
+      var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
+      pagingWhereConditions.push(whereAddendum)
+      tables.push(keysetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, node.junctionTableAs, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
+    } else if (node.orderBy) {
+      var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
+      tables.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
+    } else {
+      throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
+    }
+
+    tables.push(`LEFT JOIN ${node.name} "${node.as}" ON ${joinCondition}`)
+
+    orders.push({
+      table: node.junctionTableAs,
+      columns: orderColumns
+    })
+  },
 }
 
+
+function arrToTableUnion(arr) {
+  return arr.map(val => `
+  SELECT ${val} AS "value" FROM DUAL
+`).join(' UNION ')
+}
