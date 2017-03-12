@@ -1,3 +1,6 @@
+### v1.1.0 (Mar. 11, 2017)
+- Add Oracle as supported dialect.
+
 ### v1.0.1 (Mar. 8, 2017)
 - Add `ORDER BY` support for non-paginated fields.
 
