@@ -1,3 +1,6 @@
+### v1.1.1 (Mar. 13, 2017)
+- Add an API for GraphQLUnionType
+
 ### v1.1.0 (Mar. 11, 2017)
 - Add Oracle as supported dialect.
 

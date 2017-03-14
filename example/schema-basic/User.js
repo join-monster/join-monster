@@ -1,5 +1,6 @@
 import {
   GraphQLObjectType,
+  GraphQLUnionType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLString,
@@ -118,6 +119,21 @@ const User = new GraphQLObjectType({
       type: GraphQLInt,
       sqlDeps: [ 'num_legs' ],
       resolve: user => user.num_legs
+    },
+    writtenMaterial: {
+      type: new GraphQLList(new GraphQLUnionType({
+        name: 'Authored',
+        sqlTable: `(
+          SELECT id, body, author_id, null AS post_id, 'Post' as "$type" FROM posts
+          UNION ALL
+          SELECT id, body, author_id, post_id, 'Comment' as "$type" FROM comments
+        )`,
+        uniqueKey: 'id',
+        types: [ Comment, Post ],
+        typeHint: '$type',
+        resolveType: obj => obj.$type
+      })),
+      sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
     }
   })
 })

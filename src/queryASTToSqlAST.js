@@ -90,6 +90,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   // the typeConfig has all the keyes from the GraphQLObjectType definition
   const config = gqlType._typeConfig
 
+
   // is this a table in SQL?
   if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
     if (depth >= 1) {
@@ -97,6 +98,38 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
     }
     handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, depth, options)
   // is this a raw expression?
+  } else if (gqlType.constructor.name === 'GraphQLUnionType' && config.sqlTable) {
+    const config = gqlType._typeConfig
+
+    sqlASTNode.type = 'table'
+    sqlASTNode.name = config.sqlTable
+
+    // the graphQL field name will be the default alias for the table
+    // if thats taken, this function will just add an underscore to the end to make it unique
+    sqlASTNode.as = namespace.generate('table', field.name)
+
+    const children = sqlASTNode.children = []
+    if (config.typeHint) {
+      children.push({
+        type: 'column',
+        name: config.typeHint,
+        fieldName: config.typeHint,
+        as: namespace.generate('column', config.typeHint)
+      })
+    }
+
+    sqlASTNode.fieldName = field.name
+    sqlASTNode.grabMany = grabMany
+
+    if (field.where) {
+      sqlASTNode.where = field.where
+    }
+    if (field.sqlJoin) {
+      sqlASTNode.sqlJoin = field.sqlJoin
+    }
+    if (queryASTNode.selectionSet) {
+      handleUnionSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
+    }
   } else if (field.sqlExpr) {
     sqlASTNode.type = 'expression'
     sqlASTNode.sqlExpr = field.sqlExpr
@@ -219,6 +252,44 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   }
 }
 
+function handleUnionSelections(children, selections, gqlType, fragments, variables, namespace, depth, options) {
+  for (let selection of selections) {
+    // we need to figure out what kind of selection this is
+    switch (selection.kind) {
+    case 'Field':
+      const newNode = {}
+      children.push(newNode)
+      getGraphQLType(selection, gqlType, newNode, fragments, variables, namespace, depth + 1, options)
+      break
+    // if its an inline fragment, it has some fields and we gotta recurse thru all them
+    case 'InlineFragment':
+      {
+        const selectionNameOfType = selection.typeCondition.name.value
+        //const sameType = selectionNameOfType === gqlType.name
+        //const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
+        const deferToType = gqlType._types.find(type => type.name === selectionNameOfType)
+        handleSelections(children, selection.selectionSet.selections, deferToType, fragments, variables, namespace, depth, options)
+      }
+      break
+    // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
+    case 'FragmentSpread':
+      {
+        const fragmentName = selection.name.value
+        const fragment = fragments[fragmentName]
+        // make sure fragment type (or one of the interfaces it implements) matches the type being queried
+        const fragmentNameOfType = fragment.typeCondition.name.value
+        //const sameType = fragmentNameOfType === gqlType.name
+        //const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
+        const deferToType = gqlType._types.find(type => type.name === fragmentNameOfType )
+        handleSelections(children, fragment.selectionSet.selections, deferToType, fragments, variables, namespace, depth, options)
+      }
+      break
+    default:
+      throw new Error('Unknown selection kind: ' + selection.kind)
+    }
+  }
+}
+
 // the selections could be several types, recursively handle each type here
 function handleSelections(children, selections, gqlType, fragments, variables, namespace, depth, options) {
   for (let selection of selections) {
@@ -236,7 +307,7 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
         // check to make sure the type of this fragment (or one of the interfaces it implements) matches the type being queried
         const selectionNameOfType = selection.typeCondition.name.value
         const sameType = selectionNameOfType === gqlType.name
-        const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(selectionNameOfType) >= 0
+        const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
         if (sameType || interfaceType) {
           handleSelections(children, selection.selectionSet.selections, gqlType, fragments, variables, namespace, depth + 1, options)
         }
