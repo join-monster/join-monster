@@ -109,6 +109,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
     sqlASTNode.as = namespace.generate('table', field.name)
 
     const children = sqlASTNode.children = []
+    handleUniqueKey(config, children, namespace)
     if (config.typeHint) {
       children.push({
         type: 'column',

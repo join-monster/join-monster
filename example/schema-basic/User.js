@@ -1,6 +1,5 @@
 import {
   GraphQLObjectType,
-  GraphQLUnionType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLString,
@@ -15,8 +14,8 @@ import {
 import Comment from './Comment'
 import Post from './Post'
 import Person from './Person'
+import Authored from './Authored'
 import { toBase64, q, bool } from '../shared'
-import { sortBy } from 'lodash'
 
 const { STRATEGY, DB } = process.env
 
@@ -121,18 +120,7 @@ const User = new GraphQLObjectType({
       resolve: user => user.num_legs
     },
     writtenMaterial: {
-      type: new GraphQLList(new GraphQLUnionType({
-        name: 'Authored',
-        sqlTable: `(
-          SELECT id, body, author_id, null AS post_id, 'Post' as "$type" FROM posts
-          UNION ALL
-          SELECT id, body, author_id, post_id, 'Comment' as "$type" FROM comments
-        )`,
-        uniqueKey: 'id',
-        types: [ Comment, Post ],
-        typeHint: '$type',
-        resolveType: obj => obj.$type
-      })),
+      type: new GraphQLList(Authored),
       sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
     }
   })
