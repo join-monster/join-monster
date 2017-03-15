@@ -74,7 +74,8 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
         }
       } else {
         if (Array.isArray(data)) {
-          const nextLevelData = flatMap(data, obj => obj[fieldName])
+          const nextLevelData = chain(data).filter(obj => obj !== null).flatMap(obj => obj[fieldName]).value()
+          //const nextLevelData = flatMap(data, obj => obj[fieldName])
           return nextBatch(childAST, nextLevelData, dbCall, context, options)
         } else {
           if (data) {
