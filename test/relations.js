@@ -1,6 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaBasic from '../example/schema-basic/index'
+import schemaBasic from '../test-api/schema-basic/index'
 import { partial } from 'lodash'
 
 function wrap(query) {

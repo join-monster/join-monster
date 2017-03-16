@@ -22,13 +22,13 @@
     "testmysql-paging": "NODE_ENV=test DB=MYSQL PAGINATE=offset ava test/pagination/offset-paging.js && NODE_ENV=test DB=MYSQL PAGINATE=keyset ava test/pagination/keyset-paging.js",
     "coverage": "nyc --reporter=html npm run test",
     "lint": "eslint src test",
-    "start": "babel-watch ./example/server.js",
+    "start": "babel-watch ./test-api/server.js",
     "docs": "mkdocs serve",
     "jsdoc": "babel src/index.js -o temp.js && (jsdoc2md temp.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md) && rm temp.js",
     "prepublish": "in-publish && /bin/sh ./scripts/prepublish.sh && npm run build || not-in-publish",
     "preversion": ". ./scripts/checkgit.sh && npm test",
-    "db-build": "TZ=UTC babel-node example/data/build.js",
-    "db-shell": "sqlite3 --column --header example/data/db/demo-data.sl3"
+    "db-build": "TZ=UTC babel-node test-api/data/build.js",
+    "db-shell": "sqlite3 --column --header test-api/data/db/demo-data.sl3"
   },
   "ava": {
     "concurrency": 10,

@@ -1,6 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaRelay from '../../example/schema-paginated/index'
+import schemaRelay from '../../test-api/schema-paginated/index'
 import { partial } from 'lodash'
 import { toGlobalId, fromGlobalId } from 'graphql-relay'
 import { objToCursor } from '../../src/util'

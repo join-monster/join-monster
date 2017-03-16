@@ -1,7 +1,7 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import { toGlobalId, offsetToCursor } from 'graphql-relay'
-import schemaRelay from '../example/schema-paginated/index'
+import schemaRelay from '../test-api/schema-paginated/index'
 import { partial } from 'lodash'
 
 

@@ -1,6 +1,6 @@
 import sinon from 'sinon'
 import { graphql } from 'graphql'
-import schemaBasic from '../example/schema-basic/index'
+import schemaBasic from '../test-api/schema-basic/index'
 import * as queryAST from '../src/queryASTToSqlAST'
 
 const spy = sinon.spy(queryAST, 'queryASTToSqlAST')
