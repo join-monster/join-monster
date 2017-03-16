@@ -3,7 +3,7 @@ import { objToCursor, wrap, last } from './util'
 
 // a function for data manipulation AFTER its nested.
 // this is only necessary when using the SQL pagination
-// we have to interpret the slice that comes back and generate the connection object
+// we have to interpret the slice that comes back and generate the Connection Object type
 function arrToConnection(data, sqlAST) {
   // use "post-order" tree traversal
   for (let astChild of sqlAST.children || []) {

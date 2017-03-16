@@ -121,7 +121,12 @@ const User = new GraphQLObjectType({
     },
     writtenMaterial: {
       type: new GraphQLList(Authored),
-      sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
+      orderBy: 'id',
+      ...STRATEGY === 'batch' ?
+        { sqlBatch:
+          { thisKey: 'author_id',
+            parentKey: 'id' } } :
+        { sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}` }
     }
   })
 })

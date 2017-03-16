@@ -4,7 +4,7 @@ import { nest } from 'nesthydrationjs'
 import stringifySQL from './stringifiers/dispatcher'
 const debug = require('debug')('join-monster')
 
-import defineObjectShape from './defineObjectShape'
+import defineObjectShape from './define-object-shape'
 
 export function emphasize(str, colorCode = 33) {
   return `\n\x1b[1;${colorCode}m${str}\x1b[0m\n`
@@ -119,13 +119,15 @@ export function handleUserDbCall(dbCall, sql, shapeDefinition) {
     })
   }
 
+  // otherwise, we are expecting a promise of the data
   const result = dbCall(sql)
-  // if their func gave us a promise for the data, wait for the data
   if (typeof result.then === 'function') {
     return result.then(rows => {
       rows = validate(rows)
       debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
       debug(`${rows.length} rows...`)
+      // hydrate the data
+      // take that shape definition we produced and pass it to the NestHydrationJS library
       return nest(rows, shapeDefinition)
     })
   } else {
@@ -157,7 +159,7 @@ export async function compileSqlAST(sqlAST, context, options) {
   const sql = await stringifySQL(sqlAST, context, options)
   debug(emphasize('SQL'), sql)
 
-// figure out the shape of the object and define it for the NestHydration library so it can build the object nesting
+  // figure out the shape of the object and define it so later we can pass it to NestHydration library so it can hydrate the data
   const shapeDefinition = defineObjectShape(sqlAST)
   debug(emphasize('SHAPE_DEFINITION'), inspect(shapeDefinition))
   return { sql, shapeDefinition }

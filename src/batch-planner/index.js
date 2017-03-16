@@ -1,6 +1,6 @@
 import { uniq, chain, map, flatMap, groupBy, forIn } from 'lodash'
-import arrToConnection from './arrToConnection'
-import { handleUserDbCall, maybeQuote, wrap, compileSqlAST } from './util'
+import arrToConnection from '../array-to-connection'
+import { handleUserDbCall, maybeQuote, wrap, compileSqlAST } from '../util'
 
 
 export default async function nextBatch(sqlAST, data, dbCall, context, options) {

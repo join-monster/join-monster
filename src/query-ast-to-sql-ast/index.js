@@ -1,7 +1,7 @@
 import assert from 'assert'
 import { flatMap } from 'lodash'
-import AliasNamespace from './aliasNamespace'
-import { wrap } from './util'
+import AliasNamespace from '../alias-namespace'
+import { wrap } from '../util'
 
 
 export function queryASTToSqlAST(resolveInfo, options) {
@@ -92,45 +92,12 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
 
   // is this a table in SQL?
-  if (gqlType.constructor.name === 'GraphQLObjectType' && config.sqlTable) {
+  if ([ 'GraphQLObjectType', 'GraphQLUnionType' ].includes(gqlType.constructor.name) && config.sqlTable) {
     if (depth >= 1) {
       assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
     }
     handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, depth, options)
-  // is this a raw expression?
-  } else if (gqlType.constructor.name === 'GraphQLUnionType' && config.sqlTable) {
-    const config = gqlType._typeConfig
-
-    sqlASTNode.type = 'table'
-    sqlASTNode.name = config.sqlTable
-
-    // the graphQL field name will be the default alias for the table
-    // if thats taken, this function will just add an underscore to the end to make it unique
-    sqlASTNode.as = namespace.generate('table', field.name)
-
-    const children = sqlASTNode.children = []
-    handleUniqueKey(config, children, namespace)
-    if (config.typeHint) {
-      children.push({
-        type: 'column',
-        name: config.typeHint,
-        fieldName: config.typeHint,
-        as: namespace.generate('column', config.typeHint)
-      })
-    }
-
-    sqlASTNode.fieldName = field.name
-    sqlASTNode.grabMany = grabMany
-
-    if (field.where) {
-      sqlASTNode.where = field.where
-    }
-    if (field.sqlJoin) {
-      sqlASTNode.sqlJoin = field.sqlJoin
-    }
-    if (queryASTNode.selectionSet) {
-      handleUnionSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
-    }
+  // is this a computed column from a raw expression?
   } else if (field.sqlExpr) {
     sqlASTNode.type = 'expression'
     sqlASTNode.sqlExpr = field.sqlExpr
@@ -175,84 +142,88 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   if (field.where) {
     sqlASTNode.where = field.where
   }
+
+  /*
+   * figure out if they are doing one-to-many/many-to-many or join/batch
+   * and collect the relevant info
+   */
+
+  // are they doing a one-to-many sql join?
   if (field.sqlJoin) {
     sqlASTNode.sqlJoin = field.sqlJoin
-  }
-  else if (field.junctionTable || field.joinTable) {
+  // or a many-to-many?
+  } else if (field.junctionTable || field.joinTable) {
     assert(field.sqlJoins || field.junctionBatch, 'Must define `sqlJoins` (plural) or `junctionBatch` for a many-to-many.')
     if (field.joinTable) {
       console.warn('The `joinTable` is deprecated. Rename to `junctionTable`.')
     }
     const junctionTable = field.junctionTable || field.joinTable
     sqlASTNode.junctionTable = junctionTable
+    // we need to generate an alias for their junction table. we'll just take the alphanumeric characters from the junction table expression
     sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable.replace(/[^a-zA-Z0-9]/g, '_').slice(1, 10))
+    // are they joining or batching?
     if (field.sqlJoins) {
       sqlASTNode.sqlJoins = field.sqlJoins
     } else {
-      if (typeof field.junctionTableKey === 'string') {
-        children.push({
-          type: 'column',
-          name: field.junctionTableKey,
-          fieldName: field.junctionTableKey,
-          fromOtherTable: sqlASTNode.junctionTableAs,
-          as: namespace.generate('column', field.junctionTableKey)
-        })
-      } else if (Array.isArray(field.junctionTableKey)) {
-        const clumsyName = toClumsyName(field.junctionTableKey)
-        children.push({
-          type: 'composite',
-          name: field.junctionTableKey,
-          fieldName: clumsyName,
-          fromOtherTable: sqlASTNode.junctionTableAs,
-          as: namespace.generate('column', clumsyName)
-        })
-      }
+      children.push({
+        ...keyToASTChild(field.junctionTableKey, namespace),
+        fromOtherTable: sqlASTNode.junctionTableAs,
+      })
       sqlASTNode.junctionBatch = {
         sqlJoin: field.junctionBatch.sqlJoin,
         thisKey: {
-          type: 'column',
-          name: field.junctionBatch.thisKey,
-          fieldName: field.junctionBatch.thisKey,
-          fromOtherTable: sqlASTNode.junctionTableAs,
-          as: namespace.generate('column', field.junctionBatch.thisKey)
+          ...columnToASTChild(field.junctionBatch.thisKey, namespace),
+          fromOtherTable: sqlASTNode.junctionTableAs
         },
-        parentKey: {
-          type: 'column',
-          name: field.junctionBatch.parentKey,
-          fieldName: field.junctionBatch.parentKey,
-          as: namespace.generate('column', field.junctionBatch.parentKey)
-        }
+        parentKey: columnToASTChild(field.junctionBatch.parentKey, namespace)
       }
     }
-  }
-  else if (field.sqlBatch) {
+  // or are they doing a one-to-many with batching
+  } else if (field.sqlBatch) {
     sqlASTNode.sqlBatch = {
-      thisKey: {
-        type: 'column',
-        name: field.sqlBatch.thisKey,
-        fieldName: field.sqlBatch.thisKey,
-        as: namespace.generate('column', field.sqlBatch.thisKey)
-      },
-      parentKey: {
-        type: 'column',
-        name: field.sqlBatch.parentKey,
-        fieldName: field.sqlBatch.parentKey,
-        as: namespace.generate('column', field.sqlBatch.parentKey)
-      },
+      thisKey: columnToASTChild(field.sqlBatch.thisKey, namespace),
+      parentKey: columnToASTChild(field.sqlBatch.parentKey, namespace)
     }
   }
 
-  handleUniqueKey(config, children, namespace)
+  /*
+   * figure out the necessary children. this includes the columns join monster needs, the ones the user needs,
+   * and finding out how to map those to the field names
+   */
 
+  // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
+  // need whichever column that the schema specifies as the unique one to be the first child
+  if (!config.uniqueKey) {
+    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${config.sqlTable}`)
+  }
+  children.push(keyToASTChild(config.uniqueKey, namespace))
+
+  // this is for helping resolve types in union types
+  if (config.typeHint && gqlType.constructor.name === 'GraphQLUnionType') {
+    children.push({
+      type: 'column',
+      name: config.typeHint,
+      fieldName: config.typeHint,
+      as: namespace.generate('column', config.typeHint)
+    })
+  }
+
+  // go handle the pagination information
   if (sqlASTNode.paginate) {
     handleColumnsRequiredForPagination(sqlASTNode, namespace)
   }
 
   if (queryASTNode.selectionSet) {
-    handleSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
+    if (gqlType.constructor.name === 'GraphQLUnionType') {
+      // union types have special rules for the child fields in join monster
+      handleUnionSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
+    } else {
+      handleSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
+    }
   }
 }
 
+// we need to collect all fields from all the fragments requested in the union type and ask for them in SQL
 function handleUnionSelections(children, selections, gqlType, fragments, variables, namespace, depth, options) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
@@ -334,27 +305,15 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
   }
 }
 
-function handleUniqueKey(config, children, namespace) {
-  // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
-  // need whichever column that the schema specifies as the unique one to be the first child
-  if (!config.uniqueKey) {
-    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${config.sqlTable}`)
-  }
-  if (typeof config.uniqueKey === 'string') {
-    children.push({
-      type: 'column',
-      name: config.uniqueKey,
-      fieldName: config.uniqueKey,
-      as: namespace.generate('column', config.uniqueKey)
-    })
-  } else if (Array.isArray(config.uniqueKey)) {
-    const clumsyName = toClumsyName(config.uniqueKey)
-    children.push({
-      type: 'composite',
-      name: config.uniqueKey,
-      fieldName: clumsyName,
-      as: namespace.generate('column', clumsyName)
-    })
+
+// tell the AST we need to column that perhaps the user didnt ask for, but may be necessary for join monster to ID
+// objects or associate ones across batches
+function columnToASTChild(columnName, namespace) {
+  return {
+    type: 'column',
+    name: columnName,
+    fieldName: columnName,
+    as: namespace.generate('column', columnName)
   }
 }
 
@@ -362,6 +321,27 @@ function handleUniqueKey(config, children, namespace) {
 // slice them to help prevent exceeding oracle's 30-char identifier limit
 function toClumsyName(keyArr) {
   return keyArr.map(name => name.slice(0, 3)).join('#')
+}
+
+// keys are necessary for deduplication during the hydration process
+// this will handle singular or composite keys
+function keyToASTChild(key, namespace) {
+  if (typeof key === 'string') {
+    return {
+      type: 'column',
+      name: key,
+      fieldName: key,
+      as: namespace.generate('column', key)
+    }
+  } else if (Array.isArray(key)) {
+    const clumsyName = toClumsyName(key)
+    return {
+      type: 'composite',
+      name: key,
+      fieldName: clumsyName,
+      as: namespace.generate('column', clumsyName)
+    }
+  }
 }
 
 function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
@@ -396,6 +376,7 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
   }
 }
 
+// if its a connection type, we need to look up the Node type inside their to find the relevant SQL info
 function stripRelayConnection(field, queryASTNode, fragments) {
   // get the GraphQL Type inside the list of edges inside the Node from the schema definition
   const gqlType = field.type._fields.edges.type.ofType._fields.node.type
@@ -419,6 +400,7 @@ function stripNonNullType(type) {
   return type.constructor.name === 'GraphQLNonNull' ? type.ofType : type
 }
 
+// go through and make sure se only ask for each sqlDep once per table
 export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   // keep track of all the dependent columns at this depth in a Set (for uniqueness)
   const deps = new Set
@@ -449,6 +431,9 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   children.push(newNode)
 }
 
+// the arguments just come in as strings.
+// if they are literals, parse them,
+// if they are variable names, look them up
 function parseArgValue(value, variableValues) {
   if (value.kind === 'Variable') {
     const variableName = value.name.value
@@ -489,6 +474,9 @@ function handleOrderBy(sqlASTNode, field) {
   }
 }
 
+// instead of fields, selections can be fragments, which is another group of selections
+// fragments can be arbitrarily nested
+// this function recurses through and gets the relevant fields
 function spreadFragments(selections, fragments, typeName) {
   return flatMap(selections, selection => {
     switch(selection.kind) {

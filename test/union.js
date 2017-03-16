@@ -31,7 +31,6 @@ test('it should a union type', async t => {
   `
   const { data, errors } = await run(query)
   t.is(errors, undefined)
-  data.user.writtenMaterial.sort((a, b) => a.id - b.id)
   const expect = {
     user: {
       writtenMaterial: [

@@ -1,9 +1,9 @@
 import assert from 'assert'
 
-import * as queryAST from './queryASTToSqlAST'
-import arrToConnection from './arrToConnection'
-import AliasNamespace from './aliasNamespace'
-import nextBatch from './batchPlanner'
+import * as queryAST from './query-ast-to-sql-ast'
+import arrToConnection from './array-to-connection'
+import AliasNamespace from './alias-namespace'
+import nextBatch from './batch-planner'
 import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
 
 
@@ -82,7 +82,14 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   if (!sql) return {}
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
-  const data = arrToConnection(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)
+  let data = await handleUserDbCall(dbCall, sql, shapeDefinition)
+
+  // if they are paginating, we'll get back an array which is essentially a "slice" of the whole data. 
+  // this function goes through the data tree and converts the arrays to Connection Objects
+  data = arrToConnection(data, sqlAST)
+
+  // so far we handled the first "batch". up until now, additional batches were ignored
+  // this function recursively scanss the sqlAST and runs remaining batches
   await nextBatch(sqlAST, data, dbCall, context, options)
   return data
 }

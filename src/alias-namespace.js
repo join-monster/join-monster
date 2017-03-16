@@ -1,16 +1,19 @@
 import G from 'generatorics'
 
+// this class is responsible for generating the aliases that appear in each SQL query
+// this has different rules depending on whether we are aliasing a column or table and on whether we are minifying
 export default class AliasNamespace {
   constructor(minify) {
     this.minify = !!minify
 
     // a generator for infinite alias names, starting with the shortest possible
+    // this is helpful for generating the names when minifying
     this.mininym = G.baseNAll('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#$')
-    // keep track of all the table names we've used since these have to be unique in each query
 
+    // keep track of all the table names we've used since these have to be unique in each query
     this.usedTableAliases = new Set
 
-    // we can re-use aliases for columns since columns names will be prefixed
+    // we can re-use aliases for columns since columns names dont need to be globally unique because they will be prefixed
     // this object will remember alias assignments for each column name so we can reuse them
     this.columnAssignments = {}
   }
