@@ -29,7 +29,7 @@ const User = new GraphQLObjectType({
 })
 ```
 
-## Node Type
+## Node Interface
 
 The `Node` Interface allows Relay to fetch an instance of any type.
 This could technically be useful without using Relay on the client.
