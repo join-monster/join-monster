@@ -14,7 +14,8 @@ import {
 import Comment from './Comment'
 import Post from './Post'
 import Person from './Person'
-import Authored from './Authored'
+import AuthoredInterface from './Authored/Interface'
+import AuthoredUnion from './Authored/Union'
 import { toBase64, q, bool } from '../shared'
 
 const { STRATEGY, DB } = process.env
@@ -119,8 +120,17 @@ const User = new GraphQLObjectType({
       sqlDeps: [ 'num_legs' ],
       resolve: user => user.num_legs
     },
-    writtenMaterial: {
-      type: new GraphQLList(Authored),
+    writtenMaterial1: {
+      type: new GraphQLList(AuthoredUnion),
+      orderBy: 'id',
+      ...STRATEGY === 'batch' ?
+        { sqlBatch:
+          { thisKey: 'author_id',
+            parentKey: 'id' } } :
+        { sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}` }
+    },
+    writtenMaterial2: {
+      type: new GraphQLList(AuthoredInterface),
       orderBy: 'id',
       ...STRATEGY === 'batch' ?
         { sqlBatch:

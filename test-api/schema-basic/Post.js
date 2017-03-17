@@ -9,6 +9,7 @@ import {
 import User from './User'
 import Comment from './Comment'
 import { q, bool } from '../shared'
+import Authored from './Authored/Interface'
 
 const { STRATEGY, DB } = process.env
 
@@ -17,6 +18,7 @@ export default new GraphQLObjectType({
   name: 'Post',
   sqlTable: q('posts', DB),
   uniqueKey: 'id',
+  interfaces: () => [ Authored ],
   fields: () => ({
     id: {
       type: GraphQLInt

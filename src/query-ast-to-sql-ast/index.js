@@ -23,7 +23,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = resolveInfo.parentType
-  getGraphQLType(queryAST, parentType, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, 0, options)
+  getGraphQLType.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options)
 
   // make sure they started this party on a table
   assert.equal(sqlAST.type, 'table', 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".')
@@ -34,7 +34,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   return sqlAST
 }
 
-export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragments, variables, namespace, depth, options) {
+export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespace, depth, options) {
   // first, get the name of the field being queried
   const fieldName = queryASTNode.name.value
 
@@ -59,7 +59,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   if (queryASTNode.arguments.length) {
     const args = sqlASTNode.args = {}
     for (let arg of queryASTNode.arguments) {
-      args[arg.name.value] = parseArgValue(arg.value, variables)
+      args[arg.name.value] = parseArgValue(arg.value, this.variableValues)
     }
   }
 
@@ -73,7 +73,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   if (gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
     // grab the types and fields inside the connection
-    const stripped = stripRelayConnection(field, queryASTNode, fragments)
+    const stripped = stripRelayConnection(field, queryASTNode, this.fragments)
     // reassign those
     gqlType = stripped.gqlType
     queryASTNode = stripped.queryASTNode
@@ -92,11 +92,11 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
 
 
   // is this a table in SQL?
-  if ([ 'GraphQLObjectType', 'GraphQLUnionType' ].includes(gqlType.constructor.name) && config.sqlTable) {
+  if ([ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name) && config.sqlTable) {
     if (depth >= 1) {
       assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
     }
-    handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, depth, options)
+    handleTable.call(this, sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options)
   // is this a computed column from a raw expression?
   } else if (field.sqlExpr) {
     sqlASTNode.type = 'expression'
@@ -119,7 +119,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, fragmen
   }
 }
 
-function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variables, namespace, grabMany, depth, options) {
+function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options) {
   const config = gqlType._typeConfig
 
   sqlASTNode.type = 'table'
@@ -199,7 +199,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   children.push(keyToASTChild(config.uniqueKey, namespace))
 
   // this is for helping resolve types in union types
-  if (config.typeHint && gqlType.constructor.name === 'GraphQLUnionType') {
+  if (config.typeHint && [ 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name)) {
     children.push({
       type: 'column',
       name: config.typeHint,
@@ -214,46 +214,44 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, fragments, variab
   }
 
   if (queryASTNode.selectionSet) {
-    if (gqlType.constructor.name === 'GraphQLUnionType') {
+    if (gqlType.constructor.name === 'GraphQLUnionType' || gqlType.constructor.name === 'GraphQLInterfaceType') {
       // union types have special rules for the child fields in join monster
-      handleUnionSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
+      handleUnionSelections.call(this, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options)
     } else {
-      handleSelections(children, queryASTNode.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
+      handleSelections.call(this, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options)
     }
   }
 }
 
 // we need to collect all fields from all the fragments requested in the union type and ask for them in SQL
-function handleUnionSelections(children, selections, gqlType, fragments, variables, namespace, depth, options) {
+function handleUnionSelections(children, selections, gqlType, namespace, depth, options) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
     case 'Field':
       const newNode = {}
       children.push(newNode)
-      getGraphQLType(selection, gqlType, newNode, fragments, variables, namespace, depth + 1, options)
+      getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options)
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
       {
         const selectionNameOfType = selection.typeCondition.name.value
-        //const sameType = selectionNameOfType === gqlType.name
-        //const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
-        const deferToType = gqlType._types.find(type => type.name === selectionNameOfType)
-        handleSelections(children, selection.selectionSet.selections, deferToType, fragments, variables, namespace, depth, options)
+        // normally, we would scan for the extra join-monster data on the current gqlType.
+        // but the gqlType is the Union. The data isn't there, its on each of the types that make up the union
+        // lets find that type and handle the selections based on THAT type instead
+        const deferToType = this.schema._typeMap[selectionNameOfType]
+        handleSelections(children, selection.selectionSet.selections, deferToType, namespace, depth, options)
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
     case 'FragmentSpread':
       {
         const fragmentName = selection.name.value
-        const fragment = fragments[fragmentName]
-        // make sure fragment type (or one of the interfaces it implements) matches the type being queried
+        const fragment = this.fragments[fragmentName]
         const fragmentNameOfType = fragment.typeCondition.name.value
-        //const sameType = fragmentNameOfType === gqlType.name
-        //const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
-        const deferToType = gqlType._types.find(type => type.name === fragmentNameOfType )
-        handleSelections(children, fragment.selectionSet.selections, deferToType, fragments, variables, namespace, depth, options)
+        const deferToType = this.schema._typeMap[fragmentNameOfType ]
+        handleSelections(children, fragment.selectionSet.selections, deferToType, namespace, depth, options)
       }
       break
     default:
@@ -263,7 +261,7 @@ function handleUnionSelections(children, selections, gqlType, fragments, variabl
 }
 
 // the selections could be several types, recursively handle each type here
-function handleSelections(children, selections, gqlType, fragments, variables, namespace, depth, options) {
+function handleSelections(children, selections, gqlType, namespace, depth, options) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
@@ -271,7 +269,7 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
     case 'Field':
       const newNode = {}
       children.push(newNode)
-      getGraphQLType(selection, gqlType, newNode, fragments, variables, namespace, depth + 1, options)
+      getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options)
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
@@ -281,7 +279,7 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
         const sameType = selectionNameOfType === gqlType.name
         const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
         if (sameType || interfaceType) {
-          handleSelections(children, selection.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
+          handleSelections.call(this, children, selection.selectionSet.selections, gqlType, namespace, depth, options)
         }
       }
       break
@@ -289,13 +287,13 @@ function handleSelections(children, selections, gqlType, fragments, variables, n
     case 'FragmentSpread':
       {
         const fragmentName = selection.name.value
-        const fragment = fragments[fragmentName]
+        const fragment = this.fragments[fragmentName]
         // make sure fragment type (or one of the interfaces it implements) matches the type being queried
         const fragmentNameOfType = fragment.typeCondition.name.value
         const sameType = fragmentNameOfType === gqlType.name
         const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
         if (sameType || interfaceType) {
-          handleSelections(children, fragment.selectionSet.selections, gqlType, fragments, variables, namespace, depth, options)
+          handleSelections.call(this, children, fragment.selectionSet.selections, gqlType, namespace, depth, options)
         }
       }
       break
@@ -346,6 +344,8 @@ function keyToASTChild(key, namespace) {
 
 function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
   if (sqlASTNode.sortKey) {
+    assert(sqlASTNode.sortKey.key, '"sortKey" must have "key"')
+    assert(sqlASTNode.sortKey.order, '"sortKey" must have "order"')
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
     for (let column of wrap(sqlASTNode.sortKey.key)) {
       const newChild = {

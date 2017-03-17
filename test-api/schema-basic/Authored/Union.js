@@ -2,14 +2,14 @@ import  {
   GraphQLUnionType,
 } from 'graphql'
 
-import Comment from './Comment'
-import Post from './Post'
-import { q } from '../shared'
+import Comment from '../Comment'
+import Post from '../Post'
+import { q } from '../../shared'
 
 const { DB } = process.env
 
 export default new GraphQLUnionType({
-  name: 'Authored',
+  name: 'AuthoredUnion',
   sqlTable: `(
     SELECT
       ${q('id', DB)},
@@ -32,3 +32,4 @@ export default new GraphQLUnionType({
   typeHint: '$type',
   resolveType: obj => obj.$type
 })
+

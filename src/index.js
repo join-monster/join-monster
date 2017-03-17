@@ -107,7 +107,7 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
  */
 async function getNode(typeName, resolveInfo, context, condition, dbCall, options = {}) {
   // get the GraphQL type from the schema using the name
-  const type = resolveInfo.schema.getType(typeName)
+  const type = resolveInfo.schema._typeMap[typeName]
   assert(type, `Type "${typeName}" not found in your schema.`)
   assert(type._typeConfig.sqlTable, `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`)
 
@@ -128,7 +128,7 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   const sqlAST = {}
   const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
   // uses the same underlying function as the main `joinMonster`
-  queryAST.getGraphQLType(fieldNodes[0], fakeParentNode, sqlAST, resolveInfo.fragments, resolveInfo.variableValues, namespace, 0, options)
+  queryAST.getGraphQLType.call(resolveInfo, fieldNodes[0], fakeParentNode, sqlAST, namespace, 0, options)
   queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   const data = arrToConnection(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)

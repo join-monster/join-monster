@@ -301,7 +301,7 @@ test('it should handle numeric variables', async t => {
       }
     }
   `
-  const variables = {userId: 1}
+  const variables = { userId: 1 }
   const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
   t.is(errors, undefined)
   const expect = {

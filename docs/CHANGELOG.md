@@ -1,3 +1,6 @@
+### v1.2.0 (Mar. 16, 2017)
+- Add an API for GraphQLInterfaceType
+
 ### v1.1.1 (Mar. 13, 2017)
 - Add an API for GraphQLUnionType
 

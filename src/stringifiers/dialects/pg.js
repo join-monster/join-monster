@@ -34,10 +34,7 @@ const dialect = module.exports = {
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as, { joinCondition, joinType: 'LEFT' }))
-    } else {
-      throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
     }
-
     orders.push({
       table: node.as,
       columns: orderColumns
@@ -63,10 +60,7 @@ const dialect = module.exports = {
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       tables.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
-    } else {
-      throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
     }
-
     tables.push(`LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`)
 
     orders.push({
@@ -90,10 +84,7 @@ const dialect = module.exports = {
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       tables.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, { joinCondition: joinCondition1, joinType: 'LEFT' }))
-    } else {
-      throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
     }
-
     orders.push({
       table: node.junctionTableAs,
       columns: orderColumns
@@ -115,10 +106,7 @@ const dialect = module.exports = {
         pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
       }
       tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as))
-    } else {
-      throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
     }
-
     orders.push({
       table: node.as,
       columns: orderColumns
@@ -143,10 +131,7 @@ const dialect = module.exports = {
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as, { joinCondition: lateralJoinCondition }))
-    } else {
-      throw new Error('"sortKey" or "orderBy" is required if "sqlPaginate" is true')
     }
-
     orders.push({
       table: node.as,
       columns: orderColumns
