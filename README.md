@@ -302,7 +302,6 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 - [ ] Port to other JavaScript implementations of GraphQL
 - [ ] Add other SQL dialects (Microsoft SQL server, for example, uses `CROSS APPLY` instead of `LATERAL`)
 - [ ] Much better error messages in cases of mistakes (like missing sql properties)
-- [ ] Figure out a way to handle Interface and Union types
 
 ## NON-GOALS
 
