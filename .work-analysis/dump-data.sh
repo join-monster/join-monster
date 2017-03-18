@@ -1,0 +1,1 @@
+git log --no-merges --author 'Andrew Carlson' | grep Date | awk '{print $2,$3,$4,$5,$6}' > join-monster.log
