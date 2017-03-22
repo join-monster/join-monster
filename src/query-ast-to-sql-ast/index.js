@@ -160,7 +160,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
     const junctionTable = field.junctionTable || field.joinTable
     sqlASTNode.junctionTable = junctionTable
     // we need to generate an alias for their junction table. we'll just take the alphanumeric characters from the junction table expression
-    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable.replace(/[^a-zA-Z0-9]/g, '_').slice(1, 10))
+    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable)
     // are they joining or batching?
     if (field.sqlJoins) {
       sqlASTNode.sqlJoins = field.sqlJoins
