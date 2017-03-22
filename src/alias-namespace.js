@@ -40,7 +40,7 @@ export default class AliasNamespace {
       return name
     }
 
-    name = name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '_').slice(1, 10)
+    name = name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 10)
     // the table aliases must be unique
     // just append a "$" until its a unique name
     while (this.usedTableAliases.has(name)) {
