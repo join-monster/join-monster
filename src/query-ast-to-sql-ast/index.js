@@ -14,7 +14,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   const sqlAST = {}
 
   // v0.8 changed the "fieldASTs" property to "fieldNodes". we want to support both
-  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs 
+  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
   assert.equal(fieldNodes.length, 1, 'We thought this would always have a length of 1. FIX ME!!')
 
   // this represents the parsed query
@@ -68,7 +68,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
     gqlType = stripNonNullType(gqlType.ofType)
     grabMany = true
   }
-  
+
   // if its a relay connection, there are several things we need to do
   if (gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
@@ -121,9 +121,12 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
 
 function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options) {
   const config = gqlType._typeConfig
-
+  let sqlTable = config.sqlTable
+  if (typeof(sqlTable) === 'function') {
+    sqlTable = sqlTable(options.args, options.context)
+  }
   sqlASTNode.type = 'table'
-  sqlASTNode.name = config.sqlTable
+  sqlASTNode.name = sqlTable
 
   // the graphQL field name will be the default alias for the table
   // if thats taken, this function will just add an underscore to the end to make it unique
@@ -194,7 +197,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
   // need whichever column that the schema specifies as the unique one to be the first child
   if (!config.uniqueKey) {
-    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${config.sqlTable}`)
+    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${sqlTable}`)
   }
   children.push(keyToASTChild(config.uniqueKey, namespace))
 
@@ -439,7 +442,7 @@ function parseArgValue(value, variableValues) {
     const variableName = value.name.value
     return variableValues[variableName]
   }
-  
+
   switch(value.kind) {
   case 'IntValue':
     return parseInt(value.value)
@@ -495,4 +498,3 @@ function spreadFragments(selections, fragments, typeName) {
     }
   })
 }
-
