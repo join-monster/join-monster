@@ -7,14 +7,14 @@ import nextBatch from './batch-planner'
 import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
 
 
-/*         _ _ _                _    
+/*         _ _ _                _
   ___ __ _| | | |__   __ _  ___| | __
  / __/ _` | | | '_ \ / _` |/ __| |/ /
-| (_| (_| | | | |_) | (_| | (__|   < 
+| (_| (_| | | | |_) | (_| | (__|   <
  \___\__,_|_|_|_.__/ \__,_|\___|_|\_\
-                                     
-     _       __ _       _ _   _                 
-  __| | ___ / _(_)_ __ (_) |_(_) ___  _ __  ___ 
+
+     _       __ _       _ _   _
+  __| | ___ / _(_)_ __ (_) |_(_) ___  _ __  ___
  / _` |/ _ \ |_| | '_ \| | __| |/ _ \| '_ \/ __|
 | (_| |  __/  _| | | | | | |_| | (_) | | | \__ \
  \__,_|\___|_| |_|_| |_|_|\__|_|\___/|_| |_|___/
@@ -57,12 +57,12 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
 
 
 
-/* _                _                                      
-  | |__   ___  __ _(_)_ __    ___  ___  _   _ _ __ ___ ___ 
+/* _                _
+  | |__   ___  __ _(_)_ __    ___  ___  _   _ _ __ ___ ___
   | '_ \ / _ \/ _` | | '_ \  / __|/ _ \| | | | '__/ __/ _ \
   | |_) |  __/ (_| | | | | | \__ \ (_) | |_| | | | (_|  __/
   |_.__/ \___|\__, |_|_| |_| |___/\___/ \__,_|_|  \___\___|
-              |___/                                        
+              |___/
 */
 
 /**
@@ -77,14 +77,14 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  */
 async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
-  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options)
+  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options, context)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   if (!sql) return {}
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
   let data = await handleUserDbCall(dbCall, sql, shapeDefinition)
 
-  // if they are paginating, we'll get back an array which is essentially a "slice" of the whole data. 
+  // if they are paginating, we'll get back an array which is essentially a "slice" of the whole data.
   // this function goes through the data tree and converts the arrays to Connection Objects
   data = arrToConnection(data, sqlAST)
 
@@ -145,4 +145,3 @@ joinMonster.getNode = getNode
 // expose the package version for debugging
 joinMonster.version = require('../package.json').version
 export default joinMonster
-
