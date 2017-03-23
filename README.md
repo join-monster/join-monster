@@ -2,6 +2,7 @@
 ![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/join_monster.png)
 [![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster) [![Build Status](https://travis-ci.org/stems/join-monster.svg?branch=master)](https://travis-ci.org/stems/join-monster) [![Documentation Status](https://readthedocs.org/projects/join-monster/badge/?version=latest)](http://join-monster.readthedocs.io/en/latest/?badge=latest)
 
+[Supported SQL Dialects (DB Vendors)](https://github.com/stems/join-monster/blob/master/docs/dialects.md)
 ### Query Planning and Batch Data Fetching between GraphQL and SQL.
 
 - Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
