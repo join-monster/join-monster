@@ -86,7 +86,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
     // we'll set a flag for pagination.
     if (field.sqlPaginate) {
       sqlASTNode.paginate = true
-      getSortColumns(field, sqlASTNode)
+      getSortColumns(field, sqlASTNode, context)
     }
   } else {
     if (field.sqlPaginate) {
@@ -144,7 +144,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   sqlASTNode.as = namespace.generate('table', field.name)
 
   if (field.orderBy && !sqlASTNode.orderBy) {
-    handleOrderBy(sqlASTNode, field)
+    handleOrderBy(sqlASTNode, field, context)
   }
 
   // tables have child fields, lets push them to an array
@@ -468,23 +468,23 @@ function parseArgValue(value, variableValues) {
   }
 }
 
-function getSortColumns(field, sqlASTNode) {
+function getSortColumns(field, sqlASTNode, context) {
   if (field.sortKey) {
     if (typeof field.sortKey === 'function') {
-      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args)
+      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args, context)
     } else {
       sqlASTNode.sortKey = field.sortKey
     }
   } else if (field.orderBy) {
-    handleOrderBy(sqlASTNode, field)
+    handleOrderBy(sqlASTNode, field, context)
   } else {
     throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
   }
 }
 
-function handleOrderBy(sqlASTNode, field) {
+function handleOrderBy(sqlASTNode, field, context) {
   if (typeof field.orderBy === 'function') {
-    sqlASTNode.orderBy = field.orderBy(sqlASTNode.args || {})
+    sqlASTNode.orderBy = field.orderBy(sqlASTNode.args || {}, context)
   } else {
     sqlASTNode.orderBy = field.orderBy
   }

@@ -23,7 +23,7 @@ const { STRATEGY, DB } = process.env
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
-  sqlTable: q('accounts', DB),
+  sqlTable: () => q('accounts', DB),
   uniqueKey: 'id',
   interfaces: [ Person ],
   fields: () => ({
