@@ -3,6 +3,7 @@ import { flatMap } from 'lodash'
 import AliasNamespace from '../alias-namespace'
 import { wrap } from '../util'
 
+const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
 
 export function queryASTToSqlAST(resolveInfo, options) {
   // this is responsible for all the logic regarding creating SQL aliases
@@ -79,7 +80,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
   if (gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
     // grab the types and fields inside the connection
-    const stripped = stripRelayConnection(field, queryASTNode, this.fragments)
+    const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments)
     // reassign those
     gqlType = stripped.gqlType
     queryASTNode = stripped.queryASTNode
@@ -100,7 +101,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
   // is this a table in SQL?
   if (
     !field.jmIgnoreTable &&
-    [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name)
+    TABLE_TYPES.includes(gqlType.constructor.name)
     && config.sqlTable
   ) {
     if (depth >= 1) {
@@ -226,15 +227,17 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   if (queryASTNode.selectionSet) {
     if (gqlType.constructor.name === 'GraphQLUnionType' || gqlType.constructor.name === 'GraphQLInterfaceType') {
       // union types have special rules for the child fields in join monster
-      handleUnionSelections.call(this, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options)
+      sqlASTNode.type = 'union'
+      sqlASTNode.typedChildren = {}
+      handleUnionSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options)
     } else {
-      handleSelections.call(this, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options)
+      handleSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options)
     }
   }
 }
 
 // we need to collect all fields from all the fragments requested in the union type and ask for them in SQL
-function handleUnionSelections(children, selections, gqlType, namespace, depth, options) {
+function handleUnionSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
@@ -250,9 +253,14 @@ function handleUnionSelections(children, selections, gqlType, namespace, depth, 
         // normally, we would scan for the extra join-monster data on the current gqlType.
         // but the gqlType is the Union. The data isn't there, its on each of the types that make up the union
         // lets find that type and handle the selections based on THAT type instead
-        const deferToType = this.schema._typeMap[selectionNameOfType]
-        const handler = deferToType.constructor.name === 'GraphQLObjectType' ? handleSelections : handleUnionSelections
-        handler.call(this, children, selection.selectionSet.selections, deferToType, namespace, depth, options)
+        const deferredType = this.schema._typeMap[selectionNameOfType]
+        const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
+        const handler = deferToObjectType ? handleSelections : handleUnionSelections
+        if (deferToObjectType) {
+          const typedChildren = sqlASTNode.typedChildren
+          children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
+        }
+        handler.call(this, sqlASTNode, children, selection.selectionSet.selections, deferredType, namespace, depth, options)
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
@@ -261,9 +269,10 @@ function handleUnionSelections(children, selections, gqlType, namespace, depth, 
         const fragmentName = selection.name.value
         const fragment = this.fragments[fragmentName]
         const fragmentNameOfType = fragment.typeCondition.name.value
-        const deferToType = this.schema._typeMap[fragmentNameOfType ]
-        const handler = deferToType.constructor.name === 'GraphQLObjectType' ? handleSelections : handleUnionSelections
-        handler.call(this, children, fragment.selectionSet.selections, deferToType, namespace, depth, options)
+        const deferredType = this.schema._typeMap[fragmentNameOfType ]
+        const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
+        const handler = deferToObjectType ? handleSelections : handleUnionSelections
+        handler.call(this, sqlASTNode, children, fragment.selectionSet.selections, deferredType, namespace, depth, options)
       }
       break
     default:
@@ -273,7 +282,7 @@ function handleUnionSelections(children, selections, gqlType, namespace, depth, 
 }
 
 // the selections could be several types, recursively handle each type here
-function handleSelections(children, selections, gqlType, namespace, depth, options) {
+function handleSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
@@ -291,7 +300,7 @@ function handleSelections(children, selections, gqlType, namespace, depth, optio
         const sameType = selectionNameOfType === gqlType.name
         const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
         if (sameType || interfaceType) {
-          handleSelections.call(this, children, selection.selectionSet.selections, gqlType, namespace, depth, options)
+          handleSelections.call(this, sqlASTNode, children, selection.selectionSet.selections, gqlType, namespace, depth, options)
         }
       }
       break
@@ -305,7 +314,7 @@ function handleSelections(children, selections, gqlType, namespace, depth, optio
         const sameType = fragmentNameOfType === gqlType.name
         const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
         if (sameType || interfaceType) {
-          handleSelections.call(this, children, fragment.selectionSet.selections, gqlType, namespace, depth, options)
+          handleSelections.call(this, sqlASTNode, children, fragment.selectionSet.selections, gqlType, namespace, depth, options)
         }
       }
       break
@@ -316,7 +325,7 @@ function handleSelections(children, selections, gqlType, namespace, depth, optio
 }
 
 
-// tell the AST we need to column that perhaps the user didnt ask for, but may be necessary for join monster to ID
+// tell the AST we need a column that perhaps the user didnt ask for, but may be necessary for join monster to ID
 // objects or associate ones across batches
 function columnToASTChild(columnName, namespace) {
   return {
@@ -389,23 +398,23 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
 }
 
 // if its a connection type, we need to look up the Node type inside their to find the relevant SQL info
-function stripRelayConnection(field, queryASTNode, fragments) {
+function stripRelayConnection(gqlType, queryASTNode, fragments) {
   // get the GraphQL Type inside the list of edges inside the Node from the schema definition
-  const gqlType = field.type._fields.edges.type.ofType._fields.node.type
+  const strippedType = gqlType._fields.edges.type.ofType._fields.node.type
   // let's remember those arguments on the connection
   const args = queryASTNode.arguments
   // and then find the fields being selected on the underlying type, also buried within edges and Node
-  const edges = spreadFragments(queryASTNode.selectionSet.selections, fragments, field.type.name)
+  const edges = spreadFragments(queryASTNode.selectionSet.selections, fragments, gqlType.name)
     .find(selection => selection.name.value === 'edges')
   if (edges) {
-    queryASTNode = spreadFragments(edges.selectionSet.selections, fragments, field.type.name)
+    queryASTNode = spreadFragments(edges.selectionSet.selections, fragments, gqlType.name)
       .find(selection => selection.name.value === 'node') || {}
   } else {
     queryASTNode = {}
   }
   // place the arguments on this inner field, so our SQL AST picks it up later
   queryASTNode.arguments = args
-  return { gqlType, queryASTNode }
+  return { gqlType: strippedType, queryASTNode }
 }
 
 function stripNonNullType(type) {
@@ -414,33 +423,42 @@ function stripNonNullType(type) {
 
 // go through and make sure se only ask for each sqlDep once per table
 export function pruneDuplicateSqlDeps(sqlAST, namespace) {
-  // keep track of all the dependent columns at this depth in a Set (for uniqueness)
-  const deps = new Set
-  const children = sqlAST.children || []
+  const childrenToLoopOver = []
+  if (sqlAST.children) {
+    childrenToLoopOver.push(sqlAST.children)
+  }
+  if (sqlAST.typedChildren) {
+    childrenToLoopOver.push(...Object.values(sqlAST.typedChildren))
+  }
 
-  // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
-  for (let i = children.length - 1; i >= 0; i--) {
-    const child = children[i]
-    if (child.type === 'columnDeps') {
-      child.names.forEach(name => deps.add(name))
-      children.splice(i, 1)
-    // or if its another table, recurse on it
-    } else if (child.type === 'table') {
-      pruneDuplicateSqlDeps(child, namespace)
+  for (let children of childrenToLoopOver) {
+    // keep track of all the dependent columns at this depth in a Set (for uniqueness)
+    const deps = new Set
+
+    // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
+    for (let i = children.length - 1; i >= 0; i--) {
+      const child = children[i]
+      if (child.type === 'columnDeps') {
+        child.names.forEach(name => deps.add(name))
+        children.splice(i, 1)
+      // or if its another table, recurse on it
+      } else if (child.type === 'table' || child.type === 'union') {
+        pruneDuplicateSqlDeps(child, namespace)
+      }
     }
-  }
 
-  // now that we collected the "columnDeps", add them all to one node
-  // the "names" property will put all the column names in an object as keys
-  // the values of this object will be the SQL alias
-  const newNode = {
-    type: 'columnDeps',
-    names: {}
+    // now that we collected the "columnDeps", add them all to one node
+    // the "names" property will put all the column names in an object as keys
+    // the values of this object will be the SQL alias
+    const newNode = {
+      type: 'columnDeps',
+      names: {}
+    }
+    deps.forEach(name => {
+      newNode.names[name] = namespace.generate('column', name)
+    })
+    children.push(newNode)
   }
-  deps.forEach(name => {
-    newNode.names[name] = namespace.generate('column', name)
-  })
-  children.push(newNode)
 }
 
 // the arguments just come in as strings.

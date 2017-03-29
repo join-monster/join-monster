@@ -16,10 +16,12 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
     return 
   }
 
+  const children = sqlAST.children
+  children.push(...Object.values(sqlAST.typedChildren || {}))
 
   // loop through all the child fields that are tables
-  return Promise.all(sqlAST.children.map(async childAST => {
-    if (childAST.type !== 'table') return
+  return Promise.all(children.map(async childAST => {
+    if (childAST.type !== 'table' && childAST.type !== 'union') return
 
     const fieldName = childAST.fieldName
 
@@ -44,7 +46,7 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
         // generate the SQL, with the batch scope values incorporated in a WHERE IN clause
         const { sql, shapeDefinition } = await compileSqlAST(childAST, context, { ...options, batchScope } )
         // grab the data
-        let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition))
+        let newData = await handleUserDbCall(dbCall, sql, childAST, wrap(shapeDefinition))
         // group the rows by the key so we can match them with the previous batch
         newData = groupBy(newData, thisKey)
         // but if we paginate, we must convert to connection type first
@@ -69,7 +71,7 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
       } else {
         const batchScope = [ maybeQuote(data[parentKey]) ]
         const { sql, shapeDefinition } = await compileSqlAST(childAST, context, { ...options, batchScope } )
-        let newData = await handleUserDbCall(dbCall, sql, wrap(shapeDefinition))
+        let newData = await handleUserDbCall(dbCall, sql, childAST, wrap(shapeDefinition))
         newData = groupBy(newData, thisKey)
         if (childAST.paginate){
           const targets = newData[data[parentKey]]

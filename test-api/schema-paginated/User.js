@@ -17,6 +17,7 @@ import {
 import { PostConnection } from './Post'
 import { CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
+import { AuthoredConnection } from './Authored/Interface'
 import { q, bool } from '../shared'
 
 const { PAGINATE, STRATEGY, DB } = process.env
@@ -185,6 +186,37 @@ const User = new GraphQLObjectType({
           })
         }
       }
+    },
+    writtenMaterial: {
+      type: AuthoredConnection,
+      orderBy: 'id',
+      args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
+      sqlPaginate: !!PAGINATE,
+      ... do {
+        if (PAGINATE === 'offset') {
+          ({
+            orderBy: 'id'
+          })
+        } else if (PAGINATE === 'keyset') {
+          ({
+            sortKey: {
+              order: 'ASC',
+              key: 'id'
+            }
+          })
+        } else {
+          ({
+            resolve: (user, args) => {
+              return connectionFromArray(user.following, args)
+            }
+          })
+        }
+      },
+      ...STRATEGY === 'batch' ?
+        { sqlBatch:
+          { thisKey: 'author_id',
+            parentKey: 'id' } } :
+        { sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}` }
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),

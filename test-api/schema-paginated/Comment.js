@@ -13,6 +13,7 @@ import {
 
 import { Post } from './Post'
 import { User } from './User'
+import { Authored } from './Authored/Interface'
 import { nodeInterface } from './Node'
 import { q } from '../shared'
 
@@ -24,7 +25,7 @@ export const Comment = new GraphQLObjectType({
   //sqlTable: q('comments', DB),
   sqlTable: `(SELECT * FROM ${q('comments', DB)})`,
   uniqueKey: 'id',
-  interfaces: [ nodeInterface ],
+  interfaces: () => [ nodeInterface, Authored ],
   fields: () => ({
     id: {
       ...globalIdField(),
@@ -38,6 +39,10 @@ export const Comment = new GraphQLObjectType({
       description: 'The post that the comment belongs to',
       type: Post,
       sqlJoin: (commentTable, postTable) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)}`
+    },
+    authorId: {
+      type: GraphQLInt,
+      sqlColumn: 'author_id'
     },
     author: {
       description: 'The user who wrote the comment',

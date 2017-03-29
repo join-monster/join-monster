@@ -1,4 +1,4 @@
-import { inspect, validateSqlAST } from './util'
+import { validateSqlAST } from './util'
 
 // generate an object that defines the correct nesting shape for our GraphQL
 // this will be used by the library NestHydrationJS, check out their docs
@@ -8,47 +8,73 @@ export default function defineObjectShape(topNode) {
 }
 
 function _defineObjectShape(parent, prefix, node) {
-  if (node.type === 'table') {
-    // if this table has a parent, prefix with the parent name and 2 underscores
-    const prefixToPass = parent ? prefix + node.as + '__' : prefix
+  // if this table has a parent, prefix with the parent name and 2 underscores
+  const prefixToPass = parent ? prefix + node.as + '__' : prefix
 
-    const fieldDefinition = {}
+  const fieldDefinition = {}
 
-    for (let child of node.children) {
+  for (let child of node.children) {
+    switch (child.type) {
+    case 'column':
+      fieldDefinition[child.fieldName] = prefixToPass + child.as
+      break
+    case 'composite':
+      fieldDefinition[child.fieldName] = prefixToPass + child.as
+      break
+    case 'columnDeps':
+      for (let name in child.names) {
+        fieldDefinition[name] = prefixToPass + child.names[name]
+      }
+      break
+    case 'expression':
+      fieldDefinition[child.fieldName] = prefixToPass + child.as
+      break
+    case 'union':
+    case 'table':
+      if (child.sqlBatch) {
+        fieldDefinition[child.sqlBatch.parentKey.fieldName] = prefixToPass + child.sqlBatch.parentKey.as
+      } else {
+        const definition = _defineObjectShape(node, prefixToPass, child)
+        fieldDefinition[child.fieldName] = definition
+      }
+    }
+  }
+
+  for (let typeName in node.typedChildren || {}) {
+    for (let child of node.typedChildren[typeName]) {
       switch (child.type) {
       case 'column':
-        fieldDefinition[child.fieldName] = prefixToPass + child.as
+        fieldDefinition[child.fieldName + typeName] = prefixToPass + child.as
         break
       case 'composite':
-        fieldDefinition[child.fieldName] = prefixToPass + child.as
+        fieldDefinition[child.fieldName + typeName] = prefixToPass + child.as
         break
       case 'columnDeps':
         for (let name in child.names) {
-          fieldDefinition[name] = prefixToPass + child.names[name]
+          fieldDefinition[name + typeName] = prefixToPass + child.names[name]
         }
         break
       case 'expression':
-        fieldDefinition[child.fieldName] = prefixToPass + child.as
+        fieldDefinition[child.fieldName + typeName] = prefixToPass + child.as
         break
+      case 'union':
       case 'table':
         if (child.sqlBatch) {
-          fieldDefinition[child.sqlBatch.parentKey.fieldName] = prefixToPass + child.sqlBatch.parentKey.as
+          fieldDefinition[child.sqlBatch.parentKey.fieldName + typeName] = prefixToPass + child.sqlBatch.parentKey.as
         } else {
           const definition = _defineObjectShape(node, prefixToPass, child)
-          fieldDefinition[child.fieldName] = definition
+          fieldDefinition[child.fieldName + typeName] = definition
         }
       }
     }
+  }
 
-    // if we need many, just wrap the field definition in an array
-    if (node.grabMany) {
-      return [ fieldDefinition ]
-    // otherwise, it will just grab the first result
-    } else {
-      return fieldDefinition
-    }
+  // if we need many, just wrap the field definition in an array
+  if (node.grabMany) {
+    return [ fieldDefinition ]
+  // otherwise, it will just grab the first result
   } else {
-    throw new Error('unexpected/unknown node type reached: ' + inspect(node))
+    return fieldDefinition
   }
 }
 

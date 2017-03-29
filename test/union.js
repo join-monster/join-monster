@@ -77,7 +77,7 @@ test('it should a union type', async t => {
       ]
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
 test('it should an interface type', async t => {
@@ -145,6 +145,6 @@ test('it should an interface type', async t => {
       ]
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 

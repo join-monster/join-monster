@@ -82,7 +82,7 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   if (!sql) return {}
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
-  let data = await handleUserDbCall(dbCall, sql, shapeDefinition)
+  let data = await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition)
 
   // if they are paginating, we'll get back an array which is essentially a "slice" of the whole data. 
   // this function goes through the data tree and converts the arrays to Connection Objects
@@ -131,7 +131,7 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   queryAST.getGraphQLType.call(resolveInfo, fieldNodes[0], fakeParentNode, sqlAST, namespace, 0, options)
   queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
-  const data = arrToConnection(await handleUserDbCall(dbCall, sql, shapeDefinition), sqlAST)
+  const data = arrToConnection(await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition), sqlAST)
   await nextBatch(sqlAST, data, dbCall, context, options)
   if (!data) return data
   data.__type__ = type

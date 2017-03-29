@@ -513,3 +513,55 @@ test('should handle a "where" condition on a paginated field', async t => {
   t.deepEqual(expect, comments)
 })
 
+test('should handle an interface type', async t => {
+  const query = `{
+    user(id: 1) {
+      writtenMaterial(first: 3) {
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
+        edges {
+          node {
+            id
+            body
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    pageInfo: {
+      hasNextPage: true,
+      hasPreviousPage: false,
+      startCursor: 'YXJyYXljb25uZWN0aW9uOjA=',
+      endCursor: 'YXJyYXljb25uZWN0aW9uOjI='
+    },
+    edges: [
+      {
+        node: {
+          id: 'Q29tbWVudDox',
+          body: 'Try to input the RSS circuit, maybe it will copy the auxiliary sensor!'
+        }
+      },
+      {
+        node: {
+          id: 'UG9zdDoy',
+          body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.'
+        }
+      },
+      {
+        node: {
+          id: 'UG9zdDoz',
+          body: 'Qui provident saepe laborum non est. Eaque aut enim officiis deserunt. Est sed suscipit praesentium et similique repudiandae. Inventore similique commodi non dolores inventore dolor est aperiam.'
+        }
+      }
+    ]
+  }
+  t.deepEqual(expect, data.user.writtenMaterial)
+})
+

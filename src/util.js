@@ -2,6 +2,7 @@ import util from 'util'
 import assert from 'assert'
 import { nest } from 'nesthydrationjs'
 import stringifySQL from './stringifiers/dispatcher'
+import resolveUnions from './resolve-unions'
 const debug = require('debug')('join-monster')
 
 import defineObjectShape from './define-object-shape'
@@ -100,7 +101,7 @@ export function buildWhereFunction(type, condition, options) {
 }
 
 // handles the different callback signatures and return values.
-export function handleUserDbCall(dbCall, sql, shapeDefinition) {
+export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition) {
   // if there are two args, we're in "callback mode"
   if (dbCall.length === 2) {
     // wrap it in a promise
@@ -113,7 +114,10 @@ export function handleUserDbCall(dbCall, sql, shapeDefinition) {
           rows = validate(rows)
           debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
           debug(`${rows.length} rows...`)
-          resolve(nest(rows, shapeDefinition))
+          const data = nest(rows, shapeDefinition)
+          resolveUnions(data, sqlAST)
+          debug(emphasize('SHAPED_DATA', inspect(data)))
+          resolve(data)
         }
       })
     })
@@ -128,7 +132,10 @@ export function handleUserDbCall(dbCall, sql, shapeDefinition) {
       debug(`${rows.length} rows...`)
       // hydrate the data
       // take that shape definition we produced and pass it to the NestHydrationJS library
-      return nest(rows, shapeDefinition)
+      const data = nest(rows, shapeDefinition)
+      resolveUnions(data, sqlAST)
+      debug(emphasize('SHAPED_DATA'), inspect(data))
+      return data
     })
   } else {
     throw new Error('must return a promise of the data or use the callback')

@@ -55,6 +55,22 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     }
 
     break
+  case 'union':
+    await handleTable(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect)
+
+    // recurse thru nodes
+    if (thisIsNotTheEndOfThisBatch(node, parent)) {
+      for (let typeName in node.typedChildren) {
+        for (let child of node.typedChildren[typeName]) {
+          await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, null, dialect)
+        }
+      }
+      for (let child of node.children) {
+        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, null, dialect)
+      }
+    }
+
+    break
   case 'column':
     selections.push(
       `${q(node.fromOtherTable || parent.as)}.${q(node.name)} AS ${q(joinPrefix(prefix) + node.as)}`
