@@ -1,3 +1,8 @@
+### v1.2.1 (Mar. 28, 2017)
+- Add `jmIgnoreAll` and `jmIgnoreTable`.
+- Bug fix with recursively nested union and interface type fragments.
+- Bug fix with for batch on a single-type parent.
+
 ### v1.2.0 (Mar. 16, 2017)
 - Add an API for GraphQLInterfaceType
 

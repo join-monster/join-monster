@@ -39,7 +39,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
   const fieldName = queryASTNode.name.value
 
   // if this is an internal field (say, for introspection "__typename"), lets ignore it
-  if (fieldName.slice(0, 2) === '__') {
+  if (/^__/.test(fieldName)) {
     sqlASTNode.type = 'noop'
     return
   }
@@ -48,6 +48,12 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
   let field = parentTypeNode._fields[fieldName]
   if (!field) {
     throw new Error(`The field "${fieldName}" is not in the ${parentTypeNode.name} type.`)
+  }
+
+  // allow for explicit ignoring of fields
+  if (field.jmIgnoreAll) {
+    sqlASTNode.type = 'noop'
+    return
   }
 
   // this flag will keep track of whether multiple rows are needed
@@ -92,9 +98,13 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
 
 
   // is this a table in SQL?
-  if ([ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name) && config.sqlTable) {
+  if (
+    !field.jmIgnoreTable &&
+    [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name)
+    && config.sqlTable
+  ) {
     if (depth >= 1) {
-      assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
+      assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
     }
     handleTable.call(this, sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options)
   // is this a computed column from a raw expression?
@@ -241,7 +251,8 @@ function handleUnionSelections(children, selections, gqlType, namespace, depth, 
         // but the gqlType is the Union. The data isn't there, its on each of the types that make up the union
         // lets find that type and handle the selections based on THAT type instead
         const deferToType = this.schema._typeMap[selectionNameOfType]
-        handleSelections(children, selection.selectionSet.selections, deferToType, namespace, depth, options)
+        const handler = deferToType.constructor.name === 'GraphQLObjectType' ? handleSelections : handleUnionSelections
+        handler.call(this, children, selection.selectionSet.selections, deferToType, namespace, depth, options)
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
@@ -251,7 +262,8 @@ function handleUnionSelections(children, selections, gqlType, namespace, depth, 
         const fragment = this.fragments[fragmentName]
         const fragmentNameOfType = fragment.typeCondition.name.value
         const deferToType = this.schema._typeMap[fragmentNameOfType ]
-        handleSelections(children, fragment.selectionSet.selections, deferToType, namespace, depth, options)
+        const handler = deferToType.constructor.name === 'GraphQLObjectType' ? handleSelections : handleUnionSelections
+        handler.call(this, children, fragment.selectionSet.selections, deferToType, namespace, depth, options)
       }
       break
     default:

@@ -82,7 +82,9 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
             data[fieldName] = targets[0]
           }
         }
-        return nextBatch(childAST, data[fieldName], dbCall, context, options)
+        if (data) {
+          return nextBatch(childAST, data[fieldName], dbCall, context, options)
+        }
       }
     // otherwise, just bypass this and recurse down to the next level
     } else {

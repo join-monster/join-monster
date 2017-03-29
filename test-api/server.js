@@ -1,5 +1,5 @@
 import path from 'path'
-import koa from 'koa'
+import Koa from 'koa'
 import koaRouter from 'koa-router'
 import graphqlHTTP from 'koa-graphql'
 // module we created that lets you serve a custom build of GraphiQL
@@ -10,7 +10,7 @@ import cors from 'koa-cors'
 import schemaBasic from './schema-basic/index'
 import schemaRelay from './schema-paginated/index'
 
-const app = koa()
+const app = new Koa()
 const router = koaRouter()
 
 app.use(cors())
