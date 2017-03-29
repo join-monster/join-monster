@@ -1,5 +1,6 @@
 ### v1.2.1 (Mar. 28, 2017)
 - Add `jmIgnoreAll` and `jmIgnoreTable`.
+- Make `sqlTable` a thunk.
 - Bug fix with recursively nested union and interface type fragments.
 - Bug fix with for batch on a single-type parent.
 

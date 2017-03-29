@@ -5,7 +5,7 @@ import { wrap } from '../util'
 
 const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
 
-export function queryASTToSqlAST(resolveInfo, options) {
+export function queryASTToSqlAST(resolveInfo, options, context) {
   // this is responsible for all the logic regarding creating SQL aliases
   // we need varying degrees of uniqueness and readability
   // force oracle to minify, because it has this 30-character limit on column identifiers
@@ -15,7 +15,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   const sqlAST = {}
 
   // v0.8 changed the "fieldASTs" property to "fieldNodes". we want to support both
-  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs 
+  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
   assert.equal(fieldNodes.length, 1, 'We thought this would always have a length of 1. FIX ME!!')
 
   // this represents the parsed query
@@ -24,7 +24,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = resolveInfo.parentType
-  getGraphQLType.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options)
+  getGraphQLType.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options, context)
 
   // make sure they started this party on a table
   assert.equal(sqlAST.type, 'table', 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".')
@@ -35,7 +35,7 @@ export function queryASTToSqlAST(resolveInfo, options) {
   return sqlAST
 }
 
-export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespace, depth, options) {
+export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespace, depth, options, context) {
   // first, get the name of the field being queried
   const fieldName = queryASTNode.name.value
 
@@ -75,7 +75,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
     gqlType = stripNonNullType(gqlType.ofType)
     grabMany = true
   }
-  
+
   // if its a relay connection, there are several things we need to do
   if (gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
@@ -87,7 +87,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
     // we'll set a flag for pagination.
     if (field.sqlPaginate) {
       sqlASTNode.paginate = true
-      getSortColumns(field, sqlASTNode)
+      getSortColumns(field, sqlASTNode, context)
     }
   } else {
     if (field.sqlPaginate) {
@@ -107,7 +107,7 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
     if (depth >= 1) {
       assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
     }
-    handleTable.call(this, sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options)
+    handleTable.call(this, sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options, context)
   // is this a computed column from a raw expression?
   } else if (field.sqlExpr) {
     sqlASTNode.type = 'expression'
@@ -130,18 +130,22 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
   }
 }
 
-function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options) {
+function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options, context) {
   const config = gqlType._typeConfig
 
   sqlASTNode.type = 'table'
-  sqlASTNode.name = config.sqlTable
+  let sqlTable = config.sqlTable
+  if (typeof sqlTable === 'function') {
+    sqlTable = sqlTable(sqlASTNode.args || {}, context)
+  }
+  sqlASTNode.name = sqlTable
 
   // the graphQL field name will be the default alias for the table
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
 
   if (field.orderBy && !sqlASTNode.orderBy) {
-    handleOrderBy(sqlASTNode, field)
+    handleOrderBy(sqlASTNode, field, context)
   }
 
   // tables have child fields, lets push them to an array
@@ -205,7 +209,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
   // need whichever column that the schema specifies as the unique one to be the first child
   if (!config.uniqueKey) {
-    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${config.sqlTable}`)
+    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${sqlTable}`)
   }
   children.push(keyToASTChild(config.uniqueKey, namespace))
 
@@ -229,22 +233,22 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
       // union types have special rules for the child fields in join monster
       sqlASTNode.type = 'union'
       sqlASTNode.typedChildren = {}
-      handleUnionSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options)
+      handleUnionSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options, context)
     } else {
-      handleSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options)
+      handleSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options, context)
     }
   }
 }
 
 // we need to collect all fields from all the fragments requested in the union type and ask for them in SQL
-function handleUnionSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options) {
+function handleUnionSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options, context) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
     case 'Field':
       const newNode = {}
       children.push(newNode)
-      getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options)
+      getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
@@ -260,7 +264,7 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
           const typedChildren = sqlASTNode.typedChildren
           children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
         }
-        handler.call(this, sqlASTNode, children, selection.selectionSet.selections, deferredType, namespace, depth, options)
+        handler.call(this, sqlASTNode, children, selection.selectionSet.selections, deferredType, namespace, depth, options, context)
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
@@ -272,7 +276,11 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
         const deferredType = this.schema._typeMap[fragmentNameOfType ]
         const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
         const handler = deferToObjectType ? handleSelections : handleUnionSelections
-        handler.call(this, sqlASTNode, children, fragment.selectionSet.selections, deferredType, namespace, depth, options)
+        if (deferToObjectType) {
+          const typedChildren = sqlASTNode.typedChildren
+          children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
+        }
+        handler.call(this, sqlASTNode, children, fragment.selectionSet.selections, deferredType, namespace, depth, options, context)
       }
       break
     default:
@@ -282,7 +290,7 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
 }
 
 // the selections could be several types, recursively handle each type here
-function handleSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options) {
+function handleSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options, context) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
@@ -290,7 +298,7 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
     case 'Field':
       const newNode = {}
       children.push(newNode)
-      getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options)
+      getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
@@ -300,7 +308,7 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         const sameType = selectionNameOfType === gqlType.name
         const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
         if (sameType || interfaceType) {
-          handleSelections.call(this, sqlASTNode, children, selection.selectionSet.selections, gqlType, namespace, depth, options)
+          handleSelections.call(this, sqlASTNode, children, selection.selectionSet.selections, gqlType, namespace, depth, options, context)
         }
       }
       break
@@ -314,7 +322,7 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         const sameType = fragmentNameOfType === gqlType.name
         const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
         if (sameType || interfaceType) {
-          handleSelections.call(this, sqlASTNode, children, fragment.selectionSet.selections, gqlType, namespace, depth, options)
+          handleSelections.call(this, sqlASTNode, children, fragment.selectionSet.selections, gqlType, namespace, depth, options, context)
         }
       }
       break
@@ -469,7 +477,7 @@ function parseArgValue(value, variableValues) {
     const variableName = value.name.value
     return variableValues[variableName]
   }
-  
+
   switch(value.kind) {
   case 'IntValue':
     return parseInt(value.value)
@@ -482,23 +490,23 @@ function parseArgValue(value, variableValues) {
   }
 }
 
-function getSortColumns(field, sqlASTNode) {
+function getSortColumns(field, sqlASTNode, context) {
   if (field.sortKey) {
     if (typeof field.sortKey === 'function') {
-      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args)
+      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args, context)
     } else {
       sqlASTNode.sortKey = field.sortKey
     }
   } else if (field.orderBy) {
-    handleOrderBy(sqlASTNode, field)
+    handleOrderBy(sqlASTNode, field, context)
   } else {
     throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
   }
 }
 
-function handleOrderBy(sqlASTNode, field) {
+function handleOrderBy(sqlASTNode, field, context) {
   if (typeof field.orderBy === 'function') {
-    sqlASTNode.orderBy = field.orderBy(sqlASTNode.args || {})
+    sqlASTNode.orderBy = field.orderBy(sqlASTNode.args || {}, context)
   } else {
     sqlASTNode.orderBy = field.orderBy
   }
@@ -525,4 +533,3 @@ function spreadFragments(selections, fragments, typeName) {
     }
   })
 }
-
