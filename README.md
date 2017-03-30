@@ -2,12 +2,12 @@
 ![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/join_monster.png)
 [![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster) [![Build Status](https://travis-ci.org/stems/join-monster.svg?branch=master)](https://travis-ci.org/stems/join-monster) [![Documentation Status](https://readthedocs.org/projects/join-monster/badge/?version=latest)](http://join-monster.readthedocs.io/en/latest/?badge=latest)
 
-[Supported SQL Dialects (DB Vendors)](https://github.com/stems/join-monster/blob/master/docs/dialects.md)
 ### Query Planning and Batch Data Fetching between GraphQL and SQL.
 
 - Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
 - Try Demo: [basic version](http://join-monster.herokuapp.com/graphql?query=%7B%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20fullName%0A%20%20%20%20email%0A%20%20%20%20posts%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20body%0A%20%20%20%20%20%20createdAt%0A%20%20%20%20%20%20comments%20%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20author%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20fullName%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D) or [paginated version](https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20total%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 - [Example Repo](https://github.com/stems/join-monster-demo)
+- [Supported SQL Dialects (DB Vendors)](https://github.com/stems/join-monster/blob/master/docs/dialects.md)
 
 ## What is Join Monster?
 
@@ -119,6 +119,10 @@ Great helpers for the **Node Interface** and automatic pagination for **Connecti
 
 
 ## Usage with GraphQL
+
+```shell
+$ npm install join-monster
+```
 
 1. Take your `GraphQLObjectType` from [graphql-js](https://github.com/graphql/graphql-js) and add the SQL table name.
 2. Do the fields need values from some SQL columns? Computed columns? Add some additional properties like `sqlColumn`, `sqlDeps`, or `sqlExpr` to the fields. Join Monster will look at these when analyzing the query.
