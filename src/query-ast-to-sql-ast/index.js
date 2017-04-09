@@ -112,14 +112,20 @@ export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespa
   } else if (field.sqlExpr) {
     sqlASTNode.type = 'expression'
     sqlASTNode.sqlExpr = field.sqlExpr
-    sqlASTNode.fieldName = field.name
-    sqlASTNode.as = namespace.generate('column', field.name)
+    let aliasFrom = sqlASTNode.fieldName = field.name
+    if (sqlASTNode.defferedFrom) {
+      aliasFrom += '@' + parentTypeNode.name
+    }
+    sqlASTNode.as = namespace.generate('column', aliasFrom)
   // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
   } else if (field.sqlColumn || !field.resolve) {
     sqlASTNode.type = 'column'
     sqlASTNode.name = field.sqlColumn || field.name
-    sqlASTNode.fieldName = field.name
-    sqlASTNode.as = namespace.generate('column', sqlASTNode.name)
+    let aliasFrom = sqlASTNode.fieldName = field.name
+    if (sqlASTNode.defferedFrom) {
+      aliasFrom += '@' + parentTypeNode.name
+    }
+    sqlASTNode.as = namespace.generate('column', aliasFrom)
   // or maybe it just depends on some SQL columns
   } else if (field.sqlDeps) {
     sqlASTNode.type = 'columnDeps'
@@ -241,12 +247,15 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 }
 
 // we need to collect all fields from all the fragments requested in the union type and ask for them in SQL
-function handleUnionSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options, context) {
+function handleUnionSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options, context, internalOptions = {}) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
     case 'Field':
       const newNode = {}
+      if (internalOptions.defferedFrom) {
+        newNode.defferedFrom = internalOptions.defferedFrom
+      }
       children.push(newNode)
       getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
       break
@@ -263,8 +272,9 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
         if (deferToObjectType) {
           const typedChildren = sqlASTNode.typedChildren
           children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
+          internalOptions.defferedFrom = gqlType
         }
-        handler.call(this, sqlASTNode, children, selection.selectionSet.selections, deferredType, namespace, depth, options, context)
+        handler.call(this, sqlASTNode, children, selection.selectionSet.selections, deferredType, namespace, depth, options, context, internalOptions)
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
@@ -279,8 +289,9 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
         if (deferToObjectType) {
           const typedChildren = sqlASTNode.typedChildren
           children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
+          internalOptions.defferedFrom = gqlType
         }
-        handler.call(this, sqlASTNode, children, fragment.selectionSet.selections, deferredType, namespace, depth, options, context)
+        handler.call(this, sqlASTNode, children, fragment.selectionSet.selections, deferredType, namespace, depth, options, context, internalOptions)
       }
       break
     default:
@@ -290,13 +301,16 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
 }
 
 // the selections could be several types, recursively handle each type here
-function handleSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options, context) {
+function handleSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options, context, internalOptions = {}) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
     // if its another field, recurse through that
     case 'Field':
       const newNode = {}
+      if (internalOptions.defferedFrom) {
+        newNode.defferedFrom = internalOptions.defferedFrom
+      }
       children.push(newNode)
       getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
       break
@@ -308,7 +322,7 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         const sameType = selectionNameOfType === gqlType.name
         const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
         if (sameType || interfaceType) {
-          handleSelections.call(this, sqlASTNode, children, selection.selectionSet.selections, gqlType, namespace, depth, options, context)
+          handleSelections.call(this, sqlASTNode, children, selection.selectionSet.selections, gqlType, namespace, depth, options, context, internalOptions)
         }
       }
       break
@@ -322,7 +336,7 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         const sameType = fragmentNameOfType === gqlType.name
         const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
         if (sameType || interfaceType) {
-          handleSelections.call(this, sqlASTNode, children, fragment.selectionSet.selections, gqlType, namespace, depth, options, context)
+          handleSelections.call(this, sqlASTNode, children, fragment.selectionSet.selections, gqlType, namespace, depth, options, context, internalOptions)
         }
       }
       break

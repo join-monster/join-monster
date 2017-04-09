@@ -41,29 +41,30 @@ function _defineObjectShape(parent, prefix, node) {
   }
 
   for (let typeName in node.typedChildren || {}) {
+    const suffix = '@' + typeName
     for (let child of node.typedChildren[typeName]) {
       switch (child.type) {
       case 'column':
-        fieldDefinition[child.fieldName + typeName] = prefixToPass + child.as
+        fieldDefinition[child.fieldName + suffix] = prefixToPass + child.as
         break
       case 'composite':
-        fieldDefinition[child.fieldName + typeName] = prefixToPass + child.as
+        fieldDefinition[child.fieldName + suffix] = prefixToPass + child.as
         break
       case 'columnDeps':
         for (let name in child.names) {
-          fieldDefinition[name + typeName] = prefixToPass + child.names[name]
+          fieldDefinition[name + suffix] = prefixToPass + child.names[name]
         }
         break
       case 'expression':
-        fieldDefinition[child.fieldName + typeName] = prefixToPass + child.as
+        fieldDefinition[child.fieldName + suffix] = prefixToPass + child.as
         break
       case 'union':
       case 'table':
         if (child.sqlBatch) {
-          fieldDefinition[child.sqlBatch.parentKey.fieldName + typeName] = prefixToPass + child.sqlBatch.parentKey.as
+          fieldDefinition[child.sqlBatch.parentKey.fieldName + suffix] = prefixToPass + child.sqlBatch.parentKey.as
         } else {
           const definition = _defineObjectShape(node, prefixToPass, child)
-          fieldDefinition[child.fieldName + typeName] = definition
+          fieldDefinition[child.fieldName + suffix] = definition
         }
       }
     }

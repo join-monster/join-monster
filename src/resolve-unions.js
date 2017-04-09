@@ -7,10 +7,11 @@ export default function resolveUnions(data, sqlAST) {
 
   if (sqlAST.type === 'union') {
     for (let typeName in sqlAST.typedChildren) {
+      const suffix = '@' + typeName
       const children = sqlAST.typedChildren[typeName]
       for (let child of children) {
         const fieldName = child.fieldName
-        const qualifiedName = child.fieldName + typeName
+        const qualifiedName = child.fieldName + suffix
         if (Array.isArray(data)) {
           for (let obj of data) {
             const qualifiedValue = obj[qualifiedName]
