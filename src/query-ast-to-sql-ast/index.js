@@ -218,6 +218,11 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
     throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${sqlTable}`)
   }
   children.push(keyToASTChild(config.uniqueKey, namespace))
+  if (config.alwaysFetch) {
+    for (let column of wrap(config.alwaysFetch)) {
+      children.push(columnToASTChild(column, namespace))
+    }
+  }
 
   // this is for helping resolve types in union types
   if (config.typeHint && [ 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name)) {
