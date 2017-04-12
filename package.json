@@ -86,9 +86,9 @@
     "knex": "^0.12.0",
     "koa": "^2.0.1",
     "koa-cors": "0.0.16",
-    "koa-custom-graphiql": "0.0.3",
+    "koa-custom-graphiql": "1.0.0",
     "koa-graphql": "^0.6.0",
-    "koa-router": "^5.4.0",
+    "koa-router": "^7.1.1",
     "koa-static": "^3.0.0",
     "mysql": "^2.12.0",
     "nyc": "^10.0.0",
@@ -97,6 +97,7 @@
     "sqlite3": "^3.1.8"
   },
   "dependencies": {
+    "ava": "^0.19.1",
     "generatorics": "^1.0.8",
     "graphql-relay": "^0.5.0",
     "nesthydrationjs": "0.4.0"

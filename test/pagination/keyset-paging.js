@@ -83,7 +83,7 @@ test('should reject an invalid cursor', async t => {
   const query = makeUsersQuery({ first: 2, after: objToCursor({ id: 2, created_at: '2016-01-01' }) })
   const { errors } = await run(query)
   t.truthy(errors.length)
-  t.regex(errors[0], /Invalid cursor. The column "created_at" is not in the sort key./)
+  t.regex(errors[0] && errors[0].message, /Invalid cursor. The column "created_at" is not in the sort key./)
 })
 
 test('should handle root pagination with "first" and "after" args', async t => {
