@@ -21,7 +21,11 @@ export default function resolveUnions(data, sqlAST) {
             }
           }
           if (child.type === 'table' || child.type === 'union') {
-            const nextLevelData = chain(data).filter(obj => obj !== null).flatMap(obj => obj[fieldName]).value()
+            const nextLevelData = chain(data)
+              .filter(obj => obj !== null)
+              .flatMap(obj => obj[fieldName])
+              .filter(obj => obj !== null)
+              .value()
             resolveUnions(nextLevelData, child)
           }
         } else {
@@ -42,7 +46,11 @@ export default function resolveUnions(data, sqlAST) {
       if ((child.type === 'table' || child.type === 'union') && !child.sqlBatch) {
         const fieldName = child.fieldName
         if (Array.isArray(data)) {
-          const nextLevelData = chain(data).filter(obj => obj !== null).flatMap(obj => obj[fieldName]).value()
+          const nextLevelData = chain(data)
+            .filter(obj => obj !== null)
+            .flatMap(obj => obj[fieldName])
+            .filter(obj => obj !== null)
+            .value()
           resolveUnions(nextLevelData, child)
         } else {
           resolveUnions(data[fieldName], child)
