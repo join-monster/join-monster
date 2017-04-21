@@ -276,9 +276,9 @@ export const QueryRoot = new GraphQLObjectType({
 
 Detailed instructions for set up are found in the [docs](http://join-monster.readthedocs.io/en/latest/data-model).
 
-### Using with Apollo Server
+### Using with `graphql-tools`
 
-The GraphQL schema language doesn't let you add arbitrary properties to the type definitions. If you're using something like [graphql-tools](https://github.com/apollographql/graphql-tools), you'll need an **adapter**. See the [join-monster-graph-tools-adapter](https://github.com/acarl005/join-monster-graphql-tools-adapter) if you want to use this with Apollo.
+The GraphQL schema language doesn't let you add arbitrary properties to the type definitions. If you're using something like the Apollo [graphql-tools](https://github.com/apollographql/graphql-tools) package to write your code with the schema language, you'll need an **adapter**. See the [join-monster-graphql-tools-adapter](https://github.com/acarl005/join-monster-graphql-tools-adapter) if you want to use this with `graphql-tools`.
 
 ## Running the Demo
 
