@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "1.2.1-beta.2",
+  "version": "1.2.1-beta.8",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -71,7 +71,7 @@
     "graphql": "0.6 || 0.7 || 0.8 || 0.9"
   },
   "devDependencies": {
-    "ava": "^0.18.0",
+    "ava": "^0.19.1",
     "babel-cli": "^6.14.0",
     "babel-eslint": "^7.0.0",
     "babel-preset-node6": "^11.0.0",
@@ -97,7 +97,6 @@
     "sqlite3": "^3.1.8"
   },
   "dependencies": {
-    "ava": "^0.19.1",
     "generatorics": "^1.0.8",
     "graphql-relay": "^0.5.0",
     "nesthydrationjs": "0.4.0"
