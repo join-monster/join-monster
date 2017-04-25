@@ -24,7 +24,7 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = resolveInfo.parentType
-  getGraphQLType.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options, context)
+  populateASTNode.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options, context)
 
   // make sure they started this party on a table
   assert.equal(sqlAST.type, 'table', 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".')
@@ -35,7 +35,7 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   return sqlAST
 }
 
-export function getGraphQLType(queryASTNode, parentTypeNode, sqlASTNode, namespace, depth, options, context) {
+export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, depth, options, context) {
   // first, get the name of the field being queried
   const fieldName = queryASTNode.name.value
 
@@ -155,7 +155,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   }
 
   // tables have child fields, lets push them to an array
-  const children = sqlASTNode.children = []
+  const children = sqlASTNode.children = sqlASTNode.children || []
 
   sqlASTNode.fieldName = field.name
   sqlASTNode.grabMany = grabMany
@@ -257,12 +257,18 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
     case 'Field':
-      const newNode = {}
+      // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
+      const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
+      let newNode = {}
+      if (existingNode) {
+        newNode = existingNode
+      } else {
+        children.push(newNode)
+      }
       if (internalOptions.defferedFrom) {
         newNode.defferedFrom = internalOptions.defferedFrom
       }
-      children.push(newNode)
-      getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
+      populateASTNode.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
@@ -312,12 +318,18 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
     switch (selection.kind) {
     // if its another field, recurse through that
     case 'Field':
-      const newNode = {}
+      // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
+      const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
+      let newNode = {}
+      if (existingNode) {
+        newNode = existingNode
+      } else {
+        children.push(newNode)
+      }
       if (internalOptions.defferedFrom) {
         newNode.defferedFrom = internalOptions.defferedFrom
       }
-      children.push(newNode)
-      getGraphQLType.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
+      populateASTNode.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
       break
     // if its an inline fragment, it has some fields and we gotta recurse thru all them
     case 'InlineFragment':
