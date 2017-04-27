@@ -475,6 +475,10 @@ function parseArgValue(value, variableValues) {
     return parseFloat(value.value)
   case 'ListValue':
     return value.values.map(value => parseArgValue(value, variableValues))
+  case 'ObjectValue':
+    return value.fields.map(value => parseArgValue(value, variableValues));
+  case 'ObjectField':
+    return {[value.name.value]:name,value:value.value.value};
   default:
     return value.value
   }
