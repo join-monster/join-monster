@@ -83,7 +83,7 @@
     "graphsiql": "0.0.5",
     "in-publish": "^2.0.0",
     "jsdoc-to-markdown": "^3.0.0",
-    "knex": "^0.12.0",
+    "knex": "^0.13.0",
     "koa": "^2.0.1",
     "koa-cors": "0.0.16",
     "koa-custom-graphiql": "1.0.0",
