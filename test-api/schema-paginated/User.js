@@ -194,7 +194,10 @@ const User = new GraphQLObjectType({
       ... do {
         if (PAGINATE === 'offset') {
           ({
-            orderBy: 'id'
+            orderBy: {
+              id: 'ASC',
+              created_at: 'ASC'
+            }
           })
         } else if (PAGINATE === 'keyset') {
           ({
