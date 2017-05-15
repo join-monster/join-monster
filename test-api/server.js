@@ -5,7 +5,7 @@ import graphqlHTTP from 'koa-graphql'
 // module we created that lets you serve a custom build of GraphiQL
 import graphiql from 'koa-custom-graphiql'
 import koaStatic from 'koa-static'
-import cors from 'koa-cors'
+import cors from 'kcors'
 
 import schemaBasic from './schema-basic/index'
 import schemaRelay from './schema-paginated/index'
