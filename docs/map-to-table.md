@@ -37,7 +37,10 @@ const User = new GraphQLObjectType({
 })
 ```
 
-This can be a useful technique if you data *isn't actually modelled like Join Monster expects*. Placing VIEWs on top of your SQL tables is a good way to achieve logical data independence.
+This can be a useful technique if you data *isn't actually modelled like Join Monster expects*.
+Placing VIEWs on top of your SQL tables is a good way to achieve logical data independence.
+
+The `sqlTable` can also be a function, i.e. a *thunk*.
 
 ## Composite Keys
 

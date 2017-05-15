@@ -29,7 +29,7 @@ export default new GraphQLUnionType({
   )`,
   uniqueKey: [ 'id', '$type' ],
   types: () => [ Comment, Post ],
-  typeHint: '$type',
+  alwaysFetch: '$type',
   resolveType: obj => obj.$type
 })
 

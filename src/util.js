@@ -3,6 +3,7 @@ import assert from 'assert'
 import { nest } from 'nesthydrationjs'
 import stringifySQL from './stringifiers/dispatcher'
 import resolveUnions from './resolve-unions'
+import deprecate from 'deprecate'
 const debug = require('debug')('join-monster')
 
 import defineObjectShape from './define-object-shape'
@@ -159,8 +160,7 @@ export async function compileSqlAST(sqlAST, context, options) {
   // now convert the "SQL AST" to sql
   options.dialect = options.dialect || 'sqlite3'
   if (options.dialect === 'standard') {
-    console.warn('dialect "standard" is deprecated, because there is no true implementation of the SQL standard')
-    console.warn('"sqlite3" is the default')
+    deprecate('dialect "standard" is deprecated, because there is no true implementation of the SQL standard', '"sqlite3" is the default')
     options.dialect = 'sqlite3'
   }
   const sql = await stringifySQL(sqlAST, context, options)

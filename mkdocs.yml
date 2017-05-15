@@ -28,6 +28,7 @@ pages:
     - "One-to-many Batch": batch-one-many.md
     - "Many-to-many Batch": batch-many-many.md
   - "Advanced Usage":
+    - "Misc. Properties": misc.md
     - "Union & Interface Types": unions.md
     - "Aggregation Tricks": aggregation.md
     - "Pagination": pagination.md

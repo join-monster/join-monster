@@ -75,7 +75,7 @@ const Authored = new GraphQLUnionType({
 
 We can introduce a new column `"$type"` to not only provide a basis for a unique (composite) key, but also to disambiguate which object type each object should resolve to.
 This **will** address the uniqueness problem, but the actual hydrated data will not contain the `"$type"` (as it was not requested in the GraphQL query), so we cannot yet reference it in `resolveType`.
-Join Monster provides an optional `typeHint` property which is a column that will always appear in the hydrated data to help you implement `resolveType`.
+Join Monster provides an optional `alwaysFetch` property which forces that column to always appear in the hydrated data. You can use this to implement `resolveType`.
 
 ```js
 const Authored = new GraphQLUnionType({
@@ -84,7 +84,7 @@ const Authored = new GraphQLUnionType({
   sqlTable: `(...)`,
   uniqueKey: [ 'id', '$type' ],
   // tells join monster to always fetch the $type in the hydrated data
-  typeHint: '$type',
+  alwaysFetch: '$type',
   // easily gleaned from the column we added in SQL
   resolveType: obj => obj.$type
 })
@@ -121,7 +121,7 @@ const Authored = new GraphQLInterfaceType({
   )`,
   // the combination of `id` and `$type` will always be unique
   uniqueKey: [ 'id', '$type' ],
-  typeHint: '$type',
+  alwaysFetch: '$type',
   fields: () => ({
     id: {
       // still assumed to have the same column name as the field name

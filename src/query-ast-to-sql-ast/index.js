@@ -2,6 +2,7 @@ import assert from 'assert'
 import { flatMap } from 'lodash'
 import AliasNamespace from '../alias-namespace'
 import { wrap } from '../util'
+import deprecate from 'deprecate'
 
 const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
 
@@ -176,7 +177,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   } else if (field.junctionTable || field.joinTable) {
     assert(field.sqlJoins || field.junctionBatch, 'Must define `sqlJoins` (plural) or `junctionBatch` for a many-to-many.')
     if (field.joinTable) {
-      console.warn('The `joinTable` is deprecated. Rename to `junctionTable`.')
+      deprecate('The `joinTable` is deprecated. Rename to `junctionTable`.')
     }
     const junctionTable = field.junctionTable || field.joinTable
     sqlASTNode.junctionTable = junctionTable
@@ -218,20 +219,18 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
     throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${sqlTable}`)
   }
   children.push(keyToASTChild(config.uniqueKey, namespace))
+
   if (config.alwaysFetch) {
     for (let column of wrap(config.alwaysFetch)) {
       children.push(columnToASTChild(column, namespace))
     }
   }
 
-  // this is for helping resolve types in union types
+  // this was created for helping resolve types in union types
+  // its been generalized to `alwaysFetch`, as its a useful feature for more than just unions
   if (config.typeHint && [ 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name)) {
-    children.push({
-      type: 'column',
-      name: config.typeHint,
-      fieldName: config.typeHint,
-      as: namespace.generate('column', config.typeHint)
-    })
+    deprecate('`typeHint` is deprecated. Use `alwaysFetch` instead.')
+    children.push(columnToASTChild(config.typeHint, namespace))
   }
 
   // go handle the pagination information

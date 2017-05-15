@@ -31,7 +31,7 @@ export const Authored = new GraphQLInterfaceType({
     FROM ${q('comments', DB)}
   )`,
   uniqueKey: [ 'id', '$type' ],
-  typeHint: '$type',
+  alwaysFetch: '$type',
   fields: () => ({
     id: {
       type: GraphQLID
