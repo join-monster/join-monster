@@ -1,5 +1,7 @@
 import { chain } from 'lodash'
 
+// union types have additional processing. the field names have a @ and the typename appended to them.
+// need to strip those off and take whichever of those values are non-null
 export default function resolveUnions(data, sqlAST) {
   if (!data || (Array.isArray(data) && data.length === 0)) {
     return 
@@ -59,3 +61,4 @@ export default function resolveUnions(data, sqlAST) {
     }
   }
 }
+
