@@ -189,7 +189,6 @@ const User = new GraphQLObjectType({
     },
     writtenMaterial: {
       type: AuthoredConnection,
-      orderBy: 'id',
       args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
       sqlPaginate: !!PAGINATE,
       ... do {
@@ -201,11 +200,12 @@ const User = new GraphQLObjectType({
           ({
             sortKey: {
               order: 'ASC',
-              key: 'id'
+              key: [ 'id', 'created_at' ]
             }
           })
         } else {
           ({
+            orderBy: 'id',
             resolve: (user, args) => {
               return connectionFromArray(user.following, args)
             }

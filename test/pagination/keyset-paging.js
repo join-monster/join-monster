@@ -595,8 +595,8 @@ test('should handle an interface type', async t => {
     pageInfo: {
       hasNextPage: true,
       hasPreviousPage: false,
-      startCursor: 'eyJpZCI6MX0=',
-      endCursor: 'eyJpZCI6M30='
+      startCursor: 'eyJpZCI6MSwiY3JlYXRlZF9hdCI6IjIwMTYtMDctMTFUMDA6MjE6MjIuNTEwWiJ9',
+      endCursor: 'eyJpZCI6MywiY3JlYXRlZF9hdCI6IjIwMTYtMDEtMzFUMDk6MTA6MTIuOTQ2WiJ9'
     },
     edges: [
       {
