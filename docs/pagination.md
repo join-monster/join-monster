@@ -351,7 +351,7 @@ const Post = new GraphQLObjectType({
   fields: () => ({
     // ...
     comments: {
-      type: new GraphQLList(CommentConnection),
+      type: CommentConnection,
       sqlPaginate: true,
       sortKey: {
         order: 'desc',
@@ -368,3 +368,25 @@ const Post = new GraphQLObjectType({
   })
 })
 ```
+
+## LIMIT without pagination
+
+If you just want to limit the number of results in a list field, but don't want the Connection type and arguments, you can just use the `limit` and `orderBy` properties on that field.
+
+```javascript
+const Post = new GraphQLObjectType({
+  // ...
+  fields: () => ({
+    // ...
+    only3Comments: {
+      type: new GraphQLList(Comment),
+      orderBy: { id: 'desc' },
+      limit: 3,
+      sqlJoin: (userTable, commentTable) => `${commentTable}.author_id = ${userTable}.id` 
+    }
+  })
+})
+```
+
+The `limit` can be an integer or a function that returns an integer. This feature is only supported if pagination is supported for you SQL dialect.
+

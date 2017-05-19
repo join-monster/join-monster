@@ -205,7 +205,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 
   if (field.limit) {
     assert(field.orderBy, '`orderBy` is required with `limit`')
-    sqlASTNode.limit = field.limit
+    sqlASTNode.limit = typeof field.limit === 'function' ? field.limit(sqlASTNode.args || {}, context) : field.limit
   }
 
   /*
@@ -503,7 +503,7 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
 function getSortColumns(field, sqlASTNode, context) {
   if (field.sortKey) {
     if (typeof field.sortKey === 'function') {
-      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args, context)
+      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args || {}, context)
     } else {
       sqlASTNode.sortKey = field.sortKey
     }

@@ -90,7 +90,7 @@ const User = new GraphQLObjectType({
     commentsLast2: {
       type: new GraphQLList(Comment),
       orderBy: { id: 'desc' },
-      limit: 2,
+      limit: () => 2,
       ...STRATEGY === 'batch' ?
         { sqlBatch:
           { thisKey: 'author_id',
