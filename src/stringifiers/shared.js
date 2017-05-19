@@ -113,8 +113,11 @@ export function interpretForOffsetPaging(node, dialect) {
   const orderColumns = handleOrderBy(node.orderBy)
   let offset = 0
   if (node.args && node.args.first) {
+    limit = parseInt(node.args.first)
     // we'll get one extra item (hence the +1). this is to determine if there is a next page or not
-    limit = parseInt(node.args.first) + 1
+    if (node.paginate) {
+      limit++
+    }
     if (node.args.after) {
       offset = cursorToOffset(node.args.after) + 1
     }

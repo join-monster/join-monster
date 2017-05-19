@@ -79,6 +79,14 @@ export default new GraphQLObjectType({
         return PAGINATE ? data : connectionFromArray(data, args)
       }
     },
+    usersFirst2: {
+      type: new GraphQLList(User),
+      limit: 2,
+      orderBy: 'id',
+      resolve: (parent, args, context, resolveInfo) => {
+        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+      }
+    },
     user: {
       type: User,
       args: {

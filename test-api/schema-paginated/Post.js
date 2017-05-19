@@ -100,6 +100,10 @@ export const Post = new GraphQLObjectType({
     },
     archived: {
       type: GraphQLBoolean
+    },
+    createdAt: {
+      type: GraphQLString,
+      sqlColumn: 'created_at'
     }
   })
 })

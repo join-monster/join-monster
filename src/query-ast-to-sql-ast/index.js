@@ -203,6 +203,11 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
     }
   }
 
+  if (field.limit) {
+    assert(field.orderBy, '`orderBy` is required with `limit`')
+    sqlASTNode.limit = field.limit
+  }
+
   /*
    * figure out the necessary children. this includes the columns join monster needs, the ones the user needs,
    * and finding out how to map those to the field names

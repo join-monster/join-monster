@@ -15,7 +15,7 @@ import {
 } from 'graphql-relay'
 
 import { PostConnection } from './Post'
-import { CommentConnection } from './Comment'
+import { Comment, CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
 import { AuthoredConnection } from './Authored/Interface'
 import { q, bool } from '../shared'
@@ -86,6 +86,16 @@ const User = new GraphQLObjectType({
           })
         }
       }
+    },
+    commentsLast2: {
+      type: new GraphQLList(Comment),
+      orderBy: { id: 'desc' },
+      limit: 2,
+      ...STRATEGY === 'batch' ?
+        { sqlBatch:
+          { thisKey: 'author_id',
+            parentKey: 'id' } } :
+        { sqlJoin: (userTable, commentTable) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}` }
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -165,8 +175,32 @@ const User = new GraphQLObjectType({
           })
         }
       },
-      //junctionTable: q('relationships', DB),
       junctionTable: `(SELECT * FROM ${q('relationships', DB)})`,
+      ... do {
+        if (STRATEGY === 'batch' || STRATEGY === 'mix') {
+          ({
+            junctionTableKey: [ 'follower_id', 'followee_id' ],
+            junctionBatch: {
+              thisKey: 'follower_id',
+              parentKey: 'id',
+              sqlJoin: (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
+            }
+          })
+        } else {
+          ({
+            sqlJoins: [
+              (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)}`,
+              (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
+            ]
+          })
+        }
+      }
+    },
+    followingFirst: {
+      type: new GraphQLList(User),
+      limit: 1,
+      orderBy: 'followee_id',
+      junctionTable: q('relationships', DB),
       ... do {
         if (STRATEGY === 'batch' || STRATEGY === 'mix') {
           ({
