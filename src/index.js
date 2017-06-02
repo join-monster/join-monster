@@ -91,6 +91,20 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // so far we handled the first "batch". up until now, additional batches were ignored
   // this function recursively scanss the sqlAST and runs remaining batches
   await nextBatch(sqlAST, data, dbCall, context, options)
+
+  // check for batch data
+  if (Array.isArray(data)) {
+    const childrenToCheck = sqlAST.children.filter(child => child.sqlBatch)
+    return data.filter(d => {
+      for(const child of childrenToCheck) {
+        if (d[child.fieldName] == null) {
+          return false
+        }
+      }
+      return true
+    })
+  }
+
   return data
 }
 
