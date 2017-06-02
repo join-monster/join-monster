@@ -2,7 +2,7 @@
 
 SQL is not copy-paste portable.
 Each database vendor implements SQL differently.
-You can use `joinMonster`'s options argument to pick your dialect (see [details](/API/#joinMonster)).
+You can use `joinMonster`'s options argument to pick your dialect (see [details](/docs/API.md#joinMonster)).
 Here is a list of the currently supported SQL dialects. 
 
 | Dialect | Pagination | Description |
