@@ -56,7 +56,7 @@ module.exports = async db => {
   console.log('creating relationships...')
   const relationships = []
   const used = new Set
-  for (let i of count(numRelationships)) {
+  for (let __ of count(numRelationships)) {
     const follower_id = faker.random.number({ min: 1, max: numUsers })
     const followee_id = faker.random.number({ min: 1, max: numUsers })
     const key = `${follower_id}-${followee_id}`
@@ -75,7 +75,7 @@ module.exports = async db => {
   console.log('creating likes...')
   const likes = []
   const usedLikes = new Set
-  for (let i of count(numLikes)) {
+  for (let __ of count(numLikes)) {
     const account_id = faker.random.number({ min: 1, max: numUsers })
     const comment_id = faker.random.number({ min: 1, max: numComments })
     const key = `${account_id}-${comment_id}`

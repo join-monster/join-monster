@@ -28,6 +28,17 @@ export function wrap(maybeArr) {
   return [ maybeArr ]
 }
 
+export function ensure(obj, prop, name) {
+  if (!obj[prop]) {
+    throw new Error(`property "${prop}" must be defined on object: ${name || util.inspect(obj)}`)
+  }
+  return obj[prop]
+}
+
+export function unthunk(val, ...args) {
+  return typeof val === 'function' ? val(...args) : val
+}
+
 export function validateSqlAST(topNode) {
   // TODO: this could be a bit more comprehensive
   assert(topNode.sqlJoin == null, 'root level field can not have "sqlJoin"')

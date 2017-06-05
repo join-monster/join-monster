@@ -16,11 +16,7 @@ export function quotePrefix(prefix, q = doubleQuote) {
 }
 
 export function thisIsNotTheEndOfThisBatch(node, parent) {
-  return (!node.sqlBatch && !node.junctionBatch) || !parent
-}
-
-export function thisIsTheEndOfThisBatch(node, parent) {
-  return (node.sqlBatch || node.junctionBatch) && parent
+  return (!node.sqlBatch && !(node.junction && node.junction.sqlBatch)) || !parent
 }
 
 export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent) {

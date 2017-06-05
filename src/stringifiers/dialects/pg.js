@@ -43,35 +43,35 @@ const dialect = module.exports = {
 
   handleBatchedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, joinCondition) {
     const pagingWhereConditions = [
-      `"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
+      `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}" = temp."${node.junction.sqlBatch.parentKey.name}"`
     ]
     if (node.where) {
       pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
     }
 
-    const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junctionBatch.parentKey.name}")`
+    const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junction.sqlBatch.parentKey.name}")`
     tables.push(tempTable)
-    const lateralJoinCondition = `"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = temp."${node.junctionBatch.parentKey.name}"`
+    const lateralJoinCondition = `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}" = temp."${node.junction.sqlBatch.parentKey.name}"`
 
     if (node.sortKey) {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, node.junctionTableAs, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
+      tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, node.junction.as, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
-      tables.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
+      tables.push(offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, offset, node.junction.as, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
     }
     tables.push(`LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`)
 
     orders.push({
-      table: node.junctionTableAs,
+      table: node.junction.as,
       columns: orderColumns
     })
   },
 
   handleJoinedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1) {
     const pagingWhereConditions = [
-      await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
+      await node.junction.sqlJoins[0](`"${parent.as}"`, `"${node.junction.as}"`, node.args || {}, context)
     ]
     if (node.where) {
       pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
@@ -80,13 +80,13 @@ const dialect = module.exports = {
     if (node.sortKey) {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, node.junctionTableAs, { joinCondition: joinCondition1, joinType: 'LEFT' }))
+      tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, node.junction.as, { joinCondition: joinCondition1, joinType: 'LEFT' }))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
-      tables.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, { joinCondition: joinCondition1, joinType: 'LEFT' }))
+      tables.push(offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, offset, node.junction.as, { joinCondition: joinCondition1, joinType: 'LEFT' }))
     }
     orders.push({
-      table: node.junctionTableAs,
+      table: node.junction.as,
       columns: orderColumns
     })
   },

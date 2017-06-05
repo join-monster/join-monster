@@ -1,10 +1,11 @@
 import assert from 'assert'
 import { flatMap } from 'lodash'
 import AliasNamespace from '../alias-namespace'
-import { wrap } from '../util'
+import { wrap, ensure, unthunk } from '../util'
 import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
 
+// an enumeration of all the types that can map to SQL tables
 const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
 
 export function queryASTToSqlAST(resolveInfo, options, context) {
@@ -101,7 +102,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     && config.sqlTable
   ) {
     if (depth >= 1) {
-      assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
+      assert(field.sqlJoin || field.sqlBatch || field.junction, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junction" on that field to tell joinMonster how to fetch it. Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
     }
     handleTable.call(this, sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options, context)
   // is this a computed column from a raw expression?
@@ -136,10 +137,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   const config = gqlType._typeConfig
 
   sqlASTNode.type = 'table'
-  let sqlTable = config.sqlTable
-  if (typeof sqlTable === 'function') {
-    sqlTable = sqlTable(sqlASTNode.args || {}, context)
-  }
+  const sqlTable = unthunk(config.sqlTable, sqlASTNode.args || {}, context)
   sqlASTNode.name = sqlTable
 
   // the graphQL field name will be the default alias for the table
@@ -147,7 +145,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   sqlASTNode.as = namespace.generate('table', field.name)
 
   if (field.orderBy && !sqlASTNode.orderBy) {
-    handleOrderBy(sqlASTNode, field, context)
+    sqlASTNode.orderBy = unthunk(field.orderBy, sqlASTNode.args || {}, context)
   }
 
   // tables have child fields, lets push them to an array
@@ -169,31 +167,30 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   if (field.sqlJoin) {
     sqlASTNode.sqlJoin = field.sqlJoin
   // or a many-to-many?
-  } else if (field.junctionTable || field.joinTable) {
-    assert(field.sqlJoins || field.junctionBatch, 'Must define `sqlJoins` (plural) or `junctionBatch` for a many-to-many.')
-    if (field.joinTable) {
-      deprecate('The `joinTable` is deprecated. Rename to `junctionTable`.')
+  } else if (field.junction) {
+    const junctionTable = unthunk(ensure(field.junction, 'sqlTable'), sqlASTNode.args || {}, context)
+    const junction = sqlASTNode.junction = {
+      sqlTable: junctionTable
     }
-    const junctionTable = field.junctionTable || field.joinTable
-    sqlASTNode.junctionTable = junctionTable
-    // we need to generate an alias for their junction table. we'll just take the alphanumeric characters from the junction table expression
-    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable)
+    junction.as = namespace.generate('table', junctionTable)
     // are they joining or batching?
-    if (field.sqlJoins) {
-      sqlASTNode.sqlJoins = field.sqlJoins
-    } else {
+    if (field.junction.sqlJoins) {
+      junction.sqlJoins = field.junction.sqlJoins
+    } else if (field.junction.sqlBatch) {
       children.push({
-        ...keyToASTChild(field.junctionTableKey, namespace),
-        fromOtherTable: sqlASTNode.junctionTableAs,
+        ...keyToASTChild(ensure(field.junction, 'uniqueKey'), namespace),
+        fromOtherTable: junction.as,
       })
-      sqlASTNode.junctionBatch = {
-        sqlJoin: field.junctionBatch.sqlJoin,
+      junction.sqlBatch = {
+        sqlJoin: field.junction.sqlBatch.sqlJoin,
         thisKey: {
-          ...columnToASTChild(field.junctionBatch.thisKey, namespace),
-          fromOtherTable: sqlASTNode.junctionTableAs
+          ...columnToASTChild(ensure(field.junction.sqlBatch, 'thisKey'), namespace),
+          fromOtherTable: junction.as
         },
-        parentKey: columnToASTChild(field.junctionBatch.parentKey, namespace)
+        parentKey: columnToASTChild(ensure(field.junction.sqlBatch, 'parentKey'), namespace)
       }
+    } else {
+      throw new Error('junction requires either a `sqlJoins` or `sqlBatch`')
     }
   // or are they doing a one-to-many with batching
   } else if (field.sqlBatch) {
@@ -205,7 +202,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 
   if (field.limit) {
     assert(field.orderBy, '`orderBy` is required with `limit`')
-    sqlASTNode.limit = typeof field.limit === 'function' ? field.limit(sqlASTNode.args || {}, context) : field.limit
+    sqlASTNode.limit = unthunk(field.limit, sqlASTNode.args || {}, context)
   }
 
   /*
@@ -414,8 +411,8 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
         as: namespace.generate('column', column)
       }
       // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
-      if (sqlASTNode.junctionTable) {
-        newChild.fromOtherTable = sqlASTNode.junctionTableAs
+      if (sqlASTNode.junction) {
+        newChild.fromOtherTable = sqlASTNode.junction.as
       }
       sqlASTNode.children.push(newChild)
     }
@@ -428,8 +425,8 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
       fieldName: '$total',
       as: namespace.generate('column', '$total')
     }
-    if (sqlASTNode.junctionTable) {
-      newChild.fromOtherTable = sqlASTNode.junctionTableAs
+    if (sqlASTNode.junction) {
+      newChild.fromOtherTable = sqlASTNode.junction.as
     }
     sqlASTNode.children.push(newChild)
   }
@@ -502,25 +499,14 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
 
 function getSortColumns(field, sqlASTNode, context) {
   if (field.sortKey) {
-    if (typeof field.sortKey === 'function') {
-      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args || {}, context)
-    } else {
-      sqlASTNode.sortKey = field.sortKey
-    }
+    sqlASTNode.sortKey = unthunk(field.sortKey, sqlASTNode.args || {}, context)
   } else if (field.orderBy) {
-    handleOrderBy(sqlASTNode, field, context)
+    sqlASTNode.orderBy = unthunk(field.orderBy, sqlASTNode.args || {}, context)
   } else {
     throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
   }
 }
 
-function handleOrderBy(sqlASTNode, field, context) {
-  if (typeof field.orderBy === 'function') {
-    sqlASTNode.orderBy = field.orderBy(sqlASTNode.args || {}, context)
-  } else {
-    sqlASTNode.orderBy = field.orderBy
-  }
-}
 
 // instead of fields, selections can be fragments, which is another group of selections
 // fragments can be arbitrarily nested

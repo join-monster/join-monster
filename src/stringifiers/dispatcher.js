@@ -139,13 +139,13 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     }
   
   // many-to-many using batching
-  } else if (node.junctionTable && node.junctionBatch) {
+  } else if (node.junction && node.junction.sqlBatch) {
     if (parent) {
       selections.push(
-        `${q(parent.as)}.${q(node.junctionBatch.parentKey.name)} AS ${q(joinPrefix(prefix) + node.junctionBatch.parentKey.as)}`
+        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} AS ${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
       )
     } else {
-      const joinCondition = await node.junctionBatch.sqlJoin(`${q(node.junctionTableAs)}`, q(node.as), node.args || {}, context)
+      const joinCondition = await node.junction.sqlBatch.sqlJoin(`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
       if (node.paginate) {
         await dialect.handleBatchedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, joinCondition)
 
@@ -154,19 +154,18 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
         await dialect.handleBatchedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, joinCondition)
       } else {
         tables.push(
-          `FROM ${node.junctionTable} ${q(node.junctionTableAs)}`,
+          `FROM ${node.junction.sqlTable} ${q(node.junction.as)}`,
           `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
         )
         // ensures only the correct records are fetched using the value of the parent key
-        wheres.push(`${q(node.junctionTableAs)}.${q(node.junctionBatch.thisKey.name)} IN (${batchScope.join(',')})`)
+        wheres.push(`${q(node.junction.as)}.${q(node.junction.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`)
       }
     }
 
   // many-to-many using JOINs
-  } else if (node.junctionTable) {
-    assert(node.sqlJoins, 'Must set "sqlJoins" for a join table.')
-    const joinCondition1 = await node.sqlJoins[0](`${q(parent.as)}`, q(node.junctionTableAs), node.args || {}, context)
-    const joinCondition2 = await node.sqlJoins[1](`${q(node.junctionTableAs)}`, q(node.as), node.args || {}, context)
+  } else if (node.junction && node.junction.sqlTable) {
+    const joinCondition1 = await node.junction.sqlJoins[0](`${q(parent.as)}`, q(node.junction.as), node.args || {}, context)
+    const joinCondition2 = await node.junction.sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
 
     if (node.paginate) {
       await dialect.handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1)
@@ -177,7 +176,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
     } else {
       tables.push(
-        `LEFT JOIN ${node.junctionTable} ${q(node.junctionTableAs)} ON ${joinCondition1}`
+        `LEFT JOIN ${node.junction.sqlTable} ${q(node.junction.as)} ON ${joinCondition1}`
       )
     }
     tables.push(

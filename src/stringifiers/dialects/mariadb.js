@@ -101,23 +101,23 @@ const dialect = module.exports = {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
       const unions = batchScope.map(val => {
-        let whereConditions = [ ...pagingWhereConditions, `${quote(node.junctionTableAs)}.${quote(node.junctionBatch.thisKey.name)} = ${val}` ]
+        let whereConditions = [ ...pagingWhereConditions, `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}` ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.junctionTable, node.junctionTableAs, whereConditions, orderColumns, limit, offset, true)
+        return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, orderColumns, limit, offset, true)
       })
-      joins.push(joinUnions(unions, node.junctionTableAs))
+      joins.push(joinUnions(unions, node.junction.as))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
       const unions = batchScope.map(val => {
-        let whereConditions = [ ...pagingWhereConditions, `${quote(node.junctionTableAs)}.${quote(node.junctionBatch.thisKey.name)} = ${val}` ]
+        let whereConditions = [ ...pagingWhereConditions, `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}` ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.junctionTable, node.junctionTableAs, whereConditions, orderColumns, limit, offset, true)
+        return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, orderColumns, limit, offset, true)
       })
-      joins.push(joinUnions(unions, node.junctionTableAs))
+      joins.push(joinUnions(unions, node.junction.as))
     }
     joins.push(`LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`)
     orders.push({
-      table: node.junctionTableAs,
+      table: node.junction.as,
       columns: orderColumns
     })
   }
