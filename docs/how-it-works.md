@@ -1,5 +1,5 @@
 ## Overview
-[Join Monster](https://github.com/stems/join-monster) fetches only the data you need - *nothing more, nothing less*, just like to original philosophy of GraphQL.
+[Join Monster](https://github.com/stems/join-monster) fetches only the data you need - *nothing more, nothing less*, just like the original philosophy of GraphQL.
 It reads the parsed GraphQL query, looks at your schema definition, and automatically generates the SQL that will fetch no more than what is required to fulfill the request.
 All data fetching for all resources can be done in one or a few queries using the power of `JOIN`s.
 

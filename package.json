@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "1.2.4-beta.1",
+  "version": "1.2.5-beta.1",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -68,7 +68,7 @@
   },
   "homepage": "https://github.com/stems/join-monster#readme",
   "peerDependencies": {
-    "graphql": "0.6 || 0.7 || 0.8 || 0.9"
+    "graphql": "0.6 || 0.7 || 0.8 || 0.9 || 0.10"
   },
   "devDependencies": {
     "ava": "^0.19.1",
@@ -79,14 +79,14 @@
     "babel-watch": "^2.0.3-rc0",
     "eslint": "^3.9.0",
     "faker": "^4.1.0",
-    "graphql": "^0.9.0",
+    "graphql": "^0.10.1",
     "graphsiql": "0.0.5",
     "in-publish": "^2.0.0",
     "jsdoc-to-markdown": "^3.0.0",
     "kcors": "^2.2.1",
     "knex": "^0.12.0",
     "koa": "^2.0.1",
-    "koa-custom-graphiql": "1.0.0",
+    "koa-custom-graphiql": "1.0.1",
     "koa-graphql": "^0.7.0",
     "koa-router": "^7.1.1",
     "koa-static": "^3.0.0",

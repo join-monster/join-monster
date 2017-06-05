@@ -61,10 +61,19 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
             obj[fieldName] = newData[obj[parentKey]] || []
           }
         } else {
+          let matchedData = []
           for (let obj of data) {
-            obj[fieldName] = arrToConnection(newData[obj[parentKey]][0], childAST)
+            const ob = newData[obj[parentKey]]
+            if (ob) {
+              obj[fieldName] = arrToConnection(newData[obj[parentKey]][0], childAST)
+              matchedData.push(obj)
+            } else {
+              obj[fieldName] = null
+            }
           }
+          data = matchedData
         }
+
         // move down a level and recurse
         const nextLevelData = chain(data).filter(obj => obj !== null).flatMap(obj => obj[fieldName]).value()
         return nextBatch(childAST, nextLevelData, dbCall, context, options)
