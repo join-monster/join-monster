@@ -5,6 +5,19 @@ import { wrap, ensure, unthunk } from '../util'
 import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
 
+class SQLASTNode {
+  constructor(parentNode, props) {
+    Object.defineProperty(this, '_parent', {
+      enumerable: false,
+      value: parentNode
+    })
+
+    for (let prop in props) {
+      this[prop] = props[prop]
+    }
+  }
+}
+
 // an enumeration of all the types that can map to SQL tables
 const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
 
@@ -52,6 +65,16 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   let field = parentTypeNode._fields[fieldName]
   if (!field) {
     throw new Error(`The field "${fieldName}" is not in the ${parentTypeNode.name} type.`)
+  }
+
+  let fieldIncludes
+  if (sqlASTNode._parent && sqlASTNode._parent.junction && sqlASTNode._parent.junction.include && sqlASTNode._parent.junction.include[fieldName]) {
+    fieldIncludes = sqlASTNode._parent.junction.include[fieldName]
+    field = {
+      ...field,
+      ...fieldIncludes
+    }
+    sqlASTNode.fromOtherTable = sqlASTNode._parent.junction.as
   }
 
   // allow for explicit ignoring of fields
@@ -170,9 +193,12 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   } else if (field.junction) {
     const junctionTable = unthunk(ensure(field.junction, 'sqlTable'), sqlASTNode.args || {}, context)
     const junction = sqlASTNode.junction = {
-      sqlTable: junctionTable
+      sqlTable: junctionTable,
+      as: namespace.generate('table', junctionTable)
     }
-    junction.as = namespace.generate('table', junctionTable)
+    if (field.junction.include) {
+      junction.include = field.junction.include
+    }
     // are they joining or batching?
     if (field.junction.sqlJoins) {
       junction.sqlJoins = field.junction.sqlJoins
@@ -182,7 +208,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
         fromOtherTable: junction.as,
       })
       junction.sqlBatch = {
-        sqlJoin: field.junction.sqlBatch.sqlJoin,
+        sqlJoin: ensure(field.junction.sqlBatch, 'sqlJoin'),
         thisKey: {
           ...columnToASTChild(ensure(field.junction.sqlBatch, 'thisKey'), namespace),
           fromOtherTable: junction.as
@@ -255,7 +281,7 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
     case 'Field':
       // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
       const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
-      let newNode = {}
+      let newNode = new SQLASTNode(sqlASTNode)
       if (existingNode) {
         newNode = existingNode
       } else {
@@ -316,7 +342,7 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
     case 'Field':
       // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
       const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
-      let newNode = {}
+      let newNode = new SQLASTNode(sqlASTNode)
       if (existingNode) {
         newNode = existingNode
       } else {
@@ -485,10 +511,10 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
     // now that we collected the "columnDeps", add them all to one node
     // the "names" property will put all the column names in an object as keys
     // the values of this object will be the SQL alias
-    const newNode = {
+    const newNode = new SQLASTNode(sqlAST, {
       type: 'columnDeps',
       names: {}
-    }
+    })
     deps.forEach(name => {
       newNode.names[name] = namespace.generate('column', name)
     })

@@ -327,6 +327,7 @@ test('handle a conection type with a many-to-many', async t => {
         edges {
           node {
             id
+            intimacy
             fullName
           }
         }
@@ -341,8 +342,8 @@ test('handle a conection type with a many-to-many', async t => {
     endCursor: objToCursor({ created_at: '2016-06-15T08:56:18.519Z', followee_id: 2 })
   })
   t.deepEqual(data.user.following.edges, [
-    { node: { id: toGlobalId('User', 3), fullName: 'Coleman Abernathy' } },
-    { node: { id: toGlobalId('User', 2), fullName: 'Hudson Hyatt' } }
+    { node: { id: toGlobalId('User', 3), fullName: 'Coleman Abernathy', intimacy: 'acquaintance' } },
+    { node: { id: toGlobalId('User', 2), fullName: 'Hudson Hyatt', intimacy: 'acquaintance' } }
   ])
 })
 

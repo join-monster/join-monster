@@ -102,6 +102,12 @@ const User = new GraphQLObjectType({
       orderBy: 'first_name',
       junction: {
         sqlTable: q('relationships', DB),
+        include: {
+          intimacy: {
+            sqlColumn: 'closeness',
+            jmIgnoreAll: false
+          }
+        },
         ...[ 'batch', 'mix' ].includes(STRATEGY) ? {
           uniqueKey: [ 'follower_id', 'followee_id' ],
           sqlBatch: {
@@ -116,6 +122,10 @@ const User = new GraphQLObjectType({
           ]
         }
       }
+    },
+    intimacy: {
+      type: GraphQLString,
+      jmIgnoreAll: true
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),

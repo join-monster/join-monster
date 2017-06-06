@@ -180,6 +180,12 @@ const User = new GraphQLObjectType({
       },
       junction: {
         sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
+        include: {
+          intimacy: {
+            sqlColumn: 'closeness',
+            jmIgnoreAll: false
+          }
+        },
         ... do {
           if (STRATEGY === 'batch' || STRATEGY === 'mix') {
             ({
@@ -227,6 +233,10 @@ const User = new GraphQLObjectType({
           }
         }
       }
+    },
+    intimacy: {
+      type: GraphQLString,
+      jmIgnoreAll: true
     },
     writtenMaterial: {
       type: AuthoredConnection,
