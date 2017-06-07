@@ -20,7 +20,7 @@ export function thisIsNotTheEndOfThisBatch(node, parent) {
 }
 
 export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent) {
-  return !node.paginate && (!node.sqlBatch || !parent)
+  return !node.paginate && (!(node.sqlBatch || (node.junction && node.junction.sqlBatch)) || !parent)
 }
 
 export function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, options = {}) {

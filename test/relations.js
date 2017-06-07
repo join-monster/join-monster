@@ -3,7 +3,12 @@ import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
 import { partial } from 'lodash'
 
-function wrap(query) {
+function wrap(query, id) {
+  if (id) {
+    return `{
+      user(id: ${id}) { ${query} }
+    }`
+  }
   return `{
     users { ${query} }
   }`
@@ -90,30 +95,22 @@ test('should join on a nested relation', async t => {
           {
             id: 1,
             body: 'Wow this is a great post, Matt.',
-            author: {
-              fullName: 'andrew carlson'
-            }
+            author: { fullName: 'andrew carlson' }
           },
           {
             id: 4,
             body: 'Do not forget to check out the demo.',
-            author: {
-              fullName: 'andrew carlson'
-            }
+            author: { fullName: 'andrew carlson' }
           },
           {
             id: 6,
             body: 'Also, submit a PR if you have a feature you want to add.',
-            author: {
-              fullName: 'andrew carlson'
-            }
+            author: { fullName: 'andrew carlson' }
           },
           {
             id: 8,
             body: 'Somebody please help me with this library. It is so much work.',
-            author: {
-              fullName: 'andrew carlson'
-            }
+            author: { fullName: 'andrew carlson' }
           }
         ]
       },
@@ -122,9 +119,7 @@ test('should join on a nested relation', async t => {
           {
             id: 7,
             body: 'FIRST COMMENT!',
-            author: {
-              fullName: 'matt elder'
-            }
+            author: { fullName: 'matt elder' }
           }
         ]
       },
@@ -133,30 +128,22 @@ test('should join on a nested relation', async t => {
           {
             id: 2,
             body: 'That\'s super weird dude.',
-            author: {
-              fullName: 'foo bar'
-            }
+            author: { fullName: 'foo bar' }
           },
           {
             id: 3,
             body: 'That\'s ultra weird bro.',
-            author: {
-              fullName: 'foo bar'
-            }
+            author: { fullName: 'foo bar' }
           },
           {
             id: 5,
             body: 'This sucks. Go use REST you scrub.',
-            author: {
-              fullName: 'foo bar'
-            }
+            author: { fullName: 'foo bar' }
           },
           {
             id: 9,
             body: 'Yeah well Java 8 added lambdas.',
-            author: {
-              fullName: 'foo bar'
-            }
+            author: { fullName: 'foo bar' }
           }
         ]
       }
@@ -166,26 +153,24 @@ test('should join on a nested relation', async t => {
 })
 
 test('should handle where conditions on the relations', async t => {
-  const query = `{
-    user(id: 2) {
-      posts(active: true) {
-        id
-        body
-        archived
-        numComments
-        comments(active: true) {
-          id
-          body
-          archived
-        }
-      }
+  const query = wrap(`
+    posts(active: true) {
+      id
+      body
+      archived
+      numComments
       comments(active: true) {
         id
-        archived
         body
+        archived
       }
     }
-  }`
+    comments(active: true) {
+      id
+      archived
+      body
+    }
+  `, 2)
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
@@ -211,6 +196,28 @@ test('should handle where conditions on the relations', async t => {
         }
       ],
       comments: []
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('should handle where condition on many-to-many relation', async t => {
+  const query = wrap(`
+    id
+    fullName
+    following(name: "matt") {
+      fullName
+    }
+  `, 3)
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      id: 3,
+      fullName: 'foo bar',
+      following: [
+        { fullName: 'matt elder' }
+      ]
     }
   }
   t.deepEqual(expect, data)
@@ -538,16 +545,14 @@ test('it should handle fragments nested lower', async t => {
 })
 
 test('should handle a correlated subquery', async t => {
-  const query = `{
-    user(id: 2) {
-      posts(active: false) {
-        id
-        body
-        archived
-        numComments
-      }
+  const query = wrap(`
+    posts(active: false) {
+      id
+      body
+      archived
+      numComments
     }
-  }`
+  `, 2)
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {

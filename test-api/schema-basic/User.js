@@ -99,7 +99,11 @@ const User = new GraphQLObjectType({
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
+      args: {
+        name: { type: GraphQLString }
+      },
       orderBy: 'first_name',
+      where: (table, args) => args.name ? `${table}.${q('first_name', DB)} = '${args.name}'` : false,
       junction: {
         sqlTable: q('relationships', DB),
         include: {

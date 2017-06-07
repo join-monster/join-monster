@@ -357,6 +357,6 @@ test('should handle fragments recursively', async t => {
       }
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
