@@ -13,6 +13,10 @@ const dialect = module.exports = {
     return `"${str}"`
   },
 
+  limit(limit) {
+    return ` LIMIT ${limit} `
+  },
+
   compositeKey(parent, keys) {
     keys = keys.map(key => `"${parent}"."${key}"`)
     return `NULLIF(CONCAT(${keys.join(', ')}), '')`
