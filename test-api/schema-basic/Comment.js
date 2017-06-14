@@ -60,7 +60,8 @@ export default new GraphQLObjectType({
       sqlJoins: [
         (commentTable, likesTable) => `${commentTable}.${q('id', DB)} = ${likesTable}.${q('comment_id', DB)}`,
         (likesTable, userTable) => `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
-      ]
+      ],
+      limit: 4
     },
     archived: {
       type: GraphQLBoolean

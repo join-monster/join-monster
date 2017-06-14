@@ -14,7 +14,7 @@ export default async function stringifySqlAST(topNode, context, options) {
 
   const dialect = require('./dialects/' + options.dialect)
   // recursively figure out all the selections, joins, and where conditions that we need
-  let { selections, tables, wheres, orders } = await _stringifySqlAST(null, topNode, [], context, [], [], [], [], options.batchScope, dialect)
+  let { selections, tables, wheres, orders, limit } = await _stringifySqlAST(null, topNode, [], context, [], [], [], [], {value: null}, options.batchScope, dialect)
 
   // make sure these are unique by converting to a set and then back to an array
   // e.g. we want to get rid of things like `SELECT user.id as id, user.id as id, ...`
@@ -38,10 +38,17 @@ export default async function stringifySqlAST(topNode, context, options) {
     sql += '\nORDER BY ' + stringifyOuterOrder(orders, dialect.quote)
   }
 
+  if(limit.value) {
+    sql += dialect.limit(limit.value)
+  }
+
   return sql
 }
 
-async function _stringifySqlAST(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect) {
+async function _stringifySqlAST(parent, node, prefix, context, selections, tables, wheres, orders, limit, batchScope, dialect) {
+  if (node.limit) {
+    limit.value = node.limit
+  }
   const { quote: q } = dialect
   switch(node.type) {
   case 'table':
@@ -50,7 +57,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     // recurse thru nodes
     if (thisIsNotTheEndOfThisBatch(node, parent)) {
       for (let child of node.children) {
-        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, null, dialect)
+        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, limit, null, dialect)
       }
     }
 
@@ -62,11 +69,11 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     if (thisIsNotTheEndOfThisBatch(node, parent)) {
       for (let typeName in node.typedChildren) {
         for (let child of node.typedChildren[typeName]) {
-          await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, null, dialect)
+          await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, limit, null, dialect)
         }
       }
       for (let child of node.children) {
-        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, null, dialect)
+        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, limit, null, dialect)
       }
     }
 
@@ -102,7 +109,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
   default:
     throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
-  return { selections, tables, wheres, orders }
+  return { selections, tables, wheres, orders, limit }
 }
 
 async function handleTable(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect) {
@@ -127,7 +134,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     if (node.paginate) {
       await dialect.handleJoinedOneToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition)
 
-    // otherwite, just a regular left join on the table
+    // otherwise, just a regular left join on the table
     } else {
       tables.push(
         `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`

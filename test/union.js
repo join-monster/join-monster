@@ -65,14 +65,6 @@ test('it should a union type', async t => {
           authorId: 1,
           postId: 2,
           likers: []
-        },
-        {
-          __typename: 'Comment',
-          id: 8,
-          body: 'Somebody please help me with this library. It is so much work.',
-          authorId: 1,
-          postId: 2,
-          likers: []
         }
       ]
     }
@@ -130,14 +122,6 @@ test('it should an interface type', async t => {
           __typename: 'Comment',
           id: 6,
           body: 'Also, submit a PR if you have a feature you want to add.',
-          authorId: 1,
-          postId: 2,
-          likers: []
-        },
-        {
-          __typename: 'Comment',
-          id: 8,
-          body: 'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
           likers: []

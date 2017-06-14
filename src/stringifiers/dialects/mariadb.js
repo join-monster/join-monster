@@ -36,6 +36,10 @@ const dialect = module.exports = {
 
   quote,
 
+  limit(limit) {
+    return ` LIMIT ${limit} `
+  },
+
   compositeKey(parent, keys) {
     keys = keys.map(key => `${quote(parent)}.${quote(key)}`)
     return `CONCAT(${keys.join(', ')})`

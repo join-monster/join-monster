@@ -73,6 +73,10 @@ const dialect = module.exports = {
     return `NULLIF(${recursiveConcat(keys)}, '')`
   },
 
+  limit(limit) {
+    return ` OFFSET 0 ROWS FETCH NEXT ${limit} ROWS ONLY `
+  },
+
   handlePaginationAtRoot: async function(parent, node, prefix, context, selections, tables, wheres, orders) {
     const pagingWhereConditions = []
     if (node.sortKey) {

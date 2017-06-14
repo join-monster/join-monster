@@ -165,6 +165,10 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
    * and collect the relevant info
    */
 
+  if (field.limit) {
+    sqlASTNode.limit = field.limit
+  }
+
   // are they doing a one-to-many sql join?
   if (field.sqlJoin) {
     sqlASTNode.sqlJoin = field.sqlJoin
