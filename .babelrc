@@ -1,3 +1,4 @@
 {
-  "presets": [ "node6", "stage-0" ]
+  "presets": [ "node6", "stage-0" ],
+  "plugins": [ "object-values-to-object-keys" ]
 }
