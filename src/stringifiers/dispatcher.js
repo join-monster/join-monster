@@ -42,6 +42,7 @@ export default async function stringifySqlAST(topNode, context, options) {
 
 async function _stringifySqlAST(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect) {
   const { quote: q } = dialect
+  const parentTable = node.fromOtherTable || (parent && parent.as)
   switch(node.type) {
   case 'table':
     await handleTable(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect)
@@ -72,25 +73,24 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     break
   case 'column':
     selections.push(
-      `${q(node.fromOtherTable || parent.as)}.${q(node.name)} AS ${q(joinPrefix(prefix) + node.as)}`
+      `${q(parentTable)}.${q(node.name)} AS ${q(joinPrefix(prefix) + node.as)}`
     )
     break
   case 'columnDeps':
     // grab the dependant columns
     for (let name in node.names) {
       selections.push(
-        `${q(parent.as)}.${q(name)} AS ${q(joinPrefix(prefix) + node.names[name])}`
+        `${q(parentTable)}.${q(name)} AS ${q(joinPrefix(prefix) + node.names[name])}`
       )
     }
     break
   case 'composite':
-    const parentTable = node.fromOtherTable || parent.as
     selections.push(
       `${dialect.compositeKey(parentTable, node.name)} AS ${q(joinPrefix(prefix) + node.as)}`
     )
     break
   case 'expression':
-    const expr = await node.sqlExpr(`${q(parent.as)}`, node.args || {}, context, quotePrefix(prefix, q))
+    const expr = await node.sqlExpr(`${q(parentTable)}`, node.args || {}, context, quotePrefix(prefix, q))
     selections.push(
       `${expr} AS ${q(joinPrefix(prefix) + node.as)}`
     )

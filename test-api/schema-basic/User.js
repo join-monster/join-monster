@@ -120,8 +120,16 @@ const User = new GraphQLObjectType({
         orderBy: args => args.oldestFirst ? { followee_id: 'desc' } : null,
         where: (table, args) => args.intimacy ? `${table}.${q('closeness', DB)} = '${args.intimacy}'` : false,
         include: {
-          intimacy: {
+          friendship: {
             sqlColumn: 'closeness',
+            jmIgnoreAll: false
+          },
+          intimacy: {
+            sqlExpr: table => `${table}.closeness`,
+            jmIgnoreAll: false
+          },
+          closeness: {
+            sqlDeps: [ 'closeness' ],
             jmIgnoreAll: false
           }
         },
@@ -140,7 +148,15 @@ const User = new GraphQLObjectType({
         }
       }
     },
+    friendship: {
+      type: GraphQLString,
+      jmIgnoreAll: true
+    },
     intimacy: {
+      type: GraphQLString,
+      jmIgnoreAll: true
+    },
+    closeness: {
       type: GraphQLString,
       jmIgnoreAll: true
     },

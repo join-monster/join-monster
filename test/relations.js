@@ -223,6 +223,45 @@ test('should handle where condition on many-to-many relation', async t => {
   t.deepEqual(expect, data)
 })
 
+test('should include data from the junction table', async t => {
+  const query = wrap(`
+    id
+    fullName
+    following {
+      id
+      fullName
+      friendship # this tests sqlColumn
+      intimacy # this one tests sqlExpr
+      closeness # and this one tests sqlDeps
+    }
+  `, 3)
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      id: 3,
+      fullName: 'foo bar',
+      following: [
+        {
+          id: 1,
+          fullName: 'andrew carlson',
+          friendship: 'acquaintance',
+          intimacy: 'acquaintance',
+          closeness: 'acquaintance'
+        },
+        {
+          id: 2,
+          fullName: 'matt elder',
+          friendship: 'best',
+          intimacy: 'best',
+          closeness: 'best'
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
 test('should handle where condition on junction in many-to-many', async t => {
   const query = wrap(`
     id

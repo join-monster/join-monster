@@ -501,14 +501,22 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   }
 
   for (let children of childrenToLoopOver) {
-    // keep track of all the dependent columns at this depth in a Set (for uniqueness)
-    const deps = new Set
+    // keep track of all the dependent columns at this depth in a Set
+    // use one Set per table. usually the table is the same. but sometimes they are pulling in data from
+    // a junction table.
+    //
+    // whoa what the heck is this? Proxy? this is basically a JavaScript implementation of Python's "defaultdict"
+    // its cool. look it up
+    const depsByTable = new Proxy({}, { get: (target, name) => name in target ? target[name] : new Set })
 
     // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
     for (let i = children.length - 1; i >= 0; i--) {
       const child = children[i]
       if (child.type === 'columnDeps') {
-        child.names.forEach(name => deps.add(name))
+        const keyName = child.fromOtherTable || ''
+        child.names.forEach(name => {
+          depsByTable[keyName] = depsByTable[keyName].add(name)
+        })
         children.splice(i, 1)
       // or if its another table, recurse on it
       } else if (child.type === 'table' || child.type === 'union') {
@@ -519,14 +527,17 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
     // now that we collected the "columnDeps", add them all to one node
     // the "names" property will put all the column names in an object as keys
     // the values of this object will be the SQL alias
-    const newNode = new SQLASTNode(sqlAST, {
-      type: 'columnDeps',
-      names: {}
-    })
-    deps.forEach(name => {
-      newNode.names[name] = namespace.generate('column', name)
-    })
-    children.push(newNode)
+    for (let table in depsByTable) {
+      const newNode = new SQLASTNode(sqlAST, {
+        type: 'columnDeps',
+        names: {},
+        fromOtherTable: table || null
+      })
+      depsByTable[table].forEach(name => {
+        newNode.names[name] = namespace.generate('column', name)
+      })
+      children.push(newNode)
+    }
   }
 }
 
