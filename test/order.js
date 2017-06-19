@@ -38,3 +38,63 @@ test('it should handle nested ordering with one ASC and one DESC', async t => {
   t.deepEqual([ { id: 1 }, { id: 4 }, { id: 6 }, { id: 8 } ], data.user.comments)
 })
 
+test('it should handle order on many-to-many', async t => {
+  const query = `{
+    user(id: 3) {
+      fullName
+      following {
+        id
+        fullName
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'foo bar',
+      following: [
+        {
+          id: 1,
+          fullName: 'andrew carlson'
+        },
+        {
+          id: 2,
+          fullName: 'matt elder'
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('it sould handle order on many-to-many', async t => {
+  const query = `{
+    user(id: 3) {
+      fullName
+      following(oldestFirst: true) {
+        id
+        fullName
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'foo bar',
+      following: [
+        {
+          id: 2,
+          fullName: 'matt elder'
+        },
+        {
+          id: 1,
+          fullName: 'andrew carlson'
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+

@@ -1,7 +1,7 @@
 import assert from 'assert'
 import { flatMap } from 'lodash'
 import AliasNamespace from '../alias-namespace'
-import { wrap, ensure, unthunk } from '../util'
+import { wrap, ensure, unthunk, inspect } from '../util'
 import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
 
@@ -168,7 +168,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   sqlASTNode.as = namespace.generate('table', field.name)
 
   if (field.orderBy && !sqlASTNode.orderBy) {
-    sqlASTNode.orderBy = unthunk(field.orderBy, sqlASTNode.args || {}, context)
+    sqlASTNode.orderBy = handleOrderBy(unthunk(field.orderBy, sqlASTNode.args || {}, context))
   }
 
   // tables have child fields, lets push them to an array
@@ -197,7 +197,15 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
       as: namespace.generate('table', junctionTable)
     }
     if (field.junction.include) {
-      junction.include = field.junction.include
+      junction.include = unthunk(field.junction.include, sqlASTNode.args || {}, context)
+    }
+
+    if (field.junction.orderBy) {
+      junction.orderBy = handleOrderBy(unthunk(field.junction.orderBy, sqlASTNode.args || {}, context))
+    }
+
+    if (field.junction.where) {
+      junction.where = field.junction.where
     }
     // are they joining or batching?
     if (field.junction.sqlJoins) {
@@ -526,9 +534,11 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
 function getSortColumns(field, sqlASTNode, context) {
   if (field.sortKey) {
     sqlASTNode.sortKey = unthunk(field.sortKey, sqlASTNode.args || {}, context)
-  } else if (field.orderBy) {
-    sqlASTNode.orderBy = unthunk(field.orderBy, sqlASTNode.args || {}, context)
-  } else {
+  }
+  if (field.orderBy) {
+    sqlASTNode.orderBy = handleOrderBy(unthunk(field.orderBy, sqlASTNode.args || {}, context))
+  }
+  if (!field.sortKey && !field.orderBy) {
     throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
   }
 }
@@ -554,4 +564,22 @@ function spreadFragments(selections, fragments, typeName) {
       return selection
     }
   })
+}
+
+export function handleOrderBy(orderBy) {
+  const orderColumns = {}
+  if (typeof orderBy === 'object') {
+    for (let column in orderBy) {
+      let direction = orderBy[column].toUpperCase()
+      if (direction !== 'ASC' && direction !== 'DESC') {
+        throw new Error (direction + ' is not a valid sorting direction')
+      }
+      orderColumns[column] = direction
+    }
+  } else if (typeof orderBy === 'string') {
+    orderColumns[orderBy] = 'ASC'
+  } else {
+    throw new Error('"orderBy" is invalid type: ' + inspect(orderBy))
+  }
+  return orderColumns
 }

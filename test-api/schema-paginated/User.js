@@ -154,6 +154,7 @@ const User = new GraphQLObjectType({
       description: 'Users that this user is following',
       type: UserConnection,
       args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
+      //where: table => `${table}.email_address IS NOT NULL`,
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {

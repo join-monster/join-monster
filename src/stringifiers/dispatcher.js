@@ -5,7 +5,6 @@ import {
   joinPrefix,
   quotePrefix,
   thisIsNotTheEndOfThisBatch,
-  handleOrderBy,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
 
@@ -108,15 +107,29 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
 async function handleTable(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect) {
   const { quote: q } = dialect
   // generate the "where" condition, if applicable
-  if (node.where && whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent)) {
-    wheres.push(await node.where(`${q(node.as)}`, node.args || {}, context, quotePrefix(prefix, q)))
+  if (whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent)) {
+    const prefixStr = quotePrefix(prefix, q)
+    if (node.junction && node.junction.where) {
+      wheres.push(await node.junction.where(`${q(node.junction.as)}`, node.args || {}, context, prefixStr))
+    }
+    if (node.where) {
+      wheres.push(await node.where(`${q(node.as)}`, node.args || {}, context, prefixStr))
+    }
   }
 
-  if (!node.paginate && !node.limit && node.orderBy && thisIsNotTheEndOfThisBatch(node, parent)) {
-    orders.push({
-      table: node.as,
-      columns: handleOrderBy(node.orderBy)
-    })
+  if (!node.paginate && !node.limit && thisIsNotTheEndOfThisBatch(node, parent)) {
+    if (node.junction && node.junction.orderBy) {
+      orders.push({
+        table: node.junction.as,
+        columns: node.junction.orderBy
+      })
+    }
+    if (node.orderBy) {
+      orders.push({
+        table: node.as,
+        columns: node.orderBy
+      })
+    }
   }
 
   // one-to-many using JOIN

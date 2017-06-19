@@ -1,5 +1,6 @@
 import {
   GraphQLObjectType,
+  GraphQLEnumType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLString,
@@ -100,12 +101,24 @@ const User = new GraphQLObjectType({
       description: 'Users that this user is following',
       type: new GraphQLList(User),
       args: {
-        name: { type: GraphQLString }
+        name: { type: GraphQLString },
+        oldestFirst: { type: GraphQLBoolean },
+        intimacy: {
+          type: new GraphQLEnumType({
+            name: 'IntimacyLevel',
+            values: {
+              best: { value: 'best' },
+              acquaintance: { value: 'acquaintance' }
+            }
+          })
+        }
       },
       orderBy: 'first_name',
       where: (table, args) => args.name ? `${table}.${q('first_name', DB)} = '${args.name}'` : false,
       junction: {
         sqlTable: q('relationships', DB),
+        orderBy: args => args.oldestFirst ? { followee_id: 'desc' } : null,
+        where: (table, args) => args.intimacy ? `${table}.${q('closeness', DB)} = '${args.intimacy}'` : false,
         include: {
           intimacy: {
             sqlColumn: 'closeness',

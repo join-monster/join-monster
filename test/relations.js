@@ -223,6 +223,32 @@ test('should handle where condition on many-to-many relation', async t => {
   t.deepEqual(expect, data)
 })
 
+test('should handle where condition on junction in many-to-many', async t => {
+  const query = wrap(`
+    id
+    fullName
+    following(intimacy: best) {
+      fullName
+      intimacy
+    }
+  `, 3)
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      id: 3,
+      fullName: 'foo bar',
+      following: [
+        {
+          fullName: 'matt elder',
+          intimacy: 'best'
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
 test('should handle joins with the same table name', async t => {
   const query = wrap(`
     idEncoded

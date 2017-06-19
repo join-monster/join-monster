@@ -1,4 +1,3 @@
-import util from 'util'
 import { filter } from 'lodash'
 import { cursorToOffset } from 'graphql-relay'
 import { wrap, cursorToObj, maybeQuote } from '../util'
@@ -81,24 +80,6 @@ export function orderColumnsToString(orderColumns, q, as) {
   return conditions.join(', ')
 }
 
-export function handleOrderBy(orderBy) {
-  const orderColumns = {}
-  if (typeof orderBy === 'object') {
-    for (let column in orderBy) {
-      let direction = orderBy[column].toUpperCase()
-      if (direction !== 'ASC' && direction !== 'DESC') {
-        throw new Error (direction + ' is not a valid sorting direction')
-      }
-      orderColumns[column] = direction
-    }
-  } else if (typeof orderBy === 'string') {
-    orderColumns[orderBy] = 'ASC'
-  } else {
-    throw new Error('"orderBy" is invalid type: ' + util.inspect(orderBy))
-  }
-  return orderColumns
-}
-
 // find out what the limit, offset, order by parts should be from the relay connection args if we're paginating
 export function interpretForOffsetPaging(node, dialect) {
   const { name } = dialect
@@ -106,7 +87,7 @@ export function interpretForOffsetPaging(node, dialect) {
     throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
   }
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
-  const orderColumns = handleOrderBy(node.orderBy)
+  const orderColumns = node.orderBy
   let offset = 0
   if (node.args && node.args.first) {
     limit = parseInt(node.args.first)
