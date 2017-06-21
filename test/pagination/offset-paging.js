@@ -321,7 +321,9 @@ test('handle a conection type with a many-to-many', async t => {
         edges {
           node {
             id
+            friendship
             intimacy
+            closeness
             fullName
           }
         }
@@ -336,8 +338,24 @@ test('handle a conection type with a many-to-many', async t => {
     endCursor: offsetToCursor(2)
   })
   t.deepEqual(data.user.following.edges, [
-    { node: { id: toGlobalId('User', 2), fullName: 'Hudson Hyatt', intimacy: 'acquaintance' } },
-    { node: { id: toGlobalId('User', 3), fullName: 'Coleman Abernathy', intimacy: 'acquaintance' } }
+    {
+      node: {
+        id: toGlobalId('User', 2),
+        fullName: 'Hudson Hyatt',
+        friendship: 'acquaintance',
+        intimacy: 'acquaintance',
+        closeness: 'acquaintance'
+      }
+    },
+    {
+      node: {
+        id: toGlobalId('User', 3),
+        fullName: 'Coleman Abernathy',
+        friendship: 'acquaintance',
+        intimacy: 'acquaintance',
+        closeness: 'acquaintance'
+      }
+    }
   ])
 })
 
@@ -460,7 +478,7 @@ test('should handle a post without an author', async t => {
   t.deepEqual(expect, data)
 })
 
-test('should handle a "where" condition on a paginated field', async t => {
+test('should handle a "where" condition on a one-to-many paginated field', async t => {
   const query = `{
     users(first: 1) {
       edges {
@@ -512,6 +530,42 @@ test('should handle a "where" condition on a paginated field', async t => {
     }
   ]
   t.deepEqual(expect, comments)
+})
+
+test('should handle "where" condition on main table of many-to-many relation', async t => {
+  const query = `{
+    user(id: 3) {
+      fullName
+      following(intimacy: acquaintance) {
+        edges {
+          node {
+            id
+            fullName
+            intimacy
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'Coleman Abernathy',
+      following: {
+        edges: [
+          {
+            node: {
+              id: toGlobalId('User', 4),
+              fullName: 'Lulu Bogisich',
+              intimacy: 'acquaintance'
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(expect, data)
 })
 
 test('should handle an interface type', async t => {

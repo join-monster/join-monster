@@ -368,7 +368,7 @@ module.exports = async db => {
 {"follower_id":2,"followee_id":1,"created_at":new Date('2016-01-01T16:28:00.051Z'),"closeness":"acquaintance"},
 {"follower_id":3,"followee_id":2,"created_at":new Date('2016-10-10T06:43:33.874Z'),"closeness":"best"},
 {"follower_id":3,"followee_id":3,"created_at":new Date('2016-07-25T22:12:34.670Z'),"closeness":"best"},
-{"follower_id":3,"followee_id":4,"created_at":new Date('2016-04-21T07:17:32.344Z'),"closeness":"best"},
+{"follower_id":3,"followee_id":4,"created_at":new Date('2016-04-21T07:17:32.344Z'),"closeness":"acquaintance"},
 {"follower_id":1,"followee_id":4,"created_at":new Date('2016-04-21T07:17:33.344Z'),"closeness":"best"},
   ])
 

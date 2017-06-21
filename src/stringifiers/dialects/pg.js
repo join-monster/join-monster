@@ -69,21 +69,32 @@ const dialect = module.exports = {
     })
   },
 
-  handleJoinedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1) {
+  handleJoinedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1, joinCondition2) {
     const pagingWhereConditions = [
       await node.junction.sqlJoins[0](`"${parent.as}"`, `"${node.junction.as}"`, node.args || {}, context)
     ]
+    if (node.junction.where) {
+      pagingWhereConditions.push(await node.junction.where(`"${node.junction.as}"`, node.args || {}, context, quotePrefix(prefix)))
+    }
     if (node.where) {
       pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
     }
 
+    const lateralJoinOptions = { joinCondition: joinCondition1, joinType: 'LEFT' }
+    if (node.where || node.orderBy) {
+      lateralJoinOptions.extraJoin = {
+        name: node.name,
+        as: node.as,
+        condition: joinCondition2
+      }
+    }
     if (node.sortKey) {
       var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, node.junction.as, { joinCondition: joinCondition1, joinType: 'LEFT' }))
+      tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, node.junction.as, lateralJoinOptions))
     } else if (node.orderBy) {
       var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
-      tables.push(offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, offset, node.junction.as, { joinCondition: joinCondition1, joinType: 'LEFT' }))
+      tables.push(offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, offset, node.junction.as, lateralJoinOptions))
     }
     orders.push({
       table: node.junction.as,

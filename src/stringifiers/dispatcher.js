@@ -181,11 +181,11 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     const joinCondition2 = await node.junction.sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
 
     if (node.paginate) {
-      await dialect.handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1)
+      await dialect.handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1, joinCondition2)
 
     } else if (node.limit) {
       node.args.first = node.limit
-      await dialect.handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1)
+      await dialect.handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1, joinCondition2)
 
     } else {
       tables.push(

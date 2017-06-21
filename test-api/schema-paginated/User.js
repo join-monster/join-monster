@@ -14,6 +14,7 @@ import {
   connectionFromArray
 } from 'graphql-relay'
 
+import IntimacyLevel from '../enums/IntimacyLevel'
 import { PostConnection } from './Post'
 import { Comment, CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
@@ -153,8 +154,11 @@ const User = new GraphQLObjectType({
     following: {
       description: 'Users that this user is following',
       type: UserConnection,
-      args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
-      //where: table => `${table}.email_address IS NOT NULL`,
+      args: {
+        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
+        intimacy: { type: IntimacyLevel }
+      },
+      where: table => `${table}.email_address IS NOT NULL`,
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {
@@ -181,11 +185,37 @@ const User = new GraphQLObjectType({
       },
       junction: {
         sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
+        where: (table, args) => args.intimacy ? `${table}.${q('closeness', DB)} = '${args.intimacy}'` : null,
         include: {
-          intimacy: {
+          friendship: {
             sqlColumn: 'closeness',
             jmIgnoreAll: false
-          }
+          },
+          intimacy: {
+            sqlExpr: table => `${table}.${q('closeness', DB)}`,
+            jmIgnoreAll: false
+          },
+          closeness: {
+            sqlDeps: [ 'closeness' ],
+            jmIgnoreAll: false
+          },
+          //... do {
+            //if (PAGINATE === 'offset') {
+              //({
+                //orderBy: {
+                  //created_at: 'DESC',
+                  //followee_id: 'ASC'
+                //}
+              //})
+            //} else if (PAGINATE === 'keyset') {
+              //({
+                //sortKey: {
+                  //order: 'ASC',
+                  //key: [ 'created_at', 'followee_id' ]
+                //}
+              //})
+            //}
+          //}
         },
         ... do {
           if (STRATEGY === 'batch' || STRATEGY === 'mix') {
@@ -235,10 +265,6 @@ const User = new GraphQLObjectType({
         }
       }
     },
-    intimacy: {
-      type: GraphQLString,
-      jmIgnoreAll: true
-    },
     writtenMaterial: {
       type: AuthoredConnection,
       args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
@@ -275,6 +301,18 @@ const User = new GraphQLObjectType({
       } : {
         sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
       }
+    },
+    friendship: {
+      type: GraphQLString,
+      jmIgnoreAll: true
+    },
+    intimacy: {
+      type: GraphQLString,
+      jmIgnoreAll: true
+    },
+    closeness: {
+      type: GraphQLString,
+      jmIgnoreAll: true
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),

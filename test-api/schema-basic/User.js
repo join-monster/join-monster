@@ -1,6 +1,5 @@
 import {
   GraphQLObjectType,
-  GraphQLEnumType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLString,
@@ -12,6 +11,7 @@ import {
   globalIdField
 } from 'graphql-relay'
 
+import IntimacyLevel from '../enums/IntimacyLevel'
 import Comment from './Comment'
 import Post from './Post'
 import Person from './Person'
@@ -103,15 +103,7 @@ const User = new GraphQLObjectType({
       args: {
         name: { type: GraphQLString },
         oldestFirst: { type: GraphQLBoolean },
-        intimacy: {
-          type: new GraphQLEnumType({
-            name: 'IntimacyLevel',
-            values: {
-              best: { value: 'best' },
-              acquaintance: { value: 'acquaintance' }
-            }
-          })
-        }
+        intimacy: { type: IntimacyLevel }
       },
       orderBy: 'first_name',
       where: (table, args) => args.name ? `${table}.${q('first_name', DB)} = '${args.name}'` : false,
@@ -125,7 +117,7 @@ const User = new GraphQLObjectType({
             jmIgnoreAll: false
           },
           intimacy: {
-            sqlExpr: table => `${table}.closeness`,
+            sqlExpr: table => `${table}.${q('closeness', DB)}`,
             jmIgnoreAll: false
           },
           closeness: {

@@ -29,7 +29,7 @@ export function keysetPagingSelect(table, whereCondition, orderColumns, limit, a
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
-  SELECT *
+  SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q, as)}
@@ -38,7 +38,7 @@ ${joinType || ''} JOIN LATERAL (
   } else {
     return `\
 FROM (
-  SELECT *
+  SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q, as)}
@@ -48,14 +48,16 @@ FROM (
 }
 
 export function offsetPagingSelect(table, pagingWhereConditions, orderColumns, limit, offset, as, options = {}) {
-  let { joinCondition, joinType, q } = options
+  let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
-  SELECT *, count(*) OVER () AS ${q('$total')}
+  SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
+  ${ extraJoin ? `LEFT JOIN ${extraJoin.name} AS "${extraJoin.as}"
+    ON ${extraJoin.condition}` : '' }
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q, as)}
   LIMIT ${limit} OFFSET ${offset}
@@ -63,7 +65,7 @@ ${joinType || ''} JOIN LATERAL (
   } else {
     return `\
 FROM (
-  SELECT *, count(*) OVER () AS ${q('$total')}
+  SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(orderColumns, q, as)}

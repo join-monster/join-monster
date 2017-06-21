@@ -7,7 +7,7 @@ import { getArgumentValues } from 'graphql/execution/values'
 
 class SQLASTNode {
   constructor(parentNode, props) {
-    Object.defineProperty(this, '_parent', {
+    Object.defineProperty(this, 'parent', {
       enumerable: false,
       value: parentNode
     })
@@ -68,13 +68,13 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   }
 
   let fieldIncludes
-  if (sqlASTNode._parent && sqlASTNode._parent.junction && sqlASTNode._parent.junction.include && sqlASTNode._parent.junction.include[fieldName]) {
-    fieldIncludes = sqlASTNode._parent.junction.include[fieldName]
+  if (sqlASTNode.parent && sqlASTNode.parent.junction && sqlASTNode.parent.junction.include && sqlASTNode.parent.junction.include[fieldName]) {
+    fieldIncludes = sqlASTNode.parent.junction.include[fieldName]
     field = {
       ...field,
       ...fieldIncludes
     }
-    sqlASTNode.fromOtherTable = sqlASTNode._parent.junction.as
+    sqlASTNode.fromOtherTable = sqlASTNode.parent.junction.as
   }
 
   // allow for explicit ignoring of fields
