@@ -156,24 +156,25 @@ const User = new GraphQLObjectType({
       type: UserConnection,
       args: {
         ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
-        intimacy: { type: IntimacyLevel }
+        intimacy: { type: IntimacyLevel },
+        sortOnMain: { type: GraphQLBoolean }
       },
       where: table => `${table}.email_address IS NOT NULL`,
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {
           ({
-            orderBy: {
-              created_at: 'DESC',
-              followee_id: 'ASC'
-            }
+            orderBy: args => args.sortOnMain ? {
+              created_at: 'ASC',
+              id: 'ASC'
+            } : null
           })
         } else if (PAGINATE === 'keyset') {
           ({
-            sortKey: {
+            sortKey: args => args.sortOnMain ? {
               order: 'ASC',
-              key: [ 'created_at', 'followee_id' ]
-            }
+              key: [ 'created_at', 'id' ]
+            } : null
           })
         } else {
           ({
@@ -199,23 +200,23 @@ const User = new GraphQLObjectType({
             sqlDeps: [ 'closeness' ],
             jmIgnoreAll: false
           },
-          //... do {
-            //if (PAGINATE === 'offset') {
-              //({
-                //orderBy: {
-                  //created_at: 'DESC',
-                  //followee_id: 'ASC'
-                //}
-              //})
-            //} else if (PAGINATE === 'keyset') {
-              //({
-                //sortKey: {
-                  //order: 'ASC',
-                  //key: [ 'created_at', 'followee_id' ]
-                //}
-              //})
-            //}
-          //}
+        },
+        ... do {
+          if (PAGINATE === 'offset') {
+            ({
+              orderBy: args => args.sortOnMain ? null : {
+                created_at: 'DESC',
+                followee_id: 'ASC'
+              }
+            })
+          } else if (PAGINATE === 'keyset') {
+            ({
+              sortKey: args => args.sortOnMain ? null : {
+                order: 'ASC',
+                key: [ 'created_at', 'followee_id' ]
+              }
+            })
+          }
         },
         ... do {
           if (STRATEGY === 'batch' || STRATEGY === 'mix') {

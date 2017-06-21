@@ -309,7 +309,7 @@ test('can handle deeply nested pagination', async t => {
   t.is(comments.edges.last().cursor, comments.pageInfo.endCursor)
 })
 
-test('handle a conection type with a many-to-many', async t => {
+test('handle a connection type with a many-to-many', async t => {
   const query = `{
     user(id: 2) {
       following(first: 2, after:"${offsetToCursor(0)}") {
@@ -559,6 +559,86 @@ test('should handle "where" condition on main table of many-to-many relation', a
               id: toGlobalId('User', 4),
               fullName: 'Lulu Bogisich',
               intimacy: 'acquaintance'
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('should handle order columns on the main table', async t => {
+  const query = `{
+    user(id: 2) {
+      fullName
+      following(first: 2, sortOnMain: true, after: "${offsetToCursor(0)}") {
+        edges {
+          node {
+            id
+            fullName
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'Hudson Hyatt',
+      following: {
+        edges: [
+          {
+            node: {
+              id: toGlobalId('User', 1),
+              fullName: 'Alivia Waelchi'
+            }
+          },
+          {
+            node: {
+              id: toGlobalId('User', 2),
+              fullName: 'Hudson Hyatt'
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('should handle order columns on the junction table', async t => {
+  const query = `{
+    user(id: 2) {
+      fullName
+      following(first: 2, sortOnMain: false, after: "${offsetToCursor(0)}") {
+        edges {
+          node {
+            id
+            fullName
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'Hudson Hyatt',
+      following: {
+        edges: [
+          {
+            node: {
+              id: toGlobalId('User', 2),
+              fullName: 'Hudson Hyatt'
+            }
+          },
+          {
+            node: {
+              id: toGlobalId('User', 3),
+              fullName: 'Coleman Abernathy'
             }
           }
         ]

@@ -64,7 +64,7 @@ function arrToConnection(data, sqlAST) {
         pageInfo.endCursor = last(edges).cursor
       }
       return { edges, pageInfo, _paginated: true }
-    } else if (sqlAST.orderBy) {
+    } else if (sqlAST.orderBy || (sqlAST.junction && sqlAST.junction.orderBy)) {
       let offset = 0
       if (sqlAST.args && sqlAST.args.after) {
         offset = cursorToOffset(sqlAST.args.after) + 1

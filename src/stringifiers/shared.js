@@ -47,7 +47,7 @@ FROM (
   }
 }
 
-export function offsetPagingSelect(table, pagingWhereConditions, orderColumns, limit, offset, as, options = {}) {
+export function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
   let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
@@ -59,7 +59,7 @@ ${joinType || ''} JOIN LATERAL (
   ${ extraJoin ? `LEFT JOIN ${extraJoin.name} AS "${extraJoin.as}"
     ON ${extraJoin.condition}` : '' }
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)} ON ${joinCondition}`
   } else {
@@ -68,7 +68,7 @@ FROM (
   SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)}`
   }
@@ -89,7 +89,6 @@ export function interpretForOffsetPaging(node, dialect) {
     throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
   }
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
-  const orderColumns = node.orderBy
   let offset = 0
   if (node.args && node.args.first) {
     limit = parseInt(node.args.first)
@@ -101,7 +100,7 @@ export function interpretForOffsetPaging(node, dialect) {
       offset = cursorToOffset(node.args.after) + 1
     }
   }
-  return { limit, offset, orderColumns }
+  return { limit, offset }
 }
 
 export function interpretForKeysetPaging(node, dialect) {

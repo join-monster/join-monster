@@ -107,7 +107,6 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     // we'll set a flag for pagination.
     if (field.sqlPaginate) {
       sqlASTNode.paginate = true
-      getSortColumns(field, sqlASTNode, context)
     }
   } else {
     if (field.sqlPaginate) {
@@ -237,6 +236,10 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   if (field.limit) {
     assert(field.orderBy, '`orderBy` is required with `limit`')
     sqlASTNode.limit = unthunk(field.limit, sqlASTNode.args || {}, context)
+  }
+
+  if (sqlASTNode.paginate) {
+    getSortColumns(field, sqlASTNode, context)
   }
 
   /*
@@ -450,7 +453,7 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
       }
       sqlASTNode.children.push(newChild)
     }
-  } else if (sqlASTNode.orderBy) {
+  } else if (sqlASTNode.orderBy || (sqlASTNode.junction && sqlASTNode.junction.orderBy)) {
     // this type of paging can visit arbitrary pages, so lets provide the total number of items
     // on this special "$total" column which we will compute in the query
     const newChild = {
@@ -549,8 +552,28 @@ function getSortColumns(field, sqlASTNode, context) {
   if (field.orderBy) {
     sqlASTNode.orderBy = handleOrderBy(unthunk(field.orderBy, sqlASTNode.args || {}, context))
   }
-  if (!field.sortKey && !field.orderBy) {
-    throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
+  if (field.junction) {
+    if (field.junction.sortKey) {
+      sqlASTNode.junction.sortKey = unthunk(field.junction.sortKey, sqlASTNode.args || {}, context)
+    }
+    if (field.junction.orderBy) {
+      sqlASTNode.junction.orderBy = handleOrderBy(unthunk(field.junction.orderBy, sqlASTNode.args || {}, context))
+    }
+  }
+  if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
+    if (sqlASTNode.junction) {
+      if (!sqlASTNode.junction.sortKey && !sqlASTNode.junction.orderBy) {
+        throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
+      }
+    } else {
+      throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
+    }
+  }
+  if (sqlASTNode.sortKey && sqlASTNode.junction && sqlASTNode.junction.sortKey) {
+    throw new Error('"sortKey" must be on junction or main table, not both')
+  }
+  if (sqlASTNode.orderBy && sqlASTNode.junction && sqlASTNode.junction.orderBy) {
+    throw new Error('"orderBy" must be on junction or main table, not both')
   }
 }
 
@@ -578,6 +601,7 @@ function spreadFragments(selections, fragments, typeName) {
 }
 
 export function handleOrderBy(orderBy) {
+  if (!orderBy) return undefined
   const orderColumns = {}
   if (typeof orderBy === 'object') {
     for (let column in orderBy) {
