@@ -1,7 +1,7 @@
 import test from 'ava'
-import {graphql} from 'graphql'
+import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
-import {partial} from 'lodash'
+import { partial } from 'lodash'
 
 const run = partial(graphql, schemaBasic)
 
