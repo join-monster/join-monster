@@ -28,15 +28,11 @@ const dialect = module.exports = {
 
     // which type of pagination are they using?
     if (node.sortKey) {
-      const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as, { joinCondition, joinType: 'LEFT' }))
+      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { joinCondition, joinType: 'LEFT' }))
     } else if (node.orderBy) {
-      const { limit, offset } = interpretForOffsetPaging(node, dialect)
-      const order = {
-        table: node.as,
-        columns: node.orderBy
-      }
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { joinCondition, joinType: 'LEFT' }))
     }
   },
@@ -65,19 +61,11 @@ const dialect = module.exports = {
       }
     }
     if (node.sortKey) {
-      const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, node.junction.as, lateralJoinOptions))
+      tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, node.junction.as, lateralJoinOptions))
     } else if (node.orderBy || node.junction.orderBy) {
-      const { limit, offset } = interpretForOffsetPaging(node, dialect)
-      const order = {}
-      if (node.orderBy) {
-        order.table = node.as
-        order.columns = node.orderBy
-      } else {
-        order.table = node.junction.as
-        order.columns = node.junction.orderBy
-      }
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, offset, node.junction.as, lateralJoinOptions))
     }
     tables.push(`LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`)
@@ -102,20 +90,12 @@ const dialect = module.exports = {
         condition: joinCondition2
       }
     }
-    if (node.sortKey) {
-      const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+    if (node.sortKey || node.junction.sortKey) {
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, orderColumns, limit, node.junction.as, lateralJoinOptions))
+      tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, node.junction.as, lateralJoinOptions))
     } else if (node.orderBy || node.junction.orderBy) {
-      const { limit, offset } = interpretForOffsetPaging(node, dialect)
-      const order = {}
-      if (node.orderBy) {
-        order.table = node.as
-        order.columns = node.orderBy
-      } else {
-        order.table = node.junction.as
-        order.columns = node.junction.orderBy
-      }
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, offset, node.junction.as, lateralJoinOptions))
     }
   },
@@ -123,20 +103,16 @@ const dialect = module.exports = {
   handlePaginationAtRoot: async function(parent, node, prefix, context, selections, tables) {
     const pagingWhereConditions = []
     if (node.sortKey) {
-      const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
         pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
       }
-      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as))
+      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as))
     } else if (node.orderBy) {
-      const { limit, offset } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       if (node.where) {
         pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
-      }
-      const order = {
-        table: node.as,
-        columns: node.orderBy
       }
       tables.push(offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as))
     }
@@ -153,15 +129,11 @@ const dialect = module.exports = {
     tables.push(tempTable)
     const lateralJoinCondition = `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
     if (node.sortKey) {
-      const { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as, { joinCondition: lateralJoinCondition }))
+      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { joinCondition: lateralJoinCondition }))
     } else if (node.orderBy) {
-      const { limit, offset } = interpretForOffsetPaging(node, dialect)
-      const order = {
-        table: node.as,
-        columns: node.orderBy
-      }
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { joinCondition: lateralJoinCondition }))
     }
   }

@@ -34,7 +34,7 @@ function arrToConnection(data, sqlAST) {
   // we must prevent the recursive processing from visting the same object twice, because mutating the object the first
   // time changes it everywhere. we'll set the `_paginated` property to true to prevent this
   if (sqlAST.paginate && !data._paginated) {
-    if (sqlAST.sortKey) {
+    if (sqlAST.sortKey || (sqlAST.junction && sqlAST.junction.sortKey)) {
       if (sqlAST.args && sqlAST.args.first) {
         // we fetched an extra one in order to determine if there is a next page, if there is one, pop off that extra
         if (data.length > sqlAST.args.first) {
@@ -51,9 +51,10 @@ function arrToConnection(data, sqlAST) {
       }
       // convert nodes to edges and compute the cursor for each
       // TODO: only compute all the cursor if asked for them
+      const sortKey = sqlAST.sortKey || sqlAST.junction.sortKey
       const edges = data.map(obj => {
         const cursor = {}
-        const key = sqlAST.sortKey.key
+        const key = sortKey.key
         for (let column of wrap(key)) {
           cursor[column] = obj[column]
         }

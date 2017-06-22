@@ -436,19 +436,14 @@ function keyToASTChild(key, namespace) {
 }
 
 function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
-  if (sqlASTNode.sortKey) {
-    assert(sqlASTNode.sortKey.key, '"sortKey" must have "key"')
-    assert(sqlASTNode.sortKey.order, '"sortKey" must have "order"')
+  if (sqlASTNode.sortKey || (sqlASTNode.junction && sqlASTNode.junction.sortKey)) {
+    const sortKey = sqlASTNode.sortKey || sqlASTNode.junction.sortKey
+    assert(sortKey.order, '"sortKey" must have "order"')
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
-    for (let column of wrap(sqlASTNode.sortKey.key)) {
-      const newChild = {
-        type: 'column',
-        name: column,
-        fieldName: column,
-        as: namespace.generate('column', column)
-      }
+    for (let column of wrap(ensure(sortKey, 'key'))) {
+      const newChild = keyToASTChild(column, namespace)
       // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
-      if (sqlASTNode.junction) {
+      if (!sqlASTNode.sortKey) {
         newChild.fromOtherTable = sqlASTNode.junction.as
       }
       sqlASTNode.children.push(newChild)
