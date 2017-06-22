@@ -108,12 +108,11 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   const { quote: q } = dialect
   // generate the "where" condition, if applicable
   if (whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent)) {
-    const prefixStr = quotePrefix(prefix, q)
     if (node.junction && node.junction.where) {
-      wheres.push(await node.junction.where(`${q(node.junction.as)}`, node.args || {}, context, prefixStr))
+      wheres.push(await node.junction.where(`${q(node.junction.as)}`, node.args || {}, context, node))
     }
     if (node.where) {
-      wheres.push(await node.where(`${q(node.as)}`, node.args || {}, context, prefixStr))
+      wheres.push(await node.where(`${q(node.as)}`, node.args || {}, context, node))
     }
   }
 
@@ -150,12 +149,12 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
     // do we need to paginate? if so this will be a lateral join
     if (node.paginate) {
-      await dialect.handleJoinedOneToManyPaginated(parent, node, prefix, context, selections, tables, joinCondition)
+      await dialect.handleJoinedOneToManyPaginated(parent, node, context, tables, joinCondition)
 
     // limit has a highly similar approach to paginating
     } else if (node.limit) {
       node.args.first = node.limit
-      await dialect.handleJoinedOneToManyPaginated(parent, node, prefix, context, selections, tables, joinCondition)
+      await dialect.handleJoinedOneToManyPaginated(parent, node, context, tables, joinCondition)
     // otherwite, just a regular left join on the table
     } else {
       tables.push(
@@ -172,11 +171,11 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     } else {
       const joinCondition = await node.junction.sqlBatch.sqlJoin(`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
       if (node.paginate) {
-        await dialect.handleBatchedManyToManyPaginated(parent, node, prefix, context, selections, tables, batchScope, joinCondition)
+        await dialect.handleBatchedManyToManyPaginated(parent, node, context, tables, batchScope, joinCondition)
 
       } else if (node.limit) {
         node.args.first = node.limit
-        await dialect.handleBatchedManyToManyPaginated(parent, node, prefix, context, selections, tables, batchScope, joinCondition)
+        await dialect.handleBatchedManyToManyPaginated(parent, node, context, tables, batchScope, joinCondition)
       } else {
         tables.push(
           `FROM ${node.junction.sqlTable} ${q(node.junction.as)}`,
@@ -193,11 +192,11 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     const joinCondition2 = await node.junction.sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
 
     if (node.paginate) {
-      await dialect.handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, tables, joinCondition1, joinCondition2)
+      await dialect.handleJoinedManyToManyPaginated(parent, node, context, tables, joinCondition1, joinCondition2)
 
     } else if (node.limit) {
       node.args.first = node.limit
-      await dialect.handleJoinedManyToManyPaginated(parent, node, prefix, context, selections, tables, joinCondition1, joinCondition2)
+      await dialect.handleJoinedManyToManyPaginated(parent, node, context, tables, joinCondition1, joinCondition2)
 
     } else {
       tables.push(
@@ -216,11 +215,11 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
       )
     } else {
       if (node.paginate) {
-        await dialect.handleBatchedOneToManyPaginated(parent, node, prefix, context, selections, tables, batchScope)
+        await dialect.handleBatchedOneToManyPaginated(parent, node, context, tables, batchScope)
 
       } else if (node.limit) {
         node.args.first = node.limit
-        await dialect.handleBatchedOneToManyPaginated(parent, node, prefix, context, selections, tables, batchScope)
+        await dialect.handleBatchedOneToManyPaginated(parent, node, context, tables, batchScope)
       // otherwite, just a regular left join on the table
       } else {
         tables.push(
@@ -231,10 +230,10 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     }
   // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause
   } else if (node.paginate) {
-    await dialect.handlePaginationAtRoot(parent, node, prefix, context, selections, tables)
+    await dialect.handlePaginationAtRoot(parent, node, context, tables)
   } else if (node.limit) {
     node.args.first = node.limit
-    await dialect.handlePaginationAtRoot(parent, node, prefix, context, selections, tables)
+    await dialect.handlePaginationAtRoot(parent, node, context, tables)
   } else {
     assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
     tables.push(
