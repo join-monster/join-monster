@@ -31,7 +31,7 @@ export function keysetPagingSelect(table, whereCondition, order, limit, as, opti
 ${joinType || ''} JOIN LATERAL (
   SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
-  ${ extraJoin ? `LEFT JOIN ${extraJoin.name} AS "${extraJoin.as}"
+  ${ extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
     ON ${extraJoin.condition}` : '' }
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
@@ -58,7 +58,7 @@ export function offsetPagingSelect(table, pagingWhereConditions, order, limit, o
 ${joinType || ''} JOIN LATERAL (
   SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
-  ${ extraJoin ? `LEFT JOIN ${extraJoin.name} AS "${extraJoin.as}"
+  ${ extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
     ON ${extraJoin.condition}` : '' }
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
@@ -145,6 +145,7 @@ export function interpretForKeysetPaging(node, dialect) {
     for (let column of wrap(sortKey.key)) {
       order.columns[column] = descending ? 'DESC' : 'ASC'
     }
+    order.table = node.junction.as
   }
 
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
@@ -197,7 +198,7 @@ function sortKeyToWhereCondition(keyObj, descending, sortTable, dialect) {
   const sortColumns = []
   const sortValues = []
   for (let key in keyObj) {
-    sortColumns.push(`"${sortTable}".${q(key)}`)
+    sortColumns.push(`${q(sortTable)}.${q(key)}`)
     sortValues.push(maybeQuote(keyObj[key], name))
   }
   const operator = descending ? '<' : '>'

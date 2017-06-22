@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { filter } from 'lodash'
-import { validateSqlAST, inspect } from '../util'
+import { validateSqlAST, inspect, wrap } from '../util'
 import {
   joinPrefix,
   quotePrefix,
@@ -130,6 +130,18 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
         columns: node.orderBy
       })
     }
+    if (node.junction && node.junction.sortKey) {
+      orders.push({
+        table: node.junction.as,
+        columns: sortKeyToOrderColumns(node.junction.sortKey, node.args)
+      })
+    }
+    if (node.sortKey) {
+      orders.push({
+        table: node.as,
+        columns: sortKeyToOrderColumns(node.sortKey, node.args)
+      })
+    }
   }
 
   // one-to-many using JOIN
@@ -245,4 +257,15 @@ function stringifyOuterOrder(orders, q) {
   return conditions.join(', ')
 }
 
+function sortKeyToOrderColumns(sortKey, args) {
+  let descending = sortKey.order.toUpperCase() === 'DESC'
+  if (args && args.last) {
+    descending = !descending
+  }
+  const orderColumns = {}
+  for (let column of wrap(sortKey.key)) {
+    orderColumns[column] = descending ? 'DESC' : 'ASC'
+  }
+  return orderColumns
+}
 

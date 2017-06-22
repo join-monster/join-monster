@@ -60,7 +60,7 @@ const dialect = module.exports = {
         condition: joinCondition
       }
     }
-    if (node.sortKey) {
+    if (node.sortKey || node.junction.sortKey) {
       const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       tables.push(keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, node.junction.as, lateralJoinOptions))

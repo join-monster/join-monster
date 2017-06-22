@@ -529,11 +529,10 @@ test('should handle a "where" condition on a paginated field', async t => {
       }
     }
   }
-
   fragment info on User {
     id
     fullName
-    comments(first: 4, active: false, after: "${objToCursor({id:287})}") {
+    comments(first: 4, active: false, after: "${objToCursor({ id:287 })}") {
       edges {
         node {
           id
@@ -569,6 +568,122 @@ test('should handle a "where" condition on a paginated field', async t => {
     }
   ]
   t.deepEqual(expect, comments)
+})
+
+test('should handle "where" condition on main table of many-to-many relation', async t => {
+  const query = `{
+    user(id: 3) {
+      fullName
+      following(intimacy: acquaintance) {
+        edges {
+          node {
+            id
+            fullName
+            intimacy
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'Coleman Abernathy',
+      following: {
+        edges: [
+          {
+            node: {
+              id: toGlobalId('User', 4),
+              fullName: 'Lulu Bogisich',
+              intimacy: 'acquaintance'
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('should handle order columns on the main table', async t => {
+  const query = `{
+    user(id: 2) {
+      fullName
+      following(first: 2, sortOnMain: true, after: "${objToCursor({ created_at: '2015-10-19T05:48:04.537Z', id: 3 })}") {
+        edges {
+          node {
+            id
+            fullName
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'Hudson Hyatt',
+      following: {
+        edges: [
+          {
+            node: {
+              id: toGlobalId('User', 1),
+              fullName: 'Alivia Waelchi'
+            }
+          },
+          {
+            node: {
+              id: toGlobalId('User', 2),
+              fullName: 'Hudson Hyatt'
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('should handle order columns on the junction table', async t => {
+  const query = `{
+    user(id: 2) {
+      fullName
+      following(first: 2, sortOnMain: false, after: "${objToCursor({ created_at: '2016-01-01T16:28:00.051Z', followee_id: 1 })}") {
+        edges {
+          node {
+            id
+            fullName
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.is(errors, undefined)
+  const expect = {
+    user: {
+      fullName: 'Hudson Hyatt',
+      following: {
+        edges: [
+          {
+            node: {
+              id: toGlobalId('User', 3),
+              fullName: 'Coleman Abernathy'
+            }
+          },
+          {
+            node: {
+              id: toGlobalId('User', 2),
+              fullName: 'Hudson Hyatt'
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(expect, data)
 })
 
 test('should handle an interface type', async t => {

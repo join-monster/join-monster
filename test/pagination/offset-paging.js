@@ -44,7 +44,6 @@ function makeUsersQuery(args) {
 test('should handle pagination at the root', async t => {
   const query = makeUsersQuery()
   const { data, errors } = await run(query)
-  console.log(errors)
   t.is(errors, undefined)
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: false,
