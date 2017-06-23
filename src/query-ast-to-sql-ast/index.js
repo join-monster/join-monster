@@ -228,8 +228,8 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   // or are they doing a one-to-many with batching
   } else if (field.sqlBatch) {
     sqlASTNode.sqlBatch = {
-      thisKey: columnToASTChild(field.sqlBatch.thisKey, namespace),
-      parentKey: columnToASTChild(field.sqlBatch.parentKey, namespace)
+      thisKey: columnToASTChild(ensure(field.sqlBatch, 'thisKey'), namespace),
+      parentKey: columnToASTChild(ensure(field.sqlBatch, 'parentKey'), namespace)
     }
   }
 
@@ -249,10 +249,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 
   // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
   // need whichever column that the schema specifies as the unique one to be the first child
-  if (!config.uniqueKey) {
-    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${sqlTable}`)
-  }
-  children.push(keyToASTChild(config.uniqueKey, namespace))
+  children.push(keyToASTChild(ensure(config, 'uniqueKey'), namespace))
 
   if (config.alwaysFetch) {
     for (let column of wrap(config.alwaysFetch)) {
@@ -418,12 +415,7 @@ function toClumsyName(keyArr) {
 // this will handle singular or composite keys
 function keyToASTChild(key, namespace) {
   if (typeof key === 'string') {
-    return {
-      type: 'column',
-      name: key,
-      fieldName: key,
-      as: namespace.generate('column', key)
-    }
+    return columnToASTChild(key, namespace)
   } else if (Array.isArray(key)) {
     const clumsyName = toClumsyName(key)
     return {
@@ -441,7 +433,7 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
     assert(sortKey.order, '"sortKey" must have "order"')
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
     for (let column of wrap(ensure(sortKey, 'key'))) {
-      const newChild = keyToASTChild(column, namespace)
+      const newChild = columnToASTChild(column, namespace)
       // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
       if (!sqlASTNode.sortKey) {
         newChild.fromOtherTable = sqlASTNode.junction.as
@@ -451,12 +443,7 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
   } else if (sqlASTNode.orderBy || (sqlASTNode.junction && sqlASTNode.junction.orderBy)) {
     // this type of paging can visit arbitrary pages, so lets provide the total number of items
     // on this special "$total" column which we will compute in the query
-    const newChild = {
-      type: 'column',
-      name: '$total',
-      fieldName: '$total',
-      as: namespace.generate('column', '$total')
-    }
+    const newChild = columnToASTChild('$total', namespace)
     if (sqlASTNode.junction) {
       newChild.fromOtherTable = sqlASTNode.junction.as
     }
