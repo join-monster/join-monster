@@ -34,8 +34,8 @@ function arrToConnection(data, sqlAST) {
   // we must prevent the recursive processing from visting the same object twice, because mutating the object the first
   // time changes it everywhere. we'll set the `_paginated` property to true to prevent this
   if (sqlAST.paginate && !data._paginated) {
-    if (sqlAST.sortKey || (sqlAST.junction && sqlAST.junction.sortKey)) {
-      if (sqlAST.args && sqlAST.args.first) {
+    if (sqlAST.sortKey || idx(sqlAST, _ => _.junction.sortKey)) {
+      if (idx(sqlAST, _ => _.args.first)) {
         // we fetched an extra one in order to determine if there is a next page, if there is one, pop off that extra
         if (data.length > sqlAST.args.first) {
           pageInfo.hasNextPage = true
@@ -67,7 +67,7 @@ function arrToConnection(data, sqlAST) {
       return { edges, pageInfo, _paginated: true }
     } else if (sqlAST.orderBy || (sqlAST.junction && sqlAST.junction.orderBy)) {
       let offset = 0
-      if (sqlAST.args && sqlAST.args.after) {
+      if (idx(sqlAST, _ => _.args.after)) {
         offset = cursorToOffset(sqlAST.args.after) + 1
       }
       // $total was a special column for determining the total number of items

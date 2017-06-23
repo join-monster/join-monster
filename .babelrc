@@ -1,4 +1,4 @@
 {
   "presets": [ "node6", "stage-1" ],
-  "plugins": [ "transform-do-expressions", "object-values-to-object-keys" ]
+  "plugins": [ "transform-do-expressions", "object-values-to-object-keys", "idx" ]
 }

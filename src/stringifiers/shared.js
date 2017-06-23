@@ -15,11 +15,11 @@ export function quotePrefix(prefix, q = doubleQuote) {
 }
 
 export function thisIsNotTheEndOfThisBatch(node, parent) {
-  return (!node.sqlBatch && !(node.junction && node.junction.sqlBatch)) || !parent
+  return (!node.sqlBatch && !(idx(node, _ => _.junction.sqlBatch))) || !parent
 }
 
 export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent) {
-  return !node.paginate && (!(node.sqlBatch || (node.junction && node.junction.sqlBatch)) || !parent)
+  return !node.paginate && (!(node.sqlBatch || (idx(node, _ => _.junction.sqlBatch))) || !parent)
 }
 
 export function keysetPagingSelect(table, whereCondition, order, limit, as, options = {}) {
@@ -87,7 +87,7 @@ export function orderColumnsToString(orderColumns, q, as) {
 // find out what the limit, offset, order by parts should be from the relay connection args if we're paginating
 export function interpretForOffsetPaging(node, dialect) {
   const { name } = dialect
-  if (node.args && node.args.last) {
+  if (idx(node, _ => _.args.last)) {
     throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
   }
 
@@ -102,7 +102,7 @@ export function interpretForOffsetPaging(node, dialect) {
 
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
   let offset = 0
-  if (node.args && node.args.first) {
+  if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first)
     // we'll get one extra item (hence the +1). this is to determine if there is a next page or not
     if (node.paginate) {
@@ -127,7 +127,7 @@ export function interpretForKeysetPaging(node, dialect) {
     descending = sortKey.order.toUpperCase() === 'DESC'
     sortTable = node.as
     // flip the sort order if doing backwards paging
-    if (node.args && node.args.last) {
+    if (idx(node, _ => _.args.last)) {
       descending = !descending
     }
     for (let column of wrap(sortKey.key)) {
@@ -139,7 +139,7 @@ export function interpretForKeysetPaging(node, dialect) {
     descending = sortKey.order.toUpperCase() === 'DESC'
     sortTable = node.junction.as
     // flip the sort order if doing backwards paging
-    if (node.args && node.args.last) {
+    if (idx(node, _ => _.args.last)) {
       descending = !descending
     }
     for (let column of wrap(sortKey.key)) {
@@ -150,7 +150,7 @@ export function interpretForKeysetPaging(node, dialect) {
 
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
   let whereCondition = ''
-  if (node.args && node.args.first) {
+  if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first) + 1
     if (node.args.after) {
       const cursorObj = cursorToObj(node.args.after)
@@ -160,7 +160,7 @@ export function interpretForKeysetPaging(node, dialect) {
     if (node.args.before) {
       throw new Error('Using "before" with "first" is nonsensical.')
     }
-  } else if (node.args && node.args.last) {
+  } else if (idx(node, _ => _.args.last)) {
     limit = parseInt(node.args.last) + 1
     if (node.args.before) {
       const cursorObj = cursorToObj(node.args.before)

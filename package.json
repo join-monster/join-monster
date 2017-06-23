@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -74,9 +74,10 @@
     "ava": "^0.19.1",
     "babel-cli": "^6.14.0",
     "babel-eslint": "^7.0.0",
+    "babel-plugin-idx": "^1.5.1",
+    "babel-plugin-object-values-to-object-keys": "^1.0.2",
     "babel-plugin-syntax-do-expressions": "^6.13.0",
     "babel-plugin-transform-do-expressions": "^6.22.0",
-    "babel-plugin-object-values-to-object-keys": "^1.0.2",
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-1": "^6.24.1",
     "babel-watch": "^2.0.3-rc0",

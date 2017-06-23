@@ -26,7 +26,7 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
     const fieldName = childAST.fieldName
 
     // see if any begin a new batch
-    if (childAST.sqlBatch || (childAST.junction && childAST.junction.sqlBatch)) {
+    if (childAST.sqlBatch || idx(childAST, _ => _.junction.sqlBatch)) {
 
       let thisKey, parentKey
       if (childAST.sqlBatch) {
@@ -34,7 +34,7 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
         childAST.children.push(childAST.sqlBatch.thisKey)
         thisKey = childAST.sqlBatch.thisKey.fieldName
         parentKey = childAST.sqlBatch.parentKey.fieldName
-      } else if (childAST.junction && childAST.junction.sqlBatch) {
+      } else if (idx(childAST, _ => _.junction.sqlBatch)) {
         childAST.children.push(childAST.junction.sqlBatch.thisKey)
         thisKey = childAST.junction.sqlBatch.thisKey.fieldName
         parentKey = childAST.junction.sqlBatch.parentKey.fieldName

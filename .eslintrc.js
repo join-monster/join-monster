@@ -3,6 +3,9 @@ module.exports = {
     es6: true,
     node: true
   },
+  globals: {
+    idx: true
+  },
   extends: 'eslint:recommended',
   ecmaFeatures: {
     experimentalObjectRestSpread: true,

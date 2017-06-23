@@ -68,7 +68,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   }
 
   let fieldIncludes
-  if (sqlASTNode.parent && sqlASTNode.parent.junction && sqlASTNode.parent.junction.include && sqlASTNode.parent.junction.include[fieldName]) {
+  if (idx(sqlASTNode, _ => _.parent.junction.include[fieldName])) {
     fieldIncludes = sqlASTNode.parent.junction.include[fieldName]
     field = {
       ...field,
@@ -428,7 +428,7 @@ function keyToASTChild(key, namespace) {
 }
 
 function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
-  if (sqlASTNode.sortKey || (sqlASTNode.junction && sqlASTNode.junction.sortKey)) {
+  if (sqlASTNode.sortKey || idx(sqlASTNode, _ => _.junction.sortKey)) {
     const sortKey = sqlASTNode.sortKey || sqlASTNode.junction.sortKey
     assert(sortKey.order, '"sortKey" must have "order"')
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
@@ -440,7 +440,7 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
       }
       sqlASTNode.children.push(newChild)
     }
-  } else if (sqlASTNode.orderBy || (sqlASTNode.junction && sqlASTNode.junction.orderBy)) {
+  } else if (sqlASTNode.orderBy || idx(sqlASTNode, _ => _.junction.orderBy)) {
     // this type of paging can visit arbitrary pages, so lets provide the total number of items
     // on this special "$total" column which we will compute in the query
     const newChild = columnToASTChild('$total', namespace)
@@ -551,10 +551,10 @@ function getSortColumns(field, sqlASTNode, context) {
       throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
     }
   }
-  if (sqlASTNode.sortKey && sqlASTNode.junction && sqlASTNode.junction.sortKey) {
+  if (sqlASTNode.sortKey && idx(sqlASTNode, _ => _.junction.sortKey)) {
     throw new Error('"sortKey" must be on junction or main table, not both')
   }
-  if (sqlASTNode.orderBy && sqlASTNode.junction && sqlASTNode.junction.orderBy) {
+  if (sqlASTNode.orderBy && idx(sqlASTNode, _ => _.junction.orderBy)) {
     throw new Error('"orderBy" must be on junction or main table, not both')
   }
 }

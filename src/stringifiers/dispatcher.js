@@ -108,7 +108,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   const { quote: q } = dialect
   // generate the "where" condition, if applicable
   if (whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent)) {
-    if (node.junction && node.junction.where) {
+    if (idx(node, _ => _.junction.where)) {
       wheres.push(await node.junction.where(`${q(node.junction.as)}`, node.args || {}, context, node))
     }
     if (node.where) {
@@ -117,7 +117,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   }
 
   if (thisIsNotTheEndOfThisBatch(node, parent)) {
-    if (node.junction && node.junction.orderBy) {
+    if (idx(node, _ => _.junction.orderBy)) {
       orders.push({
         table: node.junction.as,
         columns: node.junction.orderBy
@@ -129,7 +129,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
         columns: node.orderBy
       })
     }
-    if (node.junction && node.junction.sortKey) {
+    if (idx(node, _ => _.junction.sortKey)) {
       orders.push({
         table: node.junction.as,
         columns: sortKeyToOrderColumns(node.junction.sortKey, node.args)
@@ -163,7 +163,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     }
   
   // many-to-many using batching
-  } else if (node.junction && node.junction.sqlBatch) {
+  } else if (idx(node, _ => _.junction.sqlBatch)) {
     if (parent) {
       selections.push(
         `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} AS ${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
@@ -187,7 +187,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     }
 
   // many-to-many using JOINs
-  } else if (node.junction && node.junction.sqlTable) {
+  } else if (idx(node, _ => _.junction.sqlTable)) {
     const joinCondition1 = await node.junction.sqlJoins[0](`${q(parent.as)}`, q(node.junction.as), node.args || {}, context)
     const joinCondition2 = await node.junction.sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
 
