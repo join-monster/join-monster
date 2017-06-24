@@ -2,7 +2,7 @@ import {
   keysetPagingSelect,
   offsetPagingSelect,
   interpretForOffsetPaging,
-  interpretForKeysetPaging,
+  interpretForKeysetPaging
 } from '../shared'
 
 const dialect = module.exports = {
@@ -19,7 +19,7 @@ const dialect = module.exports = {
 
   handleJoinedOneToManyPaginated: async function(parent, node, context, tables, joinCondition) {
     const pagingWhereConditions = [
-      await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context),
+      await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context)
     ]
     if (node.where) {
       pagingWhereConditions.push(

@@ -68,9 +68,9 @@ export function maybeQuote(value, dialectName) {
   let hasBackslash = false
   let escaped = '\''
 
-  for(let i = 0; i < value.length; i++) {
+  for (let i = 0; i < value.length; i++) {
     let c = value[i]
-    if(c === '\'') {
+    if (c === '\'') {
       escaped += c + c
     } else if (c === '\\') {
       escaped += c + c
@@ -82,7 +82,7 @@ export function maybeQuote(value, dialectName) {
 
   escaped += '\''
 
-  if(hasBackslash === true) {
+  if (hasBackslash === true) {
     escaped = ' E' + escaped
   }
 
@@ -93,23 +93,21 @@ export function buildWhereFunction(type, condition, options) {
   if (typeof condition === 'function') {
     return condition
   // otherwise, we'll assume they gave us the value(s) of the unique key.
-  } else {
+  }
     // determine the type of quotes necessary to escape the uniqueKey column
-    const quote = [ 'mysql', 'mariadb' ].includes(options.dialect) ? '`' : '"'
+  const quote = [ 'mysql', 'mariadb' ].includes(options.dialect) ? '`' : '"'
 
     // determine the unique key so we know what to search by
-    const uniqueKey = type._typeConfig.uniqueKey
+  const uniqueKey = type._typeConfig.uniqueKey
 
     // handle composite keys
-    if (Array.isArray(uniqueKey)) {
+  if (Array.isArray(uniqueKey)) {
       // it must have a corresponding array of values
-      assert.equal(condition.length, uniqueKey.length, `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`)
-      return table => uniqueKey.map((key, i) => `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`).join(' AND ')
+    assert.equal(condition.length, uniqueKey.length, `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`)
+    return table => uniqueKey.map((key, i) => `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`).join(' AND ')
     // single keys are simple
-    } else {
-      return table => `${table}.${quote}${uniqueKey}${quote} = ${maybeQuote(condition)}`
-    }
   }
+  return table => `${table}.${quote}${uniqueKey}${quote} = ${maybeQuote(condition)}`
 }
 
 // handles the different callback signatures and return values.
@@ -149,9 +147,8 @@ export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition) {
       debug(emphasize('SHAPED_DATA'), inspect(data))
       return data
     })
-  } else {
-    throw new Error('must return a promise of the data or use the callback')
   }
+  throw new Error('must return a promise of the data or use the callback')
 }
 
 // validate the data they gave us
@@ -160,9 +157,8 @@ function validate(rows) {
   if (Array.isArray(rows)) return rows
   // a check for the most common error. a lot of ORMs return an object with the desired data on the `rows` property
   else if (rows && rows.rows) return rows.rows
-  else {
-    throw new Error(`"dbCall" function must return/resolve an array of objects where each object is a row from the result set. Instead got ${util.inspect(rows, { depth: 3 })}`)
-  }
+
+  throw new Error(`"dbCall" function must return/resolve an array of objects where each object is a row from the result set. Instead got ${util.inspect(rows, { depth: 3 })}`)
 }
 
 export async function compileSqlAST(sqlAST, context, options) {

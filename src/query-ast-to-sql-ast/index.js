@@ -108,10 +108,8 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     if (field.sqlPaginate) {
       sqlASTNode.paginate = true
     }
-  } else {
-    if (field.sqlPaginate) {
-      throw new Error(`To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec. The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`)
-    }
+  } else if (field.sqlPaginate) {
+    throw new Error(`To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec. The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`)
   }
   // the typeConfig has all the keyes from the GraphQLObjectType definition
   const config = gqlType._typeConfig
@@ -212,7 +210,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
     } else if (field.junction.sqlBatch) {
       children.push({
         ...keyToASTChild(ensure(field.junction, 'uniqueKey'), namespace),
-        fromOtherTable: junction.as,
+        fromOtherTable: junction.as
       })
       junction.sqlBatch = {
         sqlJoin: ensure(field.junction.sqlBatch, 'sqlJoin'),
@@ -324,7 +322,7 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
         const fragmentName = selection.name.value
         const fragment = this.fragments[fragmentName]
         const fragmentNameOfType = fragment.typeCondition.name.value
-        const deferredType = this.schema._typeMap[fragmentNameOfType ]
+        const deferredType = this.schema._typeMap[fragmentNameOfType]
         const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
         const handler = deferToObjectType ? handleSelections : handleUnionSelections
         if (deferToObjectType) {
@@ -492,7 +490,7 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
     //
     // whoa what the heck is this? Proxy? this is basically a JavaScript implementation of Python's "defaultdict"
     // its cool. look it up
-    const depsByTable = new Proxy({}, { get: (target, name) => name in target ? target[name] : new Set })
+    const depsByTable = new Proxy({}, { get: (target, name) => name in target ? target[name] : new Set() })
 
     // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
     for (let i = children.length - 1; i >= 0; i--) {
@@ -565,7 +563,7 @@ function getSortColumns(field, sqlASTNode, context) {
 // this function recurses through and gets the relevant fields
 function spreadFragments(selections, fragments, typeName) {
   return flatMap(selections, selection => {
-    switch(selection.kind) {
+    switch (selection.kind) {
     case 'FragmentSpread':
       const fragmentName = selection.name.value
       const fragment = fragments[fragmentName]
@@ -573,9 +571,9 @@ function spreadFragments(selections, fragments, typeName) {
     case 'InlineFragment':
       if (selection.typeCondition.name.value === typeName) {
         return spreadFragments(selection.selectionSet.selections, fragments, typeName)
-      } else {
-        return []
       }
+      return []
+
     default:
       return selection
     }
@@ -589,7 +587,7 @@ export function handleOrderBy(orderBy) {
     for (let column in orderBy) {
       let direction = orderBy[column].toUpperCase()
       if (direction !== 'ASC' && direction !== 'DESC') {
-        throw new Error (direction + ' is not a valid sorting direction')
+        throw new Error(direction + ' is not a valid sorting direction')
       }
       orderColumns[column] = direction
     }

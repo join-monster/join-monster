@@ -28,8 +28,8 @@ ${ joinType === 'LEFT' ? 'OUTER' : 'CROSS' } APPLY (
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   FETCH FIRST ${limit} ROWS ONLY
 ) ${q(as)}`
-  } else {
-    return `\
+  }
+  return `\
 FROM (
   SELECT "${as}".*
   FROM ${table} "${as}"
@@ -37,7 +37,6 @@ FROM (
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   FETCH FIRST ${limit} ROWS ONLY
 ) ${q(as)}`
-  }
 }
 
 function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
@@ -45,7 +44,7 @@ function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, 
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || '1 = 1'
   if (joinCondition) {
     return `\
-${joinType === 'LEFT' ? 'OUTER': 'CROSS'} APPLY (
+${joinType === 'LEFT' ? 'OUTER' : 'CROSS'} APPLY (
   SELECT "${as}".*, count(*) OVER () AS ${q('$total')}
   FROM ${table} "${as}"
   ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
@@ -54,8 +53,8 @@ ${joinType === 'LEFT' ? 'OUTER': 'CROSS'} APPLY (
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
 ) ${q(as)}`
-  } else {
-    return `\
+  }
+  return `\
 FROM (
   SELECT "${as}".*, count(*) OVER () AS ${q('$total')}
   FROM ${table} "${as}"
@@ -63,13 +62,12 @@ FROM (
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
 ) ${q(as)}`
-  }
 }
 
 const dialect = module.exports = {
   ...require('./pg'),
   name: 'oracle',
-  
+
   compositeKey(parent, keys) {
     keys = keys.map(key => `"${parent}"."${key}"`)
     return `NULLIF(${recursiveConcat(keys)}, '')`
@@ -95,7 +93,7 @@ const dialect = module.exports = {
 
   handleJoinedOneToManyPaginated: async function(parent, node, context, tables, joinCondition) {
     const pagingWhereConditions = [
-      await node.sqlJoin(`"${parent.as}"`, q(node.as), node.args || {}, context),
+      await node.sqlJoin(`"${parent.as}"`, q(node.as), node.args || {}, context)
     ]
     if (node.where) {
       pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, node))

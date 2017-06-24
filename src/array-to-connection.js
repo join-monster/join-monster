@@ -25,9 +25,8 @@ function arrToConnection(data, sqlAST) {
         pageInfo,
         edges: []
       }
-    } else {
-      return null
     }
+    return null
   }
   // is cases where pagination was done, take the data and convert to the connection object
   // if any two fields happen to become a reference to the same object (when their `uniqueKey`s are the same),

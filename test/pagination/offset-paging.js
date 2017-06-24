@@ -78,7 +78,11 @@ test('should handle root pagination with "first" arg', async t => {
       email: 'Mohammed.Hayes@hotmail.com'
     }
   }, 'the first node is accurate')
-  t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
+  t.is(
+    data.users.edges.last().cursor,
+    data.users.pageInfo.endCursor,
+    'the last cursor in edges matches the end cursor in page info'
+  )
 })
 
 test('should handle root pagination with "first" and "after" args', async t => {
@@ -98,7 +102,11 @@ test('should handle root pagination with "first" and "after" args', async t => {
       email: 'Lurline79@gmail.com'
     }
   }, 'the first node is accurate')
-  t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
+  t.is(
+    data.users.edges.last().cursor,
+    data.users.pageInfo.endCursor,
+    'the last cursor in edges matches the end cursor in page info'
+  )
 })
 
 test('should handle the last page of root pagination', async t => {
@@ -119,7 +127,11 @@ test('should handle the last page of root pagination', async t => {
       email: 'andrew@stem.is'
     }
   }, 'the first node is accurate')
-  t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
+  t.is(
+    data.users.edges.last().cursor,
+    data.users.pageInfo.endCursor,
+    'the last cursor in edges matches the end cursor in page info'
+  )
 })
 
 test('should return nothing after the end of root pagination', async t => {
@@ -170,7 +182,11 @@ test('should handle pagination in a nested field', async t => {
     cursor: offsetToCursor(0),
     node: {
       id: toGlobalId('Post', 2),
-      body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.'
+      body: [
+        'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+        'Deserunt nemo pariatur sed facere accusantium quis.',
+        'Nobis aut voluptate inventore quidem explicabo.'
+      ].join(' ')
     }
   }, 'post number 2 happens to be first since this field\'s first sort column is created_at')
   t.is(posts.edges.last().cursor, posts.pageInfo.endCursor)
@@ -228,7 +244,14 @@ test('can handle nested pagination', async t => {
   t.is(data.users.edges.length, 2)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
   t.is(data.users.edges[0].node.posts.edges.length, 2)
-  t.is(data.users.edges[0].node.posts.edges[0].node.body, 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.')
+  t.is(
+    data.users.edges[0].node.posts.edges[0].node.body,
+    [
+      'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+      'Deserunt nemo pariatur sed facere accusantium quis.',
+      'Nobis aut voluptate inventore quidem explicabo.'
+    ].join(' ')
+  )
 })
 
 test('can go to each second page in a nested connection', async t => {
@@ -251,9 +274,15 @@ test('can go to each second page in a nested connection', async t => {
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   t.is(data.users.edges[0].node.id, toGlobalId('User', 1))
-  t.deepEqual(data.users.edges[0].node.posts.edges.map(edge => edge.node.id), [ toGlobalId('Post', 33), toGlobalId('Post', 38)])
+  t.deepEqual(
+    data.users.edges[0].node.posts.edges.map(edge => edge.node.id),
+    [ toGlobalId('Post', 33), toGlobalId('Post', 38) ]
+  )
   t.is(data.users.edges[1].node.id, toGlobalId('User', 2))
-  t.deepEqual(data.users.edges[1].node.posts.edges.map(edge => edge.node.id), [ toGlobalId('Post', 1), toGlobalId('Post', 50)])
+  t.deepEqual(
+    data.users.edges[1].node.posts.edges.map(edge => edge.node.id),
+    [ toGlobalId('Post', 1), toGlobalId('Post', 50) ]
+  )
 })
 
 test('can handle deeply nested pagination', async t => {
@@ -287,7 +316,7 @@ test('can handle deeply nested pagination', async t => {
       }
     }
   }`
-  const { data, errors } = await run (query)
+  const { data, errors } = await run(query)
   t.is(errors, undefined)
   const comments = data.users.edges[0].node.posts.edges[0].node.comments
   t.deepEqual(comments.pageInfo, {
@@ -402,12 +431,20 @@ test('filtering on one-to-many-nested field', async t => {
   t.deepEqual(data.user.posts.edges, [
     {
       node: {
-        body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.'
+        body: [
+          'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+          'Deserunt nemo pariatur sed facere accusantium quis.',
+          'Nobis aut voluptate inventore quidem explicabo.'
+        ].join(' ')
       }
     },
     {
       node: {
-        body: 'Incidunt quibusdam nulla adipisci error quia. Consequatur consequatur soluta fugit dolor iure. Voluptas accusamus fugiat assumenda enim.'
+        body: [
+          'Incidunt quibusdam nulla adipisci error quia.',
+          'Consequatur consequatur soluta fugit dolor iure.',
+          'Voluptas accusamus fugiat assumenda enim.'
+        ].join(' ')
       }
     }
   ])
@@ -507,7 +544,7 @@ test('should handle a "where" condition on a one-to-many paginated field', async
   t.is(data.users.edges.length, 1)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
   const comments = data.users.edges[0].node.comments.edges.map(edge => ({
-    id: parseInt(fromGlobalId(edge.node.id).id),
+    id: parseInt(fromGlobalId(edge.node.id).id, 10),
     archived: edge.node.archived
   }))
   t.is(data.users.edges[0].node.comments.total, 47)
@@ -686,13 +723,21 @@ test('should handle an interface type', async t => {
       {
         node: {
           id: 'UG9zdDoy',
-          body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.'
+          body: [
+            'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+            'Deserunt nemo pariatur sed facere accusantium quis.',
+            'Nobis aut voluptate inventore quidem explicabo.'
+          ].join(' ')
         }
       },
       {
         node: {
           id: 'UG9zdDoz',
-          body: 'Qui provident saepe laborum non est. Eaque aut enim officiis deserunt. Est sed suscipit praesentium et similique repudiandae. Inventore similique commodi non dolores inventore dolor est aperiam.'
+          body: [
+            'Qui provident saepe laborum non est. Eaque aut enim officiis deserunt.',
+            'Est sed suscipit praesentium et similique repudiandae.',
+            'Inventore similique commodi non dolores inventore dolor est aperiam.'
+          ].join(' ')
         }
       }
     ]

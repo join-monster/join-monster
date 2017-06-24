@@ -18,7 +18,7 @@ test('it should get user 1 with comments and particular posts', async t => {
       }
     }
   }`
-  const {data, errors} = await run(query)
+  const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
     user: {
@@ -89,7 +89,7 @@ test('it should get user 1 with comments and particular posts with active commen
       }
     }
   }`
-  const {data, errors} = await run(query)
+  const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
     user: {

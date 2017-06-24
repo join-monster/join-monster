@@ -56,7 +56,6 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  */
 
 
-
 /* _                _
   | |__   ___  __ _(_)_ __    ___  ___  _   _ _ __ ___ ___
   | '_ \ / _ \/ _` | | '_ \  / __|/ _ \| | | | '__/ __/ _ \
@@ -96,7 +95,7 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   if (Array.isArray(data)) {
     const childrenToCheck = sqlAST.children.filter(child => child.sqlBatch)
     return data.filter(d => {
-      for(const child of childrenToCheck) {
+      for (const child of childrenToCheck) {
         if (d[child.fieldName] == null) {
           return false
         }
@@ -153,7 +152,6 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
 }
 
 joinMonster.getNode = getNode
-
 
 
 // expose the package version for debugging

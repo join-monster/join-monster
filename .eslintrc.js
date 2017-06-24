@@ -6,7 +6,7 @@ module.exports = {
   globals: {
     idx: true
   },
-  extends: 'eslint:recommended',
+  extends: 'airbnb-base/legacy',
   ecmaFeatures: {
     experimentalObjectRestSpread: true,
     modules: true,
@@ -18,6 +18,27 @@ module.exports = {
     indent: [
       'error',
       2
+    ],
+    'no-extend-native': 0,
+    'func-names': 0,
+    'space-before-function-paren': [
+      'error',
+      'never'
+    ],
+    'guard-for-in': 0,
+    'no-restricted-syntax': 0,
+    'no-param-reassign': 0,
+    'no-multi-assign': 0,
+    'global-require': 0,
+    'vars-on-top': 0,
+    'block-scoped-var': 0,
+    'max-len': [
+      'warn',
+      125
+    ],
+    'array-bracket-spacing': [
+      'error',
+      'always'
     ],
     'linebreak-style': [
       'error',

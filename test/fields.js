@@ -65,15 +65,15 @@ test.skip('it should handle duplicate object type fields with different argument
   const expect = {
     user: {
       comments: [
-        { 'id': 3 },
-        { 'id': 5 },
-        { 'id': 9 }
+        { id: 3 },
+        { id: 5 },
+        { id: 9 }
       ],
       archivedComments: [
-        { 'id': 2 },
-        { 'id': 3 },
-        { 'id': 5 },
-        { 'id': 9 }
+        { id: 2 },
+        { id: 3 },
+        { id: 5 },
+        { id: 9 }
       ]
     }
   }

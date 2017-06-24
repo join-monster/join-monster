@@ -23,7 +23,7 @@ function paginatedSelect(table, as, whereConditions, order, limit, offset, opts 
   const { extraJoin, withTotal } = opts
   as = quote(as)
   return `\
-  (SELECT ${as}.*${withTotal ? ', count(*) OVER () AS `$total`': '' }
+  (SELECT ${as}.*${withTotal ? ', count(*) OVER () AS `$total`' : ''}
   FROM ${table} ${as}
   ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${quote(extraJoin.as)}
     ON ${extraJoin.condition}` : ''}
@@ -121,7 +121,10 @@ const dialect = module.exports = {
       const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       const unions = batchScope.map(val => {
-        let whereConditions = [ ...pagingWhereConditions, `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}` ]
+        let whereConditions = [
+          ...pagingWhereConditions,
+          `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}`
+        ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
         return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, order, limit, null, { extraJoin })
       })
@@ -129,9 +132,15 @@ const dialect = module.exports = {
     } else if (node.orderBy || node.junction.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       const unions = batchScope.map(val => {
-        let whereConditions = [ ...pagingWhereConditions, `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}` ]
+        let whereConditions = [
+          ...pagingWhereConditions,
+          `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}`
+        ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, order, limit, offset, { withTotal: true, extraJoin })
+        return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, order, limit, offset, {
+          withTotal: true,
+          extraJoin
+        })
       })
       tables.push(joinUnions(unions, node.junction.as))
     }

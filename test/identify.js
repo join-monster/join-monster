@@ -104,7 +104,7 @@ test('it should handle composite keys', async t => {
       { numLegs: 2, lastName: 'bachman' },
       { numLegs: 2, lastName: 'bachman' },
       { numLegs: 2, lastName: 'bachman' },
-      { numLegs: 2, lastName: 'daemon' },
+      { numLegs: 2, lastName: 'daemon' }
     ]
   }
   t.deepEqual(expect, data)

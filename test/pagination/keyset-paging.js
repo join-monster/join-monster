@@ -292,7 +292,7 @@ test('can handle deeply nested pagination', async t => {
       }
     }
   }`
-  const { data, errors } = await run (query)
+  const { data, errors } = await run(query)
   t.is(errors, undefined)
   const comments = data.users.edges[0].node.posts.edges[0].node.comments
   const expect = {
@@ -392,7 +392,7 @@ test('should handle pagination with duplicate objects', async t => {
     id: user1Id,
     fullName: 'Alivia Waelchi',
     email: 'Mohammed.Hayes@hotmail.com',
-    following,
+    following
   }
   const expect = {
     node: {
@@ -532,7 +532,7 @@ test('should handle a "where" condition on a paginated field', async t => {
   fragment info on User {
     id
     fullName
-    comments(first: 4, active: false, after: "${objToCursor({ id:287 })}") {
+    comments(first: 4, active: false, after: "${objToCursor({ id: 287 })}") {
       edges {
         node {
           id

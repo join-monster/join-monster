@@ -74,8 +74,7 @@ function _defineObjectShape(parent, prefix, node) {
   if (node.grabMany) {
     return [ fieldDefinition ]
   // otherwise, it will just grab the first result
-  } else {
-    return fieldDefinition
   }
+  return fieldDefinition
 }
 

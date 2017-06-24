@@ -4,7 +4,7 @@ import { chain } from 'lodash'
 // need to strip those off and take whichever of those values are non-null
 export default function resolveUnions(data, sqlAST) {
   if (!data || (Array.isArray(data) && data.length === 0)) {
-    return 
+    return
   }
 
   if (sqlAST.type === 'union') {
@@ -42,7 +42,7 @@ export default function resolveUnions(data, sqlAST) {
         }
       }
     }
-  } 
+  }
   if (sqlAST.type === 'table' || sqlAST.type === 'union') {
     for (let child of sqlAST.children) {
       if ((child.type === 'table' || child.type === 'union') && !child.sqlBatch) {

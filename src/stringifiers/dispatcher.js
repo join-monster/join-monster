@@ -19,12 +19,12 @@ export default async function stringifySqlAST(topNode, context, options) {
   // GraphQL does not prevent queries with duplicate fields
   selections = [ ...new Set(selections) ]
 
-  // bail out if they made no selections 
+  // bail out if they made no selections
   if (!selections.length) return ''
 
   // put together the SQL query
-  let sql = 'SELECT\n  ' + 
-    selections.join(',\n  ') + '\n' + 
+  let sql = 'SELECT\n  ' +
+    selections.join(',\n  ') + '\n' +
     tables.join('\n')
 
   wheres = filter(wheres)
@@ -42,7 +42,7 @@ export default async function stringifySqlAST(topNode, context, options) {
 async function _stringifySqlAST(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect) {
   const { quote: q } = dialect
   const parentTable = node.fromOtherTable || (parent && parent.as)
-  switch(node.type) {
+  switch (node.type) {
   case 'table':
     await handleTable(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect)
 
@@ -160,7 +160,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
         `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
       )
     }
-  
+
   // many-to-many using batching
   } else if (idx(node, _ => _.junction.sqlBatch)) {
     if (parent) {
@@ -171,7 +171,6 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
       const joinCondition = await node.junction.sqlBatch.sqlJoin(`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
       if (node.paginate) {
         await dialect.handleBatchedManyToManyPaginated(parent, node, context, tables, batchScope, joinCondition)
-
       } else if (node.limit) {
         node.args.first = node.limit
         await dialect.handleBatchedManyToManyPaginated(parent, node, context, tables, batchScope, joinCondition)
@@ -192,11 +191,9 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
     if (node.paginate) {
       await dialect.handleJoinedManyToManyPaginated(parent, node, context, tables, joinCondition1, joinCondition2)
-
     } else if (node.limit) {
       node.args.first = node.limit
       await dialect.handleJoinedManyToManyPaginated(parent, node, context, tables, joinCondition1, joinCondition2)
-
     } else {
       tables.push(
         `LEFT JOIN ${node.junction.sqlTable} ${q(node.junction.as)} ON ${joinCondition1}`
@@ -212,20 +209,17 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
       selections.push(
         `${q(parent.as)}.${q(node.sqlBatch.parentKey.name)} AS ${q(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`
       )
-    } else {
-      if (node.paginate) {
-        await dialect.handleBatchedOneToManyPaginated(parent, node, context, tables, batchScope)
-
-      } else if (node.limit) {
-        node.args.first = node.limit
-        await dialect.handleBatchedOneToManyPaginated(parent, node, context, tables, batchScope)
+    } else if (node.paginate) {
+      await dialect.handleBatchedOneToManyPaginated(parent, node, context, tables, batchScope)
+    } else if (node.limit) {
+      node.args.first = node.limit
+      await dialect.handleBatchedOneToManyPaginated(parent, node, context, tables, batchScope)
       // otherwite, just a regular left join on the table
-      } else {
-        tables.push(
+    } else {
+      tables.push(
           `FROM ${node.name} ${q(node.as)}`
         )
-        wheres.push(`${q(node.as)}.${q(node.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`)
-      }
+      wheres.push(`${q(node.as)}.${q(node.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`)
     }
   // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause
   } else if (node.paginate) {

@@ -242,9 +242,9 @@ test('it should handle a column that resolves independantly of SQL', async t => 
   t.is(errors, undefined)
   const expect = {
     users: [
-      { id: 1, favNums: [1, 2, 3] },
-      { id: 2, favNums: [1, 2, 3] },
-      { id: 3, favNums: [1, 2, 3] }
+      { id: 1, favNums: [ 1, 2, 3 ] },
+      { id: 2, favNums: [ 1, 2, 3 ] },
+      { id: 3, favNums: [ 1, 2, 3 ] }
     ]
   }
   t.deepEqual(expect, data)
@@ -259,7 +259,7 @@ test('it should handle a query that gets nothing from the database', async t => 
   const { data, errors } = await run(query)
   t.is(errors, undefined)
   const expect = {
-    user: { favNums: [1, 2, 3] }
+    user: { favNums: [ 1, 2, 3 ] }
   }
   t.deepEqual(expect, data)
 })

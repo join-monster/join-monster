@@ -33,8 +33,8 @@ ${joinType || ''} JOIN LATERAL (
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit}
 ) ${q(as)} ON ${joinCondition}`
-  } else {
-    return `\
+  }
+  return `\
 FROM (
   SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
@@ -42,7 +42,6 @@ FROM (
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit}
 ) ${q(as)}`
-  }
 }
 
 export function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
@@ -60,8 +59,8 @@ ${joinType || ''} JOIN LATERAL (
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)} ON ${joinCondition}`
-  } else {
-    return `\
+  }
+  return `\
 FROM (
   SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
@@ -69,7 +68,6 @@ FROM (
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)}`
-  }
 }
 
 export function orderColumnsToString(orderColumns, q, as) {
@@ -161,7 +159,7 @@ export function interpretForKeysetPaging(node, dialect) {
     if (node.args.before) {
       const cursorObj = cursorToObj(node.args.before)
       validateCursor(cursorObj, wrap(sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, sortTable,dialect)
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending, sortTable, dialect)
     }
     if (node.args.after) {
       throw new Error('Using "after" with "last" is nonsensical.')
