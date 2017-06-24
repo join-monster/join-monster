@@ -43,7 +43,11 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   populateASTNode.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options, context)
 
   // make sure they started this party on a table
-  assert.equal(sqlAST.type, 'table', 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".')
+  assert.equal(
+    sqlAST.type,
+    'table',
+    'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".'
+  )
 
   // make sure each "sqlDep" is only specified once at each level. also assign it an alias
   pruneDuplicateSqlDeps(sqlAST, namespace)
@@ -109,7 +113,10 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
       sqlASTNode.paginate = true
     }
   } else if (field.sqlPaginate) {
-    throw new Error(`To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec. The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`)
+    throw new Error(
+      `To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec.
+      The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`
+    )
   }
   // the typeConfig has all the keyes from the GraphQLObjectType definition
   const config = gqlType._typeConfig
@@ -122,7 +129,12 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     && config.sqlTable
   ) {
     if (depth >= 1) {
-      assert(field.sqlJoin || field.sqlBatch || field.junction, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junction" on that field to tell joinMonster how to fetch it. Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
+      assert(
+        field.sqlJoin || field.sqlBatch || field.junction,
+        `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table,
+        you must define "sqlJoin", "sqlBatch", or "junction" on that field to tell joinMonster how to fetch it.
+        Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`
+      )
     }
     handleTable.call(this, sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options, context)
   // is this a computed column from a raw expression?
@@ -272,9 +284,17 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
       // union types have special rules for the child fields in join monster
       sqlASTNode.type = 'union'
       sqlASTNode.typedChildren = {}
-      handleUnionSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options, context)
+      handleUnionSelections.call(
+        this, sqlASTNode, children,
+        queryASTNode.selectionSet.selections, gqlType, namespace,
+        depth, options, context
+      )
     } else {
-      handleSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options, context)
+      handleSelections.call(
+        this, sqlASTNode, children,
+        queryASTNode.selectionSet.selections, gqlType, namespace,
+        depth, options, context
+      )
     }
   }
 }
@@ -313,7 +333,12 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
           children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
           internalOptions.defferedFrom = gqlType
         }
-        handler.call(this, sqlASTNode, children, selection.selectionSet.selections, deferredType, namespace, depth, options, context, internalOptions)
+        handler.call(
+          this, sqlASTNode, children,
+          selection.selectionSet.selections, deferredType, namespace,
+          depth, options, context,
+          internalOptions
+        )
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
@@ -330,7 +355,12 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
           children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
           internalOptions.defferedFrom = gqlType
         }
-        handler.call(this, sqlASTNode, children, fragment.selectionSet.selections, deferredType, namespace, depth, options, context, internalOptions)
+        handler.call(
+          this, sqlASTNode, children,
+          fragment.selectionSet.selections, deferredType, namespace,
+          depth, options, context,
+          internalOptions
+        )
       }
       break
     default:
@@ -367,7 +397,12 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         const sameType = selectionNameOfType === gqlType.name
         const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
         if (sameType || interfaceType) {
-          handleSelections.call(this, sqlASTNode, children, selection.selectionSet.selections, gqlType, namespace, depth, options, context, internalOptions)
+          handleSelections.call(
+            this, sqlASTNode, children,
+            selection.selectionSet.selections, gqlType, namespace,
+            depth, options, context,
+            internalOptions
+          )
         }
       }
       break
@@ -381,7 +416,12 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         const sameType = fragmentNameOfType === gqlType.name
         const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
         if (sameType || interfaceType) {
-          handleSelections.call(this, sqlASTNode, children, fragment.selectionSet.selections, gqlType, namespace, depth, options, context, internalOptions)
+          handleSelections.call(
+            this, sqlASTNode, children,
+            fragment.selectionSet.selections, gqlType, namespace,
+            depth, options, context,
+            internalOptions
+          )
         }
       }
       break

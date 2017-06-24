@@ -32,9 +32,17 @@ module.exports = {
     'global-require': 0,
     'vars-on-top': 0,
     'block-scoped-var': 0,
+    'no-underscore-dangle': 0,
+    'no-use-before-define': 0,
+    'no-plusplus': 0,
+    'no-await-in-loop': 0,
+    'consistent-return': 0,
+    'default-case': 0,
+    'no-void': 0,
     'max-len': [
       'warn',
-      125
+      125,
+      { ignoreComments: true }
     ],
     'array-bracket-spacing': [
       'error',

@@ -1,4 +1,4 @@
-import { validateSqlAST } from './util'
+import { validateSqlAST, inspect } from './util'
 
 // generate an object that defines the correct nesting shape for our GraphQL
 // this will be used by the library NestHydrationJS, check out their docs
@@ -37,6 +37,12 @@ function _defineObjectShape(parent, prefix, node) {
         const definition = _defineObjectShape(node, prefixToPass, child)
         fieldDefinition[child.fieldName] = definition
       }
+      break
+    case 'noop':
+      void 0
+      break
+    default:
+      throw new Error(`invalid SQLASTNode type: ${inspect(child.type)}`)
     }
   }
 
@@ -66,6 +72,12 @@ function _defineObjectShape(parent, prefix, node) {
           const definition = _defineObjectShape(node, prefixToPass, child)
           fieldDefinition[child.fieldName + suffix] = definition
         }
+        break
+      case 'noop':
+        void 0
+        break
+      default:
+        throw new Error(`invalid SQLASTNode type: ${inspect(child.type)}`)
       }
     }
   }

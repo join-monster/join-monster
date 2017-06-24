@@ -60,7 +60,10 @@ export function maybeQuote(value, dialectName) {
   if (value && typeof value.toSQL === 'function') return value.toSQL()
 
   if (dialectName === 'oracle' && value.match(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(.\d+)?Z?/)) {
-    return value.replace(/(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)(.\d+)?Z?/, "TIMESTAMP '$1 $2$3 UTC'") // eslint-disable-line quotes
+    return value.replace(
+      /(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)(.\d+)?Z?/,
+      'TIMESTAMP \'$1 $2$3 UTC\''
+    )
   }
 
   // Picked from https://github.com/brianc/node-postgres/blob/876018/lib/client.js#L235..L260
@@ -103,7 +106,11 @@ export function buildWhereFunction(type, condition, options) {
     // handle composite keys
   if (Array.isArray(uniqueKey)) {
       // it must have a corresponding array of values
-    assert.equal(condition.length, uniqueKey.length, `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`)
+    assert.equal(
+      condition.length,
+      uniqueKey.length,
+      `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`
+    )
     return table => uniqueKey.map((key, i) => `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`).join(' AND ')
     // single keys are simple
   }
@@ -158,7 +165,10 @@ function validate(rows) {
   // a check for the most common error. a lot of ORMs return an object with the desired data on the `rows` property
   else if (rows && rows.rows) return rows.rows
 
-  throw new Error(`"dbCall" function must return/resolve an array of objects where each object is a row from the result set. Instead got ${util.inspect(rows, { depth: 3 })}`)
+  throw new Error(
+    `"dbCall" function must return/resolve an array of objects where each object is a row from the result set.
+    Instead got ${util.inspect(rows, { depth: 3 })}`
+  )
 }
 
 export async function compileSqlAST(sqlAST, context, options) {
@@ -167,13 +177,17 @@ export async function compileSqlAST(sqlAST, context, options) {
   // now convert the "SQL AST" to sql
   options.dialect = options.dialect || 'sqlite3'
   if (options.dialect === 'standard') {
-    deprecate('dialect "standard" is deprecated, because there is no true implementation of the SQL standard', '"sqlite3" is the default')
+    deprecate(
+      'dialect "standard" is deprecated, because there is no true implementation of the SQL standard',
+      '"sqlite3" is the default'
+    )
     options.dialect = 'sqlite3'
   }
   const sql = await stringifySQL(sqlAST, context, options)
   debug(emphasize('SQL'), sql)
 
-  // figure out the shape of the object and define it so later we can pass it to NestHydration library so it can hydrate the data
+  // figure out the shape of the object and define it so later we can pass it to
+  // NestHydration library so it can hydrate the data
   const shapeDefinition = defineObjectShape(sqlAST)
   debug(emphasize('SHAPE_DEFINITION'), inspect(shapeDefinition))
   return { sql, shapeDefinition }

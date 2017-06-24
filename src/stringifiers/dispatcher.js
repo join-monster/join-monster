@@ -12,7 +12,12 @@ export default async function stringifySqlAST(topNode, context, options) {
 
   const dialect = require('./dialects/' + options.dialect)
   // recursively figure out all the selections, joins, and where conditions that we need
-  let { selections, tables, wheres, orders } = await _stringifySqlAST(null, topNode, [], context, [], [], [], [], options.batchScope, dialect)
+  let { selections, tables, wheres, orders } = await _stringifySqlAST(
+    null, topNode, [],
+    context, [], [],
+    [], [], options.batchScope,
+    dialect
+  )
 
   // make sure these are unique by converting to a set and then back to an array
   // e.g. we want to get rid of things like `SELECT user.id as id, user.id as id, ...`
@@ -49,7 +54,12 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     // recurse thru nodes
     if (thisIsNotTheEndOfThisBatch(node, parent)) {
       for (let child of node.children) {
-        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, null, dialect)
+        await _stringifySqlAST(
+          node, child, [ ...prefix, node.as ],
+          context, selections, tables,
+          wheres, orders, null,
+          dialect
+        )
       }
     }
 
@@ -61,11 +71,21 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     if (thisIsNotTheEndOfThisBatch(node, parent)) {
       for (let typeName in node.typedChildren) {
         for (let child of node.typedChildren[typeName]) {
-          await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, null, dialect)
+          await _stringifySqlAST(
+            node, child, [ ...prefix, node.as ],
+            context, selections, tables,
+            wheres, orders, null,
+            dialect
+          )
         }
       }
       for (let child of node.children) {
-        await _stringifySqlAST(node, child, [ ...prefix, node.as ], context, selections, tables, wheres, orders, null, dialect)
+        await _stringifySqlAST(
+          node, child, [ ...prefix, node.as ],
+          context, selections, tables,
+          wheres, orders, null,
+          dialect
+        )
       }
     }
 

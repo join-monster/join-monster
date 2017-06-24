@@ -97,7 +97,7 @@ export function interpretForOffsetPaging(node, dialect) {
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
   let offset = 0
   if (idx(node, _ => _.args.first)) {
-    limit = parseInt(node.args.first)
+    limit = parseInt(node.args.first, 10)
     // we'll get one extra item (hence the +1). this is to determine if there is a next page or not
     if (node.paginate) {
       limit++
@@ -145,7 +145,7 @@ export function interpretForKeysetPaging(node, dialect) {
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
   let whereCondition = ''
   if (idx(node, _ => _.args.first)) {
-    limit = parseInt(node.args.first) + 1
+    limit = parseInt(node.args.first, 10) + 1
     if (node.args.after) {
       const cursorObj = cursorToObj(node.args.after)
       validateCursor(cursorObj, wrap(sortKey.key))
@@ -155,7 +155,7 @@ export function interpretForKeysetPaging(node, dialect) {
       throw new Error('Using "before" with "first" is nonsensical.')
     }
   } else if (idx(node, _ => _.args.last)) {
-    limit = parseInt(node.args.last) + 1
+    limit = parseInt(node.args.last, 10) + 1
     if (node.args.before) {
       const cursorObj = cursorToObj(node.args.before)
       validateCursor(cursorObj, wrap(sortKey.key))

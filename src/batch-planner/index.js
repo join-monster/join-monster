@@ -27,8 +27,8 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
 
     // see if any begin a new batch
     if (childAST.sqlBatch || idx(childAST, _ => _.junction.sqlBatch)) {
-      let thisKey,
-        parentKey
+      let thisKey
+      let parentKey
       if (childAST.sqlBatch) {
         // if so, we know we'll need to get the key for matching with the parent key
         childAST.children.push(childAST.sqlBatch.thisKey)

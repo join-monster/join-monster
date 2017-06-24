@@ -76,7 +76,11 @@ test('should handle root pagination with "first" arg', async t => {
       email: 'Mohammed.Hayes@hotmail.com'
     }
   }, 'the first node is accurate')
-  t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
+  t.is(
+    data.users.edges.last().cursor,
+    data.users.pageInfo.endCursor,
+    'the last cursor in edges matches the end cursor in page info'
+  )
 })
 
 test('should reject an invalid cursor', async t => {
@@ -104,7 +108,11 @@ test('should handle root pagination with "first" and "after" args', async t => {
       email: 'Lurline79@gmail.com'
     }
   }, 'the first node is accurate')
-  t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
+  t.is(
+    data.users.edges.last().cursor,
+    data.users.pageInfo.endCursor,
+    'the last cursor in edges matches the end cursor in page info'
+  )
 })
 
 test('should handle the last page of root pagination', async t => {
@@ -126,7 +134,11 @@ test('should handle the last page of root pagination', async t => {
       fullName: 'Andrew Carlson'
     }
   }, 'the first node is accurate')
-  t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor, 'the last cursor in edges matches the end cursor in page info')
+  t.is(
+    data.users.edges.last().cursor,
+    data.users.pageInfo.endCursor,
+    'the last cursor in edges matches the end cursor in page info'
+  )
 })
 
 test('should return nothing after the end of root pagination', async t => {
@@ -202,7 +214,11 @@ test('should handle pagination in a nested field', async t => {
     cursor: objToCursor({ created_at: '2016-04-17T18:49:15.942Z', id: 2 }),
     node: {
       id: toGlobalId('Post', 2),
-      body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.'
+      body: [
+        'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+        'Deserunt nemo pariatur sed facere accusantium quis.',
+        'Nobis aut voluptate inventore quidem explicabo.'
+      ].join(' ')
     }
   }, 'post number 2 happens to be first since this field\'s first sort column is created_at')
   t.is(posts.edges.last().cursor, posts.pageInfo.endCursor)
@@ -259,7 +275,14 @@ test('can handle nested pagination', async t => {
   t.is(data.users.edges.length, 2)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
   t.is(data.users.edges[0].node.posts.edges.length, 2)
-  t.is(data.users.edges[0].node.posts.edges[0].node.body, 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.')
+  t.is(
+    data.users.edges[0].node.posts.edges[0].node.body,
+    [
+      'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+      'Deserunt nemo pariatur sed facere accusantium quis.',
+      'Nobis aut voluptate inventore quidem explicabo.'
+    ].join(' ')
+  )
 })
 
 test('can handle deeply nested pagination', async t => {
@@ -349,7 +372,8 @@ test('handle a conection type with a many-to-many', async t => {
 
 test('should handle pagination with duplicate objects', async t => {
   const user1Id = toGlobalId('User', 1)
-  // notice the cyclical nature of this query. we get a user. then we get their posts. the we get the author, who is that same user
+  // notice the cyclical nature of this query. we get a user. then we get their posts.
+  // then we get the author, who is that same user
   // we need to make sure join monster references the same object instead of cloning it
   const query = `{
     node(id: "${user1Id}") {
@@ -401,7 +425,11 @@ test('should handle pagination with duplicate objects', async t => {
         edges: [
           {
             node: {
-              body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.',
+              body: [
+                'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+                'Deserunt nemo pariatur sed facere accusantium quis.',
+                'Nobis aut voluptate inventore quidem explicabo.'
+              ].join(' '),
               author: user1
             }
           },
@@ -413,7 +441,10 @@ test('should handle pagination with duplicate objects', async t => {
           },
           {
             node: {
-              body: 'Incidunt quibusdam nulla adipisci error quia. Consequatur consequatur soluta fugit dolor iure. Voluptas accusamus fugiat assumenda enim.',
+              body: [
+                'Incidunt quibusdam nulla adipisci error quia. Consequatur consequatur soluta fugit dolor iure.',
+                'Voluptas accusamus fugiat assumenda enim.'
+              ].join(' '),
               author: user1
             }
           }
@@ -467,12 +498,19 @@ test('filtering on one-to-many-nested field', async t => {
   t.deepEqual(data.user.posts.edges, [
     {
       node: {
-        body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.'
+        body: [
+          'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+          'Deserunt nemo pariatur sed facere accusantium quis.',
+          'Nobis aut voluptate inventore quidem explicabo.'
+        ].join(' ')
       }
     },
     {
       node: {
-        body: 'Incidunt quibusdam nulla adipisci error quia. Consequatur consequatur soluta fugit dolor iure. Voluptas accusamus fugiat assumenda enim.'
+        body: [
+          'Incidunt quibusdam nulla adipisci error quia. Consequatur consequatur soluta fugit dolor iure.',
+          'Voluptas accusamus fugiat assumenda enim.'
+        ].join(' ')
       }
     }
   ])
@@ -546,7 +584,7 @@ test('should handle a "where" condition on a paginated field', async t => {
   t.is(data.users.edges.length, 1)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
   const comments = data.users.edges[0].node.comments.edges.map(edge => ({
-    id: parseInt(fromGlobalId(edge.node.id).id),
+    id: parseInt(fromGlobalId(edge.node.id).id, 10),
     archived: edge.node.archived
   }))
   const expect = [
@@ -647,10 +685,11 @@ test('should handle order columns on the main table', async t => {
 })
 
 test('should handle order columns on the junction table', async t => {
+  const cursor = objToCursor({ created_at: '2016-01-01T16:28:00.051Z', followee_id: 1 })
   const query = `{
     user(id: 2) {
       fullName
-      following(first: 2, sortOnMain: false, after: "${objToCursor({ created_at: '2016-01-01T16:28:00.051Z', followee_id: 1 })}") {
+      following(first: 2, sortOnMain: false, after: "${cursor}") {
         edges {
           node {
             id
@@ -724,13 +763,21 @@ test('should handle an interface type', async t => {
       {
         node: {
           id: 'UG9zdDoy',
-          body: 'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut. Deserunt nemo pariatur sed facere accusantium quis. Nobis aut voluptate inventore quidem explicabo.'
+          body: [
+            'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+            'Deserunt nemo pariatur sed facere accusantium quis.',
+            'Nobis aut voluptate inventore quidem explicabo.'
+          ].join(' ')
         }
       },
       {
         node: {
           id: 'UG9zdDoz',
-          body: 'Qui provident saepe laborum non est. Eaque aut enim officiis deserunt. Est sed suscipit praesentium et similique repudiandae. Inventore similique commodi non dolores inventore dolor est aperiam.'
+          body: [
+            'Qui provident saepe laborum non est. Eaque aut enim officiis deserunt.',
+            'Est sed suscipit praesentium et similique repudiandae.',
+            'Inventore similique commodi non dolores inventore dolor est aperiam.'
+          ].join(' ')
         }
       }
     ]
