@@ -159,7 +159,7 @@ const User = new GraphQLObjectType({
         intimacy: { type: IntimacyLevel },
         sortOnMain: { type: GraphQLBoolean }
       },
-      where: table => `${table}.email_address IS NOT NULL`,
+      where: table => `${table}.${q('email_address', DB)} IS NOT NULL`,
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {

@@ -25,8 +25,8 @@ function paginatedSelect(table, as, whereConditions, order, limit, offset, opts 
   return `\
   (SELECT ${as}.*${withTotal ? ', count(*) OVER () AS `$total`': '' }
   FROM ${table} ${as}
-  ${ extraJoin ? `LEFT JOIN ${extraJoin.name} ${quote(extraJoin.as)}
-    ON ${extraJoin.condition}` : '' }
+  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${quote(extraJoin.as)}
+    ON ${extraJoin.condition}` : ''}
   WHERE ${whereConditions}
   ORDER BY ${orderColumnsToString(order.columns, quote, order.table)}
   LIMIT ${limit}${offset ? ' OFFSET ' + offset : ''})`
@@ -50,22 +50,32 @@ const dialect = module.exports = {
       const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`${quote(node.as)}`, node.args || {}, context, node))
+        pagingWhereConditions.push(
+          await node.where(`${quote(node.as)}`, node.args || {}, context, node)
+        )
       }
-      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { q: quote }))
+      tables.push(
+        keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { q: quote })
+      )
     } else if (node.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`${quote(node.as)}`, node.args || {}, context, node))
+        pagingWhereConditions.push(
+          await node.where(`${quote(node.as)}`, node.args || {}, context, node)
+        )
       }
-      tables.push(offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { q: quote }))
+      tables.push(
+        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { q: quote })
+      )
     }
   },
 
   handleBatchedOneToManyPaginated: async function(parent, node, context, tables, batchScope) {
     const pagingWhereConditions = []
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${quote(node.as)}`, node.args || {}, context, node))
+      pagingWhereConditions.push(
+        await node.where(`${quote(node.as)}`, node.args || {}, context, node)
+      )
     }
     if (node.sortKey) {
       const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
@@ -90,10 +100,14 @@ const dialect = module.exports = {
   handleBatchedManyToManyPaginated: async function(parent, node, context, tables, batchScope, joinCondition) {
     const pagingWhereConditions = []
     if (node.junction.where) {
-      pagingWhereConditions.push(await node.junction.where(`${quote(node.junction.as)}`, node.args || {}, context, node))
+      pagingWhereConditions.push(
+        await node.junction.where(`${quote(node.junction.as)}`, node.args || {}, context, node)
+      )
     }
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`${quote(node.as)}`, node.args || {}, context, node))
+      pagingWhereConditions.push(
+        await node.where(`${quote(node.as)}`, node.args || {}, context, node)
+      )
     }
 
     if (node.where || node.orderBy) {

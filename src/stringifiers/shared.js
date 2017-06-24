@@ -10,10 +10,6 @@ function doubleQuote(str) {
   return `"${str}"`
 }
 
-export function quotePrefix(prefix, q = doubleQuote) {
-  return prefix.map(name => q(name))
-}
-
 export function thisIsNotTheEndOfThisBatch(node, parent) {
   return (!node.sqlBatch && !(idx(node, _ => _.junction.sqlBatch))) || !parent
 }
@@ -31,8 +27,8 @@ export function keysetPagingSelect(table, whereCondition, order, limit, as, opti
 ${joinType || ''} JOIN LATERAL (
   SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
-  ${ extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
-    ON ${extraJoin.condition}` : '' }
+  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}` : ''}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit}
@@ -58,8 +54,8 @@ export function offsetPagingSelect(table, pagingWhereConditions, order, limit, o
 ${joinType || ''} JOIN LATERAL (
   SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
-  ${ extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
-    ON ${extraJoin.condition}` : '' }
+  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}` : ''}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}

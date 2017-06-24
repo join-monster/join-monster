@@ -3,7 +3,6 @@ import { filter } from 'lodash'
 import { validateSqlAST, inspect, wrap } from '../util'
 import {
   joinPrefix,
-  quotePrefix,
   thisIsNotTheEndOfThisBatch,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
@@ -90,7 +89,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     )
     break
   case 'expression':
-    const expr = await node.sqlExpr(`${q(parentTable)}`, node.args || {}, context, quotePrefix(prefix, q))
+    const expr = await node.sqlExpr(`${q(parentTable)}`, node.args || {}, context, node)
     selections.push(
       `${expr} AS ${q(joinPrefix(prefix) + node.as)}`
     )
