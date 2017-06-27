@@ -1,6 +1,6 @@
 ## Specify the SQL Table and Its Unique Key
 
-We'll add a couple of properties to the `GraphQLObjectType` definition on `User`. Our users data lives in the `accounts` table, so we'll set the `sqlTable` property to `'accounts'`.
+We'll add a couple of properties to the `GraphQLObjectType` definition on `User`. Our users data lives in the `accounts` table, so we'll set the ([thunked](/API/#thunk)) `sqlTable` property to `'accounts'`.
 
 We also need a unique identifier so it's unambiguous which objects are distinct entities and which were duplicated due to a join. Our `accounts` table has a primary key, the `'id'`, so we'll set that as the `uniqueKey` property. The `uniqueKey` does not need to have any constraints in the actual database. It's up to you to make sure no duplicate values exist in whichever column you indicate as being unique.
 

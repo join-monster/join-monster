@@ -129,6 +129,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     && config.sqlTable
   ) {
     if (depth >= 1) {
+      assert(!field.junctionTable, '"junctionTable" has been replaced with a new API.')
       assert(
         field.sqlJoin || field.sqlBatch || field.junction,
         `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table,

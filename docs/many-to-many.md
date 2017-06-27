@@ -1,6 +1,6 @@
 ## Through a Junction Table
 
-Let us allow `Users` to follow one another. We'll need to go through a junction table for the many-to-many and hence two joins to fetch this field. For this we can specify `junctionTable`, which is the name of the intermediate join table. We also need `sqlJoins`, an array of two functions that generate the `JOIN` conditions, the first joins the parent table to the junction, and the second joins the junction to the child table.
+Let us allow `Users` to follow one another. We'll need to go through a junction table for the many-to-many and hence two joins to fetch this field. For this we can specify a `junction` object, which has ([thunked](/API/#thunk)) `sqlTable` which is the name of the intermediate join table, and also `sqlJoins`, an array of two functions that generate the `JOIN` conditions. The first joins the parent table to the junction, and the second joins the junction to the child table.
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -10,15 +10,17 @@ const User = new GraphQLObjectType({
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
-      // name the table that holds the two foreign keys
-      junctionTable: 'relationships',
-      sqlJoins: [
-        // first the parent table to the junction
-        (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
-        // then the junction to the child
-        (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
-      ]
-    },
+      junction: {
+        // name the table that holds the two foreign keys
+        sqlTable: 'relationships',
+        sqlJoins: [
+          // first the parent table to the junction
+          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
+          // then the junction to the child
+          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
+        ]
+      }
+    }
   })
 })
 ```
@@ -49,12 +51,41 @@ const Comment = new GraphQLObjectType({
     likers: {
       description: 'Which users have liked this comment',
       type: new GraphQLList(User),
-      junctionTable: 'likes',
-      sqlJoins: [
-        (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,
-        (likesTable, userTable) => `${likesTable}.account_id = ${userTable}.id`
-      ]
-    },
+      junction: {
+        sqlTable: 'likes',
+        sqlJoins: [
+          (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,
+          (likesTable, userTable) => `${likesTable}.account_id = ${userTable}.id`
+        ]
+      }
+    }
+  })
+})
+```
+
+## Applying `WHERE` conditions
+
+In a similar manner, `where` can be added to this field, and it will apply to the `accounts` table for the followees. You can also add a `where` in the `junction` object to apply a `WHERE` clause on the junction table.
+
+```javascript
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    following: {
+      type: new GraphQLList(User),
+      // only get followers who's account is still active
+      where: accountTable => `${accountTable}.is_active = TRUE`,
+      junction: {
+        sqlTable: 'relationships',
+        // filter out where they are following themselves
+        where: junctionTable => `${junctionTable}.follower_id <> ${junctionTable}.followee_id`
+        sqlJoins: [
+          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
+          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
+        ]
+      }
+    }
   })
 })
 ```

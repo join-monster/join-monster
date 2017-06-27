@@ -79,7 +79,7 @@ const User = new GraphQLObjectType({
               thisKey: 'author_id',
               parentKey: 'id'
             },
-            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null 
+            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
           })
         } else {
           ({
@@ -103,7 +103,7 @@ const User = new GraphQLObjectType({
     },
     posts: {
       description: 'A list of Posts the user has written',
-      type: PostConnection, 
+      type: PostConnection,
       args: {
         search: { type: GraphQLString },
         ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
@@ -199,7 +199,7 @@ const User = new GraphQLObjectType({
           closeness: {
             sqlDeps: [ 'closeness' ],
             jmIgnoreAll: false
-          },
+          }
         },
         ... do {
           if (PAGINATE === 'offset') {
@@ -317,7 +317,7 @@ const User = new GraphQLObjectType({
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),
-      resolve: () => [1, 2, 3]
+      resolve: () => [ 1, 2, 3 ]
     },
     numLegs: {
       description: 'How many legs this user has',

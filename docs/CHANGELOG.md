@@ -1,3 +1,112 @@
+### v2.0.0 (Jun. 25, 2017)
+**New features:**
+- `LIMIT` functionality, supported on all fields 
+- Fetch columns from junction tables
+- For fields with junctions, you can now specify `WHERE` and `ORDER BY` clauses on the junction table or the main table, including paginated fields.
+- Ability to dynamically choose pagination implementation per-request.
+- Better ability to write `where` functions that depend on args and info from the parent/ancestors.
+
+**Breaking changes:**
+- Fields with junctions have a new interface in order to support the new features.
+- Any `where`, `orderBy`, and `sortKey` on many-to-many paginated fields used to be applied to the junction table. This has changed, and will be applied to the main table instead in order to be consistent with non-paginated junctions. If the old behavior is desired, you can nest those properties inside the `junction` object, which is part of the new API.
+- Change 4th parameter of `where` and `sqlExpr` to the field's SQL AST Node, which is a lot more useful.
+
+```js
+// this...
+{
+  type: new GraphQLList(User),
+  junctionTable: 'relationships',
+  sqlJoins: [
+    (followers, relations) => `${followers}.id = ${relations}.follower_id`,
+    (relations, followees) => `${relations}.followee_id = ${followees}.id`
+  ]
+}
+
+// is now this...
+{
+  type: new GraphQLList(User),
+  junction: {
+    sqlTable: 'relationships',
+    sqlJoins: [
+      (followers, relations) => `${followers}.id = ${relations}.follower_id`,
+      (relations, followees) => `${relations}.followee_id = ${followees}.id`
+    ]
+  }
+}
+```
+
+```js
+// this...
+{
+  type: new GraphQLList(User),
+  junctionTable: 'relationships',
+  junctionTableKey: [ 'follower_id', 'followee_id' ],
+  junctionBatch: {
+    thisKey: 'follower_id',
+    parentKey: 'id',
+    sqlJoin: (relations, followees) => `${relations}.followee_id = ${followees}.id`
+  }
+}
+
+// is now this...
+{
+  type: new GraphQLList(User),
+  junction: {
+    sqlTable: 'relationships',
+    uniqueKey: [ 'follower_id', 'followee_id' ],
+    sqlBatch: {
+      thisKey: 'follower_id',
+      parentKey: 'id',
+      sqlJoin: (relations, followees) => `${relations}.followee_id = ${followees}.id`
+    }
+  }
+}
+```
+
+```js
+// this...
+{
+  type: UserConnection,
+  args: forwardConnectionArgs,
+  sqlPaginate: true,
+  orderBy: {
+    created_at: 'DESC',
+    followee_id: 'ASC'
+  },
+  junctionTable: 'relationships',
+  sqlJoins: [
+    (followers, relations) => `${followers}.id = ${relations}.follower_id`,
+    (relations, followees) => `${relations}.followee_id = ${followees}.id`
+  ]
+}
+
+// is now this...
+{
+  type: UserConnection,
+  args: forwardConnectionArgs,
+  sqlPaginate: true,
+  junction: {
+    sqlTable: 'relationships',
+    sqlJoins: [
+      (followers, relations) => `${followers}.id = ${relations}.follower_id`,
+      (relations, followees) => `${relations}.followee_id = ${followees}.id`
+    ],
+    // the order now goes inside the `junction` if you want to sort on the junction table
+    orderBy: {
+      created_at: 'DESC',
+      followee_id: 'ASC'
+    }
+  }
+  // or you could apply the order on the user table by putting it out here
+  //orderBy: {
+  //  created_at: 'DESC',
+  //  id: 'ASC'
+  //}
+  
+  // you could also place a `where` at either
+}
+```
+
 ### v1.2.1 (Mar. 28, 2017)
 - Add `jmIgnoreAll` and `jmIgnoreTable`.
 - Make `sqlTable` a thunk.

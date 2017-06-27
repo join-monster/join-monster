@@ -33,7 +33,7 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {String} tableAlias - The alias generated for this table. Already double-quoted.
  * @param {Object} args - The GraphQL arguments for this field.
  * @param {Object} context - An Object with arbitrary contextual information.
- * @param {Array.<String>} parentAliases - List of aliases of the antecedent tables, starting with the top-level.
+ * @param {Object} sqlASTNode - Join Monster object that abstractly represents this field. Also includes a reference to its parent node. This is useful, for example, if you need to access the parent field's table alias or GraphQL arguments.
  * @returns {String|Promise.<String>} The RAW expression interpolated into the query to compute the column. Unsafe user input must be scrubbed.
  */
 /**
@@ -42,7 +42,7 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {String} tableAlias - The alias generated for this table. Already double-quoted.
  * @param {Object} args - The GraphQL arguments for this field.
  * @param {Object} context - An Object with arbitrary contextual information.
- * @param {Array.<String>} parentAliases - List of aliases of the antecedent tables, starting with the top-level.
+ * @param {Object} sqlASTNode - Join Monster object that abstractly represents this field. Also includes a reference to its parent node. This is useful, for example, if you need to access the parent field's table alias or GraphQL arguments.
  * @returns {String|Promise.<String>} The RAW condition for the `WHERE` clause. Omitted if falsy value returned. Unsafe user input must be scrubbed.
  */
 /**
@@ -54,7 +54,12 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {Object} context - An Object with arbitrary contextual information.
  * @returns {String} The RAW condition for the `LEFT JOIN`. Unsafe user input must be scrubbed.
  */
-
+/**
+ * Rather than a constant value, its a function to dynamically return the value.
+ * @callback thunk
+ * @param {Object} args - The GraphQL arguments for this field.
+ * @param {Object} context - An Object with arbitrary contextual information.
+ */
 
 /* _                _
   | |__   ___  __ _(_)_ __    ___  ___  _   _ _ __ ___ ___
@@ -157,3 +162,4 @@ joinMonster.getNode = getNode
 // expose the package version for debugging
 joinMonster.version = require('../package.json').version
 export default joinMonster
+

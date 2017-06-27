@@ -4,7 +4,7 @@
 
 ### Query Planning and Batch Data Fetching between GraphQL and SQL.
 
-- Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
+- Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/), [v1](http://join-monster.readthedocs.io/en/v1.2.7-beta.1) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
 - Try Demo: [basic version](http://join-monster.herokuapp.com/graphql?query=%7B%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20fullName%0A%20%20%20%20email%0A%20%20%20%20posts%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20body%0A%20%20%20%20%20%20createdAt%0A%20%20%20%20%20%20comments%20%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20author%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20fullName%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D) or [paginated version](https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20total%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 - [Example Repo](https://github.com/stems/join-monster-demo)
 - [Supported SQL Dialects (DB Vendors)](http://join-monster.readthedocs.io/en/latest/dialects/)
@@ -201,13 +201,15 @@ const User = new GraphQLObjectType({
       description: "Other users that this user is following.",
       type: new GraphQLList(User),
       // name the table that holds the two foreign keys
-      junctionTable: 'relationships',
-      sqlJoins: [
-        // first the parent table to the junction
-        (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
-        // then the junction to the child
-        (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
-      ]
+      junction: {
+        sqlTable: 'relationships',
+        sqlJoins: [
+          // first the parent table to the junction
+          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
+          // then the junction to the child
+          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
+        ]
+      }
     },
     numLegs: {
       description: 'Number of legs this user has.',
@@ -300,16 +302,4 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 ![graphsiql](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/graphsiql.png)
 
 **There's still a lot of work to do. Please feel free to fork and submit a Pull Request!**
-
-## TODO
-
-- [ ] Aggregate functions
-- [ ] Port to other JavaScript implementations of GraphQL
-- [ ] Add other SQL dialects (Microsoft SQL server, for example, uses `CROSS APPLY` instead of `LATERAL`)
-- [ ] Much better error messages in cases of mistakes (like missing sql properties)
-
-## NON-GOALS
-
-- Caching: application specific cache invalidation makes this a problem we don't want to solve
-- Support EVERY SQL Feature (only the most powerful subset of the most popular databases will be supported)
 

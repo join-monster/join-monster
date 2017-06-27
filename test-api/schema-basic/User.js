@@ -75,7 +75,7 @@ const User = new GraphQLObjectType({
         where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
       } : {
         sqlJoin: (userTable, commentTable, args) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}`
-      },
+      }
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -135,7 +135,7 @@ const User = new GraphQLObjectType({
         } : {
           sqlJoins: [
             (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)}`,
-            (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}` 
+            (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
           ]
         }
       }
@@ -154,7 +154,7 @@ const User = new GraphQLObjectType({
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),
-      resolve: () => [1, 2, 3]
+      resolve: () => [ 1, 2, 3 ]
     },
     numLegs: {
       description: 'How many legs this user has',
@@ -194,4 +194,5 @@ const User = new GraphQLObjectType({
   })
 })
 
-export default User 
+export default User
+
