@@ -1,6 +1,7 @@
 <!-- Use fully qualified URL for the images so they'll also be visible from the NPM page too -->
 ![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/join_monster.png)
 [![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster) [![Build Status](https://travis-ci.org/stems/join-monster.svg?branch=master)](https://travis-ci.org/stems/join-monster) [![Documentation Status](https://readthedocs.org/projects/join-monster/badge/?version=latest)](http://join-monster.readthedocs.io/en/latest/?badge=latest)
+[![Greenkeeper badge](https://badges.greenkeeper.io/stems/join-monster.svg)](https://greenkeeper.io/)
 
 ### Query Planning and Batch Data Fetching between GraphQL and SQL.
 
