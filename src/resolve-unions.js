@@ -18,7 +18,7 @@ export default function resolveUnions(data, sqlAST) {
           for (let obj of data) {
             const qualifiedValue = obj[qualifiedName]
             delete obj[qualifiedName]
-            if (obj[fieldName] == null && qualifiedValue) {
+            if (obj[fieldName] == null && qualifiedValue != null) {
               obj[fieldName] = qualifiedValue
             }
           }
@@ -33,7 +33,7 @@ export default function resolveUnions(data, sqlAST) {
         } else {
           const qualifiedValue = data[qualifiedName]
           delete data[qualifiedName]
-          if (data[fieldName] == null && qualifiedValue) {
+          if (data[fieldName] == null && qualifiedValue != null) {
             data[fieldName] = qualifiedValue
           }
           if (child.type === 'table' || child.type === 'union') {
