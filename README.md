@@ -304,3 +304,11 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 
 **There's still a lot of work to do. Please feel free to fork and submit a Pull Request!**
 
+## Future Work
+
+- [ ] Remove NestHydrationJS as a dependency by re-implementing it. Write it to handle [this issue](https://github.com/stems/join-monster/issues/122).
+- [ ] Address [this known bug](https://github.com/stems/join-monster/issues/126).
+- [ ] Write static [Flow](https://flow.org/) types.
+- [ ] Support custom `ORDER BY` expressions ([issue](https://github.com/stems/join-monster/issues/138)).
+- [ ] Cover more SQL dialects, like MSSQL and DB2.
+
