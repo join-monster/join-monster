@@ -56,6 +56,10 @@ export function cursorToObj(cursor) {
 
 // wrap in a pair of single quotes for the SQL if needed
 export function maybeQuote(value, dialectName) {
+  if (value == null) {
+    return 'NULL'
+  }
+
   if (typeof value === 'number') return value
   if (value && typeof value.toSQL === 'function') return value.toSQL()
 
