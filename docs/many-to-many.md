@@ -90,5 +90,79 @@ const User = new GraphQLObjectType({
 })
 ```
 
+## Including Data From the Junction
+
+Sometimes you actually want to expose some data columns from your junction tables.
+Suppose the `relationships` table had a `closeness` column representing varying degrees of intimacy for each relationship.
+To expose this, there are two options.
+The first is to create a `GraphQLObjectType` for the `relationships` table.
+This table could become an interleaving `Relationship` type instead of using Join Monster's `junction` option.
+
+```graphql
+{
+  user(id: 2) {
+    name
+    email
+    relationships {
+      closeness
+      user {
+        id
+        name
+      }
+    }
+  }
+}
+```
+
+If you don't want that extra object type between your users and followees, you can use the `junction.include` property.
+
+```js
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    // add the closeness to the User instead
+    closeness: {
+      type: GraphQLString
+    },
+    following: {
+      type: new GraphQLList(User),
+      junction: {
+        sqlTable: 'relationships',
+        include: {
+          closeness: {
+            sqlColumn: 'closeness'
+          }
+        },
+        sqlJoins: [
+          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
+          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
+        ]
+      }
+    }
+  })
+})
+```
+
+The `include` property is an object that maps field names from the child object type to dependecies on column in the junction table.
+It supports `sqlColumn`, `sqlDeps`, and `sqlExpr`.
+In this case, `closeness` is a child on the `User` of the `following` field.
+When `closeness` is requested in the query, the `closeness` column will be fetched from the junction via the `sqlColumn` option.
+
+So now the query would look something like this:
+
+```graphql
+{
+  user(id: 2) {
+    name
+    email
+    following {
+      id
+      closeness
+      name
+    }
+  }
+}
+```
+
 We've completed the schema diagram! We can theoretically resolve any GraphQL query with one SQL query! In the next section we'll see how we can batch the request different to reduce the number of joins.
 
