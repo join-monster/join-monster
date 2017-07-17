@@ -14,8 +14,9 @@ import {
   connectionFromArray
 } from 'graphql-relay'
 
+import IntimacyLevel from '../enums/IntimacyLevel'
 import { PostConnection } from './Post'
-import { CommentConnection } from './Comment'
+import { Comment, CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
 import { AuthoredConnection } from './Authored/Interface'
 import { q, bool } from '../shared'
@@ -78,7 +79,7 @@ const User = new GraphQLObjectType({
               thisKey: 'author_id',
               parentKey: 'id'
             },
-            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null 
+            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
           })
         } else {
           ({
@@ -87,9 +88,22 @@ const User = new GraphQLObjectType({
         }
       }
     },
+    commentsLast2: {
+      type: new GraphQLList(Comment),
+      orderBy: { id: 'desc' },
+      limit: () => 2,
+      ...STRATEGY === 'batch' ? {
+        sqlBatch: {
+          thisKey: 'author_id',
+          parentKey: 'id'
+        }
+      } : {
+        sqlJoin: (userTable, commentTable) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
+      }
+    },
     posts: {
       description: 'A list of Posts the user has written',
-      type: PostConnection, 
+      type: PostConnection,
       args: {
         search: { type: GraphQLString },
         ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
@@ -140,22 +154,27 @@ const User = new GraphQLObjectType({
     following: {
       description: 'Users that this user is following',
       type: UserConnection,
-      args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
+      args: {
+        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
+        intimacy: { type: IntimacyLevel },
+        sortOnMain: { type: GraphQLBoolean }
+      },
+      where: table => `${table}.${q('email_address', DB)} IS NOT NULL`,
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {
           ({
-            orderBy: {
-              created_at: 'DESC',
-              followee_id: 'ASC'
-            }
+            orderBy: args => args.sortOnMain ? {
+              created_at: 'ASC',
+              id: 'ASC'
+            } : null
           })
         } else if (PAGINATE === 'keyset') {
           ({
-            sortKey: {
+            sortKey: args => args.sortOnMain ? {
               order: 'ASC',
-              key: [ 'created_at', 'followee_id' ]
-            }
+              key: [ 'created_at', 'id' ]
+            } : null
           })
         } else {
           ({
@@ -165,25 +184,85 @@ const User = new GraphQLObjectType({
           })
         }
       },
-      //junctionTable: q('relationships', DB),
-      junctionTable: `(SELECT * FROM ${q('relationships', DB)})`,
-      ... do {
-        if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-          ({
-            junctionTableKey: [ 'follower_id', 'followee_id' ],
-            junctionBatch: {
-              thisKey: 'follower_id',
-              parentKey: 'id',
-              sqlJoin: (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
-            }
-          })
-        } else {
-          ({
-            sqlJoins: [
-              (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)}`,
-              (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
-            ]
-          })
+      junction: {
+        sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
+        where: (table, args) => args.intimacy ? `${table}.${q('closeness', DB)} = '${args.intimacy}'` : null,
+        include: {
+          friendship: {
+            sqlColumn: 'closeness',
+            jmIgnoreAll: false
+          },
+          intimacy: {
+            sqlExpr: table => `${table}.${q('closeness', DB)}`,
+            jmIgnoreAll: false
+          },
+          closeness: {
+            sqlDeps: [ 'closeness' ],
+            jmIgnoreAll: false
+          }
+        },
+        ... do {
+          if (PAGINATE === 'offset') {
+            ({
+              orderBy: args => args.sortOnMain ? null : {
+                created_at: 'DESC',
+                followee_id: 'ASC'
+              }
+            })
+          } else if (PAGINATE === 'keyset') {
+            ({
+              sortKey: args => args.sortOnMain ? null : {
+                order: 'ASC',
+                key: [ 'created_at', 'followee_id' ]
+              }
+            })
+          }
+        },
+        ... do {
+          if (STRATEGY === 'batch' || STRATEGY === 'mix') {
+            ({
+              uniqueKey: [ 'follower_id', 'followee_id' ],
+              sqlBatch: {
+                thisKey: 'follower_id',
+                parentKey: 'id',
+                sqlJoin: (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
+              }
+            })
+          } else {
+            ({
+              sqlJoins: [
+                (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)}`,
+                (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
+              ]
+            })
+          }
+        }
+      }
+    },
+    followingFirst: {
+      type: new GraphQLList(User),
+      limit: 1,
+      orderBy: 'followee_id',
+      junction: {
+        sqlTable: q('relationships', DB),
+        ... do {
+          if (STRATEGY === 'batch' || STRATEGY === 'mix') {
+            ({
+              uniqueKey: [ 'follower_id', 'followee_id' ],
+              sqlBatch: {
+                thisKey: 'follower_id',
+                parentKey: 'id',
+                sqlJoin: (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
+              }
+            })
+          } else {
+            ({
+              sqlJoins: [
+                (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)}`,
+                (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
+              ]
+            })
+          }
         }
       }
     },
@@ -215,15 +294,30 @@ const User = new GraphQLObjectType({
           })
         }
       },
-      ...STRATEGY === 'batch' ?
-        { sqlBatch:
-          { thisKey: 'author_id',
-            parentKey: 'id' } } :
-        { sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}` }
+      ...STRATEGY === 'batch' ? {
+        sqlBatch: {
+          thisKey: 'author_id',
+          parentKey: 'id'
+        }
+      } : {
+        sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
+      }
+    },
+    friendship: {
+      type: GraphQLString,
+      jmIgnoreAll: true
+    },
+    intimacy: {
+      type: GraphQLString,
+      jmIgnoreAll: true
+    },
+    closeness: {
+      type: GraphQLString,
+      jmIgnoreAll: true
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),
-      resolve: () => [1, 2, 3]
+      resolve: () => [ 1, 2, 3 ]
     },
     numLegs: {
       description: 'How many legs this user has',

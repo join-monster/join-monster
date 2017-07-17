@@ -93,7 +93,7 @@ It uses a predictable, position-based integer that determines how many rows to s
 
 To use it, you must provide a connection type and choose a stable sort based on one or multiple columns.
 Tell Join Monster you want to use this method by adding two properties to the field.
-Set `sqlPaginate` to `true`. Set `orderBy` to tell it how to sort.
+Set `sqlPaginate` to `true`. Set ([thunked](/API/#thunk)) `orderBy` to tell it how to sort.
 
 ```javascript
 import { forwardConnectionArgs } from 'graphql-relay'
@@ -242,7 +242,7 @@ The uniqueness allows us to place the sort key into the cursor to uniquely ident
 We can use a `WHERE` in lieu of an `OFFSET`, which can benefit performance.
 It is the most scalable approach, but also the most limiting.
 Tell Join Monster to use this by providing a connection type and setting two properties.
-Again, set `sqlPaginate` to `true`. Set `sortKey` to an object with an order direction and the key (which is either the name of the column or an array of column names).
+Again, set `sqlPaginate` to `true`. Set ([thunked](/API/#thunk)) `sortKey` to an object with an order direction and the key (which is either the name of the column or an array of column names).
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -342,7 +342,7 @@ You can still get the beginning or end of nested connections though.
 
 ## Pagination with Batching
 
-All implementations support batching instead of joins. Simply combine the applicable properties with either `sqlBatch` or `junctionBatch`.
+All implementations support batching instead of joins. Simply combine the applicable properties with either `sqlBatch` or `junction.sqlBatch`.
 
 
 ```javascript
@@ -351,7 +351,7 @@ const Post = new GraphQLObjectType({
   fields: () => ({
     // ...
     comments: {
-      type: new GraphQLList(CommentConnection),
+      type: CommentConnection,
       sqlPaginate: true,
       sortKey: {
         order: 'desc',
@@ -368,3 +368,26 @@ const Post = new GraphQLObjectType({
   })
 })
 ```
+
+## LIMIT without pagination
+
+If you just want to limit the number of results in a list field, but don't want the Connection type and arguments,
+you can just use the ([thunked](/API/#thunk)) `limit` and `orderBy` properties on that field.
+
+```javascript
+const Post = new GraphQLObjectType({
+  // ...
+  fields: () => ({
+    // ...
+    only3Comments: {
+      type: new GraphQLList(Comment),
+      orderBy: { id: 'desc' },
+      limit: 3,
+      sqlJoin: (userTable, commentTable) => `${commentTable}.author_id = ${userTable}.id` 
+    }
+  })
+})
+```
+
+The `limit` can be an integer or a function that returns an integer. This feature is only supported if pagination is supported for you SQL dialect.
+

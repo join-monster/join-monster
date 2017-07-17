@@ -113,12 +113,12 @@ module.exports = async db => {
     {
       follower_id: 1,
       followee_id: 2,
-      closeness: 'best'
+      closeness: 'acquaintance'
     },
     {
       follower_id: 3,
       followee_id: 2,
-      closeness: 'acquaintance'
+      closeness: 'best'
     },
     {
       follower_id: 3,

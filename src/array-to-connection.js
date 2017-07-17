@@ -25,17 +25,16 @@ function arrToConnection(data, sqlAST) {
         pageInfo,
         edges: []
       }
-    } else {
-      return null
     }
+    return null
   }
   // is cases where pagination was done, take the data and convert to the connection object
   // if any two fields happen to become a reference to the same object (when their `uniqueKey`s are the same),
   // we must prevent the recursive processing from visting the same object twice, because mutating the object the first
   // time changes it everywhere. we'll set the `_paginated` property to true to prevent this
   if (sqlAST.paginate && !data._paginated) {
-    if (sqlAST.sortKey) {
-      if (sqlAST.args && sqlAST.args.first) {
+    if (sqlAST.sortKey || idx(sqlAST, _ => _.junction.sortKey)) {
+      if (idx(sqlAST, _ => _.args.first)) {
         // we fetched an extra one in order to determine if there is a next page, if there is one, pop off that extra
         if (data.length > sqlAST.args.first) {
           pageInfo.hasNextPage = true
@@ -51,9 +50,10 @@ function arrToConnection(data, sqlAST) {
       }
       // convert nodes to edges and compute the cursor for each
       // TODO: only compute all the cursor if asked for them
+      const sortKey = sqlAST.sortKey || sqlAST.junction.sortKey
       const edges = data.map(obj => {
         const cursor = {}
-        const key = sqlAST.sortKey.key
+        const key = sortKey.key
         for (let column of wrap(key)) {
           cursor[column] = obj[column]
         }
@@ -64,13 +64,13 @@ function arrToConnection(data, sqlAST) {
         pageInfo.endCursor = last(edges).cursor
       }
       return { edges, pageInfo, _paginated: true }
-    } else if (sqlAST.orderBy) {
+    } else if (sqlAST.orderBy || (sqlAST.junction && sqlAST.junction.orderBy)) {
       let offset = 0
-      if (sqlAST.args && sqlAST.args.after) {
+      if (idx(sqlAST, _ => _.args.after)) {
         offset = cursorToOffset(sqlAST.args.after) + 1
       }
       // $total was a special column for determining the total number of items
-      const arrayLength = data[0] && parseInt(data[0].$total)
+      const arrayLength = data[0] && parseInt(data[0].$total, 10)
       const connection = connectionFromArraySlice(data, sqlAST.args || {}, { sliceStart: offset, arrayLength })
       connection.total = arrayLength || 0
       connection._paginated = true

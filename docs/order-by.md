@@ -1,6 +1,6 @@
 ## Adding Sorting
 
-To add any of the tables to the `ORDER BY` clause, you can add the `orderBy` property. This is an object of with the sorted column(s) as  the key(s) and either `'ASC'` or `'DESC'` as the value(s).
+To add any of the tables to the `ORDER BY` clause, you can add the ([thunked](/API/#thunk)) `orderBy` property. This is an object of with the sorted column(s) as  the key(s) and either `'ASC'` or `'DESC'` as the value(s).
 
 
 ```javascript
@@ -89,3 +89,29 @@ const User = new GraphQLObjectType({
   })
 })
 ```
+
+For many-to-many relations, you can add `orderBy` to the field directly, and/or within the `junction` object to order by columns on the junction table.
+
+```javascript
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    following: {
+      type: new GraphQLList(User),
+      // order by the user id
+      orderBy: { id: 'DESC' },
+      junction: {
+        sqlTable: 'relationships',
+        // this would have been equivalent
+        //orderBy: { followee_id: 'DESC' },
+        sqlJoins: [
+          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
+          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
+        ]
+      }
+    }
+  })
+})
+```
+

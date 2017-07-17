@@ -22,7 +22,6 @@ const { PAGINATE, DB } = process.env
 export const Comment = new GraphQLObjectType({
   description: 'Comments on posts',
   name: 'Comment',
-  //sqlTable: q('comments', DB),
   sqlTable: `(SELECT * FROM ${q('comments', DB)})`,
   uniqueKey: 'id',
   interfaces: () => [ nodeInterface, Authored ],
@@ -54,12 +53,14 @@ export const Comment = new GraphQLObjectType({
     },
     likers: {
       description: 'Which users have liked this comment',
-      junctionTable: 'likes',
       type: new GraphQLList(User),
-      sqlJoins: [
-        (commentTable, likesTable) => `${commentTable}.${q('id', DB)} = ${likesTable}.${q('comment_id', DB)}`,
-        (likesTable, userTable) => `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
-      ]
+      junction: {
+        sqlTable: 'likes',
+        sqlJoins: [
+          (commentTable, likesTable) => `${commentTable}.${q('id', DB)} = ${likesTable}.${q('comment_id', DB)}`,
+          (likesTable, userTable) => `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
+        ]
+      }
     },
     createdAt: {
       description: 'When this was created',

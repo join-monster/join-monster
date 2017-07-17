@@ -1,4 +1,3 @@
-import util from 'util'
 import { filter } from 'lodash'
 import { cursorToOffset } from 'graphql-relay'
 import { wrap, cursorToObj, maybeQuote } from '../util'
@@ -11,70 +10,64 @@ function doubleQuote(str) {
   return `"${str}"`
 }
 
-export function quotePrefix(prefix, q = doubleQuote) {
-  return prefix.map(name => q(name))
-}
-
 export function thisIsNotTheEndOfThisBatch(node, parent) {
-  return (!node.sqlBatch && !node.junctionBatch) || !parent
-}
-
-export function thisIsTheEndOfThisBatch(node, parent) {
-  return (node.sqlBatch || node.junctionBatch) && parent
+  return (!node.sqlBatch && !(idx(node, _ => _.junction.sqlBatch))) || !parent
 }
 
 export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent) {
-  return !node.paginate && (!node.sqlBatch || !parent)
+  return !node.paginate && (!(node.sqlBatch || (idx(node, _ => _.junction.sqlBatch))) || !parent)
 }
 
-export function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, options = {}) {
-  let { joinCondition, joinType, q } = options
+export function keysetPagingSelect(table, whereCondition, order, limit, as, options = {}) {
+  let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
   whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
-  SELECT *
+  SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
+  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}` : ''}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit}
 ) ${q(as)} ON ${joinCondition}`
-  } else {
-    return `\
+  }
+  return `\
 FROM (
-  SELECT *
+  SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit}
 ) ${q(as)}`
-  }
 }
 
-export function offsetPagingSelect(table, pagingWhereConditions, orderColumns, limit, offset, as, options = {}) {
-  let { joinCondition, joinType, q } = options
+export function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
+  let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
-  SELECT *, count(*) OVER () AS ${q('$total')}
+  SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
+  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}` : ''}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)} ON ${joinCondition}`
-  } else {
-    return `\
+  }
+  return `\
 FROM (
-  SELECT *, count(*) OVER () AS ${q('$total')}
+  SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)}`
-  }
 }
 
 export function orderColumnsToString(orderColumns, q, as) {
@@ -85,80 +78,95 @@ export function orderColumnsToString(orderColumns, q, as) {
   return conditions.join(', ')
 }
 
-export function handleOrderBy(orderBy) {
-  const orderColumns = {}
-  if (typeof orderBy === 'object') {
-    for (let column in orderBy) {
-      let direction = orderBy[column].toUpperCase()
-      if (direction !== 'ASC' && direction !== 'DESC') {
-        throw new Error (direction + ' is not a valid sorting direction')
-      }
-      orderColumns[column] = direction
-    }
-  } else if (typeof orderBy === 'string') {
-    orderColumns[orderBy] = 'ASC'
-  } else {
-    throw new Error('"orderBy" is invalid type: ' + util.inspect(orderBy))
-  }
-  return orderColumns
-}
-
 // find out what the limit, offset, order by parts should be from the relay connection args if we're paginating
 export function interpretForOffsetPaging(node, dialect) {
   const { name } = dialect
-  if (node.args && node.args.last) {
+  if (idx(node, _ => _.args.last)) {
     throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
   }
+
+  const order = {}
+  if (node.orderBy) {
+    order.table = node.as
+    order.columns = node.orderBy
+  } else {
+    order.table = node.junction.as
+    order.columns = node.junction.orderBy
+  }
+
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
-  const orderColumns = handleOrderBy(node.orderBy)
   let offset = 0
-  if (node.args && node.args.first) {
+  if (idx(node, _ => _.args.first)) {
+    limit = parseInt(node.args.first, 10)
     // we'll get one extra item (hence the +1). this is to determine if there is a next page or not
-    limit = parseInt(node.args.first) + 1
+    if (node.paginate) {
+      limit++
+    }
     if (node.args.after) {
       offset = cursorToOffset(node.args.after) + 1
     }
   }
-  return { limit, offset, orderColumns }
+  return { limit, offset, order }
 }
 
 export function interpretForKeysetPaging(node, dialect) {
   const { name } = dialect
-  const orderColumns = {}
-  let descending = node.sortKey.order.toUpperCase() === 'DESC'
-  // flip the sort order if doing backwards paging
-  if (node.args && node.args.last) {
-    descending = !descending
-  }
-  for (let column of wrap(node.sortKey.key)) {
-    orderColumns[column] = descending ? 'DESC' : 'ASC'
+
+  let sortTable
+  let sortKey
+  let descending
+  const order = { columns: {} }
+  if (node.sortKey) {
+    sortKey = node.sortKey
+    descending = sortKey.order.toUpperCase() === 'DESC'
+    sortTable = node.as
+    // flip the sort order if doing backwards paging
+    if (idx(node, _ => _.args.last)) {
+      descending = !descending
+    }
+    for (let column of wrap(sortKey.key)) {
+      order.columns[column] = descending ? 'DESC' : 'ASC'
+    }
+    order.table = node.as
+  } else {
+    sortKey = node.junction.sortKey
+    descending = sortKey.order.toUpperCase() === 'DESC'
+    sortTable = node.junction.as
+    // flip the sort order if doing backwards paging
+    if (idx(node, _ => _.args.last)) {
+      descending = !descending
+    }
+    for (let column of wrap(sortKey.key)) {
+      order.columns[column] = descending ? 'DESC' : 'ASC'
+    }
+    order.table = node.junction.as
   }
 
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
   let whereCondition = ''
-  if (node.args && node.args.first) {
-    limit = parseInt(node.args.first) + 1
+  if (idx(node, _ => _.args.first)) {
+    limit = parseInt(node.args.first, 10) + 1
     if (node.args.after) {
       const cursorObj = cursorToObj(node.args.after)
-      validateCursor(cursorObj, wrap(node.sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, dialect)
+      validateCursor(cursorObj, wrap(sortKey.key))
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending, sortTable, dialect)
     }
     if (node.args.before) {
       throw new Error('Using "before" with "first" is nonsensical.')
     }
-  } else if (node.args && node.args.last) {
-    limit = parseInt(node.args.last) + 1
+  } else if (idx(node, _ => _.args.last)) {
+    limit = parseInt(node.args.last, 10) + 1
     if (node.args.before) {
       const cursorObj = cursorToObj(node.args.before)
-      validateCursor(cursorObj, wrap(node.sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, dialect)
+      validateCursor(cursorObj, wrap(sortKey.key))
+      whereCondition = sortKeyToWhereCondition(cursorObj, descending, sortTable, dialect)
     }
     if (node.args.after) {
       throw new Error('Using "after" with "last" is nonsensical.')
     }
   }
 
-  return { limit, orderColumns, whereCondition }
+  return { limit, order, whereCondition }
 }
 
 // the cursor contains the sort keys. it needs to match the keys specified in the `sortKey` on this field in the schema
@@ -179,12 +187,12 @@ export function validateCursor(cursorObj, expectedKeys) {
 }
 
 // take the sort key and translate that for the where clause
-function sortKeyToWhereCondition(keyObj, descending, dialect) {
+function sortKeyToWhereCondition(keyObj, descending, sortTable, dialect) {
   const { name, quote: q } = dialect
   const sortColumns = []
   const sortValues = []
   for (let key in keyObj) {
-    sortColumns.push(`${q(key)}`)
+    sortColumns.push(`${q(sortTable)}.${q(key)}`)
     sortValues.push(maybeQuote(keyObj[key], name))
   }
   const operator = descending ? '<' : '>'

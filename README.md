@@ -1,12 +1,11 @@
 <!-- Use fully qualified URL for the images so they'll also be visible from the NPM page too -->
 ![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/join_monster.png)
 [![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster) [![Build Status](https://travis-ci.org/stems/join-monster.svg?branch=master)](https://travis-ci.org/stems/join-monster) [![Documentation Status](https://readthedocs.org/projects/join-monster/badge/?version=latest)](http://join-monster.readthedocs.io/en/latest/?badge=latest)
+[![Greenkeeper badge](https://badges.greenkeeper.io/stems/join-monster.svg)](https://greenkeeper.io/)
 
 ### Query Planning and Batch Data Fetching between GraphQL and SQL.
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/stems/join-monster.svg)](https://greenkeeper.io/)
-
-- Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
+- Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/), [v1](http://join-monster.readthedocs.io/en/v1.2.7-beta.1) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
 - Try Demo: [basic version](http://join-monster.herokuapp.com/graphql?query=%7B%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20fullName%0A%20%20%20%20email%0A%20%20%20%20posts%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20body%0A%20%20%20%20%20%20createdAt%0A%20%20%20%20%20%20comments%20%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20author%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20fullName%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D) or [paginated version](https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20total%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 - [Example Repo](https://github.com/stems/join-monster-demo)
 - [Supported SQL Dialects (DB Vendors)](http://join-monster.readthedocs.io/en/latest/dialects/)
@@ -61,7 +60,7 @@ SELECT
   "comments"."post_id" AS "post_id"
 FROM comments AS "comments"
 LEFT JOIN accounts AS "author" ON "comments".author_id = "author".id
-WHERE "comments".archived = FALSE AND "comments"."post_id" IN (2,8,11,12)
+WHERE "comments".archived = FALSE AND "comments"."post_id" IN (2,8,11,12) -- the post IDs from the previous query 
 ```
 
 ...and get back correctly hydrated data.
@@ -107,7 +106,7 @@ More details on the "round-trip" (a.k.a. N+1) problem are [here](http://join-mon
 - [X] **Maintainability** - SQL is automatically generated and adaptive. No need to manually write queries or update them when the schema changes.
 - [X] **Declarative** - Simply define the *data requirements* of the GraphQL fields on the SQL columns.
 - [X] **Unobtrusive** - Coexists with your custom resolve functions and existing schemas. Use it on the whole graph or only in parts. Retain the power and expressiveness in defining your schema.
-- [X] **GraphQL becomes the ORM** - Mixing and matching sucks. With only a few additions of metadata, the GraphQL schema *becomes* the mapping relation.
+- [X] **Object-relational impedance mismatch ****- Don't bother duplicating a bunch of object definitions in an ORM. Let GraphQL do your object mapping *for you*.
 
 Since it works with the reference implementation, the API is all very familiar. Join Monster is a tool built on top to add batch data fetching. You add some special properties along-side the schema definition that Join Monster knows to look for. The use of [graphql-js](https://github.com/graphql/graphql-js) does not change. You still define your types the same way. You can write resolve functions to mainpulate the data from Join Monster, or incorporate data from elsewhere without breaking out of your "join-monsterized" schema.
 
@@ -203,13 +202,15 @@ const User = new GraphQLObjectType({
       description: "Other users that this user is following.",
       type: new GraphQLList(User),
       // name the table that holds the two foreign keys
-      junctionTable: 'relationships',
-      sqlJoins: [
-        // first the parent table to the junction
-        (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
-        // then the junction to the child
-        (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
-      ]
+      junction: {
+        sqlTable: 'relationships',
+        sqlJoins: [
+          // first the parent table to the junction
+          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
+          // then the junction to the child
+          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
+        ]
+      }
     },
     numLegs: {
       description: 'Number of legs this user has.',
@@ -303,15 +304,11 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 
 **There's still a lot of work to do. Please feel free to fork and submit a Pull Request!**
 
-## TODO
+## Future Work
 
-- [ ] Aggregate functions
-- [ ] Port to other JavaScript implementations of GraphQL
-- [ ] Add other SQL dialects (Microsoft SQL server, for example, uses `CROSS APPLY` instead of `LATERAL`)
-- [ ] Much better error messages in cases of mistakes (like missing sql properties)
-
-## NON-GOALS
-
-- Caching: application specific cache invalidation makes this a problem we don't want to solve
-- Support EVERY SQL Feature (only the most powerful subset of the most popular databases will be supported)
+- [ ] Remove NestHydrationJS as a dependency by re-implementing it. Write it to handle [this issue](https://github.com/stems/join-monster/issues/122).
+- [ ] Address [this known bug](https://github.com/stems/join-monster/issues/126).
+- [ ] Write static [Flow](https://flow.org/) types.
+- [ ] Support custom `ORDER BY` expressions ([issue](https://github.com/stems/join-monster/issues/138)).
+- [ ] Cover more SQL dialects, like MSSQL and DB2.
 

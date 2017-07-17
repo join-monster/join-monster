@@ -1,7 +1,6 @@
 import {
   interpretForOffsetPaging,
   interpretForKeysetPaging,
-  quotePrefix,
   orderColumnsToString
 } from '../shared'
 import { filter } from 'lodash'
@@ -15,181 +14,200 @@ function recursiveConcat(keys) {
 
 const q = str => `"${str}"`
 
-function keysetPagingSelect(table, whereCondition, orderColumns, limit, as, options = {}) {
-  let { joinCondition, joinType } = options
-  const q = str => `"${str}"`
-  whereCondition = filter(whereCondition).join(' AND ')
+function keysetPagingSelect(table, whereCondition, order, limit, as, options = {}) {
+  let { joinCondition, joinType, extraJoin } = options
+  whereCondition = filter(whereCondition).join(' AND ') || '1 = 1'
   if (joinCondition) {
     return `\
 ${ joinType === 'LEFT' ? 'OUTER' : 'CROSS' } APPLY (
-  SELECT *
+  SELECT "${as}".*
   FROM ${table} "${as}"
-  ${whereCondition? `WHERE ${whereCondition}` : '' }
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
-  FETCH FIRST ${limit} ROWS ONLY
-) ${q(as)}`
-  } else {
-    return `\
-FROM (
-  SELECT *
-  FROM ${table} "${as}"
-  ${whereCondition? `WHERE ${whereCondition}` : '' }
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}` : ''}
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   FETCH FIRST ${limit} ROWS ONLY
 ) ${q(as)}`
   }
+  return `\
+FROM (
+  SELECT "${as}".*
+  FROM ${table} "${as}"
+  WHERE ${whereCondition}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  FETCH FIRST ${limit} ROWS ONLY
+) ${q(as)}`
 }
 
-function offsetPagingSelect(table, pagingWhereConditions, orderColumns, limit, offset, as, options = {}) {
-  let { joinCondition, joinType } = options
+function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
+  let { joinCondition, joinType, extraJoin } = options
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || '1 = 1'
   if (joinCondition) {
     return `\
-${joinType === 'LEFT' ? 'OUTER': 'CROSS'} APPLY (
+${joinType === 'LEFT' ? 'OUTER' : 'CROSS'} APPLY (
   SELECT "${as}".*, count(*) OVER () AS ${q('$total')}
   FROM ${table} "${as}"
+  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}` : ''}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
 ) ${q(as)}`
-  } else {
-    return `\
+  }
+  return `\
 FROM (
   SELECT "${as}".*, count(*) OVER () AS ${q('$total')}
   FROM ${table} "${as}"
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(orderColumns, q, as)}
+  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
 ) ${q(as)}`
-  }
 }
 
 const dialect = module.exports = {
   ...require('./pg'),
   name: 'oracle',
-  
+
   compositeKey(parent, keys) {
     keys = keys.map(key => `"${parent}"."${key}"`)
     return `NULLIF(${recursiveConcat(keys)}, '')`
   },
 
-  handlePaginationAtRoot: async function(parent, node, prefix, context, selections, tables, wheres, orders) {
+  handlePaginationAtRoot: async function(parent, node, context, tables) {
     const pagingWhereConditions = []
     if (node.sortKey) {
-      var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
+        pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, node))
       }
-      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as))
+      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as))
     } else if (node.orderBy) {
-      var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       if (node.where) {
-        pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
+        pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, node))
       }
-      tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as))
+      tables.push(offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as))
     }
-    orders.push({
-      table: node.as,
-      columns: orderColumns
-    })
-
   },
 
-  handleJoinedOneToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition) {
+  handleJoinedOneToManyPaginated: async function(parent, node, context, tables, joinCondition) {
     const pagingWhereConditions = [
-      await node.sqlJoin(`"${parent.as}"`, q(node.as), node.args || {}, context),
+      await node.sqlJoin(`"${parent.as}"`, q(node.as), node.args || {}, context)
     ]
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, node))
     }
 
     // which type of pagination are they using?
     if (node.sortKey) {
-      var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as, { joinCondition, joinType: 'LEFT' }))
+      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { joinCondition, joinType: 'LEFT' }))
     } else if (node.orderBy) {
-      var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
-      tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as, { joinCondition, joinType: 'LEFT' }))
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      tables.push(offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { joinCondition, joinType: 'LEFT' }))
     }
-    orders.push({
-      table: node.as,
-      columns: orderColumns
-    })
   },
 
-  handleJoinedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, joinCondition1) {
+  handleJoinedManyToManyPaginated: async function(parent, node, context, tables, joinCondition1, joinCondition2) {
     const pagingWhereConditions = [
-      await node.sqlJoins[0](`"${parent.as}"`, `"${node.junctionTableAs}"`, node.args || {}, context)
+      await node.junction.sqlJoins[0](`"${parent.as}"`, `"${node.junction.as}"`, node.args || {}, context)
     ]
+    if (node.junction.where) {
+      pagingWhereConditions.push(
+        await node.junction.where(`"${node.junction.as}"`, node.args || {}, context, node)
+      )
+    }
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
+      pagingWhereConditions.push(
+        await node.where(`"${node.as}"`, node.args || {}, context, node)
+      )
     }
 
-    if (node.sortKey) {
-      var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
-      pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, node.junctionTableAs, { joinCondition: joinCondition1, joinType: 'LEFT' }))
-    } else if (node.orderBy) {
-      var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
-      tables.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, { joinCondition: joinCondition1, joinType: 'LEFT' }))
+    const lateralJoinOptions = { joinCondition: joinCondition1, joinType: 'LEFT' }
+    if (node.where || node.orderBy) {
+      lateralJoinOptions.extraJoin = {
+        name: node.name,
+        as: node.as,
+        condition: joinCondition2
+      }
     }
-    orders.push({
-      table: node.junctionTableAs,
-      columns: orderColumns
-    })
+    if (node.sortKey || node.junction.sortKey) {
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      pagingWhereConditions.push(whereAddendum)
+      tables.push(
+        keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, node.junction.as, lateralJoinOptions)
+      )
+    } else if (node.orderBy || node.junction.orderBy) {
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      tables.push(
+        offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, offset, node.junction.as, lateralJoinOptions)
+      )
+    }
   },
 
-  handleBatchedOneToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, batchScope) {
+  handleBatchedOneToManyPaginated: async function(parent, node, context, tables, batchScope) {
     const pagingWhereConditions = [
       `"${node.as}"."${node.sqlBatch.thisKey.name}" = "temp"."value"`
     ]
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, []))
+      pagingWhereConditions.push(
+        await node.where(`"${node.as}"`, node.args || {}, context, node)
+      )
     }
     tables.push(`FROM (${arrToTableUnion(batchScope)}) "temp"`)
     const lateralJoinCondition = `"${node.as}"."${node.sqlBatch.thisKey.name}" = "temp"."value"`
     if (node.sortKey) {
-      var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, node.as, { joinCondition: lateralJoinCondition }))
+      tables.push(
+        keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { joinCondition: lateralJoinCondition })
+      )
     } else if (node.orderBy) {
-      var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
-      tables.push(offsetPagingSelect(node.name, pagingWhereConditions, orderColumns, limit, offset, node.as, { joinCondition: lateralJoinCondition }))
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      tables.push(offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { joinCondition: lateralJoinCondition }))
     }
-    orders.push({
-      table: node.as,
-      columns: orderColumns
-    })
   },
 
-  handleBatchedManyToManyPaginated: async function(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, joinCondition) {
+  handleBatchedManyToManyPaginated: async function(parent, node, context, tables, batchScope, joinCondition) {
     const pagingWhereConditions = [
-      `"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = "temp"."value"`
+      `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}" = "temp"."value"`
     ]
+    if (node.junction.where) {
+      pagingWhereConditions.push(
+        await node.junction.where(`"${node.junction.as}"`, node.args || {}, context, node)
+      )
+    }
     if (node.where) {
-      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, quotePrefix(prefix)))
+      pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, node))
     }
 
     tables.push(`FROM (${arrToTableUnion(batchScope)}) "temp"`)
-    const lateralJoinCondition = `"${node.junctionTableAs}"."${node.junctionBatch.thisKey.name}" = "temp"."value"`
+    const lateralJoinCondition = `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}" = "temp"."value"`
 
-    if (node.sortKey) {
-      var { limit, orderColumns, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect) // eslint-disable-line no-redeclare
+    const lateralJoinOptions = { joinCondition: lateralJoinCondition, joinType: 'LEFT' }
+    if (node.where || node.orderBy) {
+      lateralJoinOptions.extraJoin = {
+        name: node.name,
+        as: node.as,
+        condition: joinCondition
+      }
+    }
+    if (node.sortKey || node.junction.sortKey) {
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
-      tables.push(keysetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, node.junctionTableAs, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
-    } else if (node.orderBy) {
-      var { limit, offset, orderColumns } = interpretForOffsetPaging(node, dialect) // eslint-disable-line no-redeclare
-      tables.push(offsetPagingSelect(node.junctionTable, pagingWhereConditions, orderColumns, limit, offset, node.junctionTableAs, { joinCondition: lateralJoinCondition, joinType: 'LEFT' }))
+      tables.push(
+        keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, node.junction.as, lateralJoinOptions)
+      )
+    } else if (node.orderBy || node.junction.orderBy) {
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      tables.push(
+        offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, offset, node.junction.as, lateralJoinOptions)
+      )
     }
     tables.push(`LEFT JOIN ${node.name} "${node.as}" ON ${joinCondition}`)
-
-    orders.push({
-      table: node.junctionTableAs,
-      columns: orderColumns
-    })
-  },
+  }
 }
 
 

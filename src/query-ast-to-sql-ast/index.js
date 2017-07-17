@@ -1,10 +1,24 @@
 import assert from 'assert'
 import { flatMap } from 'lodash'
 import AliasNamespace from '../alias-namespace'
-import { wrap } from '../util'
+import { wrap, ensure, unthunk, inspect } from '../util'
 import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
 
+class SQLASTNode {
+  constructor(parentNode, props) {
+    Object.defineProperty(this, 'parent', {
+      enumerable: false,
+      value: parentNode
+    })
+
+    for (let prop in props) {
+      this[prop] = props[prop]
+    }
+  }
+}
+
+// an enumeration of all the types that can map to SQL tables
 const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
 
 export function queryASTToSqlAST(resolveInfo, options, context) {
@@ -29,7 +43,11 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   populateASTNode.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options, context)
 
   // make sure they started this party on a table
-  assert.equal(sqlAST.type, 'table', 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".')
+  assert.equal(
+    sqlAST.type,
+    'table',
+    'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".'
+  )
 
   // make sure each "sqlDep" is only specified once at each level. also assign it an alias
   pruneDuplicateSqlDeps(sqlAST, namespace)
@@ -51,6 +69,16 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   let field = parentTypeNode._fields[fieldName]
   if (!field) {
     throw new Error(`The field "${fieldName}" is not in the ${parentTypeNode.name} type.`)
+  }
+
+  let fieldIncludes
+  if (idx(sqlASTNode, _ => _.parent.junction.include[fieldName])) {
+    fieldIncludes = sqlASTNode.parent.junction.include[fieldName]
+    field = {
+      ...field,
+      ...fieldIncludes
+    }
+    sqlASTNode.fromOtherTable = sqlASTNode.parent.junction.as
   }
 
   // allow for explicit ignoring of fields
@@ -83,12 +111,12 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     // we'll set a flag for pagination.
     if (field.sqlPaginate) {
       sqlASTNode.paginate = true
-      getSortColumns(field, sqlASTNode, context)
     }
-  } else {
-    if (field.sqlPaginate) {
-      throw new Error(`To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec. The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`)
-    }
+  } else if (field.sqlPaginate) {
+    throw new Error(
+      `To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec.
+      The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`
+    )
   }
   // the typeConfig has all the keyes from the GraphQLObjectType definition
   const config = gqlType._typeConfig
@@ -101,7 +129,13 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     && config.sqlTable
   ) {
     if (depth >= 1) {
-      assert(field.sqlJoin || field.sqlBatch || field.junctionTable, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table, you must define "sqlJoin", "sqlBatch", or "junctionTable" on that field to tell joinMonster how to fetch it. Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`)
+      assert(!field.junctionTable, '"junctionTable" has been replaced with a new API.')
+      assert(
+        field.sqlJoin || field.sqlBatch || field.junction,
+        `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table,
+        you must define "sqlJoin", "sqlBatch", or "junction" on that field to tell joinMonster how to fetch it.
+        Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`
+      )
     }
     handleTable.call(this, sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options, context)
   // is this a computed column from a raw expression?
@@ -136,10 +170,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   const config = gqlType._typeConfig
 
   sqlASTNode.type = 'table'
-  let sqlTable = config.sqlTable
-  if (typeof sqlTable === 'function') {
-    sqlTable = sqlTable(sqlASTNode.args || {}, context)
-  }
+  const sqlTable = unthunk(config.sqlTable, sqlASTNode.args || {}, context)
   sqlASTNode.name = sqlTable
 
   // the graphQL field name will be the default alias for the table
@@ -147,7 +178,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   sqlASTNode.as = namespace.generate('table', field.name)
 
   if (field.orderBy && !sqlASTNode.orderBy) {
-    handleOrderBy(sqlASTNode, field, context)
+    sqlASTNode.orderBy = handleOrderBy(unthunk(field.orderBy, sqlASTNode.args || {}, context))
   }
 
   // tables have child fields, lets push them to an array
@@ -169,38 +200,57 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   if (field.sqlJoin) {
     sqlASTNode.sqlJoin = field.sqlJoin
   // or a many-to-many?
-  } else if (field.junctionTable || field.joinTable) {
-    assert(field.sqlJoins || field.junctionBatch, 'Must define `sqlJoins` (plural) or `junctionBatch` for a many-to-many.')
-    if (field.joinTable) {
-      deprecate('The `joinTable` is deprecated. Rename to `junctionTable`.')
+  } else if (field.junction) {
+    const junctionTable = unthunk(ensure(field.junction, 'sqlTable'), sqlASTNode.args || {}, context)
+    const junction = sqlASTNode.junction = {
+      sqlTable: junctionTable,
+      as: namespace.generate('table', junctionTable)
     }
-    const junctionTable = field.junctionTable || field.joinTable
-    sqlASTNode.junctionTable = junctionTable
-    // we need to generate an alias for their junction table. we'll just take the alphanumeric characters from the junction table expression
-    sqlASTNode.junctionTableAs = namespace.generate('table', junctionTable)
+    if (field.junction.include) {
+      junction.include = unthunk(field.junction.include, sqlASTNode.args || {}, context)
+    }
+
+    if (field.junction.orderBy) {
+      junction.orderBy = handleOrderBy(unthunk(field.junction.orderBy, sqlASTNode.args || {}, context))
+    }
+
+    if (field.junction.where) {
+      junction.where = field.junction.where
+    }
     // are they joining or batching?
-    if (field.sqlJoins) {
-      sqlASTNode.sqlJoins = field.sqlJoins
-    } else {
+    if (field.junction.sqlJoins) {
+      junction.sqlJoins = field.junction.sqlJoins
+    } else if (field.junction.sqlBatch) {
       children.push({
-        ...keyToASTChild(field.junctionTableKey, namespace),
-        fromOtherTable: sqlASTNode.junctionTableAs,
+        ...keyToASTChild(ensure(field.junction, 'uniqueKey'), namespace),
+        fromOtherTable: junction.as
       })
-      sqlASTNode.junctionBatch = {
-        sqlJoin: field.junctionBatch.sqlJoin,
+      junction.sqlBatch = {
+        sqlJoin: ensure(field.junction.sqlBatch, 'sqlJoin'),
         thisKey: {
-          ...columnToASTChild(field.junctionBatch.thisKey, namespace),
-          fromOtherTable: sqlASTNode.junctionTableAs
+          ...columnToASTChild(ensure(field.junction.sqlBatch, 'thisKey'), namespace),
+          fromOtherTable: junction.as
         },
-        parentKey: columnToASTChild(field.junctionBatch.parentKey, namespace)
+        parentKey: columnToASTChild(ensure(field.junction.sqlBatch, 'parentKey'), namespace)
       }
+    } else {
+      throw new Error('junction requires either a `sqlJoins` or `sqlBatch`')
     }
   // or are they doing a one-to-many with batching
   } else if (field.sqlBatch) {
     sqlASTNode.sqlBatch = {
-      thisKey: columnToASTChild(field.sqlBatch.thisKey, namespace),
-      parentKey: columnToASTChild(field.sqlBatch.parentKey, namespace)
+      thisKey: columnToASTChild(ensure(field.sqlBatch, 'thisKey'), namespace),
+      parentKey: columnToASTChild(ensure(field.sqlBatch, 'parentKey'), namespace)
     }
+  }
+
+  if (field.limit) {
+    assert(field.orderBy, '`orderBy` is required with `limit`')
+    sqlASTNode.limit = unthunk(field.limit, sqlASTNode.args || {}, context)
+  }
+
+  if (sqlASTNode.paginate) {
+    getSortColumns(field, sqlASTNode, context)
   }
 
   /*
@@ -210,10 +260,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 
   // the NestHydrationJS library only treats the first column as the unique identifier, therefore we
   // need whichever column that the schema specifies as the unique one to be the first child
-  if (!config.uniqueKey) {
-    throw new Error(`You must specify the "uniqueKey" on the GraphQLObjectType definition of ${sqlTable}`)
-  }
-  children.push(keyToASTChild(config.uniqueKey, namespace))
+  children.push(keyToASTChild(ensure(config, 'uniqueKey'), namespace))
 
   if (config.alwaysFetch) {
     for (let column of wrap(config.alwaysFetch)) {
@@ -238,9 +285,17 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
       // union types have special rules for the child fields in join monster
       sqlASTNode.type = 'union'
       sqlASTNode.typedChildren = {}
-      handleUnionSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options, context)
+      handleUnionSelections.call(
+        this, sqlASTNode, children,
+        queryASTNode.selectionSet.selections, gqlType, namespace,
+        depth, options, context
+      )
     } else {
-      handleSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options, context)
+      handleSelections.call(
+        this, sqlASTNode, children,
+        queryASTNode.selectionSet.selections, gqlType, namespace,
+        depth, options, context
+      )
     }
   }
 }
@@ -253,7 +308,7 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
     case 'Field':
       // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
       const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
-      let newNode = {}
+      let newNode = new SQLASTNode(sqlASTNode)
       if (existingNode) {
         newNode = existingNode
       } else {
@@ -279,7 +334,12 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
           children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
           internalOptions.defferedFrom = gqlType
         }
-        handler.call(this, sqlASTNode, children, selection.selectionSet.selections, deferredType, namespace, depth, options, context, internalOptions)
+        handler.call(
+          this, sqlASTNode, children,
+          selection.selectionSet.selections, deferredType, namespace,
+          depth, options, context,
+          internalOptions
+        )
       }
       break
     // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
@@ -288,7 +348,7 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
         const fragmentName = selection.name.value
         const fragment = this.fragments[fragmentName]
         const fragmentNameOfType = fragment.typeCondition.name.value
-        const deferredType = this.schema._typeMap[fragmentNameOfType ]
+        const deferredType = this.schema._typeMap[fragmentNameOfType]
         const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
         const handler = deferToObjectType ? handleSelections : handleUnionSelections
         if (deferToObjectType) {
@@ -296,7 +356,12 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
           children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
           internalOptions.defferedFrom = gqlType
         }
-        handler.call(this, sqlASTNode, children, fragment.selectionSet.selections, deferredType, namespace, depth, options, context, internalOptions)
+        handler.call(
+          this, sqlASTNode, children,
+          fragment.selectionSet.selections, deferredType, namespace,
+          depth, options, context,
+          internalOptions
+        )
       }
       break
     default:
@@ -314,7 +379,7 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
     case 'Field':
       // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
       const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
-      let newNode = {}
+      let newNode = new SQLASTNode(sqlASTNode)
       if (existingNode) {
         newNode = existingNode
       } else {
@@ -333,7 +398,12 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         const sameType = selectionNameOfType === gqlType.name
         const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
         if (sameType || interfaceType) {
-          handleSelections.call(this, sqlASTNode, children, selection.selectionSet.selections, gqlType, namespace, depth, options, context, internalOptions)
+          handleSelections.call(
+            this, sqlASTNode, children,
+            selection.selectionSet.selections, gqlType, namespace,
+            depth, options, context,
+            internalOptions
+          )
         }
       }
       break
@@ -347,7 +417,12 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         const sameType = fragmentNameOfType === gqlType.name
         const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
         if (sameType || interfaceType) {
-          handleSelections.call(this, sqlASTNode, children, fragment.selectionSet.selections, gqlType, namespace, depth, options, context, internalOptions)
+          handleSelections.call(
+            this, sqlASTNode, children,
+            fragment.selectionSet.selections, gqlType, namespace,
+            depth, options, context,
+            internalOptions
+          )
         }
       }
       break
@@ -379,12 +454,7 @@ function toClumsyName(keyArr) {
 // this will handle singular or composite keys
 function keyToASTChild(key, namespace) {
   if (typeof key === 'string') {
-    return {
-      type: 'column',
-      name: key,
-      fieldName: key,
-      as: namespace.generate('column', key)
-    }
+    return columnToASTChild(key, namespace)
   } else if (Array.isArray(key)) {
     const clumsyName = toClumsyName(key)
     return {
@@ -397,34 +467,24 @@ function keyToASTChild(key, namespace) {
 }
 
 function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
-  if (sqlASTNode.sortKey) {
-    assert(sqlASTNode.sortKey.key, '"sortKey" must have "key"')
-    assert(sqlASTNode.sortKey.order, '"sortKey" must have "order"')
+  if (sqlASTNode.sortKey || idx(sqlASTNode, _ => _.junction.sortKey)) {
+    const sortKey = sqlASTNode.sortKey || sqlASTNode.junction.sortKey
+    assert(sortKey.order, '"sortKey" must have "order"')
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
-    for (let column of wrap(sqlASTNode.sortKey.key)) {
-      const newChild = {
-        type: 'column',
-        name: column,
-        fieldName: column,
-        as: namespace.generate('column', column)
-      }
+    for (let column of wrap(ensure(sortKey, 'key'))) {
+      const newChild = columnToASTChild(column, namespace)
       // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
-      if (sqlASTNode.junctionTable) {
-        newChild.fromOtherTable = sqlASTNode.junctionTableAs
+      if (!sqlASTNode.sortKey) {
+        newChild.fromOtherTable = sqlASTNode.junction.as
       }
       sqlASTNode.children.push(newChild)
     }
-  } else if (sqlASTNode.orderBy) {
+  } else if (sqlASTNode.orderBy || idx(sqlASTNode, _ => _.junction.orderBy)) {
     // this type of paging can visit arbitrary pages, so lets provide the total number of items
     // on this special "$total" column which we will compute in the query
-    const newChild = {
-      type: 'column',
-      name: '$total',
-      fieldName: '$total',
-      as: namespace.generate('column', '$total')
-    }
-    if (sqlASTNode.junctionTable) {
-      newChild.fromOtherTable = sqlASTNode.junctionTableAs
+    const newChild = columnToASTChild('$total', namespace)
+    if (sqlASTNode.junction) {
+      newChild.fromOtherTable = sqlASTNode.junction.as
     }
     sqlASTNode.children.push(newChild)
   }
@@ -465,14 +525,22 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   }
 
   for (let children of childrenToLoopOver) {
-    // keep track of all the dependent columns at this depth in a Set (for uniqueness)
-    const deps = new Set
+    // keep track of all the dependent columns at this depth in a Set
+    // use one Set per table. usually the table is the same. but sometimes they are pulling in data from
+    // a junction table.
+    //
+    // whoa what the heck is this? Proxy? this is basically a JavaScript implementation of Python's "defaultdict"
+    // its cool. look it up
+    const depsByTable = new Proxy({}, { get: (target, name) => name in target ? target[name] : new Set() })
 
     // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
     for (let i = children.length - 1; i >= 0; i--) {
       const child = children[i]
       if (child.type === 'columnDeps') {
-        child.names.forEach(name => deps.add(name))
+        const keyName = child.fromOtherTable || ''
+        child.names.forEach(name => {
+          depsByTable[keyName] = depsByTable[keyName].add(name)
+        })
         children.splice(i, 1)
       // or if its another table, recurse on it
       } else if (child.type === 'table' || child.type === 'union') {
@@ -483,46 +551,60 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
     // now that we collected the "columnDeps", add them all to one node
     // the "names" property will put all the column names in an object as keys
     // the values of this object will be the SQL alias
-    const newNode = {
-      type: 'columnDeps',
-      names: {}
+    for (let table in depsByTable) {
+      const newNode = new SQLASTNode(sqlAST, {
+        type: 'columnDeps',
+        names: {},
+        fromOtherTable: table || null
+      })
+      depsByTable[table].forEach(name => {
+        newNode.names[name] = namespace.generate('column', name)
+      })
+      children.push(newNode)
     }
-    deps.forEach(name => {
-      newNode.names[name] = namespace.generate('column', name)
-    })
-    children.push(newNode)
   }
 }
 
 
 function getSortColumns(field, sqlASTNode, context) {
   if (field.sortKey) {
-    if (typeof field.sortKey === 'function') {
-      sqlASTNode.sortKey = field.sortKey(sqlASTNode.args, context)
-    } else {
-      sqlASTNode.sortKey = field.sortKey
+    sqlASTNode.sortKey = unthunk(field.sortKey, sqlASTNode.args || {}, context)
+  }
+  if (field.orderBy) {
+    sqlASTNode.orderBy = handleOrderBy(unthunk(field.orderBy, sqlASTNode.args || {}, context))
+  }
+  if (field.junction) {
+    if (field.junction.sortKey) {
+      sqlASTNode.junction.sortKey = unthunk(field.junction.sortKey, sqlASTNode.args || {}, context)
     }
-  } else if (field.orderBy) {
-    handleOrderBy(sqlASTNode, field, context)
-  } else {
-    throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
+    if (field.junction.orderBy) {
+      sqlASTNode.junction.orderBy = handleOrderBy(unthunk(field.junction.orderBy, sqlASTNode.args || {}, context))
+    }
+  }
+  if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
+    if (sqlASTNode.junction) {
+      if (!sqlASTNode.junction.sortKey && !sqlASTNode.junction.orderBy) {
+        throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
+      }
+    } else {
+      throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true')
+    }
+  }
+  if (sqlASTNode.sortKey && idx(sqlASTNode, _ => _.junction.sortKey)) {
+    throw new Error('"sortKey" must be on junction or main table, not both')
+  }
+  if (sqlASTNode.orderBy && idx(sqlASTNode, _ => _.junction.orderBy)) {
+    throw new Error('"orderBy" must be on junction or main table, not both')
   }
 }
 
-function handleOrderBy(sqlASTNode, field, context) {
-  if (typeof field.orderBy === 'function') {
-    sqlASTNode.orderBy = field.orderBy(sqlASTNode.args || {}, context)
-  } else {
-    sqlASTNode.orderBy = field.orderBy
-  }
-}
 
 // instead of fields, selections can be fragments, which is another group of selections
 // fragments can be arbitrarily nested
 // this function recurses through and gets the relevant fields
 function spreadFragments(selections, fragments, typeName) {
   return flatMap(selections, selection => {
-    switch(selection.kind) {
+    switch (selection.kind) {
     case 'FragmentSpread':
       const fragmentName = selection.name.value
       const fragment = fragments[fragmentName]
@@ -530,11 +612,30 @@ function spreadFragments(selections, fragments, typeName) {
     case 'InlineFragment':
       if (selection.typeCondition.name.value === typeName) {
         return spreadFragments(selection.selectionSet.selections, fragments, typeName)
-      } else {
-        return []
       }
+      return []
+
     default:
       return selection
     }
   })
+}
+
+export function handleOrderBy(orderBy) {
+  if (!orderBy) return undefined
+  const orderColumns = {}
+  if (typeof orderBy === 'object') {
+    for (let column in orderBy) {
+      let direction = orderBy[column].toUpperCase()
+      if (direction !== 'ASC' && direction !== 'DESC') {
+        throw new Error(direction + ' is not a valid sorting direction')
+      }
+      orderColumns[column] = direction
+    }
+  } else if (typeof orderBy === 'string') {
+    orderColumns[orderBy] = 'ASC'
+  } else {
+    throw new Error('"orderBy" is invalid type: ' + inspect(orderBy))
+  }
+  return orderColumns
 }

@@ -24,6 +24,9 @@
 <dt><a href="#sqlJoin">sqlJoin</a> ⇒ <code>String</code></dt>
 <dd><p>Function for generating a <code>JOIN</code> condition.</p>
 </dd>
+<dt><a href="#thunk">thunk</a> : <code>function</code></dt>
+<dd><p>Rather than a constant value, its a function to dynamically return the value.</p>
+</dd>
 </dl>
 
 <a name="joinMonster"></a>
@@ -37,7 +40,7 @@ Takes the GraphQL resolveInfo and returns a hydrated Object with the data.
 | --- | --- | --- |
 | resolveInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
 | context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  `WHERE` condition, e.g. session, logged in user, localization. |
-| dbCall | <code>[dbCall](#dbCall)</code> | A function that is passed the compiled SQL that calls the database and returns a promise of the data. |
+| dbCall | [<code>dbCall</code>](#dbCall) | A function that is passed the compiled SQL that calls the database and returns a promise of the data. |
 | [options] | <code>Object</code> |  |
 | options.minify | <code>Boolean</code> | Generate minimum-length column names in the results table. |
 | options.dialect | <code>String</code> | The dialect of SQL your Database uses. Currently `'pg'`, `'oracle'`, `'mariadb'`, `'mysql'`, and `'sqlite3'` are supported. |
@@ -54,7 +57,7 @@ A helper for resolving the Node type in Relay.
 | typeName | <code>String</code> | The Name of the GraphQLObjectType |
 | resolveInfo | <code>Object</code> | Contains the parsed GraphQL query, schema definition, and more. Obtained from the fourth argument to the resolver. |
 | context | <code>Object</code> | An arbitrary object that gets passed to the `where` function. Useful for contextual infomation that influeces the  WHERE condition, e.g. session, logged in user, localization. |
-| condition | <code>[where](#where)</code> &#124; <code>Number</code> &#124; <code>String</code> &#124; <code>Array</code> | A value to determine the `where` function for searching the node. If it's a function, that function will be used as the `where` function. Otherwise, it is assumed to be the value(s) of the `primaryKey`. An array of values is needed for composite primary keys. |
+| condition | [<code>where</code>](#where) \| <code>Number</code> \| <code>String</code> \| <code>Array</code> | A value to determine the `where` function for searching the node. If it's a function, that function will be used as the `where` function. Otherwise, it is assumed to be the value(s) of the `primaryKey`. An array of values is needed for composite primary keys. |
 | dbCall | <code>function</code> | A function that is passed the compiled SQL that calls the database and returns (a promise of) the data. |
 | [options] | <code>Object</code> | Same as `joinMonster` function's options. |
 
@@ -72,31 +75,31 @@ User-defined function that sends a raw SQL query to the databse.
 
 <a name="sqlExpr"></a>
 
-## sqlExpr ⇒ <code>String</code> &#124; <code>Promise.&lt;String&gt;</code>
+## sqlExpr ⇒ <code>String</code> \| <code>Promise.&lt;String&gt;</code>
 Function for generating a SQL expression.
 
-**Returns**: <code>String</code> &#124; <code>Promise.&lt;String&gt;</code> - The RAW expression interpolated into the query to compute the column. Unsafe user input must be scrubbed.  
+**Returns**: <code>String</code> \| <code>Promise.&lt;String&gt;</code> - The RAW expression interpolated into the query to compute the column. Unsafe user input must be scrubbed.  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | tableAlias | <code>String</code> | The alias generated for this table. Already double-quoted. |
 | args | <code>Object</code> | The GraphQL arguments for this field. |
 | context | <code>Object</code> | An Object with arbitrary contextual information. |
-| parentAliases | <code>Array.&lt;String&gt;</code> | List of aliases of the antecedent tables, starting with the top-level. |
+| sqlASTNode | <code>Object</code> | Join Monster object that abstractly represents this field. Also includes a reference to its parent node. This is useful, for example, if you need to access the parent field's table alias or GraphQL arguments. |
 
 <a name="where"></a>
 
-## where ⇒ <code>String</code> &#124; <code>Promise.&lt;String&gt;</code>
+## where ⇒ <code>String</code> \| <code>Promise.&lt;String&gt;</code>
 Function for generating a `WHERE` condition.
 
-**Returns**: <code>String</code> &#124; <code>Promise.&lt;String&gt;</code> - The RAW condition for the `WHERE` clause. Omitted if falsy value returned. Unsafe user input must be scrubbed.  
+**Returns**: <code>String</code> \| <code>Promise.&lt;String&gt;</code> - The RAW condition for the `WHERE` clause. Omitted if falsy value returned. Unsafe user input must be scrubbed.  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | tableAlias | <code>String</code> | The alias generated for this table. Already double-quoted. |
 | args | <code>Object</code> | The GraphQL arguments for this field. |
 | context | <code>Object</code> | An Object with arbitrary contextual information. |
-| parentAliases | <code>Array.&lt;String&gt;</code> | List of aliases of the antecedent tables, starting with the top-level. |
+| sqlASTNode | <code>Object</code> | Join Monster object that abstractly represents this field. Also includes a reference to its parent node. This is useful, for example, if you need to access the parent field's table alias or GraphQL arguments. |
 
 <a name="sqlJoin"></a>
 
@@ -109,6 +112,17 @@ Function for generating a `JOIN` condition.
 | --- | --- | --- |
 | parentTable | <code>String</code> | The alias generated for the parent's table. Already double-quoted. |
 | childTable | <code>String</code> | The alias for the child's table. Already double-quoted. |
+| args | <code>Object</code> | The GraphQL arguments for this field. |
+| context | <code>Object</code> | An Object with arbitrary contextual information. |
+
+<a name="thunk"></a>
+
+## thunk : <code>function</code>
+Rather than a constant value, its a function to dynamically return the value.
+
+
+| Param | Type | Description |
+| --- | --- | --- |
 | args | <code>Object</code> | The GraphQL arguments for this field. |
 | context | <code>Object</code> | An Object with arbitrary contextual information. |
 

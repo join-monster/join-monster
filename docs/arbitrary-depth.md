@@ -93,7 +93,7 @@ const Post = new GraphQLObjectType({
       type: new GraphQLList(Comment),
       // the JOIN condition also checks that the comment is not archived
       sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id AND ${commentTable}.archived = FALSE`,
-    },
+    }
   })
 })
 

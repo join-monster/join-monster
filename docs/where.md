@@ -4,7 +4,7 @@ We of course don't want every single user in the database.
 We need a way to place a `WHERE` clause in the query.
 
 You can define a `where` function on a field that generates the `WHERE` condition.
-Its parameters are the table alias (generated automatically by `joinMonster`), the GraphQL arguments on that field, the "context" mentioned earlier, and the parent table aliases.
+Its parameters are the table alias (generated automatically by `joinMonster`), the GraphQL arguments on that field, the "context" mentioned earlier, and the field's "SQL AST node".
 The (Promise of) string returned is the `WHERE` condition.
 If a falsy value is returned, there will be no `WHERE` condition.
 We'll add another top-level field that just returns one user.

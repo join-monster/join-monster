@@ -74,7 +74,7 @@ test('it should fetch a Node type with a variable', async t => {
   t.is(errors, undefined)
   const expect = {
     node: {
-      fullName: 'andrew carlson',
+      fullName: 'andrew carlson'
     }
   }
   t.deepEqual(expect, data)
@@ -357,6 +357,6 @@ test('should handle fragments recursively', async t => {
       }
     }
   }
-  t.deepEqual(data, expect)
+  t.deepEqual(expect, data)
 })
 
