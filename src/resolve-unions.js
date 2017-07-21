@@ -1,4 +1,5 @@
 import { chain } from 'lodash'
+import { isEmptyArray } from './util'
 
 // union types have additional processing. the field names have a @ and the typename appended to them.
 // need to strip those off and take whichever of those values are non-null
@@ -20,6 +21,8 @@ export default function resolveUnions(data, sqlAST) {
             delete obj[qualifiedName]
             if (obj[fieldName] == null && qualifiedValue != null) {
               obj[fieldName] = qualifiedValue
+            } else if (isEmptyArray(obj[fieldName]) && !isEmptyArray(qualifiedValue)) {
+              obj[fieldName] = qualifiedValue
             }
           }
           if (child.type === 'table' || child.type === 'union') {
@@ -34,6 +37,8 @@ export default function resolveUnions(data, sqlAST) {
           const qualifiedValue = data[qualifiedName]
           delete data[qualifiedName]
           if (data[fieldName] == null && qualifiedValue != null) {
+            data[fieldName] = qualifiedValue
+          } else if (isEmptyArray(data[fieldName]) && !isEmptyArray(qualifiedValue)) {
             data[fieldName] = qualifiedValue
           }
           if (child.type === 'table' || child.type === 'union') {

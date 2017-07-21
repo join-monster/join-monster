@@ -28,6 +28,10 @@ export function wrap(maybeArr) {
   return [ maybeArr ]
 }
 
+export function isEmptyArray(val) {
+  return Array.isArray(val) && val.length === 0
+}
+
 export function ensure(obj, prop, name) {
   if (!obj[prop]) {
     throw new Error(`property "${prop}" must be defined on object: ${name || util.inspect(obj)}`)
