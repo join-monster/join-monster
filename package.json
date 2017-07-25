@@ -25,7 +25,7 @@
     "start": "babel-watch ./test-api/server.js",
     "docs": "mkdocs serve",
     "jsdoc": "babel src/index.js -o temp.js && (jsdoc2md temp.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md) && rm temp.js",
-    "prepublish": "in-publish && /bin/sh ./scripts/prepublish.sh && npm run build || not-in-publish",
+    "prepublishOnly": "/bin/sh ./scripts/prepublish.sh && npm run build",
     "preversion": ". ./scripts/checkgit.sh && npm test",
     "db-build": "TZ=UTC babel-node test-api/data/build.js",
     "db-shell": "sqlite3 --column --header test-api/data/db/demo-data.sl3"
@@ -85,7 +85,6 @@
     "faker": "^4.1.0",
     "graphql": "^0.10.1",
     "graphsiql": "0.0.6",
-    "in-publish": "^2.0.0",
     "jsdoc-to-markdown": "^3.0.0",
     "kcors": "^2.2.1",
     "knex": "^0.13.0",
