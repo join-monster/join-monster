@@ -237,8 +237,8 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
       // otherwite, just a regular left join on the table
     } else {
       tables.push(
-          `FROM ${node.name} ${q(node.as)}`
-        )
+        `FROM ${node.name} ${q(node.as)}`
+      )
       wheres.push(`${q(node.as)}.${q(node.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`)
     }
   // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause

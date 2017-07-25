@@ -84,7 +84,7 @@ test('it should disambiguate two entities with identical fields', async t => {
   const expect = {
     users: [
       { numLegs: 2 }, // andy
-      { numLegs: 2 },  // matt
+      { numLegs: 2 }, // matt
       { numLegs: 2 }
     ]
   }

@@ -105,15 +105,15 @@ export function buildWhereFunction(type, condition, options) {
     return condition
   // otherwise, we'll assume they gave us the value(s) of the unique key.
   }
-    // determine the type of quotes necessary to escape the uniqueKey column
+  // determine the type of quotes necessary to escape the uniqueKey column
   const quote = [ 'mysql', 'mariadb' ].includes(options.dialect) ? '`' : '"'
 
-    // determine the unique key so we know what to search by
+  // determine the unique key so we know what to search by
   const uniqueKey = type._typeConfig.uniqueKey
 
-    // handle composite keys
+  // handle composite keys
   if (Array.isArray(uniqueKey)) {
-      // it must have a corresponding array of values
+    // it must have a corresponding array of values
     assert.equal(
       condition.length,
       uniqueKey.length,

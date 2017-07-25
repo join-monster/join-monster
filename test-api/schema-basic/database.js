@@ -31,7 +31,7 @@ function pgUrl(dbName) {
 }
 
 function mysqlUrl(dbName) {
-  assert(process.env.MYSQL_URL, 'Environment variable MYSQL_URL must be defined, e.g. "mysql//user:pass@localhost/"')
+  assert(process.env.MYSQL_URL, 'Environment variable MYSQL_URL must be defined, e.g. "mysql://user:pass@localhost/"')
   return process.env.MYSQL_URL + dbName
 }
 

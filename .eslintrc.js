@@ -7,12 +7,6 @@ module.exports = {
     idx: true
   },
   extends: 'airbnb-base/legacy',
-  ecmaFeatures: {
-    experimentalObjectRestSpread: true,
-    modules: true,
-    classes: true,
-    sourceType: 'module'
-  },
   parser: 'babel-eslint',
   rules: {
     indent: [

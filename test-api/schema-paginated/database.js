@@ -4,13 +4,13 @@ import path from 'path'
 const dbType = process.env.DB
 
 const connection = process.env.NODE_ENV !== 'test' ?
-  pgUrl(process.env.PAGINATE ? 'test2': 'test1') :
+  pgUrl(process.env.PAGINATE ? 'test2' : 'test1') :
   dbType === 'PG' ?
-    pgUrl(process.env.PAGINATE ? 'test2': 'test1') :
+    pgUrl(process.env.PAGINATE ? 'test2' : 'test1') :
     dbType === 'MYSQL' ?
-      mysqlUrl(process.env.PAGINATE ? 'test2': 'test1') :
+      mysqlUrl(process.env.PAGINATE ? 'test2' : 'test1') :
       dbType === 'ORACLE' ?
-        oracleUrl(process.env.PAGINATE ? 'test2': 'test1') :
+        oracleUrl(process.env.PAGINATE ? 'test2' : 'test1') :
         { filename: path.join(__dirname, '../data/db/test1-data.sl3') }
 
 let client = 'sqlite3'
