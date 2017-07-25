@@ -41,9 +41,21 @@ const User = new GraphQLObjectType({
 })
 ```
 
-**Note:** If your column names have capital letters, or consist of anything that isn't an alpha-numeric character, $ and #, then you must *double-quote* your column names in the returned `JOIN` condition.
-The table aliases being passed to the `sqlJoin` function are already quoted, but any identifier that you type yourself will not be automatically quoted.
-Like the [where](/API/#where) function, this returns raw SQL. Be sure to **escape any unsafe user input!**
+<div class="admonition note">
+  <p class="first admonition-title">Note</p>
+  <p class="last">
+    If your column names have capital letters, or consist of anything that isn't an alpha-numeric character, $ and #,
+    then you must <strong>double-quote</strong> your column names in the returned <code>JOIN</code> condition.
+    The table aliases being passed to the <code>sqlJoin</code> function are already quoted, but any identifier that you type yourself will not be automatically quoted.
+  </p>
+</div>
+
+<div class="admonition warning">
+  <p class="first admonition-title">Warning</p>
+  <p class="last">
+    Like the <a href="/API/#where">where</a> function, this returns raw SQL. Be sure to <strong>escape any unsafe user input!</strong>
+  </p>
+</div>
 
 Now you can query for the comments for each user!
 

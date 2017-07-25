@@ -33,6 +33,13 @@ function toBase64(clear) {
 
 In the case of the `id` field, the `sqlColumn` was omitted. Since it has no resolver, it is assumed to have to come from the table and the column name is assumed to be the same as the field name. The same inference is not made if a resolver is present.
 
+<div class="admonition note">
+  <p class="first admonition-title">Note</p>
+  <p class="last">
+    Some external libraries add resolvers to your schema, such as <a href="https://github.com/apollographql/optics-agent-js">Optics</a>. If using one of these, <code>sqlColumn</code> cannot be omitted.
+  </p>
+</div>
+
 ## Computed Columns
 
 You can manipulate the data in your query without losing the benefit of batched requests.
