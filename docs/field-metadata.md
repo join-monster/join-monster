@@ -36,7 +36,8 @@ In the case of the `id` field, the `sqlColumn` was omitted. Since it has no reso
 <div class="admonition note">
   <p class="first admonition-title">Note</p>
   <p class="last">
-    Some external libraries add resolvers to your schema, such as <a href="https://github.com/apollographql/optics-agent-js">Optics</a>. If using one of these, <code>sqlColumn</code> cannot be omitted.
+    Some external libraries add resolvers to your schema, such as <a href="https://github.com/apollographql/optics-agent-js">Optics</a>, or the <code>logger</code> option in <a href="https://github.com/apollographql/graphql-tools">graphql-tools</a>.
+    If using one of these, <code>sqlColumn</code> cannot be omitted.
   </p>
 </div>
 
