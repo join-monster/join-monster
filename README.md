@@ -306,9 +306,9 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 
 ## Future Work
 
-- [ ] Remove NestHydrationJS as a dependency by re-implementing it. Write it to handle [this issue](https://github.com/stems/join-monster/issues/122).
-- [ ] Address [this known bug](https://github.com/stems/join-monster/issues/126).
+- [ ] Address this known bug #126.
+- [ ] Support custom `ORDER BY` expressions #138.
+- [ ] Support binding parameters #169.
 - [ ] Write static [Flow](https://flow.org/) types.
-- [ ] Support custom `ORDER BY` expressions ([issue](https://github.com/stems/join-monster/issues/138)).
 - [ ] Cover more SQL dialects, like MSSQL and DB2.
 
