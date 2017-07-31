@@ -13,6 +13,12 @@ import User from './User'
 import Sponsor from './Sponsor'
 import { fromBase64, q } from '../shared'
 
+import mariadbModule from '../../src/stringifiers/dialects/mariadb'
+import mysqlModule from '../../src/stringifiers/dialects/mysql'
+import oracleModule from '../../src/stringifiers/dialects/oracle'
+import pgModule from '../../src/stringifiers/dialects/pg'
+import sqlite3Module from '../../src/stringifiers/dialects/sqlite3'
+
 import joinMonster from '../../src/index'
 
 const { MINIFY, DB } = process.env
@@ -20,13 +26,14 @@ const options = {
   minify: MINIFY == 1
 }
 if (knex.client.config.client === 'mysql') {
-  options.dialect = 'mysql'
+  options.dialectModule = PAGINATE ? mariadbModule : mysqlModule
 } else if (knex.client.config.client === 'pg') {
-  options.dialect = 'pg'
+  options.dialectModule = pgModule
 } else if (knex.client.config.client === 'oracledb') {
-  options.dialect = 'oracle'
+  options.dialectModule = oracleModule
+} else if (knex.client.config.client === 'sqlite3') {
+  options.dialectModule = sqlite3Module
 }
-
 
 export default new GraphQLObjectType({
   description: 'global query object',
@@ -92,7 +99,7 @@ export default new GraphQLObjectType({
         return joinMonster(resolveInfo, context, (sql, done) => {
           knex.raw(sql)
           .then(result => {
-            if (options.dialect === 'mysql') {
+            if (options.dialectModule.name === 'mysql') {
               done(null, result[0])
             } else {
               done(null, result)
