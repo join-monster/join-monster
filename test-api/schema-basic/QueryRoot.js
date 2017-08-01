@@ -13,7 +13,6 @@ import User from './User'
 import Sponsor from './Sponsor'
 import { fromBase64, q } from '../shared'
 
-import mariadbModule from '../../src/stringifiers/dialects/mariadb'
 import mysqlModule from '../../src/stringifiers/dialects/mysql'
 import oracleModule from '../../src/stringifiers/dialects/oracle'
 import pgModule from '../../src/stringifiers/dialects/pg'
@@ -26,7 +25,7 @@ const options = {
   minify: MINIFY == 1
 }
 if (knex.client.config.client === 'mysql') {
-  options.dialectModule = PAGINATE ? mariadbModule : mysqlModule
+  options.dialectModule = mysqlModule
 } else if (knex.client.config.client === 'pg') {
   options.dialectModule = pgModule
 } else if (knex.client.config.client === 'oracledb') {
