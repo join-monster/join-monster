@@ -15,6 +15,7 @@ const run = partial(graphql, schemaBasic)
 test('get a field with the same name as the SQL column', async t => {
   const query = wrap('id')
   const { data, errors } = await run(query)
+  console.log('col error', errors)
   t.is(errors, undefined)
   t.deepEqual(data, {
     users: [
