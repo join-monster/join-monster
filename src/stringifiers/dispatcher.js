@@ -10,7 +10,12 @@ import {
 export default async function stringifySqlAST(topNode, context, options) {
   validateSqlAST(topNode)
 
-  const dialect = require('./dialects/' + options.dialect)
+  let dialect = options.dialectModule
+
+  if (!dialect && options.dialect) {
+    dialect = require('./dialects/' + options.dialect)
+  }
+
   // recursively figure out all the selections, joins, and where conditions that we need
   let { selections, tables, wheres, orders } = await _stringifySqlAST(
     null, topNode, [],
