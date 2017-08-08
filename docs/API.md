@@ -44,7 +44,7 @@ Takes the GraphQL resolveInfo and returns a hydrated Object with the data.
 | [options] | <code>Object</code> |  |
 | options.minify | <code>Boolean</code> | Generate minimum-length column names in the results table. |
 | options.dialect | <code>String</code> | The dialect of SQL your Database uses. Currently `'pg'`, `'oracle'`, `'mariadb'`, `'mysql'`, and `'sqlite3'` are supported. |
-| options.dialectModule | <code>Object</code> | An alternative to <code>options.dialect</code>. You can import or require a module and use it directly.  |
+| options.dialectModule | <code>Object</code> | An alternative to options.dialect. You can provide a custom implementation of one of the supported dialects. |
 
 <a name="getNode"></a>
 

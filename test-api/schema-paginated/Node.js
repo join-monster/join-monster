@@ -3,26 +3,17 @@ import {
   fromGlobalId
 } from 'graphql-relay'
 
-import mariadbModule from '../../src/stringifiers/dialects/mariadb'
-import mysqlModule from '../../src/stringifiers/dialects/mysql'
-import oracleModule from '../../src/stringifiers/dialects/oracle'
-import pgModule from '../../src/stringifiers/dialects/pg'
-import sqlite3Module from '../../src/stringifiers/dialects/sqlite3'
-
 import joinMonster from '../../src/index'
 const options = {
   minify: process.env.MINIFY == 1
 }
 const { PAGINATE } = process.env
-
 if (knex.client.config.client === 'mysql') {
-  options.dialectModule = PAGINATE ? mariadbModule : mysqlModule
+  options.dialect = PAGINATE ? 'mariadb' : 'mysql'
 } else if (knex.client.config.client === 'pg') {
-  options.dialectModule = pgModule
+  options.dialect = 'pg'
 } else if (knex.client.config.client === 'oracledb') {
-  options.dialectModule = oracleModule
-} else if (knex.client.config.client === 'sqlite3') {
-  options.dialectModule = sqlite3Module
+  options.dialect = 'oracle'
 }
 
 import dbCall from '../data/fetch'

@@ -16,12 +16,6 @@ import { User, UserConnection } from './User'
 import Sponsor from './Sponsor'
 import { nodeField } from './Node'
 
-import mariadbModule from '../../src/stringifiers/dialects/mariadb'
-import mysqlModule from '../../src/stringifiers/dialects/mysql'
-import oracleModule from '../../src/stringifiers/dialects/oracle'
-import pgModule from '../../src/stringifiers/dialects/pg'
-import sqlite3Module from '../../src/stringifiers/dialects/sqlite3'
-
 import joinMonster from '../../src/index'
 import dbCall from '../data/fetch'
 import { q } from '../shared'
@@ -32,14 +26,14 @@ const options = {
   minify: process.env.MINIFY == 1
 }
 if (knex.client.config.client === 'mysql') {
-  options.dialectModule = PAGINATE ? mariadbModule : mysqlModule
+  options.dialect = PAGINATE ? 'mariadb' : 'mysql'
 } else if (knex.client.config.client === 'pg') {
-  options.dialectModule = pgModule
+  options.dialect = 'pg'
 } else if (knex.client.config.client === 'oracledb') {
-  options.dialectModule = oracleModule
-} else if (knex.client.config.client === 'sqlite3') {
-  options.dialectModule = sqlite3Module
+  options.dialect = 'oracle'
 }
+
+
 export default new GraphQLObjectType({
   description: 'global query object',
   name: 'Query',
@@ -54,7 +48,7 @@ export default new GraphQLObjectType({
     },
     dialect: {
       type: GraphQLString,
-      resolve: () => options.dialectModule.name
+      resolve: () => options.dialect
     },
     node: nodeField,
     users: {
