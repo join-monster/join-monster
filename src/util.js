@@ -100,8 +100,15 @@ export function maybeQuote(value, dialectName) {
   return escaped
 }
 
+function getDialectName(options) {
+  if (options.dialectModule) {
+    return options.dialectModule.name
+  }
+  return options.dialect || 'sqlite3'
+}
+
 export function buildWhereFunction(type, condition, options) {
-  const { name } = options.dialectModule
+  const name = getDialectName(options)
   if (typeof condition === 'function') {
     return condition
   // otherwise, we'll assume they gave us the value(s) of the unique key.

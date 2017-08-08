@@ -33,13 +33,12 @@ before_script:
   - psql -c "CREATE DATABASE test2 LC_COLLATE 'en_US.UTF-8';" -U postgres
   - psql -c "CREATE DATABASE test3 LC_COLLATE 'en_US.UTF-8';" -U postgres
   - psql -c "CREATE DATABASE demo LC_COLLATE 'en_US.UTF-8';" -U postgres
-  - mysql -u root -e 'SHOW VARIABLES LIKE "%version%";'
-  - echo "CREATE DATABASE test1" | mysql -u root
-  - echo "CREATE DATABASE test2" | mysql -u root
+  - echo "CREATE DATABASE test1" | mysql -u travis
+  - echo "CREATE DATABASE test2" | mysql -u travis
   # populate them with data
   - npm run db-build
 env:
-  - MYSQL_URL=mysql://root@localhost/ PG_URL=postgres://postgres@localhost/ CXX=g++-4.8
+  - MYSQL_URL=mysql://travis@localhost/ PG_URL=postgres://postgres@localhost/ CXX=g++-4.8
 
 notifications:
   email: false
