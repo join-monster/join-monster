@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -84,7 +84,7 @@
     "eslint-config-airbnb-base": "^11.3.1",
     "faker": "^4.1.0",
     "graphql": "^0.10.1",
-    "graphsiql": "0.0.6",
+    "graphsiql": "0.0.10",
     "jsdoc-to-markdown": "^3.0.0",
     "kcors": "^2.2.1",
     "knex": "^0.13.0",
@@ -93,10 +93,10 @@
     "koa-graphql": "^0.7.0",
     "koa-router": "^7.1.1",
     "koa-static": "^3.0.0",
-    "mysql": "^2.12.0",
-    "nyc": "^11.0.3",
-    "pg": "^7.0.0",
-    "sinon": "^2.0.0",
+    "mysql": "^2.14.1",
+    "nyc": "^11.1.0",
+    "pg": "^7.1.0",
+    "sinon": "^3.1.0",
     "sqlite3": "^3.1.8"
   },
   "dependencies": {
