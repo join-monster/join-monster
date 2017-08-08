@@ -1,7 +1,11 @@
+### v2.0.4
+- Add option for custom dialect modules.
+- Various bug fixes.
+
 ### v2.0.0 (Jun. 25, 2017)
 **New features:**
-- `LIMIT` functionality, supported on all fields 
-- Fetch columns from junction tables
+- `LIMIT` functionality, supported on all fields.
+- Fetch columns from junction tables.
 - For fields with junctions, you can now specify `WHERE` and `ORDER BY` clauses on the junction table or the main table, including paginated fields.
 - Ability to dynamically choose pagination implementation per-request.
 - Better ability to write `where` functions that depend on args and info from the parent/ancestors.
