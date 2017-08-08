@@ -6,7 +6,7 @@ function quote(str) {
 module.exports = {
   ...require('./mixins/pagination-not-supported'),
 
-  name: 'mysql',
+  name: 'sqlite3',
 
   quote,
 

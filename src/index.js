@@ -77,6 +77,7 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {Object} [options]
  * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
  * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'oracle'`, `'mariadb'`, `'mysql'`, and `'sqlite3'` are supported.
+ * @param {Object} options.dialectModule - An alternative to options.dialect. You can provide a custom implementation of one of the supported dialects.
  * @returns {Promise.<Object>} The correctly nested data from the database.
  */
 async function joinMonster(resolveInfo, context, dbCall, options = {}) {
