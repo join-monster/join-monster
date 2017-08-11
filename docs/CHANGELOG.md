@@ -1,4 +1,7 @@
-### v2.0.4
+### v2.0.5 (Aug. 11, 2017)
+- Remove the use of `Proxy` to improve compatibility.
+
+### v2.0.4 (Aug. 8, 2017)
 - Add option for custom dialect modules.
 - Various bug fixes.
 

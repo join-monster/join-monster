@@ -528,10 +528,7 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
     // keep track of all the dependent columns at this depth in a Set
     // use one Set per table. usually the table is the same. but sometimes they are pulling in data from
     // a junction table.
-    //
-    // whoa what the heck is this? Proxy? this is basically a JavaScript implementation of Python's "defaultdict"
-    // its cool. look it up
-    const depsByTable = new Proxy({}, { get: (target, name) => name in target ? target[name] : new Set() })
+    const depsByTable = {}
 
     // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
     for (let i = children.length - 1; i >= 0; i--) {
@@ -539,7 +536,10 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
       if (child.type === 'columnDeps') {
         const keyName = child.fromOtherTable || ''
         child.names.forEach(name => {
-          depsByTable[keyName] = depsByTable[keyName].add(name)
+          if (!depsByTable[keyName]) {
+            depsByTable[keyName] = new Set()
+          }
+          depsByTable[keyName].add(name)
         })
         children.splice(i, 1)
       // or if its another table, recurse on it
