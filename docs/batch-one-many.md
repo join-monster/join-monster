@@ -31,11 +31,11 @@ const Post = new GraphQLObjectType({
 
 ## The New Query Plan
 
-Now the `Comment` and all its children are fetched in a separate batch. This plan now haw 2 database queries rather than 1.
+Now the `Comment` and all its children are fetched in a separate batch. This plan now has 2 database queries rather than 1.
 
 ![query-plan-2](img/query-plan-2.png)
 
-Join Monster with look at the `'id'` in each `Post` and use `WHERE IN` to know which comments to get in the subsequent query.
+Join Monster looks at the `'id'` in each `Post` and uses `WHERE IN` to know which comments to get in the subsequent query.
 It will "join" these results together by matching on the values in those columns in the application layer.
 
 So a query like this:
