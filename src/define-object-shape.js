@@ -41,6 +41,7 @@ function _defineObjectShape(parent, prefix, node) {
     case 'noop':
       void 0
       break
+    /* istanbul ignore next */
     default:
       throw new Error(`invalid SQLASTNode type: ${inspect(child.type)}`)
     }
@@ -76,6 +77,7 @@ function _defineObjectShape(parent, prefix, node) {
       case 'noop':
         void 0
         break
+      /* istanbul ignore next */
       default:
         throw new Error(`invalid SQLASTNode type: ${inspect(child.type)}`)
       }

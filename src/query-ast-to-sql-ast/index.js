@@ -364,6 +364,7 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
         )
       }
       break
+    /* istanbul ignore next */
     default:
       throw new Error('Unknown selection kind: ' + selection.kind)
     }
@@ -426,6 +427,7 @@ function handleSelections(sqlASTNode, children, selections, gqlType, namespace, 
         }
       }
       break
+    /* istanbul ignore next */
     default:
       throw new Error('Unknown selection kind: ' + selection.kind)
     }

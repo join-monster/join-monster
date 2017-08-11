@@ -213,8 +213,8 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
   // many-to-many using JOINs
   } else if (idx(node, _ => _.junction.sqlTable)) {
-    const joinCondition1 = await node.junction.sqlJoins[0](`${q(parent.as)}`, q(node.junction.as), node.args || {}, context)
-    const joinCondition2 = await node.junction.sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
+    const joinCondition1 = await node.junction.sqlJoins[0](`${q(parent.as)}`, q(node.junction.as), node.args || {}, context, node)
+    const joinCondition2 = await node.junction.sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context, node)
 
     if (node.paginate) {
       await dialect.handleJoinedManyToManyPaginated(parent, node, context, tables, joinCondition1, joinCondition2)

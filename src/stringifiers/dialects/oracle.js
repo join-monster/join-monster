@@ -120,7 +120,7 @@ const dialect = module.exports = {
 
   handleJoinedManyToManyPaginated: async function(parent, node, context, tables, joinCondition1, joinCondition2) {
     const pagingWhereConditions = [
-      await node.junction.sqlJoins[0](`"${parent.as}"`, `"${node.junction.as}"`, node.args || {}, context)
+      await node.junction.sqlJoins[0](`"${parent.as}"`, `"${node.junction.as}"`, node.args || {}, context, node)
     ]
     if (node.junction.where) {
       pagingWhereConditions.push(
