@@ -52,6 +52,7 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {String} childTable - The alias for the child's table. Already double-quoted.
  * @param {Object} args - The GraphQL arguments for this field.
  * @param {Object} context - An Object with arbitrary contextual information.
+ * @param {Object} sqlASTNode - Join Monster object that abstractly represents this field. Also includes a reference to its parent node. This is useful, for example, if you need to access the parent field's table alias or GraphQL arguments.
  * @returns {String} The RAW condition for the `LEFT JOIN`. Unsafe user input must be scrubbed.
  */
 /**

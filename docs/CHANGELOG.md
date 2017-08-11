@@ -1,3 +1,6 @@
+### v2.0.6 (Aug. 11, 2017)
+- Add SQL AST node to sqlJoin callback signature.
+
 ### v2.0.5 (Aug. 11, 2017)
 - Remove the use of `Proxy` to improve compatibility.
 

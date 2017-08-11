@@ -19,7 +19,7 @@ const dialect = module.exports = {
 
   handleJoinedOneToManyPaginated: async function(parent, node, context, tables, joinCondition) {
     const pagingWhereConditions = [
-      await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context)
+      await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context, node)
     ]
     if (node.where) {
       pagingWhereConditions.push(
@@ -37,7 +37,9 @@ const dialect = module.exports = {
     } else if (node.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
-        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { joinCondition, joinType: 'LEFT' })
+        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, {
+          joinCondition, joinType: 'LEFT'
+        })
       )
     }
   },
@@ -78,7 +80,10 @@ const dialect = module.exports = {
     } else if (node.orderBy || node.junction.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
-        offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, offset, node.junction.as, lateralJoinOptions)
+        offsetPagingSelect(
+          node.junction.sqlTable, pagingWhereConditions, order,
+          limit, offset, node.junction.as, lateralJoinOptions
+        )
       )
     }
     tables.push(`LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`)
@@ -116,7 +121,10 @@ const dialect = module.exports = {
     } else if (node.orderBy || node.junction.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
-        offsetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, offset, node.junction.as, lateralJoinOptions)
+        offsetPagingSelect(
+          node.junction.sqlTable, pagingWhereConditions, order,
+          limit, offset, node.junction.as, lateralJoinOptions
+        )
       )
     }
   },
@@ -168,7 +176,9 @@ const dialect = module.exports = {
     } else if (node.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
-        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { joinCondition: lateralJoinCondition })
+        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, {
+          joinCondition: lateralJoinCondition
+        })
       )
     }
   }

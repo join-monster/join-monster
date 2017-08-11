@@ -169,7 +169,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
   // one-to-many using JOIN
   if (node.sqlJoin) {
-    const joinCondition = await node.sqlJoin(`${q(parent.as)}`, q(node.as), node.args || {}, context)
+    const joinCondition = await node.sqlJoin(`${q(parent.as)}`, q(node.as), node.args || {}, context, node)
 
     // do we need to paginate? if so this will be a lateral join
     if (node.paginate) {
@@ -193,7 +193,9 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
         `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} AS ${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
       )
     } else {
-      const joinCondition = await node.junction.sqlBatch.sqlJoin(`${q(node.junction.as)}`, q(node.as), node.args || {}, context)
+      const joinCondition = await node.junction.sqlBatch.sqlJoin(
+        `${q(node.junction.as)}`, q(node.as), node.args || {}, context, node
+      )
       if (node.paginate) {
         await dialect.handleBatchedManyToManyPaginated(parent, node, context, tables, batchScope, joinCondition)
       } else if (node.limit) {
