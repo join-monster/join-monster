@@ -10,7 +10,7 @@ It's a function that takes a GraphQL query and dynamically **translates GraphQL 
 
 It solves the problem of making too many database queries, i.e. the "round-trip" problem or "N+1" problem, where the round-trips are requests for data over the TCP/IP stack between your API server and your SQL database. Think of it as an alternative to Facebook's [DataLoader](https://github.com/facebook/dataloader), but with more specificity toward SQL, making it more powerful and simpler to use with SQL.
 
-It is **NOT** a tool for automatically creating a schema for you GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree. It's is a little opinionated, but not a full ORM.
+It is **NOT** a tool for automatically creating a schema for your GraphQL from your database or vice versa. You retain the freedom and power to define your schemas how you want. Join Monster simply "compiles" a GraphQL query to a SQL query *based on the existing schemas*. It fits into existing applications and can be seamlessly removed later or used to varying degree. It is a little opinionated, but not a full ORM.
 
 
 ## Preview
