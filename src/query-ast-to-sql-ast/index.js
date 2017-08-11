@@ -531,7 +531,7 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
     //
     // whoa what the heck is this? Proxy? this is basically a JavaScript implementation of Python's "defaultdict"
     // its cool. look it up
-    const depsByTable = new Proxy({}, { get: (target, name) => name in target ? target[name] : new Set() })
+    const depsByTable = {}
 
     // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
     for (let i = children.length - 1; i >= 0; i--) {
@@ -539,6 +539,9 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
       if (child.type === 'columnDeps') {
         const keyName = child.fromOtherTable || ''
         child.names.forEach(name => {
+          if (!depsByTable[keyName]) {
+            depsByTable[keyName] = new Set()
+          }
           depsByTable[keyName] = depsByTable[keyName].add(name)
         })
         children.splice(i, 1)
