@@ -528,9 +528,7 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
     // keep track of all the dependent columns at this depth in a Set
     // use one Set per table. usually the table is the same. but sometimes they are pulling in data from
     // a junction table.
-    //
-    // whoa what the heck is this? Proxy? this is basically a JavaScript implementation of Python's "defaultdict"
-    // its cool. look it up
+
     const depsByTable = {}
 
     // loop thru each child which has "columnDeps", remove it from the tree, and add it to the set
