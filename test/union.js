@@ -2,6 +2,7 @@ import test from 'ava'
 import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
 import { partial } from 'lodash'
+import { errCheck } from './_util'
 
 const run = partial(graphql, schemaBasic)
 
@@ -32,7 +33,7 @@ test('it should a union type', async t => {
     }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       writtenMaterial1: [
@@ -100,7 +101,7 @@ test('it should an interface type', async t => {
     }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       writtenMaterial2: [

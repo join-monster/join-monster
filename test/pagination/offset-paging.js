@@ -3,6 +3,7 @@ import { graphql } from 'graphql'
 import schemaRelay from '../../test-api/schema-paginated/index'
 import { partial } from 'lodash'
 import { offsetToCursor, toGlobalId, fromGlobalId } from 'graphql-relay'
+import { errCheck } from '../_util'
 
 // monkey-patch the array prototype because these are tests and IDGAF
 Object.defineProperty(Array.prototype, 'last', {
@@ -44,7 +45,7 @@ function makeUsersQuery(args) {
 test('should handle pagination at the root', async t => {
   const query = makeUsersQuery()
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: false,
     startCursor: offsetToCursor(0),
@@ -64,7 +65,7 @@ test('should handle pagination at the root', async t => {
 test('should handle root pagination with "first" arg', async t => {
   const query = makeUsersQuery({ first: 2 })
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: true,
     startCursor: offsetToCursor(0),
@@ -88,7 +89,7 @@ test('should handle root pagination with "first" arg', async t => {
 test('should handle root pagination with "first" and "after" args', async t => {
   const query = makeUsersQuery({ first: 2, after: offsetToCursor(1) })
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: true,
     startCursor: offsetToCursor(2),
@@ -112,7 +113,7 @@ test('should handle root pagination with "first" and "after" args', async t => {
 test('should handle the last page of root pagination', async t => {
   const query = makeUsersQuery({ first: 2, after: offsetToCursor(4) })
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: false,
     startCursor: offsetToCursor(5),
@@ -137,7 +138,7 @@ test('should handle the last page of root pagination', async t => {
 test('should return nothing after the end of root pagination', async t => {
   const query = makeUsersQuery({ first: 3, after: offsetToCursor(5) })
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data.users, {
     total: 0,
     pageInfo: {
@@ -169,7 +170,7 @@ function makePostsQuery(args) {
 test('should handle pagination in a nested field', async t => {
   const query = makePostsQuery()
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const posts = data.user.posts
   t.is(posts.total, 8)
   t.deepEqual(posts.pageInfo, {
@@ -195,7 +196,7 @@ test('should handle pagination in a nested field', async t => {
 test('nested paging should handle "first" arg', async t => {
   const query = makePostsQuery({ first: 3 })
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const posts = data.user.posts
   t.is(posts.total, 8)
   t.deepEqual(posts.pageInfo, {
@@ -210,7 +211,7 @@ test('nested paging should handle "first" arg', async t => {
 test('nested paging should handle "first" and "after" args that reaches the last page', async t => {
   const query = makePostsQuery({ first: 5, after: offsetToCursor(3) })
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const posts = data.user.posts
   t.is(posts.total, 8)
   t.deepEqual(posts.pageInfo, {
@@ -240,7 +241,7 @@ test('can handle nested pagination', async t => {
   }`
   const { data, errors } = await run(query)
   t.deepEqual(data.users.edges.map(edge => edge.node.posts.total), [ 8, 13 ])
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.is(data.users.edges.length, 2)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
   t.is(data.users.edges[0].node.posts.edges.length, 2)
@@ -272,7 +273,7 @@ test('can go to each second page in a nested connection', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.is(data.users.edges[0].node.id, toGlobalId('User', 1))
   t.deepEqual(
     data.users.edges[0].node.posts.edges.map(edge => edge.node.id),
@@ -317,7 +318,7 @@ test('can handle deeply nested pagination', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const comments = data.users.edges[0].node.posts.edges[0].node.comments
   t.deepEqual(comments.pageInfo, {
     hasNextPage: true,
@@ -360,7 +361,7 @@ test('handle a connection type with a many-to-many', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data.user.following.pageInfo, {
     hasNextPage: true,
     startCursor: offsetToCursor(1),
@@ -399,7 +400,7 @@ test('filtered pagination at the root', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data, {
     users: {
       edges: [
@@ -427,7 +428,7 @@ test('filtering on one-to-many-nested field', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data.user.posts.edges, [
     {
       node: {
@@ -477,7 +478,7 @@ test('should handle emptiness', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       following: {
@@ -504,7 +505,7 @@ test('should handle a post without an author', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     node: {
       id: toGlobalId('Post', 19),
@@ -540,7 +541,7 @@ test('should handle a "where" condition on a one-to-many paginated field', async
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.is(data.users.edges.length, 1)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
   const comments = data.users.edges[0].node.comments.edges.map(edge => ({
@@ -585,7 +586,7 @@ test('should handle "where" condition on main table of many-to-many relation', a
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       fullName: 'Coleman Abernathy',
@@ -620,7 +621,7 @@ test('should handle order columns on the main table', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       fullName: 'Hudson Hyatt',
@@ -660,7 +661,7 @@ test('should handle order columns on the junction table', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       fullName: 'Hudson Hyatt',
@@ -705,7 +706,7 @@ test('should handle an interface type', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     pageInfo: {
       hasNextPage: true,

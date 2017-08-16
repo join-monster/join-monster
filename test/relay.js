@@ -3,7 +3,7 @@ import { graphql } from 'graphql'
 import { toGlobalId, offsetToCursor } from 'graphql-relay'
 import schemaRelay from '../test-api/schema-paginated/index'
 import { partial } from 'lodash'
-
+import { errCheck } from './_util'
 
 const run = partial(graphql, schemaRelay)
 
@@ -15,7 +15,7 @@ test('it should get a globalId', async t => {
     user(id:1) { id }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = { user: { id: user1Id } }
   t.deepEqual(expect, data)
 })
@@ -27,7 +27,7 @@ test('it should fetch a Node type with inline fragments', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = { node: { body: 'If I could marry a programming language, it would be Haskell.' } }
   t.deepEqual(expect, data)
 })
@@ -47,7 +47,7 @@ test('it should fetch a Node type with named fragments', async t => {
     }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     node: {
       fullName: 'andrew carlson',
@@ -71,7 +71,7 @@ test('it should fetch a Node type with a variable', async t => {
   `
   const variables = { id: user1Id }
   const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     node: {
       fullName: 'andrew carlson'
@@ -92,7 +92,7 @@ test('it should not error when no record is returned ', async t => {
   `
   const variables = { id: toGlobalId('User', 999) }
   const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     node: null
   }
@@ -134,7 +134,7 @@ test('it should handle the relay connection type', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       fullName: 'andrew carlson',
@@ -214,7 +214,7 @@ test('it should handle nested connection types', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       fullName: 'andrew carlson',
@@ -272,7 +272,7 @@ test('should handle a post without an author', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     node: {
       id: toGlobalId('Post', 4),
@@ -325,7 +325,7 @@ test('should handle fragments recursively', async t => {
     }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       fullName: 'andrew carlson',

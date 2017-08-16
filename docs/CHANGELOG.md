@@ -1,3 +1,6 @@
+### v2.0.8 (Aug. 16, 2017)
+- Support duplicate fields without aliases off the query root type.
+
 ### v2.0.6 (Aug. 11, 2017)
 - Add SQL AST node to sqlJoin callback signature.
 

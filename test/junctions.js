@@ -2,7 +2,7 @@ import test from 'ava'
 import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
 import { partial } from 'lodash'
-
+import { errCheck } from './_util'
 
 const run = partial(graphql, schemaBasic)
 
@@ -17,7 +17,7 @@ test('should handle data from the junction table', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       fullName: 'foo bar',

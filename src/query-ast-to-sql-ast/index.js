@@ -1,9 +1,10 @@
 import assert from 'assert'
 import { flatMap } from 'lodash'
-import AliasNamespace from '../alias-namespace'
-import { wrap, ensure, unthunk, inspect } from '../util'
 import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
+
+import AliasNamespace from '../alias-namespace'
+import { wrap, ensure, unthunk, inspect } from '../util'
 
 class SQLASTNode {
   constructor(parentNode, props) {
@@ -21,6 +22,25 @@ class SQLASTNode {
 // an enumeration of all the types that can map to SQL tables
 const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
 
+
+function mergeAll(fieldNodes) {
+  const newFieldNodes = [ ...fieldNodes ]
+  while (newFieldNodes.length > 1) {
+    newFieldNodes.push(merge(newFieldNodes.pop(), newFieldNodes.pop()))
+  }
+  return newFieldNodes
+}
+
+function merge(dest, src) {
+  return {
+    ...dest,
+    selectionSet: {
+      ...dest.selectionSet,
+      selections: [ ...dest.selectionSet.selections, ...src.selectionSet.selections ]
+    }
+  }
+}
+
 export function queryASTToSqlAST(resolveInfo, options, context) {
   // this is responsible for all the logic regarding creating SQL aliases
   // we need varying degrees of uniqueness and readability
@@ -31,7 +51,11 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   const sqlAST = {}
 
   // v0.8 changed the "fieldASTs" property to "fieldNodes". we want to support both
-  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
+  let fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
+
+  // fieldNodes is usually an array of 1 GraphQL node. If a field is requested twice *without* aliases, both nodes will be in this array
+  // we need to merge it into one
+  fieldNodes = mergeAll(fieldNodes)
   assert.equal(fieldNodes.length, 1, 'We thought this would always have a length of 1. FIX ME!!')
 
   // this represents the parsed query

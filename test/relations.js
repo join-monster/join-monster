@@ -2,6 +2,7 @@ import test from 'ava'
 import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
 import { partial } from 'lodash'
+import { errCheck } from './_util'
 
 function wrap(query, id) {
   if (id) {
@@ -19,7 +20,7 @@ const run = partial(graphql, schemaBasic)
 test('should join a one-to-many relation', async t => {
   const query = wrap('id, comments { id, body }')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       {
@@ -87,7 +88,7 @@ test('should join on a nested relation', async t => {
     }
   `)
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       {
@@ -172,7 +173,7 @@ test('should handle where conditions on the relations', async t => {
     }
   `, 2)
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       posts: [
@@ -210,7 +211,7 @@ test('should handle where condition on many-to-many relation', async t => {
     }
   `, 3)
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       id: 3,
@@ -236,7 +237,7 @@ test('should include data from the junction table', async t => {
     }
   `, 3)
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       id: 3,
@@ -272,7 +273,7 @@ test('should handle where condition on junction in many-to-many', async t => {
     }
   `, 3)
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       id: 3,
@@ -306,7 +307,7 @@ test('should handle joins with the same table name', async t => {
     }
   `)
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       {
@@ -471,7 +472,7 @@ test('it should handle many to many relationship', async t => {
     following { fullName }
   `)
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       {
@@ -523,7 +524,7 @@ test('it should handle fragments nested lower', async t => {
     fragment F3 on Comment { body }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       {
@@ -619,7 +620,7 @@ test('should handle a correlated subquery', async t => {
     }
   `, 2)
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       posts: [

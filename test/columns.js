@@ -3,6 +3,7 @@ import { graphql } from 'graphql'
 import { toGlobalId } from 'graphql-relay'
 import schemaBasic from '../test-api/schema-basic/index'
 import { partial } from 'lodash'
+import { errCheck } from './_util'
 
 function wrap(query) {
   return `{
@@ -15,7 +16,7 @@ const run = partial(graphql, schemaBasic)
 test('get a field with the same name as the SQL column', async t => {
   const query = wrap('id')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data, {
     users: [
       { id: 1 },
@@ -28,7 +29,7 @@ test('get a field with the same name as the SQL column', async t => {
 test('get a field with a different SQL column name and field name', async t => {
   const query = wrap('email')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data, {
     users: [
       { email: 'andrew@stem.is' },
@@ -41,7 +42,7 @@ test('get a field with a different SQL column name and field name', async t => {
 test('get a field that has a resolver on top of the SQL column', async t => {
   const query = wrap('idEncoded')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data, {
     users: [
       { idEncoded: 'MQ==' },
@@ -54,7 +55,7 @@ test('get a field that has a resolver on top of the SQL column', async t => {
 test('get a globalID field', async t => {
   const query = wrap('globalId')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data, {
     users: [
       { globalId: toGlobalId('User', 1) },
@@ -67,7 +68,7 @@ test('get a globalID field', async t => {
 test('get a field that depends on multiple sql columns', async t => {
   const query = wrap('fullName')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.deepEqual(data, {
     users: [
       { fullName: 'andrew carlson' },
@@ -80,7 +81,7 @@ test('get a field that depends on multiple sql columns', async t => {
 test('it should disambiguate two entities with identical fields', async t => {
   const query = wrap('numLegs')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       { numLegs: 2 }, // andy
@@ -101,7 +102,7 @@ test('it should handle fragments at the top level', async t => {
     fragment F0 on User { id }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       { id: 1 },
@@ -122,7 +123,7 @@ test('it should handle an inline fragment', async t => {
     }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       { fullName: 'andrew carlson' },
@@ -147,7 +148,7 @@ test('it should handle nested fragments', async t => {
     }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       { id: 1, fullName: 'andrew carlson', email: 'andrew@stem.is' },
@@ -180,7 +181,7 @@ test('it should handle named fragments on an interface', async t => {
     }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     sponsors: [
       { fullName: 'erlich bachman', generation: 1 },
@@ -222,7 +223,7 @@ test('it should handle inline fragments on an interface', async t => {
     }
   `
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     sponsors: [
       { fullName: 'erlich bachman', generation: 1 },
@@ -239,7 +240,7 @@ test('it should handle inline fragments on an interface', async t => {
 test('it should handle a column that resolves independantly of SQL', async t => {
   const query = wrap('id, favNums')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       { id: 1, favNums: [ 1, 2, 3 ] },
@@ -257,7 +258,7 @@ test('it should handle a query that gets nothing from the database', async t => 
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: { favNums: [ 1, 2, 3 ] }
   }
@@ -267,7 +268,7 @@ test('it should handle a query that gets nothing from the database', async t => 
 test('it should handle duplicate fields', async t => {
   const query = wrap('id id id id idEncoded fullName fullName')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       { id: 1, idEncoded: 'MQ==', fullName: 'andrew carlson' },
@@ -281,7 +282,7 @@ test('it should handle duplicate fields', async t => {
 test('it should not be tripped up by the introspection queries', async t => {
   const query = wrap('__typename')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       { __typename: 'User' },
@@ -303,7 +304,7 @@ test('it should handle numeric variables', async t => {
   `
   const variables = { userId: 1 }
   const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       id: 1,
@@ -324,7 +325,7 @@ test('it should handle string variables', async t => {
   `
   const variables = { encodedUserId: 'MQ==' }
   const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       idEncoded: 'MQ==',
@@ -344,7 +345,7 @@ test('it should handle boolean variables', async t => {
   `
   const variables = { filter: true }
   const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     sponsors: []
   }
@@ -359,7 +360,7 @@ test('it should handle raw SQL expressions', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   t.is(data.user.fullName.split(' ')[1].toUpperCase(), data.user.capitalizedLastName)
 })
 

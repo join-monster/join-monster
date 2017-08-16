@@ -2,6 +2,7 @@ import test from 'ava'
 import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
 import { partial } from 'lodash'
+import { errCheck } from './_util'
 
 function wrap(query) {
   return `{
@@ -18,7 +19,7 @@ test('it should handle a where condition', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: { fullName: 'andrew carlson' }
   }
@@ -32,7 +33,7 @@ test('it should handle an async where condition', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: { fullName: 'andrew carlson' }
   }
@@ -42,7 +43,7 @@ test('it should handle an async where condition', async t => {
 test('a query with a sqlDeps as the first requested field should not mess it up', async t => {
   const query = wrap('numFeet, fullName, id')
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     users: [
       {
@@ -72,7 +73,7 @@ test('it should handle a single object in which the first requested field is a l
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     user: {
       posts: [
@@ -97,7 +98,7 @@ test('it should handle composite keys', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.is(errors, undefined)
+  errCheck(t, errors)
   const expect = {
     sponsors: [
       { numLegs: 2, lastName: 'bachman' },
