@@ -309,6 +309,8 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 - [ ] Address this known bug [#126](https://github.com/stems/join-monster/issues/126).
 - [ ] Support custom `ORDER BY` expressions [#138](https://github.com/stems/join-monster/issues/138).
 - [ ] Support binding parameters [#169](https://github.com/stems/join-monster/issues/169).
-- [ ] Write static [Flow](https://flow.org/) types.
+- [ ] Write static [Flow](https://flow.org/) types or TypeScript.
+- [ ] Support "lookup tables" where a column might be an enum code to look up in another table.
+- [ ] Support "hyperjunctions" where many-to-many relations can join through multiple junction tables.
 - [ ] Cover more SQL dialects, like MSSQL and DB2.
 
