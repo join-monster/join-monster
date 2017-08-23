@@ -353,6 +353,7 @@ const Post = new GraphQLObjectType({
     comments: {
       type: CommentConnection,
       sqlPaginate: true,
+      args: connectionArgs,
       sortKey: {
         order: 'desc',
         key: [ 'created_at', 'id' ]
