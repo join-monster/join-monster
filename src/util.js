@@ -66,7 +66,11 @@ export function maybeQuote(value, dialectName) {
 
   if (typeof value === 'number') return value
   if (value && typeof value.toSQL === 'function') return value.toSQL()
-
+  if (value instanceof Buffer
+    && typeof value === 'object'
+    && typeof value.toString === 'function') {
+    return `X'${value.toString('hex')}'`
+  }
   if (dialectName === 'oracle' && value.match(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(.\d+)?Z?/)) {
     return value.replace(
       /(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)(.\d+)?Z?/,
