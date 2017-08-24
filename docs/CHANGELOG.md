@@ -1,3 +1,6 @@
+### v2.0.9 (Aug. 23, 2017)
+- Properly format instances of Buffer.
+
 ### v2.0.8 (Aug. 16, 2017)
 - Support duplicate fields without aliases off the query root type.
 
