@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -68,7 +68,7 @@
   },
   "homepage": "https://github.com/stems/join-monster#readme",
   "peerDependencies": {
-    "graphql": "0.6 || 0.7 || 0.8 || 0.9 || 0.10"
+    "graphql": "0.6 || 0.7 || 0.8 || 0.9 || 0.10 || 0.11"
   },
   "devDependencies": {
     "ava": "^0.22.0",
@@ -84,7 +84,7 @@
     "eslint-config-airbnb-base": "^11.3.1",
     "faker": "^4.1.0",
     "graphql": "^0.11.1",
-    "graphsiql": "0.0.10",
+    "graphsiql": "0.1.0",
     "jsdoc-to-markdown": "^3.0.0",
     "kcors": "^2.2.1",
     "knex": "^0.13.0",
@@ -104,6 +104,7 @@
     "debug": "^3.0.0",
     "deprecate": "^1.0.0",
     "generatorics": "^1.0.8",
-    "graphql-relay": "^0.5.0"
+    "graphql-relay": "^0.5.0",
+    "lodash": "^4.13.1"
   }
 }
