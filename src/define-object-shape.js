@@ -69,6 +69,9 @@ function _defineObjectShape(parent, prefix, node) {
       case 'table':
         if (child.sqlBatch) {
           fieldDefinition[child.sqlBatch.parentKey.fieldName + suffix] = prefixToPass + child.sqlBatch.parentKey.as
+        } else if (idx(child, _ => _.junction.sqlBatch)) {
+          fieldDefinition[child.junction.sqlBatch.parentKey.fieldName + suffix] =
+            prefixToPass + child.junction.sqlBatch.parentKey.as
         } else {
           const definition = _defineObjectShape(node, prefixToPass, child)
           fieldDefinition[child.fieldName + suffix] = definition
