@@ -138,13 +138,13 @@ export function buildWhereFunction(type, condition, options) {
 }
 
 // handles the different callback signatures and return values.
-export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition) {
+export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition, bindings) {
   // if there are two args, we're in "callback mode"
-  if (dbCall.length === 2) {
+  if (dbCall.length === 3) {
     // wrap it in a promise
     return new Promise((resolve, reject) => {
       // wait for them to call "done"
-      dbCall(sql, (err, rows) => {
+      dbCall(sql, bindings, (err, rows) => {
         if (err) {
           reject(err)
         } else {
@@ -161,7 +161,7 @@ export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition) {
   }
 
   // otherwise, we are expecting a promise of the data
-  const result = dbCall(sql)
+  const result = dbCall(sql, bindings)
   if (typeof result.then === 'function') {
     return result.then(rows => {
       rows = validate(rows)
@@ -203,13 +203,14 @@ export async function compileSqlAST(sqlAST, context, options) {
     )
     options.dialect = 'sqlite3'
   }
-  const sql = await stringifySQL(sqlAST, context, options)
+  const { sql, bindings } = await stringifySQL(sqlAST, context, options)
   debug(emphasize('SQL'), sql)
+  debug(emphasize('BINDINGS'), bindings)
 
   // figure out the shape of the object and define it so later we can pass it to
   // NestHydration library so it can hydrate the data
   const shapeDefinition = defineObjectShape(sqlAST)
   debug(emphasize('SHAPE_DEFINITION'), inspect(shapeDefinition))
-  return { sql, shapeDefinition }
+  return { sql, shapeDefinition, bindings }
 }
 

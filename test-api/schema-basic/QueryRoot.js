@@ -18,11 +18,11 @@ import oracleModule from '../../src/stringifiers/dialects/oracle'
 import pgModule from '../../src/stringifiers/dialects/pg'
 import sqlite3Module from '../../src/stringifiers/dialects/sqlite3'
 
-import joinMonster from '../../src/index'
+import joinMonster, { NamedBinding } from '../../src/index'
 
 const { MINIFY, DB } = process.env
 const options = {
-  minify: MINIFY == 1
+  minify: MINIFY == 1 // eslint-disable-line eqeqeq
 }
 if (knex.client.config.client === 'mysql') {
   options.dialectModule = mysqlModule
@@ -54,7 +54,7 @@ export default new GraphQLObjectType({
       where: (table, args) => args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
       orderBy: 'id',
       resolve: async (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonster(resolveInfo, context, (sql, bindings) => dbCall(sql, bindings, knex, context), options)
       }
     },
     user: {
@@ -74,12 +74,13 @@ export default new GraphQLObjectType({
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
+        //if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
+        if (args.id) return new NamedBinding(`${usersTable}.${q('id', DB)} = :userId`, { userId: args.id })
         if (args.idEncoded) return `${usersTable}.${q('id', DB)} = ${fromBase64(args.idEncoded)}`
         if (args.idAsync) return Promise.resolve(`${usersTable}.${q('id', DB)} = ${args.idAsync}`)
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonster(resolveInfo, context, (sql, bindings) => dbCall(sql, bindings, knex, context), options)
       }
     },
     sponsors: {
@@ -95,16 +96,16 @@ export default new GraphQLObjectType({
       },
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time
-        return joinMonster(resolveInfo, context, (sql, done) => {
-          knex.raw(sql)
-          .then(result => {
-            if (options.dialectModule.name === 'mysql') {
-              done(null, result[0])
-            } else {
-              done(null, result)
-            }
-          })
-          .catch(done)
+        return joinMonster(resolveInfo, context, (sql, bindings, done) => {
+          knex.raw(sql, bindings)
+            .then(result => {
+              if (options.dialectModule.name === 'mysql') {
+                done(null, result[0])
+              } else {
+                done(null, result)
+              }
+            })
+            .catch(done)
         }, options)
       }
     }

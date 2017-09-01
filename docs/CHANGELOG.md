@@ -1,3 +1,6 @@
+### v2.0.12 (Sep. 1, 2017)
+- Add named parameters.
+
 ### v2.0.9 (Aug. 23, 2017)
 - Properly format instances of Buffer.
 

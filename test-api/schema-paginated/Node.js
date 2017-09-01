@@ -23,7 +23,7 @@ const { nodeInterface, nodeField } = nodeDefinitions(
   (globalId, context, resolveInfo) => {
     const { type, id } = fromGlobalId(globalId)
     return joinMonster.getNode(type, resolveInfo, context, parseInt(id),
-      sql => dbCall(sql, knex, context),
+      (sql, bindings) => dbCall(sql, bindings, knex, context),
       options
     )
   },

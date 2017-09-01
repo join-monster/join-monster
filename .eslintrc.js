@@ -17,7 +17,11 @@ module.exports = {
     'func-names': 0,
     'space-before-function-paren': [
       'error',
-      'never'
+      {
+        anonymous: 'never',
+        named: 'never',
+        asyncArrow: 'always'
+      }
     ],
     'guard-for-in': 0,
     'no-restricted-syntax': 0,

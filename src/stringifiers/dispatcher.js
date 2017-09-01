@@ -6,6 +6,7 @@ import {
   thisIsNotTheEndOfThisBatch,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
+import { NamedBinding } from '../binding-parameters'
 
 export default async function stringifySqlAST(topNode, context, options) {
   validateSqlAST(topNode)
@@ -38,7 +39,16 @@ export default async function stringifySqlAST(topNode, context, options) {
     tables.join('\n')
 
   wheres = filter(wheres)
+  console.log(wheres)
+  const bindings = {}
   if (wheres.length) {
+    wheres = wheres.map(where => {
+      if (where instanceof NamedBinding) {
+        Object.assign(bindings, where.bindings)
+        return where.raw
+      }
+      return where
+    })
     sql += '\nWHERE ' + wheres.join(' AND ')
   }
 
@@ -46,7 +56,7 @@ export default async function stringifySqlAST(topNode, context, options) {
     sql += '\nORDER BY ' + stringifyOuterOrder(orders, dialect.quote)
   }
 
-  return sql
+  return { sql, bindings }
 }
 
 async function _stringifySqlAST(parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect) {

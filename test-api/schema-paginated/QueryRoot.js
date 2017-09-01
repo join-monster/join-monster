@@ -75,7 +75,7 @@ export default new GraphQLObjectType({
         if (args.search) return `(lower(${table}.${q('first_name', DB)}) LIKE lower('%${args.search}%') OR lower(${table}.${q('last_name', DB)}) LIKE lower('%${args.search}%'))`
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        const data = await joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        const data = await joinMonster(resolveInfo, context, (sql, bindings) => dbCall(sql, bindings, knex, context), options)
         return PAGINATE ? data : connectionFromArray(data, args)
       }
     },
@@ -84,7 +84,7 @@ export default new GraphQLObjectType({
       limit: 2,
       orderBy: 'id',
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonster(resolveInfo, context, (sql, bindings) => dbCall(sql, bindings, knex, context), options)
       }
     },
     user: {
@@ -99,15 +99,15 @@ export default new GraphQLObjectType({
         if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonster(resolveInfo, context, (sql, bindings) => dbCall(sql, bindings, knex, context), options)
       }
     },
     sponsors: {
       type: new GraphQLList(Sponsor),
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time
-        return joinMonster(resolveInfo, context, (sql, done) => {
-          knex.raw(sql)
+        return joinMonster(resolveInfo, context, (sql, bindings, done) => {
+          knex.raw(sql, bindings)
           .then(data => done(null, data))
           .catch(done)
         }, options)

@@ -6,6 +6,7 @@ import AliasNamespace from './alias-namespace'
 import nextBatch from './batch-planner'
 import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
 
+export { NamedBinding } from './binding-parameters'
 
 /*         _ _ _                _
   ___ __ _| | | |__   __ _  ___| | __
@@ -84,11 +85,11 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
 async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
   const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options, context)
-  const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
+  const { sql, bindings, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   if (!sql) return {}
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
-  let data = await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition)
+  let data = await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition, bindings)
 
   // if they are paginating, we'll get back an array which is essentially a "slice" of the whole data.
   // this function goes through the data tree and converts the arrays to Connection Objects
@@ -150,8 +151,8 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   // uses the same underlying function as the main `joinMonster`
   queryAST.populateASTNode.call(resolveInfo, fieldNodes[0], fakeParentNode, sqlAST, namespace, 0, options)
   queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
-  const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
-  const data = arrToConnection(await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition), sqlAST)
+  const { sql, bindings, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
+  const data = arrToConnection(await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition), sqlAST, bindings)
   await nextBatch(sqlAST, data, dbCall, context, options)
   if (!data) return data
   data.__type__ = type
