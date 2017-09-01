@@ -39,7 +39,6 @@ export default async function stringifySqlAST(topNode, context, options) {
     tables.join('\n')
 
   wheres = filter(wheres)
-  console.log(wheres)
   const bindings = {}
   if (wheres.length) {
     wheres = wheres.map(where => {

@@ -74,7 +74,6 @@ export default new GraphQLObjectType({
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        //if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
         if (args.id) return new NamedBinding(`${usersTable}.${q('id', DB)} = :userId`, { userId: args.id })
         if (args.idEncoded) return `${usersTable}.${q('id', DB)} = ${fromBase64(args.idEncoded)}`
         if (args.idAsync) return Promise.resolve(`${usersTable}.${q('id', DB)} = ${args.idAsync}`)
