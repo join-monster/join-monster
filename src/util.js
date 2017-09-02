@@ -50,11 +50,11 @@ export function validateSqlAST(topNode) {
 
 export function objToCursor(obj) {
   const str = JSON.stringify(obj)
-  return new Buffer(str).toString('base64')
+  return Buffer.from(str).toString('base64')
 }
 
 export function cursorToObj(cursor) {
-  const str = new Buffer(cursor, 'base64').toString()
+  const str = Buffer.from(cursor, 'base64').toString()
   return JSON.parse(str)
 }
 
