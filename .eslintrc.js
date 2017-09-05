@@ -37,6 +37,8 @@ module.exports = {
     'consistent-return': 0,
     'default-case': 0,
     'no-void': 0,
+    'function-paren-newline': 0,
+    'object-curly-newline': 0,
     'max-len': [
       'warn',
       125,
