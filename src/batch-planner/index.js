@@ -75,7 +75,11 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
         }
 
         // move down a level and recurse
-        const nextLevelData = chain(data).filter(obj => obj != null).flatMap(obj => obj[fieldName]).value()
+        const nextLevelData = chain(data)
+          .filter(obj => obj != null)
+          .flatMap(obj => obj[fieldName])
+          .filter(obj => obj != null)
+          .value()
         return nextBatch(childAST, nextLevelData, dbCall, context, options)
       }
       const batchScope = [ maybeQuote(data[parentKey]) ]
@@ -97,7 +101,11 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
 
     // otherwise, just bypass this and recurse down to the next level
     } else if (Array.isArray(data)) {
-      const nextLevelData = chain(data).filter(obj => obj != null).flatMap(obj => obj[fieldName]).value()
+      const nextLevelData = chain(data)
+        .filter(obj => obj != null)
+        .flatMap(obj => obj[fieldName])
+        .filter(obj => obj != null)
+        .value()
       return nextBatch(childAST, nextLevelData, dbCall, context, options)
     } else if (data) {
       return nextBatch(childAST, data[fieldName], dbCall, context, options)
