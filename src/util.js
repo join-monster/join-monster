@@ -50,11 +50,11 @@ export function validateSqlAST(topNode) {
 
 export function objToCursor(obj) {
   const str = JSON.stringify(obj)
-  return new Buffer(str).toString('base64')
+  return Buffer.from(str).toString('base64')
 }
 
 export function cursorToObj(cursor) {
-  const str = new Buffer(cursor, 'base64').toString()
+  const str = Buffer.from(cursor, 'base64').toString()
   return JSON.parse(str)
 }
 
@@ -149,11 +149,15 @@ export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition, bindings)
           reject(err)
         } else {
           rows = validate(rows)
-          debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
-          debug(`${rows.length} rows...`)
+          if (debug.enabled) {
+            debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
+            debug(`${rows.length} rows...`)
+          }
           const data = nest(rows, shapeDefinition)
           resolveUnions(data, sqlAST)
-          debug(emphasize('SHAPED_DATA', inspect(data)))
+          if (debug.enabled) {
+            debug(emphasize('SHAPED_DATA', inspect(data)))
+          }
           resolve(data)
         }
       })
@@ -165,13 +169,17 @@ export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition, bindings)
   if (typeof result.then === 'function') {
     return result.then(rows => {
       rows = validate(rows)
-      debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
-      debug(`${rows.length} rows...`)
+      if (debug.enabled) {
+        debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
+        debug(`${rows.length} rows...`)
+      }
       // hydrate the data
       // take that shape definition we produced and pass it to the NestHydrationJS library
       const data = nest(rows, shapeDefinition)
       resolveUnions(data, sqlAST)
-      debug(emphasize('SHAPED_DATA'), inspect(data))
+      if (debug.enabled) {
+        debug(emphasize('SHAPED_DATA'), inspect(data))
+      }
       return data
     })
   }
@@ -192,7 +200,9 @@ function validate(rows) {
 }
 
 export async function compileSqlAST(sqlAST, context, options) {
-  debug(emphasize('SQL_AST'), inspect(sqlAST))
+  if (debug.enabled) {
+    debug(emphasize('SQL_AST'), inspect(sqlAST))
+  }
 
   // now convert the "SQL AST" to sql
   options.dialect = options.dialect || 'sqlite3'
@@ -204,13 +214,17 @@ export async function compileSqlAST(sqlAST, context, options) {
     options.dialect = 'sqlite3'
   }
   const { sql, bindings } = await stringifySQL(sqlAST, context, options)
-  debug(emphasize('SQL'), sql)
-  debug(emphasize('BINDINGS'), bindings)
+  if (debug.enabled) {
+    debug(emphasize('SQL'), sql)
+    debug(emphasize('BINDINGS'), bindings)
+  }
 
   // figure out the shape of the object and define it so later we can pass it to
   // NestHydration library so it can hydrate the data
   const shapeDefinition = defineObjectShape(sqlAST)
-  debug(emphasize('SHAPE_DEFINITION'), inspect(shapeDefinition))
+  if (debug.enabled) {
+    debug(emphasize('SHAPE_DEFINITION'), inspect(shapeDefinition))
+  }
   return { sql, shapeDefinition, bindings }
 }
 
