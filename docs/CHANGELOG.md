@@ -1,3 +1,6 @@
+### v2.0.13 (Sep. 4, 2017)
+- Don't write to debug module unless it's actually enabled.
+
 ### v2.0.12 (Sep. 1, 2017)
 - Add named parameters.
 
