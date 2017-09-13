@@ -45,7 +45,7 @@ export function unthunk(val, ...args) {
 
 export function validateSqlAST(topNode) {
   // TODO: this could be a bit more comprehensive
-  assert(topNode.sqlJoin == null, 'root level field can not have "sqlJoin"')
+  assert(topNode.sqlJoin == null, 'root level field can not have "sqlJoin", it must be in a child field')
 }
 
 export function objToCursor(obj) {

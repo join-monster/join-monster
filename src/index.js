@@ -85,6 +85,7 @@ export { NamedBinding } from './binding-parameters'
 async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
   const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options, context)
+  assert(sqlAST.sqlBatch == null, 'root level field can not have "sqlBatch", it must be in a child field')
   const { sql, bindings, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   if (!sql) return {}
 
