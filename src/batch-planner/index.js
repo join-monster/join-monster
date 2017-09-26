@@ -58,7 +58,7 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
         // if we they want many rows, give them an array
         if (childAST.grabMany) {
           for (let obj of data) {
-            obj[fieldName] = newData[obj[parentKey]] || { total: 0, edges: [] }
+            obj[fieldName] = newData[obj[parentKey]] || (childAST.paginate ? { total: 0, edges: [] } : [])
           }
         } else {
           let matchedData = []
