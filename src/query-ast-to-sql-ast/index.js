@@ -325,7 +325,17 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 }
 
 // we need to collect all fields from all the fragments requested in the union type and ask for them in SQL
-function handleUnionSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options, context, internalOptions = {}) {
+function handleUnionSelections(
+  sqlASTNode,
+  children,
+  selections,
+  gqlType,
+  namespace,
+  depth,
+  options,
+  context,
+  internalOptions = {}
+) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
@@ -396,7 +406,17 @@ function handleUnionSelections(sqlASTNode, children, selections, gqlType, namesp
 }
 
 // the selections could be several types, recursively handle each type here
-function handleSelections(sqlASTNode, children, selections, gqlType, namespace, depth, options, context, internalOptions = {}) {
+function handleSelections(
+  sqlASTNode,
+  children,
+  selections,
+  gqlType,
+  namespace,
+  depth,
+  options,
+  context,
+  internalOptions = {},
+) {
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
