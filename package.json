@@ -97,7 +97,7 @@
     "nyc": "^11.1.0",
     "pg": "^7.1.0",
     "sinon": "^3.1.0",
-    "sqlite3": "^3.1.9"
+    "sqlite3": "^3.1.13"
   },
   "dependencies": {
     "@stem/nesthydrationjs": "0.4.0",
