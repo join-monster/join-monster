@@ -120,7 +120,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     )
     break
   case 'noop':
-    // we hit this with fields that don't need anything from SQL, they resolve independantly
+    // we hit this with fields that don't need anything from SQL, they resolve independently
     return
   default:
     throw new Error('unexpected/unknown node type reached: ' + inspect(node))
@@ -190,7 +190,8 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   } else if (idx(node, _ => _.junction.sqlBatch)) {
     if (parent) {
       selections.push(
-        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} AS ${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
+        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} 
+        AS ${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
       )
     } else {
       const joinCondition = await node.junction.sqlBatch.sqlJoin(
@@ -213,8 +214,10 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
 
   // many-to-many using JOINs
   } else if (idx(node, _ => _.junction.sqlTable)) {
-    const joinCondition1 = await node.junction.sqlJoins[0](`${q(parent.as)}`, q(node.junction.as), node.args || {}, context, node)
-    const joinCondition2 = await node.junction.sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context, node)
+    const joinCondition1 = await node.junction
+      .sqlJoins[0](`${q(parent.as)}`, q(node.junction.as), node.args || {}, context, node)
+    const joinCondition2 = await node.junction
+      .sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context, node)
 
     if (node.paginate) {
       await dialect.handleJoinedManyToManyPaginated(parent, node, context, tables, joinCondition1, joinCondition2)
