@@ -38,7 +38,8 @@ const dialect = module.exports = {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
         offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, {
-          joinCondition, joinType: 'LEFT'
+          joinCondition, joinType: 'LEFT',
+          withTotal: true
         })
       )
     }
@@ -69,7 +70,8 @@ const dialect = module.exports = {
       lateralJoinOptions.extraJoin = {
         name: node.name,
         as: node.as,
-        condition: joinCondition
+        condition: joinCondition,
+        withTotal: true
       }
     }
     if (node.sortKey || node.junction.sortKey) {
@@ -110,7 +112,8 @@ const dialect = module.exports = {
       lateralJoinOptions.extraJoin = {
         name: node.name,
         as: node.as,
-        condition: joinCondition2
+        condition: joinCondition2,
+        withTotal: true
       }
     }
     if (node.sortKey || node.junction.sortKey) {
@@ -178,7 +181,8 @@ const dialect = module.exports = {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
         offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, {
-          joinCondition: lateralJoinCondition
+          joinCondition: lateralJoinCondition,
+          withTotal: true
         })
       )
     }
