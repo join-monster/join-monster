@@ -88,7 +88,7 @@
     "jsdoc-to-markdown": "^3.0.0",
     "kcors": "^2.2.1",
     "knex": "^0.13.0",
-    "koa": "^2.0.1",
+    "koa": "2.3.0",
     "koa-custom-graphiql": "1.0.1",
     "koa-graphql": "^0.7.0",
     "koa-router": "^7.1.1",
