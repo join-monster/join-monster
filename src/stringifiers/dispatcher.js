@@ -4,7 +4,6 @@ import { validateSqlAST, inspect, wrap } from '../util'
 import {
   joinPrefix,
   thisIsNotTheEndOfThisBatch,
-  interpretForOffsetPaging,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
 
@@ -48,9 +47,17 @@ export default async function stringifySqlAST(topNode, context, options) {
   }
 
   if (dialect.name === 'sqlite3' || dialect.name === 'mysql') {
-    const { limit, offset } = interpretForOffsetPaging(topNode, dialect)
+    let limit = 'ALL';
+    let offset = 0;
 
-    if (limit) {
+    if (topNode.args.limit) {
+      limit = topNode.args.limit;
+    }
+    if (topNode.args.after) {
+      offset = topNode.args.after;
+    }
+
+    if (limit !== 'ALL') {
       sql += `\nLIMIT ${limit} OFFSET ${offset}`
     }
   }
@@ -264,12 +271,12 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   } else if (node.paginate) {
     await dialect.handlePaginationAtRoot(parent, node, context, tables)
   } else if (node.limit) {
-    node.args.first = node.limit
     if (dialect.name === 'sqlite3' || dialect.name === 'mysql') {
       tables.push(
         `FROM ${node.name} ${q(node.as)}`
       )
     } else {
+      node.args.first = node.limit
       await dialect.handlePaginationAtRoot(parent, node, context, tables)
     }
   } else {
