@@ -47,8 +47,8 @@ export default async function stringifySqlAST(topNode, context, options) {
   }
 
   if (dialect.name === 'sqlite3' || dialect.name === 'mysql') {
-    if (topNode.args.first) {
-      sql += `\nLIMIT ${topNode.args.first}`
+    if (topNode.args.limitOnly) {
+      sql += `\nLIMIT ${topNode.args.limitOnly}`
     }
   }
 
@@ -261,12 +261,13 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   } else if (node.paginate) {
     await dialect.handlePaginationAtRoot(parent, node, context, tables)
   } else if (node.limit) {
-    node.args.first = node.limit
     if (dialect.name === 'sqlite3' || dialect.name === 'mysql') {
+      node.args.limitOnly = node.limit
       tables.push(
         `FROM ${node.name} ${q(node.as)}`
       )
     } else {
+      node.args.first = node.limit
       await dialect.handlePaginationAtRoot(parent, node, context, tables)
     }
   } else {
