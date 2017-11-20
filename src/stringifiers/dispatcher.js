@@ -47,14 +47,14 @@ export default async function stringifySqlAST(topNode, context, options) {
   }
 
   if (dialect.name === 'sqlite3' || dialect.name === 'mysql') {
-    let limit = 'ALL';
-    let offset = 0;
+    let limit = 'ALL'
+    let offset = 0
 
     if (topNode.args.limit) {
-      limit = topNode.args.limit;
+      limit = topNode.args.limit
     }
     if (topNode.args.after) {
-      offset = topNode.args.after;
+      offset = topNode.args.after
     }
 
     if (limit !== 'ALL') {
