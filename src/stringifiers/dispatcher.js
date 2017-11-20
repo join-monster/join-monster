@@ -47,14 +47,8 @@ export default async function stringifySqlAST(topNode, context, options) {
   }
 
   if (dialect.name === 'sqlite3' || dialect.name === 'mysql') {
-    let limit = 'ALL'
-
-    if (topNode.args.limit) {
-      limit = topNode.args.limit
-    }
-
-    if (limit !== 'ALL') {
-      sql += `\nLIMIT ${limit}`
+    if (topNode.args.first) {
+      sql += `\nLIMIT ${topNode.args.first}`
     }
   }
 
