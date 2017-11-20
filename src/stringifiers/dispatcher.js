@@ -190,8 +190,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   } else if (idx(node, _ => _.junction.sqlBatch)) {
     if (parent) {
       selections.push(
-        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} 
-        AS ${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
+        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} AS ${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
       )
     } else {
       const joinCondition = await node.junction.sqlBatch.sqlJoin(
