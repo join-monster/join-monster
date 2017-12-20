@@ -85,7 +85,7 @@
     "faker": "^4.1.0",
     "graphql": "^0.11.1",
     "graphsiql": "0.1.0",
-    "jsdoc-to-markdown": "^3.0.0",
+    "jsdoc-to-markdown": "3.0.2",
     "kcors": "^2.2.1",
     "knex": "^0.13.0",
     "koa": "^2.0.1",
