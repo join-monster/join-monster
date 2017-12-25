@@ -73,7 +73,7 @@
   "devDependencies": {
     "ava": "^0.22.0",
     "babel-cli": "^6.14.0",
-    "babel-eslint": "^8.0.0",
+    "babel-eslint": "^8.1.1",
     "babel-plugin-idx": "^1.5.1",
     "babel-plugin-object-values-to-object-keys": "^1.0.2",
     "babel-plugin-transform-do-expressions": "^6.22.0",
