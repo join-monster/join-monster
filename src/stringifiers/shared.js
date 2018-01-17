@@ -45,13 +45,13 @@ FROM (
 }
 
 export function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
-  let { joinCondition, joinType, extraJoin, q } = options
+  let {joinCondition, joinType, extraJoin, withTotal, q} = options
   q = q || doubleQuote
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
-  SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
+  SELECT ${q(as)}.*${withTotal ? ', count(*) OVER () AS ' + q('$total') : ''}
   FROM ${table} ${q(as)}
   ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
     ON ${extraJoin.condition}` : ''}
@@ -62,7 +62,7 @@ ${joinType || ''} JOIN LATERAL (
   }
   return `\
 FROM (
-  SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
+  SELECT ${q(as)}.*${withTotal ? ', count(*) OVER () AS ' + q('$total') : ''}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
@@ -94,7 +94,7 @@ export function interpretForOffsetPaging(node, dialect) {
     order.columns = node.junction.orderBy
   }
 
-  let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
+  let limit = ['mariadb', 'mysql', 'oracle', 'spanner'].includes(name) ? Number.MAX_SAFE_INTEGER.toString() : 'ALL'
   let offset = 0
   if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first, 10)
@@ -142,7 +142,7 @@ export function interpretForKeysetPaging(node, dialect) {
     order.table = node.junction.as
   }
 
-  let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
+  let limit = ['mariadb', 'mysql', 'oracle', 'spanner'].includes(name) ? Number.MAX_SAFE_INTEGER.toString() : 'ALL'
   let whereCondition = ''
   if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first, 10) + 1
