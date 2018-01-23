@@ -183,7 +183,7 @@ export function interpretForOffsetPaging(node, dialect) {
   if (idx(node, _ => _.defaultPageSize)) {
     limit = node.defaultPageSize + 1
   }
-  let offset = 0
+  let offset = node.offset ?? 0
   if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first, 10)
     // we'll get one extra item (hence the +1). this is to determine if there is a next page or not
