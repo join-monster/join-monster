@@ -130,7 +130,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     // grab the types and fields inside the connection
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments)
     // reassign those
-    gqlType = stripped.gqlType
+    gqlType = stripNonNullType(stripped.gqlType)
     queryASTNode = stripped.queryASTNode
     // we'll set a flag for pagination.
     if (field.sqlPaginate) {
@@ -539,7 +539,8 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
 // if its a connection type, we need to look up the Node type inside their to find the relevant SQL info
 function stripRelayConnection(gqlType, queryASTNode, fragments) {
   // get the GraphQL Type inside the list of edges inside the Node from the schema definition
-  const strippedType = gqlType._fields.edges.type.ofType._fields.node.type
+  const edgeType = stripNonNullType(gqlType._fields.edges.type)
+  const strippedType = stripNonNullType(stripNonNullType(edgeType.ofType)._fields.node.type)
   // let's remember those arguments on the connection
   const args = queryASTNode.arguments
   // and then find the fields being selected on the underlying type, also buried within edges and Node
