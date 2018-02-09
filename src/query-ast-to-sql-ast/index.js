@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { flatMap } from 'lodash'
-import deprecate from 'deprecate'
+//import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
 
 import AliasNamespace from '../alias-namespace'
@@ -295,7 +295,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   // this was created for helping resolve types in union types
   // its been generalized to `alwaysFetch`, as its a useful feature for more than just unions
   if (config.typeHint && [ 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name)) {
-    deprecate('`typeHint` is deprecated. Use `alwaysFetch` instead.')
+    //deprecate('`typeHint` is deprecated. Use `alwaysFetch` instead.')
     children.push(columnToASTChild(config.typeHint, namespace))
   }
 

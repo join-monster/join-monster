@@ -7,13 +7,19 @@ import {
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
 
+const sqlite3 = require('./dialects/sqlite3');
+
 export default async function stringifySqlAST(topNode, context, options) {
   validateSqlAST(topNode)
 
   let dialect = options.dialectModule
 
   if (!dialect && options.dialect) {
-    dialect = require('./dialects/' + options.dialect)
+    if (options.dialect === 'sqlite3') {
+      dialect = sqlite3
+    } else {
+      dialect = require('./dialects/' + options.dialect)
+    }
   }
 
   // recursively figure out all the selections, joins, and where conditions that we need
