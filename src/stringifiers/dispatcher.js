@@ -7,7 +7,7 @@ import {
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
 
-const sqlite3 = require('./dialects/sqlite3');
+const sqlite3 = require('./dialects/sqlite3')
 
 export default async function stringifySqlAST(topNode, context, options) {
   validateSqlAST(topNode)
