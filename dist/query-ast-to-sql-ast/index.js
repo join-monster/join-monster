@@ -19,6 +19,8 @@ var _lodash = require('lodash');
 
 var _values = require('graphql/execution/values');
 
+var _graphql = require('graphql');
+
 var _aliasNamespace = require('../alias-namespace');
 
 var _aliasNamespace2 = _interopRequireDefault(_aliasNamespace);
@@ -26,6 +28,22 @@ var _aliasNamespace2 = _interopRequireDefault(_aliasNamespace);
 var _util = require('../util');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function isListType(t) {
+  return t instanceof _graphql.GraphQLList;
+}
+
+function isObjectType(t) {
+  return t instanceof _graphql.GraphQLObjectType;
+}
+
+function isUnionType(t) {
+  return t instanceof _graphql.GraphQLUnionType;
+}
+
+function isInterfaceType(t) {
+  return t instanceof _graphql.GraphQLInterfaceType;
+}
 
 class SQLASTNode {
   constructor(parentNode, props) {
@@ -41,6 +59,10 @@ class SQLASTNode {
 }
 
 const TABLE_TYPES = ['GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType'];
+
+function isTableType(t) {
+  return isListType(t) || isUnionType(t) || isObjectType(t);
+}
 
 function mergeAll(fieldNodes) {
   const newFieldNodes = [...fieldNodes];
@@ -113,12 +135,12 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
 
   sqlASTNode.args = (0, _values.getArgumentValues)(field, queryASTNode, this.variableValues);
 
-  if (gqlType.constructor.name === 'GraphQLList') {
+  if (isListType(gqlType)) {
     gqlType = stripNonNullType(gqlType.ofType);
     grabMany = true;
   }
 
-  if (gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
+  if (isObjectType(gqlType) && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true;
 
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments);
@@ -136,7 +158,7 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
 
   const config = gqlType._typeConfig;
 
-  if (!field.jmIgnoreTable && TABLE_TYPES.includes(gqlType.constructor.name) && config.sqlTable) {
+  if (!field.jmIgnoreTable && isTableType(gqlType) && config.sqlTable) {
     if (depth >= 1) {
       (0, _assert2.default)(!field.junctionTable, '"junctionTable" has been replaced with a new API.');
       (0, _assert2.default)(field.sqlJoin || field.sqlBatch || field.junction, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table,
@@ -250,7 +272,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
     }
   }
 
-  if (config.typeHint && ['GraphQLUnionType', 'GraphQLInterfaceType'].includes(gqlType.constructor.name)) {
+  if (config.typeHint && (isUnionType(gqlType) || isInterfaceType(gqlType))) {
     children.push(columnToASTChild(config.typeHint, namespace));
   }
 
@@ -259,7 +281,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   }
 
   if (queryASTNode.selectionSet) {
-    if (gqlType.constructor.name === 'GraphQLUnionType' || gqlType.constructor.name === 'GraphQLInterfaceType') {
+    if (isUnionType(gqlType) || isInterfaceType(gqlType)) {
       sqlASTNode.type = 'union';
       sqlASTNode.typedChildren = {};
       handleUnionSelections.call(this, sqlASTNode, children, queryASTNode.selectionSet.selections, gqlType, namespace, depth, options, context);

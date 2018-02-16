@@ -2,9 +2,26 @@ import assert from 'assert'
 import { flatMap } from 'lodash'
 //import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
+import { GraphQLObjectType, GraphQLList, GraphQLUnionType, GraphQLInterfaceType } from 'graphql'
 
 import AliasNamespace from '../alias-namespace'
 import { wrap, ensure, unthunk, inspect } from '../util'
+
+function isListType(t) {
+  return t instanceof GraphQLList
+}
+
+function isObjectType(t) {
+  return t instanceof GraphQLObjectType
+}
+
+function isUnionType(t) {
+  return t instanceof GraphQLUnionType
+}
+
+function isInterfaceType(t) {
+  return t instanceof GraphQLInterfaceType
+}
 
 class SQLASTNode {
   constructor(parentNode, props) {
@@ -21,6 +38,10 @@ class SQLASTNode {
 
 // an enumeration of all the types that can map to SQL tables
 const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
+
+function isTableType( t) {
+  return isListType(t) || isUnionType(t) || isObjectType(t)
+}
 
 
 function mergeAll(fieldNodes) {
@@ -119,13 +140,13 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   sqlASTNode.args = getArgumentValues(field, queryASTNode, this.variableValues)
 
   // if list then mark flag true & get the type inside the GraphQLList container type
-  if (gqlType.constructor.name === 'GraphQLList') {
+  if (isListType(gqlType)) {
     gqlType = stripNonNullType(gqlType.ofType)
     grabMany = true
   }
 
   // if its a relay connection, there are several things we need to do
-  if (gqlType.constructor.name === 'GraphQLObjectType' && gqlType._fields.edges && gqlType._fields.pageInfo) {
+  if (isObjectType(gqlType) && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
     // grab the types and fields inside the connection
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments)
@@ -149,7 +170,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   // is this a table in SQL?
   if (
     !field.jmIgnoreTable &&
-    TABLE_TYPES.includes(gqlType.constructor.name)
+    isTableType(gqlType)
     && config.sqlTable
   ) {
     if (depth >= 1) {
@@ -294,7 +315,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 
   // this was created for helping resolve types in union types
   // its been generalized to `alwaysFetch`, as its a useful feature for more than just unions
-  if (config.typeHint && [ 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name)) {
+  if (config.typeHint && (isUnionType(gqlType) || isInterfaceType(gqlType))) {
     //deprecate('`typeHint` is deprecated. Use `alwaysFetch` instead.')
     children.push(columnToASTChild(config.typeHint, namespace))
   }
@@ -305,7 +326,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   }
 
   if (queryASTNode.selectionSet) {
-    if (gqlType.constructor.name === 'GraphQLUnionType' || gqlType.constructor.name === 'GraphQLInterfaceType') {
+    if (isUnionType(gqlType) || isInterfaceType(gqlType)) {
       // union types have special rules for the child fields in join monster
       sqlASTNode.type = 'union'
       sqlASTNode.typedChildren = {}
