@@ -9,8 +9,9 @@
   "files": [
     "dist/"
   ],
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && babel src --no-comments --out-dir dist",
+    "build": "rm -rf dist && babel src --no-comments --out-dir dist --copy-files --ignore README.md",
     "watch": "rm -rf dist && babel src --watch --source-maps true --out-dir dist",
     "test": "npm run lint && bin/test --no-oracle",
     "testsqlite3": "NODE_ENV=test ava test/*.js",
