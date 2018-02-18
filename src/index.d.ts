@@ -4,8 +4,8 @@ import * as graphql from 'graphql'
 // Extend graphql objects and fields
 
 declare module 'graphql/type/definition' {
-  type SqlJoin<TContext, TArgs> = (table1: string, table2: string, args: TArgs, context: TContext) => string
-  type Where<TContext, TArgs> = (usersTable: string, args: TArgs, context: TContext) => string | void
+  type SqlJoin<TContext, TArgs> = (table1: string, table2: string, args: TArgs, context: TContext, sqlASTNode: any) => string
+  type Where<TContext, TArgs> = (usersTable: string, args: TArgs, context: TContext, sqlASTNode: any) => string | void
   type Order = 'ASC' | 'asc' | 'DESC' | 'desc'
   type OrderBy = string | { [key: string]: Order }
   type ThunkWithArgsCtx<T, TContext, TArgs> = ((args: TArgs, context: TContext) => T) | T;
@@ -52,7 +52,7 @@ declare module 'graphql/type/definition' {
     }
     sqlColumn?: string
     sqlDeps?: string[]
-    sqlExpr?: (table: string, args: TArgs, context: TContext) => string
+    sqlExpr?: (table: string, args: TArgs, context: TContext, sqlASTNode: any) => string
     sqlJoin?: SqlJoin<TContext, TArgs>
     sqlPaginate?: boolean
     where?: Where<TContext, TArgs>
