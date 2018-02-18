@@ -6,39 +6,46 @@ import * as graphql from 'graphql'
 declare module 'graphql/type/definition' {
   type SqlJoin<TContext, TArgs> = (table1: string, table2: string, args: TArgs, context: TContext) => string
   type Where<TContext, TArgs> = (usersTable: string, args: TArgs, context: TContext) => string | void
-  type OrderBy = string | { [key: string]: 'ASC' | 'asc' | 'DESC' | 'desc' }
+  type Order = 'ASC' | 'asc' | 'DESC' | 'desc'
+  type OrderBy = string | { [key: string]: Order }
+  type ThunkWithArgsCtx<T, TContext, TArgs> = ((args: TArgs, context: TContext) => T) | T;
 
   export interface GraphQLObjectTypeConfig<TSource, TContext> {
     alwaysFetch?: string
-    sqlTable?: string
-    uniqueKey?: string
+    sqlTable?: ThunkWithArgsCtx<string, any, TContext>
+    uniqueKey?: string | string[]
   }
 
   export interface GraphQLFieldConfig<TSource, TContext, TArgs> {
     jmIgnoreAll?: boolean
     jmIgnoreTable?: boolean
     junction?: {
-      include?: {
+      include?: ThunkWithArgsCtx<{
         sqlColumn?: string
         sqlExpr?: string
         sqlDeps?: string | string[]
-      }
+      }, TContext, TArgs>
+      orderBy?: ThunkWithArgsCtx<OrderBy, TContext, TArgs>
+      sortKey?: ThunkWithArgsCtx<{
+        order: Order
+        key: string | string[]
+      }, TContext, TArgs>
       sqlBatch?: {
         thisKey: string
         parentKey: string
         sqlJoin: SqlJoin<TContext, TArgs>
       }
       sqlJoins?: [SqlJoin<TContext, TArgs>, SqlJoin<TContext, TArgs>]
-      sqlTable: string
-      uniqueKey?: string[]
+      sqlTable: ThunkWithArgsCtx<string, TContext, TArgs>
+      uniqueKey?: string | string[]
       where?: Where<TContext, TArgs>
     }
-    limit?: number
-    orderBy?: Thunk<OrderBy>
-    sortKey?: {
-      order: 'ASC' | 'asc' | 'DESC' | 'desc'
+    limit?: ThunkWithArgsCtx<number, any, TContext>
+    orderBy?: ThunkWithArgsCtx<OrderBy, TContext, TArgs>
+    sortKey?: ThunkWithArgsCtx<{
+      order: Order
       key: string | string[]
-    }
+    }, TContext, TArgs>
     sqlBatch?: {
       thisKey: string
       parentKey: string
