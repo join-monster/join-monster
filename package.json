@@ -1,10 +1,10 @@
 {
   "name": "@gd/join-monster",
-  "version": "2.0.16",
+  "version": "2.0.17-rc.1",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=9.3.0"
   },
   "files": [
     "dist/"
@@ -68,43 +68,43 @@
   },
   "homepage": "https://github.com/stems/join-monster#readme",
   "peerDependencies": {
-    "graphql": "0.6 || 0.7 || 0.8 || 0.9 || 0.10 || 0.11 || 0.12"
+    "graphql": "0.6 || 0.7 || 0.8 || 0.9 || 0.10 || 0.11 || 0.12 || 0.13"
   },
   "devDependencies": {
-    "ava": "^0.23.0",
-    "babel-cli": "^6.14.0",
-    "babel-eslint": "^8.0.0",
-    "babel-plugin-idx": "^1.5.1",
+    "ava": "^0.25.0",
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.2.2",
+    "babel-plugin-idx": "^2.2.0",
     "babel-plugin-object-values-to-object-keys": "^1.0.2",
     "babel-plugin-transform-do-expressions": "^6.22.0",
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-1": "^6.24.1",
-    "babel-watch": "^2.0.3-rc0",
-    "eslint": "^4.7.1",
-    "eslint-config-airbnb-base": "^12.0.0",
+    "babel-watch": "^2.0.7",
+    "eslint": "^4.18.2",
+    "eslint-config-airbnb-base": "^12.1.0",
     "faker": "^4.1.0",
-    "graphql": "^0.12.3",
-    "graphsiql": "0.1.0",
-    "jsdoc-to-markdown": "^3.0.0",
+    "graphql": "^0.13.1",
+    "graphsiql": "^0.2.0",
+    "jsdoc-to-markdown": "^4.0.1",
     "kcors": "^2.2.1",
-    "knex": "^0.14.0",
-    "koa": "^2.0.1",
-    "koa-custom-graphiql": "1.0.1",
-    "koa-graphql": "^0.7.0",
-    "koa-router": "^7.1.1",
-    "koa-static": "^3.0.0",
-    "mysql": "^2.14.1",
-    "nyc": "^11.1.0",
-    "pg": "^7.1.0",
-    "sinon": "^4.0.0",
-    "sqlite3": "^3.1.9"
+    "knex": "^0.14.4",
+    "koa": "^2.5.0",
+    "koa-custom-graphiql": "^1.0.1",
+    "koa-graphql": "^0.7.5",
+    "koa-router": "^7.4.0",
+    "koa-static": "^4.0.2",
+    "mysql": "^2.15.0",
+    "nyc": "^11.4.1",
+    "pg": "^7.4.1",
+    "sinon": "^4.4.2",
+    "sqlite3": "^3.1.13"
   },
   "dependencies": {
-    "@stem/nesthydrationjs": "0.4.0",
-    "debug": "^3.0.1",
+    "@stem/nesthydrationjs": "^0.4.0",
+    "debug": "^3.1.0",
     "deprecate": "^1.0.0",
-    "generatorics": "^1.0.8",
-    "graphql-relay": "^0.5.0",
-    "lodash": "^4.13.1"
+    "generatorics": "^1.1.0",
+    "graphql-relay": "^0.5.4",
+    "lodash": "^4.17.5"
   }
 }
