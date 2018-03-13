@@ -1,10 +1,10 @@
 {
   "name": "@gd/join-monster",
-  "version": "2.0.17-rc.1",
+  "version": "2.0.17-rc.2",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=9.3.0"
+    "node": ">=6.0.0"
   },
   "files": [
     "dist/"
