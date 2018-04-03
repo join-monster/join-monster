@@ -59,11 +59,23 @@ declare module 'graphql/type/definition' {
   }
 }
 
+export interface GraphQLUnionTypeConfig<TSource, TContext> {
+  sqlTable?: string
+  uniqueKey?: string | string[]
+  alwaysFetch?: string
+}
+
+export interface GraphQLInterfaceTypeConfig<TSource, TContext> {
+  sqlTable?: string
+  uniqueKey?: string | string[]
+  alwaysFetch?: string
+}
+
 // JoinMonster lib interface
 
 interface DialectModule { name: string }
 
-type Dialect = 'pg' | 'oracle' | 'mariadb' | 'mysql' | 'sqlite'
+type Dialect = 'pg' | 'oracle' | 'mariadb' | 'mysql' | 'sqlite3'
 type JoinMonsterOptions = { minify?: boolean, dialect?: Dialect, dialectModule?: DialectModule }
 
 type Rows = any
