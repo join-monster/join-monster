@@ -671,7 +671,7 @@ export function handleOrderBy(orderBy, options) {
   if (!orderBy) return undefined
   const orderColumns = {}
   if (typeof orderBy === 'object') {
-    let directionTester = validateDirectionWithDialect(options);
+    let directionTester = validateDirectionWithDialect(options)
     for (let column in orderBy) {
       let direction = orderBy[column].toUpperCase().trim()
       if (!directionTester(direction)) {

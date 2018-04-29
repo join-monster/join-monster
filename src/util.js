@@ -113,10 +113,10 @@ function getDialectName(options) {
 
 // returns new function that accepts string input for "direction"
 // to test against a wider range of options currently supported by
-// dialects listed (a.k.a. pg).  
+// dialects listed (a.k.a. pg).
 export function validateDirectionWithDialect(options) {
   const validDirections = {
-    'pg': [
+    pg: [
       'ASC',
       'DESC',
       'ASC NULLS FIRST',
@@ -126,18 +126,18 @@ export function validateDirectionWithDialect(options) {
       'NULLS FIRST',
       'NULLS LAST'
     ],
-    'others': [
+    others: [
       'ASC',
       'DESC'
     ]
-  };
+  }
 
-  const dialect = getDialectName(options);
-  const directions = validDirections[ dialect ] || validDirections.others;
+  const dialect = getDialectName(options)
+  const directions = validDirections[dialect] || validDirections.others
 
   return function(direction) {
-    return directions.includes(direction);
-  };
+    return directions.includes(direction)
+  }
 }
 
 export function buildWhereFunction(type, condition, options) {
