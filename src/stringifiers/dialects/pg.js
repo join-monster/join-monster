@@ -6,15 +6,6 @@ import {
   generateCastExpressionFromValueType
 } from '../shared'
 
-
-
-export function _getCastFromValueType(val) {
-  const casts = {
-    'string': '::TEXT',
-  }
-  return casts[typeof val] || ''
-}
-
 const dialect = module.exports = {
   name: 'pg',
 
