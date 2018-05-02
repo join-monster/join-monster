@@ -2,8 +2,18 @@ import {
   keysetPagingSelect,
   offsetPagingSelect,
   interpretForOffsetPaging,
-  interpretForKeysetPaging
+  interpretForKeysetPaging,
+  generateCastExpressionFromValueType
 } from '../shared'
+
+
+
+export function _getCastFromValueType(val) {
+  const casts = {
+    'string': '::TEXT',
+  }
+  return casts[typeof val] || ''
+}
 
 const dialect = module.exports = {
   name: 'pg',
@@ -46,7 +56,7 @@ const dialect = module.exports = {
 
   handleBatchedManyToManyPaginated: async function(parent, node, context, tables, batchScope, joinCondition) {
     const pagingWhereConditions = [
-      `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}" = temp."${node.junction.sqlBatch.parentKey.name}"`
+      `${generateCastExpressionFromValueType(`"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}"`, batchScope[0])} = temp."${node.junction.sqlBatch.parentKey.name}"`
     ]
     if (node.junction.where) {
       pagingWhereConditions.push(
@@ -61,8 +71,9 @@ const dialect = module.exports = {
 
     const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junction.sqlBatch.parentKey.name}")`
     tables.push(tempTable)
+
     const lateralJoinCondition =
-      `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}" = temp."${node.junction.sqlBatch.parentKey.name}"`
+      `${generateCastExpressionFromValueType(`"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}"`, batchScope[0])} = temp."${node.junction.sqlBatch.parentKey.name}"`
 
     const lateralJoinOptions = { joinCondition: lateralJoinCondition, joinType: 'LEFT' }
     if (node.where || node.orderBy) {
@@ -158,7 +169,7 @@ const dialect = module.exports = {
 
   handleBatchedOneToManyPaginated: async function(parent, node, context, tables, batchScope) {
     const pagingWhereConditions = [
-      `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+      `${generateCastExpressionFromValueType(`"${node.as}"."${node.sqlBatch.thisKey.name}"`, batchScope[0])} = temp."${node.sqlBatch.parentKey.name}"`
     ]
     if (node.where) {
       pagingWhereConditions.push(
@@ -167,7 +178,7 @@ const dialect = module.exports = {
     }
     const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")`
     tables.push(tempTable)
-    const lateralJoinCondition = `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
+    const lateralJoinCondition = `${generateCastExpressionFromValueType(`"${node.as}"."${node.sqlBatch.thisKey.name}"`, batchScope[0])} = temp."${node.sqlBatch.parentKey.name}"`
     if (node.sortKey) {
       const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)

@@ -6,6 +6,20 @@ export function joinPrefix(prefix) {
   return prefix.slice(1).map(name => name + '__').join('')
 }
 
+
+
+export function generateCastExpressionFromValueType(key, val) {
+  const castTypes = {
+    'string': 'TEXT',
+  }
+  const type = castTypes[typeof val] || null;
+
+  if (type) {
+    return `CAST(${key} AS ${type})`; 
+  }
+  return key;
+}
+
 function doubleQuote(str) {
   return `"${str}"`
 }
