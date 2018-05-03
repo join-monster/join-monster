@@ -46,8 +46,11 @@ const dialect = module.exports = {
   },
 
   handleBatchedManyToManyPaginated: async function(parent, node, context, tables, batchScope, joinCondition) {
+    const thisKeyOperand = generateCastExpressionFromValueType(
+      `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}"`, batchScope[0]
+    )
     const pagingWhereConditions = [
-      `${generateCastExpressionFromValueType(`"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}"`, batchScope[0])} = temp."${node.junction.sqlBatch.parentKey.name}"`
+      `${thisKeyOperand} = temp."${node.junction.sqlBatch.parentKey.name}"`
     ]
     if (node.junction.where) {
       pagingWhereConditions.push(
@@ -64,7 +67,7 @@ const dialect = module.exports = {
     tables.push(tempTable)
 
     const lateralJoinCondition =
-      `${generateCastExpressionFromValueType(`"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}"`, batchScope[0])} = temp."${node.junction.sqlBatch.parentKey.name}"`
+      `${thisKeyOperand} = temp."${node.junction.sqlBatch.parentKey.name}"`
 
     const lateralJoinOptions = { joinCondition: lateralJoinCondition, joinType: 'LEFT' }
     if (node.where || node.orderBy) {
@@ -159,8 +162,9 @@ const dialect = module.exports = {
   },
 
   handleBatchedOneToManyPaginated: async function(parent, node, context, tables, batchScope) {
+    const thisKeyOperand = generateCastExpressionFromValueType(`"${node.as}"."${node.sqlBatch.thisKey.name}"`, batchScope[0])
     const pagingWhereConditions = [
-      `${generateCastExpressionFromValueType(`"${node.as}"."${node.sqlBatch.thisKey.name}"`, batchScope[0])} = temp."${node.sqlBatch.parentKey.name}"`
+      `${thisKeyOperand} = temp."${node.sqlBatch.parentKey.name}"`
     ]
     if (node.where) {
       pagingWhereConditions.push(
@@ -169,7 +173,7 @@ const dialect = module.exports = {
     }
     const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")`
     tables.push(tempTable)
-    const lateralJoinCondition = `${generateCastExpressionFromValueType(`"${node.as}"."${node.sqlBatch.thisKey.name}"`, batchScope[0])} = temp."${node.sqlBatch.parentKey.name}"`
+    const lateralJoinCondition = `${thisKeyOperand} = temp."${node.sqlBatch.parentKey.name}"`
     if (node.sortKey) {
       const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)

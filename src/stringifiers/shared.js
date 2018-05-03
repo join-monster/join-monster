@@ -7,17 +7,16 @@ export function joinPrefix(prefix) {
 }
 
 
-
 export function generateCastExpressionFromValueType(key, val) {
   const castTypes = {
-    'string': 'TEXT',
+    string: 'TEXT'
   }
-  const type = castTypes[typeof val] || null;
+  const type = castTypes[typeof val] || null
 
   if (type) {
-    return `CAST(${key} AS ${type})`; 
+    return `CAST(${key} AS ${type})`
   }
-  return key;
+  return key
 }
 
 function doubleQuote(str) {
