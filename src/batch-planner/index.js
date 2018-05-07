@@ -2,25 +2,9 @@ import { uniq, chain, map, groupBy, forIn } from 'lodash'
 import arrToConnection from '../array-to-connection'
 import { handleUserDbCall, maybeQuote, wrap, compileSqlAST } from '../util'
 
-
-export default async function nextBatch(sqlAST, data, dbCall, context, options) {
-  // paginated fields are wrapped in connections. strip those off for the batching
-  if (sqlAST.paginate) {
-    if (Array.isArray(data)) {
-      data = chain(data).flatMap('edges').map('node').value()
-    } else {
-      data = map(data.edges, 'node')
-    }
-  }
-  if (!data || (Array.isArray(data) && data.length === 0)) {
-    return
-  }
-
-  const children = sqlAST.children
-  Object.values(sqlAST.typedChildren || {}).forEach(typedChildren => children.push(...typedChildren))
-
-  // loop through all the child fields that are tables
-  return Promise.all(children.map(async childAST => {
+// processes a single child of the batch
+function nextBatchChild(data, dbCall, context, options) {
+  return async childAST => {
     if (childAST.type !== 'table' && childAST.type !== 'union') return
 
     const fieldName = childAST.fieldName
@@ -110,5 +94,25 @@ export default async function nextBatch(sqlAST, data, dbCall, context, options) 
     } else if (data) {
       return nextBatch(childAST, data[fieldName], dbCall, context, options)
     }
-  }))
+  }
+}
+
+export default async function nextBatch(sqlAST, data, dbCall, context, options) {
+  // paginated fields are wrapped in connections. strip those off for the batching
+  if (sqlAST.paginate) {
+    if (Array.isArray(data)) {
+      data = chain(data).flatMap('edges').map('node').value()
+    } else {
+      data = map(data.edges, 'node')
+    }
+  }
+  if (!data || (Array.isArray(data) && data.length === 0)) {
+    return
+  }
+
+  const children = sqlAST.children
+  Object.values(sqlAST.typedChildren || {}).forEach(typedChildren => children.push(...typedChildren))
+
+  // loop through all the child fields that are tables
+  return Promise.all(children.map(nextBatchChild(data, dbCall, context, options)))
 }
