@@ -146,7 +146,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   }
 
   // if its a relay connection, there are several things we need to do
-  if (isObjectType(gqlType) && gqlType._fields.edges && gqlType._fields.pageInfo) {
+  if (isObjectType(gqlType) && gqlType._fields && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true
     // grab the types and fields inside the connection
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments)

@@ -140,7 +140,7 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
     grabMany = true;
   }
 
-  if (isObjectType(gqlType) && gqlType._fields.edges && gqlType._fields.pageInfo) {
+  if (isObjectType(gqlType) && gqlType._fields && gqlType._fields.edges && gqlType._fields.pageInfo) {
     grabMany = true;
 
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments);
