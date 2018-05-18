@@ -18,54 +18,62 @@ export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, 
   return !node.paginate && (!(node.sqlBatch || (idx(node, _ => _.junction.sqlBatch))) || !parent)
 }
 
-export function keysetPagingSelect(table, whereCondition, order, limit, as, options = {}) {
+export function keysetPagingSelect(expressions, table, whereCondition, order, limit, as, options = {}) {
   let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
+  const selections = [ `${q(as)}.*`, ...expressions.map(expr => `${expr.expr} AS ${expr.as}`) ].join(',\n  ')
   whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
+  order = orderColumnsToString(order.columns, q, order.table)
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
-  SELECT ${q(as)}.*
+  SELECT ${selections}
   FROM ${table} ${q(as)}
   ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
     ON ${extraJoin.condition}` : ''}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${order}
   LIMIT ${limit}
 ) ${q(as)} ON ${joinCondition}`
   }
   return `\
 FROM (
-  SELECT ${q(as)}.*
+  SELECT ${selections}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${order}
   LIMIT ${limit}
 ) ${q(as)}`
 }
 
-export function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
+export function offsetPagingSelect(expressions, table, pagingWhereConditions, order, limit, offset, as, options = {}) {
   let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
+  const selections = [
+    `${q(as)}.*`,
+    ...expressions.map(expr => `${expr.expr} AS ${expr.as}`),
+    `count(*) OVER () AS ${q('$total')}`
+  ].join(',\n  ')
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
+  order = orderColumnsToString(order.columns, q, order.table)
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
-  SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
+  SELECT ${selections}
   FROM ${table} ${q(as)}
   ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
     ON ${extraJoin.condition}` : ''}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${order}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)} ON ${joinCondition}`
   }
   return `\
 FROM (
-  SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
+  SELECT ${selections}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${order}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)}`
 }

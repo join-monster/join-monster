@@ -19,20 +19,22 @@ ${unions.join('\nUNION\n')}
 ) AS ${quote(as)}`
 }
 
-function paginatedSelect(table, as, whereConditions, order, limit, offset, opts = {}) {
+function paginatedSelect(expressions, table, as, whereConditions, order, limit, offset, opts = {}) {
   const { extraJoin, withTotal } = opts
   as = quote(as)
+  const selections = [ `${as}.*`, ...expressions.map(expr => `${expr.expr} AS ${expr.as}`) ].join(',\n  ')
+  order = orderColumnsToString(order.columns, quote, order.table)
   return `\
-  (SELECT ${as}.*${withTotal ? ', count(*) OVER () AS `$total`' : ''}
+  (SELECT ${selections}${withTotal ? `,\n  count(*) OVER () AS ${quote('$total')}` : ''}
   FROM ${table} ${as}
   ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${quote(extraJoin.as)}
     ON ${extraJoin.condition}` : ''}
   WHERE ${whereConditions}
-  ORDER BY ${orderColumnsToString(order.columns, quote, order.table)}
+  ORDER BY ${order}
   LIMIT ${limit}${offset ? ' OFFSET ' + offset : ''})`
 }
 
-const dialect = module.exports = {
+const dialect = (module.exports = {
   ...require('./mixins/pagination-not-supported'),
 
   name: 'mariadb',
@@ -44,7 +46,7 @@ const dialect = module.exports = {
     return `CONCAT(${keys.join(', ')})`
   },
 
-  handlePaginationAtRoot: async function(parent, node, context, tables) {
+  handlePaginationAtRoot: async function(parent, node, context, expressions, tables) {
     const pagingWhereConditions = []
     if (node.sortKey) {
       const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
@@ -54,9 +56,7 @@ const dialect = module.exports = {
           await node.where(`${quote(node.as)}`, node.args || {}, context, node)
         )
       }
-      tables.push(
-        keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { q: quote })
-      )
+      tables.push(keysetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, node.as, { q: quote }))
     } else if (node.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       if (node.where) {
@@ -65,12 +65,12 @@ const dialect = module.exports = {
         )
       }
       tables.push(
-        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, { q: quote })
+        offsetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, offset, node.as, { q: quote })
       )
     }
   },
 
-  handleBatchedOneToManyPaginated: async function(parent, node, context, tables, batchScope) {
+  handleBatchedOneToManyPaginated: async function(parent, node, context, expressions, tables, batchScope) {
     const pagingWhereConditions = []
     if (node.where) {
       pagingWhereConditions.push(
@@ -83,7 +83,7 @@ const dialect = module.exports = {
       const unions = batchScope.map(val => {
         let whereConditions = [ ...pagingWhereConditions, `${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} = ${val}` ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.name, node.as, whereConditions, order, limit, null)
+        return paginatedSelect(expressions, node.name, node.as, whereConditions, order, limit, null)
       })
       tables.push(joinUnions(unions, node.as))
     } else if (node.orderBy) {
@@ -91,13 +91,13 @@ const dialect = module.exports = {
       const unions = batchScope.map(val => {
         let whereConditions = [ ...pagingWhereConditions, `${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} = ${val}` ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.name, node.as, whereConditions, order, limit, offset, { withTotal: true })
+        return paginatedSelect(expressions, node.name, node.as, whereConditions, order, limit, offset, { withTotal: true })
       })
       tables.push(joinUnions(unions, node.as))
     }
   },
 
-  handleBatchedManyToManyPaginated: async function(parent, node, context, tables, batchScope, joinCondition) {
+  handleBatchedManyToManyPaginated: async function(parent, node, context, expressions, tables, batchScope, joinCondition) {
     const pagingWhereConditions = []
     if (node.junction.where) {
       pagingWhereConditions.push(
@@ -126,7 +126,9 @@ const dialect = module.exports = {
           `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}`
         ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, order, limit, null, { extraJoin })
+        return paginatedSelect(expressions, node.junction.sqlTable, node.junction.as, whereConditions, order, limit, null, {
+          extraJoin
+        })
       })
       tables.push(joinUnions(unions, node.junction.as))
     } else if (node.orderBy || node.junction.orderBy) {
@@ -137,13 +139,22 @@ const dialect = module.exports = {
           `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}`
         ]
         whereConditions = filter(whereConditions).join(' AND ') || '1'
-        return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, order, limit, offset, {
-          withTotal: true,
-          extraJoin
-        })
+        return paginatedSelect(
+          expressions,
+          node.junction.sqlTable,
+          node.junction.as,
+          whereConditions,
+          order,
+          limit,
+          offset,
+          {
+            withTotal: true,
+            extraJoin
+          }
+        )
       })
       tables.push(joinUnions(unions, node.junction.as))
     }
     tables.push(`LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`)
   }
-}
+})
