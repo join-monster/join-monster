@@ -1,0 +1,25 @@
+#!/bin/bash
+
+export MYSQL_USER=root # This is set by mariadb docker image
+export MYSQL_PORT=13306
+export MYSQL_URL="${MYSQL_URL:-mysql://$MYSQL_USER@localhost:$MYSQL_PORT/}"
+export MYSQL_IMAGE="mariadb:10.2"
+
+export PG_USER=root
+export PG_PORT=15432
+export PG_URL="${PG_URL:-pg://$PG_USER@localhost:$PG_PORT/}"
+export PG_IMAGE="postgres:9.4"
+
+export MYSQL_DOCKER_NAME="joinmonster-test-mariadb"
+export POSTGRES_DOCKER_NAME="joinmonster-test-postgres"
+
+export TZ=UTC
+
+isContainerRunning() {
+  running=$(docker ps -f name="$1" | wc -l)
+  if [[ "$running" -gt "1" ]]; then
+    echo "1";
+  else
+    echo "0";
+  fi
+}

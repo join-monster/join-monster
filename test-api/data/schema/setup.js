@@ -1,15 +1,13 @@
-const url = require('url')
-const { execSync } = require('child_process')
 const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
 const Promise = require('bluebird')
 
-module.exports = function(db, name) {
-  const { ORACLE_URL, PG_URL, MYSQL_URL } = process.env
-
-  if (db === 'oracle') {
-    console.log('building oracle')
+module.exports = async function(db, name) {
+  switch (db) {
+  case 'oracle': {
+    const { ORACLE_URL } = process.env
+    assert(ORACLE_URL, 'Must provide environment variable ORACLE_URL, e.g. "pass@localhost/"')
     const [ password, connectString ] = ORACLE_URL.split('@')
     const knex = require('knex')({
       client: 'oracledb',
@@ -20,62 +18,63 @@ module.exports = function(db, name) {
         stmtCacheSize: 0
       }
     })
-
-    let schema = fs.readFileSync(path.join(__dirname, 'oracle.sql')).toString()
-    schema = schema.split(/\r?\n\r?\n/)
-    return Promise.each(schema.filter(i => i), stmt => knex.raw(stmt.trim()))
-    .then(() => knex)
-    .catch(err => {
-      console.error(err)
-      knex.destroy()
-      process.exit(1)
-    })
+    await runStatementsFromFile(knex, 'oracle.sql', /\r?\n\r?\n/)
+    return knex
   }
 
-  if (db === 'pg') {
+  case 'pg': {
+    const { PG_URL } = process.env
     assert(PG_URL, 'Must provide environment variable PG_URL, e.g. "postgres://user:pass@localhost/"')
-    const out = execSync(`psql ${PG_URL + name} < ${__dirname}/pg.sql`)
-    if (out.toString()) {
-      console.log(out.toString())
-    }
-    return require('knex')({
+    const knex = require('knex')({
       client: 'pg',
       connection: PG_URL + name
     })
+    await runStatementsFromFile(knex, 'pg.sql')
+    return knex
   }
 
-  if (db === 'mysql') {
+  case 'mysql': {
+    const { MYSQL_URL } = process.env
     assert(MYSQL_URL, 'Must provide environment variable MYSQL_URL, e.g. "mysql://user:pass@localhost/"')
     const knex = require('knex')({
       client: 'mysql',
       connection: MYSQL_URL + name
     })
-    const ddl = fs.readFileSync(`${__dirname}/mysql.sql`, 'utf8')
-      .split(';')
-      .map(stmt => stmt.trim())
-      .filter(stmt => !!stmt)
-    for (let stmt of ddl) {
-      console.log(stmt)
-    }
-    return Promise.each(ddl, stmt => knex.raw(stmt))
-      .then(() => knex)
+    await runStatementsFromFile(knex, 'mysql.sql')
+    return knex
   }
 
-  if (db === 'sqlite3') {
-    const out = execSync(`/bin/cat ${__dirname}/sqlite3.sql | sqlite3 ${__dirname}/../db/${name}-data.sl3`)
-    if (out.toString()) {
-      console.log(out.toString())
-    }
-
-    return require('knex')({
+  case 'sqlite3': {
+    const knex = require('knex')({
       client: 'sqlite3',
       connection: {
         filename: __dirname + `/../db/${name}-data.sl3`
       },
       useNullAsDefault: true
     })
+    await runStatementsFromFile(knex, 'sqlite3.sql')
+    return knex
   }
 
-  throw new Error(`do not recognize database "${db}"`)
+  default:
+    throw new Error(`do not recognize database "${db}"`)
+  }
 }
 
+async function runStatementsFromFile(knex, filename, split = ';') {
+  const statements = fs
+    .readFileSync(path.join(__dirname, filename), 'utf8')
+    .toString()
+    .split(/;/)
+  try {
+    await Promise.mapSeries(statements.map(stmt => stmt.trim()).filter(stmt => !!stmt), stmt => {
+      console.log(stmt)
+      return knex.raw(stmt)
+    })
+    return knex
+  } catch (err) {
+    console.error(err)
+    knex.destroy()
+    process.exit(1)
+  }
+}

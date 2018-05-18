@@ -1,0 +1,121 @@
+#!/bin/bash
+set -e
+
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+CYAN='\033[36m'
+NC='\033[0m'
+
+PG=1
+MYSQL=1
+
+while [[ $# -gt 0 ]]
+do
+  case $1 in
+    -p|--no-pg)
+      PG=0
+    ;;
+    -m|--no-mysql)
+      MYSQL=0
+    ;;
+    *)
+      echo unrecognized option $1
+      exit 1
+    ;;
+  esac
+  shift # past argument or value
+done
+
+# Clear the URLs to make sure they aren't accidentally set by environment
+MYSQL_URL=
+PG_URL=
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$DIR/env"
+
+if [ $MYSQL = 1 ]; then
+  echo -e "$YELLOW setting up mysql server...$NC"
+  echo -e "$CYAN MYSQL_URL=$MYSQL_URL$NC"
+
+  mysql_running=$(isContainerRunning "$MYSQL_DOCKER_NAME")
+  if [[ "$mysql_running" -ne "1" ]]
+  then
+    docker pull "$MYSQL_IMAGE" > /dev/null
+    docker run --name "$MYSQL_DOCKER_NAME" -d --rm -e MYSQL_ROOT_HOST=% -e MYSQL_ALLOW_EMPTY_PASSWORD=true -p $MYSQL_PORT:3306 "$MYSQL_IMAGE" > /dev/null
+  fi
+
+  databases=""
+  for i in {1..20}
+  do
+    databases=$(docker exec -i "$MYSQL_DOCKER_NAME" mysql <<< "show databases" 2> /dev/null) || true
+    if [[ ! -z "$databases" ]]
+    then
+      break
+    else
+      sleep 1
+    fi
+  done
+  if [[ -z "$databases" ]]
+  then
+    echo -e "$RED mysql server was not responding after 20 seconds...$NC"
+    exit 1
+  else
+    if ! echo $databases | grep test1 > /dev/null
+    then
+      echo -e "$YELLOW creating database test1$NC"
+      docker exec -i "$MYSQL_DOCKER_NAME" mysql <<< "CREATE DATABASE test1" > /dev/null
+    fi
+    if ! echo $databases | grep test2 > /dev/null
+    then
+      echo -e "$YELLOW creating database test2$NC"
+      docker exec -i "$MYSQL_DOCKER_NAME" mysql <<< "CREATE DATABASE test2" > /dev/null
+    fi
+    echo -e "${GREEN} mysql server setup$NC\n"
+  fi
+fi
+
+if [ $PG = 1 ]; then
+  echo -e "$YELLOW setting up postgres server...$NC"
+  echo -e "$CYAN PG_URL=$PG_URL$NC"
+
+  postgres_running=$(isContainerRunning "$POSTGRES_DOCKER_NAME")
+  if [[ "$postgres_running" -ne "1" ]]
+  then
+    docker pull "$PG_IMAGE" > /dev/null
+    docker run --name "$POSTGRES_DOCKER_NAME" -d --rm -e POSTGRES_USER=$PG_USER -e POSTGRES_PASSWORD= -p $PG_PORT:5432 "$PG_IMAGE" > /dev/null
+  fi
+
+  databases=""
+  for i in {1..20}
+  do
+    databases=$(docker exec -i "$POSTGRES_DOCKER_NAME" psql <<< "\l" 2> /dev/null) || true
+    if [[ ! -z "$databases" ]]
+    then
+      break
+    else
+      sleep 1
+    fi
+  done
+  if [[ -z "$databases" ]]
+  then
+    echo -e "$RED postgres server was not responding after 20 seconds...$NC"
+    exit 1
+  else
+    if ! echo $databases | grep test1 > /dev/null
+    then
+      echo -e "$YELLOW creating database test1$NC"
+      docker exec -i "$POSTGRES_DOCKER_NAME" psql <<< "CREATE DATABASE test1" > /dev/null
+    fi
+    if ! echo $databases | grep test2 > /dev/null
+    then
+      echo -e "$YELLOW creating database test2$NC"
+      docker exec -i "$POSTGRES_DOCKER_NAME" psql <<< "CREATE DATABASE test2" > /dev/null
+    fi
+    if ! echo $databases | grep demo > /dev/null
+    then
+      echo -e "$YELLOW creating database demo$NC"
+      docker exec -i "$POSTGRES_DOCKER_NAME" psql <<< "CREATE DATABASE demo" > /dev/null
+    fi
+    echo -e "${GREEN} postgres server setup$NC\n"
+  fi
+fi

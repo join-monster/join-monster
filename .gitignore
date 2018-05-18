@@ -6,3 +6,6 @@ coverage/
 .env
 .idea.txt
 .idea
+*.log
+*.sl3
+yarn.lock

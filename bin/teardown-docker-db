@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+CYAN='\033[36m'
+NC='\033[0m'
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "$DIR/env"
+
+mysql_running=$(isContainerRunning "$MYSQL_DOCKER_NAME")
+if [[ "$mysql_running" -eq "1" ]]
+then
+  docker rm -f -v "$MYSQL_DOCKER_NAME"
+  echo -e "${GREEN} mysql server shutdown$NC\n"
+fi
+
+postgres_running=$(isContainerRunning "$POSTGRES_DOCKER_NAME")
+if [[ "$postgres_running" -eq "1" ]]
+then
+  docker rm -f -v "$POSTGRES_DOCKER_NAME"
+  echo -e "${GREEN} postgres server shutdown$NC\n"
+fi
