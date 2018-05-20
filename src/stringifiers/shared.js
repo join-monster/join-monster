@@ -21,9 +21,9 @@ export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, 
 export function keysetPagingSelect(expressions, table, whereCondition, order, limit, as, options = {}) {
   let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
-  const selections = [ `${q(as)}.*`, ...expressions.map(expr => `${expr.expr} AS ${expr.as}`) ].join(',\n  ')
+  const selections = [ `${q(as)}.*`, ...new Set(expressions.map(expr => `${expr.expr} AS ${q(expr.as)}`)) ].join(',\n  ')
   whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
-  order = orderColumnsToString(order.columns, q, order.table)
+  order = orderColumnsToString(order, q)
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
@@ -51,11 +51,11 @@ export function offsetPagingSelect(expressions, table, pagingWhereConditions, or
   q = q || doubleQuote
   const selections = [
     `${q(as)}.*`,
-    ...expressions.map(expr => `${expr.expr} AS ${expr.as}`),
+    ...new Set(expressions.map(expr => `${expr.expr} AS ${q(expr.as)}`)),
     `count(*) OVER () AS ${q('$total')}`
   ].join(',\n  ')
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
-  order = orderColumnsToString(order.columns, q, order.table)
+  order = orderColumnsToString(order, q)
   if (joinCondition) {
     return `\
 ${joinType || ''} JOIN LATERAL (
@@ -78,28 +78,30 @@ FROM (
 ) ${q(as)}`
 }
 
-export function orderColumnsToString(orderColumns, q, as) {
-  const conditions = []
-  for (let column in orderColumns) {
-    conditions.push(`${as ? q(as) + '.' : ''}${q(column)} ${orderColumns[column]}`)
-  }
-  return conditions.join(', ')
+export function orderColumnsToString(order, q) {
+  return order.map(entry => `${entry.table ? `${q(entry.table)}.` : ''}${q(entry.column)} ${entry.direction}`).join(', ')
 }
 
 // find out what the limit, offset, order by parts should be from the relay connection args if we're paginating
-export function interpretForOffsetPaging(node, dialect) {
+export function interpretForOffsetPaging(node, dialect, expressions) {
   const { name } = dialect
   if (idx(node, _ => _.args.last)) {
     throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
   }
 
-  const order = {}
+  let sortTable
+  let orderBy
   if (node.orderBy) {
-    order.table = node.as
-    order.columns = node.orderBy
+    sortTable = node.as
+    orderBy = node.orderBy
   } else {
-    order.table = node.junction.as
-    order.columns = node.junction.orderBy
+    sortTable = node.junction.as
+    orderBy = node.junction.orderBy
+  }
+  const order = []
+  for (let column in orderBy) {
+    const direction = orderBy[column]
+    addToOrder(order, column, direction, sortTable, expressions, true)
   }
 
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
@@ -117,37 +119,27 @@ export function interpretForOffsetPaging(node, dialect) {
   return { limit, offset, order }
 }
 
-export function interpretForKeysetPaging(node, dialect) {
+export function interpretForKeysetPaging(node, dialect, expressions) {
   const { name } = dialect
 
   let sortTable
   let sortKey
-  let descending
-  const order = { columns: {} }
   if (node.sortKey) {
-    sortKey = node.sortKey
-    descending = sortKey.order.toUpperCase() === 'DESC'
     sortTable = node.as
-    // flip the sort order if doing backwards paging
-    if (idx(node, _ => _.args.last)) {
-      descending = !descending
-    }
-    for (let column of wrap(sortKey.key)) {
-      order.columns[column] = descending ? 'DESC' : 'ASC'
-    }
-    order.table = node.as
+    sortKey = node.sortKey
   } else {
-    sortKey = node.junction.sortKey
-    descending = sortKey.order.toUpperCase() === 'DESC'
     sortTable = node.junction.as
-    // flip the sort order if doing backwards paging
-    if (idx(node, _ => _.args.last)) {
-      descending = !descending
-    }
-    for (let column of wrap(sortKey.key)) {
-      order.columns[column] = descending ? 'DESC' : 'ASC'
-    }
-    order.table = node.junction.as
+    sortKey = node.junction.sortKey
+  }
+  let descending = sortKey.order.toUpperCase() === 'DESC'
+  // flip the sort order if doing backwards paging
+  if (idx(node, _ => _.args.last)) {
+    descending = !descending
+  }
+  const order = []
+  for (let column of wrap(sortKey.key)) {
+    const direction = descending ? 'DESC' : 'ASC'
+    addToOrder(order, column, direction, sortTable, expressions, true)
   }
 
   let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
@@ -175,6 +167,21 @@ export function interpretForKeysetPaging(node, dialect) {
   }
 
   return { limit, order, whereCondition }
+}
+
+export function addToOrder(order, column, direction, as, expressions, stripTable) {
+  // Don't use a table prefix for order for computed expressions
+  let table = as
+  for (const expr of expressions) {
+    if (expr.column === column) {
+      column = expr.as
+      if (stripTable) {
+        table = undefined
+      }
+      break
+    }
+  }
+  order.push({ table, column, direction })
 }
 
 // the cursor contains the sort keys. it needs to match the keys specified in the `sortKey` on this field in the schema

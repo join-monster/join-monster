@@ -299,10 +299,8 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
     children.push(columnToASTChild(config.typeHint, namespace))
   }
 
-  // go handle the pagination information
-  if (sqlASTNode.paginate) {
-    handleColumnsRequiredForPagination(sqlASTNode, namespace)
-  }
+  // add columns needed for sorting
+  handleColumnsRequiredForSorting(sqlASTNode, gqlType._fields, namespace)
 
   if (queryASTNode.selectionSet) {
     if (gqlType.constructor.name === 'GraphQLUnionType' || gqlType.constructor.name === 'GraphQLInterfaceType') {
@@ -490,6 +488,18 @@ function columnToASTChild(columnName, namespace) {
   }
 }
 
+function expressionToASTChild(columnName, sqlExpr, namespace, args, isGeneratedSortColumn) {
+  return {
+    type: 'expression',
+    name: columnName,
+    fieldName: columnName,
+    sqlExpr,
+    as: namespace.generate('column', columnName),
+    args,
+    isGeneratedSortColumn
+  }
+}
+
 // generate a name for a composite key based on the individual column names smashed together
 // slice them to help prevent exceeding oracle's 30-char identifier limit
 function toClumsyName(keyArr) {
@@ -512,27 +522,96 @@ function keyToASTChild(key, namespace) {
   }
 }
 
-function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
+function handleColumnsRequiredForSorting(sqlASTNode, fieldTypes, namespace) {
   if (sqlASTNode.sortKey || idx(sqlASTNode, _ => _.junction.sortKey)) {
     const sortKey = sqlASTNode.sortKey || sqlASTNode.junction.sortKey
-    assert(sortKey.order, '"sortKey" must have "order"')
+    assert(sortKey.order || !sqlASTNode.paginate, '"sortKey" must have "order"')
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
     for (let column of wrap(ensure(sortKey, 'key'))) {
-      const newChild = columnToASTChild(column, namespace)
-      // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
-      if (!sqlASTNode.sortKey) {
+      // If we find the field and it is an expression, add a child node to make sure it gets
+      // selected, so that we can sort on it
+      const field = findFieldInTableOrJunction(sqlASTNode, fieldTypes, column, sqlASTNode.paginate)
+      let newChild
+      if (field && field.sqlExpr) {
+        newChild = expressionToASTChild(
+          column,
+          field.sqlExpr,
+          namespace,
+          sqlASTNode.args,
+          true, // isGeneratedSortColumn
+        )
+      } else if (sqlASTNode.paginate) {
+        newChild = columnToASTChild(column, namespace)
+      }
+      if (newChild) {
+        // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
+        if (sqlASTNode.junction) {
+          if (!field) {
+            // We couldn't find the field so this field is probably an unlisted field on the junction table
+            newChild.fromOtherTable = sqlASTNode.junction.as
+          }
+          newChild.junctionTable = sqlASTNode.junction.as
+        }
+        sqlASTNode.children.push(newChild)
+      }
+    }
+  } else if (sqlASTNode.orderBy || idx(sqlASTNode, _ => _.junction.orderBy)) {
+    if (sqlASTNode.paginate) {
+      // this type of paging can visit arbitrary pages, so lets provide the total number of items
+      // on this special "$total" column which we will compute in the query
+      const newChild = columnToASTChild('$total', namespace)
+      if (sqlASTNode.junction) {
         newChild.fromOtherTable = sqlASTNode.junction.as
       }
       sqlASTNode.children.push(newChild)
     }
-  } else if (sqlASTNode.orderBy || idx(sqlASTNode, _ => _.junction.orderBy)) {
-    // this type of paging can visit arbitrary pages, so lets provide the total number of items
-    // on this special "$total" column which we will compute in the query
-    const newChild = columnToASTChild('$total', namespace)
-    if (sqlASTNode.junction) {
-      newChild.fromOtherTable = sqlASTNode.junction.as
+
+    const orderBy = sqlASTNode.orderBy || sqlASTNode.junction.orderBy
+    for (let column in orderBy) {
+      // If we find the field and it is an expression, add a child node to make sure it gets
+      // selected, so that we can sort on it
+      const field = findFieldInTableOrJunction(sqlASTNode, fieldTypes, column, sqlASTNode.paginate)
+      if (field && field.sqlExpr) {
+        const newChild = expressionToASTChild(
+          column,
+          field.sqlExpr,
+          namespace,
+          sqlASTNode.args,
+          true, // isGeneratedSortColumn
+        )
+        if (sqlASTNode.junction) {
+          if (!field) {
+            // We couldn't find the field so this field is probably an unlisted field on the junction table
+            newChild.fromOtherTable = sqlASTNode.junction.as
+          }
+          newChild.junctionTable = sqlASTNode.junction.as
+        }
+        sqlASTNode.children.push(newChild)
+      }
     }
-    sqlASTNode.children.push(newChild)
+  }
+}
+
+function findFieldInTableOrJunction(sqlASTNode, fields, column, paginate) {
+  let field = findField(fields, column)
+  if (!field && sqlASTNode.junction) {
+    const junctionField = findField(fields, sqlASTNode.fieldName)
+    assert(junctionField, 'We should always find the junction table')
+    const joinedTableFields = paginate
+      ? junctionField.type._fields.edges.type.ofType._fields.node.type._fields
+      : junctionField.type.ofType._fields
+    assert(joinedTableFields, 'We should always find the joined table fields')
+    field = findField(joinedTableFields, column)
+  }
+  return field
+}
+
+function findField(fields, column) {
+  for (let key in fields) {
+    const field = fields[key]
+    if (column === field.sqlColumn || column === field.name) {
+      return field
+    }
   }
 }
 

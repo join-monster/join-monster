@@ -356,11 +356,11 @@ test('it should handle raw SQL expressions', async t => {
   const query = `{
     user(id: 2) {
       fullName
-      capitalizedLastName
+      transformedLastName
     }
   }`
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.is(data.user.fullName.split(' ')[1].toUpperCase(), data.user.capitalizedLastName)
+  t.is(data.user.fullName.split(' ')[1].toUpperCase(), data.user.transformedLastName)
 })
 

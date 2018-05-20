@@ -69,7 +69,7 @@ test('it should handle order on many-to-many', async t => {
   t.deepEqual(expect, data)
 })
 
-test('it sould handle order on many-to-many', async t => {
+test('it should handle order on many-to-many reverse', async t => {
   const query = `{
     user(id: 3) {
       fullName
@@ -99,3 +99,147 @@ test('it sould handle order on many-to-many', async t => {
   t.deepEqual(expect, data)
 })
 
+test('it should handle computed column order on root', async t => {
+  const query = `{
+    users(order: [ transformedLastName ]) {
+      id, transformedLastName
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = [
+    {
+      id: 3,
+      transformedLastName: 'BAR'
+    },
+    {
+      id: 1,
+      transformedLastName: 'CARLSON'
+    },
+    {
+      id: 2,
+      transformedLastName: 'ELDER'
+    }
+  ]
+  t.deepEqual(expect, data.users)
+})
+
+test('it should handle computed column order without requesting column', async t => {
+  const query = `{
+    users(order: [ transformedLastName ]) {
+      id
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = [
+    {
+      id: 3
+    },
+    {
+      id: 1
+    },
+    {
+      id: 2
+    }
+  ]
+  t.deepEqual(expect, data.users)
+})
+
+test('it should handle computed column order with arguments', async t => {
+  const query = `{
+    users(order: [ transformedLastName ]) {
+      id
+      transformedLastName(lowercase:true)
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = [
+    {
+      id: 3,
+      transformedLastName: 'bar'
+    },
+    {
+      id: 1,
+      transformedLastName: 'carlson'
+    },
+    {
+      id: 2,
+      transformedLastName: 'elder'
+    }
+  ]
+  t.deepEqual(expect, data.users)
+})
+
+test('it should handle computed column order on nested field', async t => {
+  const query = `{
+    user(id: 2) {
+      posts(order: [ numComments ]) {
+        id
+        numComments
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = [
+    {
+      id: 1,
+      numComments: 3
+    },
+    {
+      id: 3,
+      numComments: 1
+    }
+  ]
+  t.deepEqual(expect, data.user.posts)
+})
+
+test('it should handle computed column order on many-to-many', async t => {
+  const query = `{
+    user(id: 3) {
+      following(order: [ transformedLastName ]) {
+        id
+        transformedLastName
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = [
+    {
+      id: 1,
+      transformedLastName: 'CARLSON'
+    },
+    {
+      id: 2,
+      transformedLastName: 'ELDER'
+    }
+  ]
+  t.deepEqual(expect, data.user.following)
+})
+
+test('it should handle computed column order on many-to-many', async t => {
+  const query = `{
+    user(id: 3) {
+      following(order: [ transformedLastName ]) {
+        id
+        transformedLastName
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = [
+    {
+      id: 1,
+      transformedLastName: 'CARLSON'
+    },
+    {
+      id: 2,
+      transformedLastName: 'ELDER'
+    }
+  ]
+  t.deepEqual(expect, data.user.following)
+})

@@ -1,4 +1,5 @@
 import {
+  GraphQLEnumType,
   GraphQLObjectType,
   GraphQLList,
   GraphQLNonNull,
@@ -52,10 +53,11 @@ const User = new GraphQLObjectType({
       sqlDeps: [ 'first_name', 'last_name' ],
       resolve: user => `${user.first_name} ${user.last_name}`
     },
-    capitalizedLastName: {
-      description: 'The last name WITH CAPS LOCK',
+    transformedLastName: {
+      description: 'The last name transformed upper case or lower case',
       type: GraphQLString,
-      sqlExpr: (table, args, context) => `upper(${table}.${q('last_name', DB)})` // eslint-disable-line no-unused-vars
+      args: { lowercase: { type: GraphQLBoolean } },
+      sqlExpr: (table, args, context) => `${args.lowercase ? 'lower' : 'upper'}(${table}.${q('last_name', DB)})` // eslint-disable-line no-unused-vars
     },
     comments: {
       description: 'Comments the user has written on people\'s posts',
@@ -84,18 +86,40 @@ const User = new GraphQLObjectType({
         active: {
           description: 'Get only posts not archived',
           type: GraphQLBoolean
+        },
+        order: {
+          description: 'Order to return the posts',
+          type: new GraphQLList(
+            new GraphQLEnumType({
+              name: 'UsersPostsOrder',
+              values: { id: { value: 'id' }, created_at: { value: 'created_at' }, numComments: { value: 'numComments' } }
+            })
+          )
         }
       },
-      where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null,
-      orderBy: { body: 'desc' },
-      ...STRATEGY === 'batch' ? {
-        sqlBatch: {
-          thisKey: 'author_id',
-          parentKey: 'id'
+      where: (table, args) => (args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null),
+      orderBy: args => {
+        if (!args.order) {
+          return {
+            body: 'desc'
+          }
         }
-      } : {
-        sqlJoin: (userTable, postTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
-      }
+        const order = {}
+        args.order.forEach(col => {
+          order[col] = 'desc'
+        })
+        return order
+      },
+      ...(STRATEGY === 'batch'
+        ? {
+          sqlBatch: {
+            thisKey: 'author_id',
+            parentKey: 'id'
+          }
+        }
+        : {
+          sqlJoin: (userTable, postTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
+        })
     },
     following: {
       description: 'Users that this user is following',
@@ -103,10 +127,27 @@ const User = new GraphQLObjectType({
       args: {
         name: { type: GraphQLString },
         oldestFirst: { type: GraphQLBoolean },
-        intimacy: { type: IntimacyLevel }
+        intimacy: { type: IntimacyLevel },
+        order: {
+          type: new GraphQLList(
+            new GraphQLEnumType({
+              name: 'UsersFollowingOrder',
+              values: { id: { value: 'id' }, transformedLastName: { value: 'transformedLastName' } }
+            })
+          )
+        }
       },
-      orderBy: 'first_name',
-      where: (table, args) => args.name ? `${table}.${q('first_name', DB)} = '${args.name}'` : false,
+      orderBy: args => {
+        if (!args.order) {
+          return 'first_name'
+        }
+        const order = {}
+        args.order.forEach(col => {
+          order[col] = 'asc'
+        })
+        return order
+      },
+      where: (table, args) => (args.name ? `${table}.${q('first_name', DB)} = '${args.name}'` : false),
       junction: {
         sqlTable: q('relationships', DB),
         orderBy: args => args.oldestFirst ? { followee_id: 'desc' } : null,

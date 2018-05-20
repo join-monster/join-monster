@@ -1,4 +1,5 @@
 import {
+  GraphQLEnumType,
   GraphQLObjectType,
   GraphQLList,
   GraphQLString,
@@ -55,18 +56,37 @@ export default new GraphQLObjectType({
       type: UserConnection,
       args: {
         search: { type: GraphQLString },
-        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
+        order: {
+          type: new GraphQLList(
+            new GraphQLEnumType({
+              name: 'UsersOrder',
+              values: { id: { value: 'id' }, capitalizedLastName: { value: 'capitalizedLastName' } }
+            })
+          )
+        },
+        ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {
-          ({ orderBy: 'id' })
+          ({
+            orderBy: args => {
+              if (!args.order) {
+                return 'id'
+              }
+              const order = {}
+              args.order.forEach(col => {
+                order[col] = 'asc'
+              })
+              return order
+            }
+          })
         } else if (PAGINATE === 'keyset') {
           ({
-            sortKey: {
+            sortKey: args => ({
               order: 'asc',
-              key: 'id'
-            }
+              key: args.order || 'id'
+            })
           })
         }
       },

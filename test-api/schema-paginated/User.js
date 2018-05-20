@@ -1,4 +1,5 @@
 import {
+  GraphQLEnumType,
   GraphQLObjectType,
   GraphQLList,
   GraphQLString,
@@ -44,6 +45,11 @@ const User = new GraphQLObjectType({
       type: GraphQLString,
       sqlDeps: [ 'first_name', 'last_name' ],
       resolve: user => `${user.first_name} ${user.last_name}`
+    },
+    capitalizedLastName: {
+      description: 'The last name WITH CAPS LOCK',
+      type: GraphQLString,
+      sqlExpr: (table, args, context) => `upper(${table}.${q('last_name', DB)})` // eslint-disable-line no-unused-vars
     },
     comments: {
       description: 'Comments the user has written on people\'s posts',
@@ -106,22 +112,40 @@ const User = new GraphQLObjectType({
       type: PostConnection,
       args: {
         search: { type: GraphQLString },
-        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
+        order: {
+          description: 'Order to return the posts',
+          type: new GraphQLList(
+            new GraphQLEnumType({
+              name: 'UsersPostsOrder',
+              values: { id: { value: 'id' }, created_at: { value: 'created_at' }, numComments: { value: 'numComments' } }
+            })
+          )
+        },
+        ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {
           ({
-            orderBy: args => ({ // eslint-disable-line no-unused-vars
-              created_at: 'desc',
-              id: 'asc'
-            })
+            orderBy: args => {
+              if (!args.order) {
+                return {
+                  created_at: 'desc',
+                  id: 'desc'
+                }
+              }
+              const order = {}
+              args.order.forEach(col => {
+                order[col] = 'desc'
+              })
+              return order
+            }
           })
         } else if (PAGINATE === 'keyset') {
           ({
-            sortKey: args => ({ // eslint-disable-line no-unused-vars
+            sortKey: args => ({
               order: 'desc',
-              key: [ 'created_at', 'id' ]
+              key: args.order || [ 'created_at', 'id' ]
             })
           })
         } else {
@@ -157,24 +181,42 @@ const User = new GraphQLObjectType({
       args: {
         ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
         intimacy: { type: IntimacyLevel },
-        sortOnMain: { type: GraphQLBoolean }
+        sortOnMain: { type: GraphQLBoolean },
+        order: {
+          type: new GraphQLList(
+            new GraphQLEnumType({
+              name: 'UsersFollowingOrder',
+              values: {
+                id: { value: 'id' },
+                created_at: { value: 'created_at' },
+                capitalizedLastName: { value: 'capitalizedLastName' }
+              }
+            })
+          )
+        }
       },
       where: table => `${table}.${q('email_address', DB)} IS NOT NULL`,
       sqlPaginate: !!PAGINATE,
       ... do {
         if (PAGINATE === 'offset') {
           ({
-            orderBy: args => args.sortOnMain ? {
-              created_at: 'ASC',
-              id: 'ASC'
-            } : null
+            orderBy: args => {
+              if (!args.sortOnMain) {
+                return null
+              }
+              if (!args.order) {
+                return { created_at: 'asc', id: 'asc' }
+              }
+              const order = {}
+              args.order.forEach(col => {
+                order[col] = 'asc'
+              })
+              return order
+            }
           })
         } else if (PAGINATE === 'keyset') {
           ({
-            sortKey: args => args.sortOnMain ? {
-              order: 'ASC',
-              key: [ 'created_at', 'id' ]
-            } : null
+            sortKey: args => (args.sortOnMain ? { order: 'ASC', key: args.order || [ 'created_at', 'id' ] } : null)
           })
         } else {
           ({
@@ -204,17 +246,32 @@ const User = new GraphQLObjectType({
         ... do {
           if (PAGINATE === 'offset') {
             ({
-              orderBy: args => args.sortOnMain ? null : {
-                created_at: 'DESC',
-                followee_id: 'ASC'
+              orderBy: args => {
+                if (args.sortOnMain) {
+                  return null
+                }
+                if (!args.order) {
+                  return {
+                    created_at: 'desc',
+                    followee_id: 'asc'
+                  }
+                }
+                const order = {}
+                args.order.forEach(col => {
+                  order[col] = 'asc'
+                })
+                return order
               }
             })
           } else if (PAGINATE === 'keyset') {
             ({
-              sortKey: args => args.sortOnMain ? null : {
-                order: 'ASC',
-                key: [ 'created_at', 'followee_id' ]
-              }
+              sortKey: args =>
+                args.sortOnMain
+                  ? null
+                  : {
+                    order: 'asc',
+                    key: args.order || [ 'created_at', 'followee_id' ]
+                  }
             })
           }
         },

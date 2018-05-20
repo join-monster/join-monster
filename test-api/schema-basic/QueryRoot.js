@@ -1,4 +1,5 @@
 import {
+  GraphQLEnumType,
   GraphQLObjectType,
   GraphQLList,
   GraphQLString,
@@ -49,11 +50,28 @@ export default new GraphQLObjectType({
     users: {
       type: new GraphQLList(User),
       args: {
-        ids: { type: new GraphQLList(GraphQLInt) }
+        ids: { type: new GraphQLList(GraphQLInt) },
+        order: {
+          type: new GraphQLList(
+            new GraphQLEnumType({
+              name: 'UsersOrder',
+              values: { id: { value: 'id' }, transformedLastName: { value: 'transformedLastName' } }
+            })
+          )
+        }
       },
-      where: (table, args) => args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
-      orderBy: 'id',
-      resolve: async (parent, args, context, resolveInfo) => {
+      where: (table, args) => (args.ids ? `${table}.id IN (${args.ids.join(',')})` : null),
+      orderBy: args => {
+        if (!args.order) {
+          return 'id'
+        }
+        const order = {}
+        args.order.forEach(col => {
+          order[col] = 'asc'
+        })
+        return order
+      },
+      resolve: async(parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },

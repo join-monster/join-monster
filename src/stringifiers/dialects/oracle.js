@@ -1,8 +1,4 @@
-import {
-  interpretForOffsetPaging,
-  interpretForKeysetPaging,
-  orderColumnsToString
-} from '../shared'
+import { interpretForOffsetPaging, interpretForKeysetPaging, orderColumnsToString } from '../shared'
 import { filter } from 'lodash'
 
 function recursiveConcat(keys) {
@@ -16,16 +12,20 @@ const q = str => `"${str}"`
 
 function keysetPagingSelect(expressions, table, whereCondition, order, limit, as, options = {}) {
   let { joinCondition, joinType, extraJoin } = options
-  const selections = [ `"${as}".*`, ...expressions.map(expr => `${expr.expr} AS ${expr.as}`) ].join(',\n  ')
+  const selections = [ `${q(as)}.*`, ...new Set(expressions.map(expr => `${expr.expr} AS ${q(expr.as)}`)) ].join(',\n  ')
   whereCondition = filter(whereCondition).join(' AND ') || '1 = 1'
-  order = orderColumnsToString(order.columns, q, order.table)
+  order = orderColumnsToString(order, q)
   if (joinCondition) {
     return `\
 ${ joinType === 'LEFT' ? 'OUTER' : 'CROSS' } APPLY (
   SELECT ${selections}
-  FROM ${table} "${as}"
-  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
-    ON ${extraJoin.condition}` : ''}
+  FROM ${table} ${q(as)}
+  ${
+  extraJoin
+    ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}`
+    : ''
+}
   WHERE ${whereCondition}
   ORDER BY ${order}
   FETCH FIRST ${limit} ROWS ONLY
@@ -34,7 +34,7 @@ ${ joinType === 'LEFT' ? 'OUTER' : 'CROSS' } APPLY (
   return `\
 FROM (
   SELECT ${selections}
-  FROM ${table} "${as}"
+  FROM ${table} ${q(as)}
   WHERE ${whereCondition}
   ORDER BY ${order}
   FETCH FIRST ${limit} ROWS ONLY
@@ -44,12 +44,12 @@ FROM (
 function offsetPagingSelect(expressions, table, pagingWhereConditions, order, limit, offset, as, options = {}) {
   let { joinCondition, joinType, extraJoin } = options
   const selections = [
-    `"${as}".*`,
-    ...expressions.map(expr => `${expr.expr} AS ${expr.as}`),
+    `${q(as)}.*`,
+    ...new Set(expressions.map(expr => `${expr.expr} AS ${q(expr.as)}`)),
     `count(*) OVER () AS ${q('$total')}`
   ].join(',\n  ')
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || '1 = 1'
-  order = orderColumnsToString(order.columns, q, order.table)
+  order = orderColumnsToString(order, q)
   if (joinCondition) {
     return `\
 ${joinType === 'LEFT' ? 'OUTER' : 'CROSS'} APPLY (
@@ -84,7 +84,7 @@ const dialect = module.exports = {
   handlePaginationAtRoot: async function(parent, node, context, expressions, tables) {
     const pagingWhereConditions = []
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
         pagingWhereConditions.push(await node.where(`"${node.as}"`, node.args || {}, context, node))
@@ -107,7 +107,7 @@ const dialect = module.exports = {
 
     // which type of pagination are they using?
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
         keysetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, node.as, {
@@ -158,7 +158,7 @@ const dialect = module.exports = {
       }
     }
     if (node.sortKey || node.junction.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
         keysetPagingSelect(
@@ -172,7 +172,7 @@ const dialect = module.exports = {
         )
       )
     } else if (node.orderBy || node.junction.orderBy) {
-      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect, expressions)
       tables.push(
         offsetPagingSelect(
           expressions,
@@ -198,7 +198,7 @@ const dialect = module.exports = {
     tables.push(`FROM (${arrToTableUnion(batchScope)}) "temp"`)
     const lateralJoinCondition = `"${node.as}"."${node.sqlBatch.thisKey.name}" = "temp"."value"`
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
         keysetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, node.as, {
@@ -206,7 +206,7 @@ const dialect = module.exports = {
         })
       )
     } else if (node.orderBy) {
-      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect, expressions)
       tables.push(
         offsetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, offset, node.as, {
           joinCondition: lateralJoinCondition
@@ -238,7 +238,7 @@ const dialect = module.exports = {
       }
     }
     if (node.sortKey || node.junction.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
         keysetPagingSelect(
@@ -252,7 +252,7 @@ const dialect = module.exports = {
         )
       )
     } else if (node.orderBy || node.junction.orderBy) {
-      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect, expressions)
       tables.push(
         offsetPagingSelect(
           expressions,

@@ -726,6 +726,163 @@ test('should handle order columns on the junction table', async t => {
   t.deepEqual(expect, data)
 })
 
+test('should handle computed column order', async t => {
+  const query = `{
+    users(first: 3, order: [ capitalizedLastName ]) {
+      edges {
+        node { id, capitalizedLastName }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = {
+    users: {
+      edges: [
+        {
+          node: {
+            id: toGlobalId('User', 3),
+            capitalizedLastName: 'ABERNATHY'
+          }
+        },
+        {
+          node: {
+            id: toGlobalId('User', 4),
+            capitalizedLastName: 'BOGISICH'
+          }
+        },
+        {
+          node: {
+            id: toGlobalId('User', 6),
+            capitalizedLastName: 'CARLSON'
+          }
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('should handle computed column order without requesting column', async t => {
+  const query = `{
+    users(first: 3, order: [ capitalizedLastName ]) {
+      edges {
+        node { id, fullName }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = {
+    users: {
+      edges: [
+        {
+          node: {
+            id: toGlobalId('User', 3),
+            fullName: 'Coleman Abernathy'
+          }
+        },
+        {
+          node: {
+            id: toGlobalId('User', 4),
+            fullName: 'Lulu Bogisich'
+          }
+        },
+        {
+          node: {
+            id: toGlobalId('User', 6),
+            fullName: 'Andrew Carlson'
+          }
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('should handle computed column order on nested field', async t => {
+  const query = `{
+    user(id: 1) {
+      posts(first: 3, order: [ numComments, id ]) {
+        edges {
+          node { id, body, numComments }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = [
+    {
+      node: {
+        id: toGlobalId('Post', 47),
+        body: [
+          'Dolores fugit qui eaque repellendus perspiciatis.',
+          'Sequi est eligendi beatae at. Pariatur ut placeat exercitationem facere quidem omnis.'
+        ].join(' '),
+        numComments: 10
+      }
+    },
+    {
+      node: {
+        id: toGlobalId('Post', 38),
+        body: [
+          'Quas omnis dignissimos eveniet non minus in voluptas.',
+          'Aliquam porro non nihil impedit officia ut.'
+        ].join(' '),
+        numComments: 7
+      }
+    },
+    {
+      node: {
+        id: toGlobalId('Post', 28),
+        body: 'Eum iure laudantium officia doloremque et ut fugit ut. Magni eveniet ipsa.',
+        numComments: 7
+      }
+    }
+  ]
+  t.deepEqual(expect, data.user.posts.edges)
+})
+
+test('should handle computed column order on many to many', async t => {
+  const query = `{
+    user(id: 3) {
+      capitalizedLastName
+      following(order: [ capitalizedLastName ]) {
+        edges {
+          node {
+            id
+            capitalizedLastName
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const expect = [
+    {
+      node: {
+        id: toGlobalId('User', 3),
+        capitalizedLastName: 'ABERNATHY'
+      }
+    },
+    {
+      node: {
+        id: toGlobalId('User', 4),
+        capitalizedLastName: 'BOGISICH'
+      }
+    },
+    {
+      node: {
+        id: toGlobalId('User', 2),
+        capitalizedLastName: 'HYATT'
+      }
+    }
+  ]
+  t.deepEqual(expect, data.user.following.edges)
+})
+
 test('should handle an interface type', async t => {
   const query = `{
     user(id: 1) {
@@ -785,4 +942,3 @@ test('should handle an interface type', async t => {
   }
   t.deepEqual(expect, data.user.writtenMaterial)
 })
-

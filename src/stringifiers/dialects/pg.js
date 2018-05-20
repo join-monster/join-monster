@@ -27,7 +27,7 @@ const dialect = module.exports = {
 
     // which type of pagination are they using?
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
         keysetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, node.as, {
@@ -36,7 +36,7 @@ const dialect = module.exports = {
         })
       )
     } else if (node.orderBy) {
-      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect, expressions)
       tables.push(
         offsetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, offset, node.as, {
           joinCondition,
@@ -76,7 +76,7 @@ const dialect = module.exports = {
       }
     }
     if (node.sortKey || node.junction.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
         keysetPagingSelect(
@@ -90,7 +90,7 @@ const dialect = module.exports = {
         )
       )
     } else if (node.orderBy || node.junction.orderBy) {
-      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect, expressions)
       tables.push(
         offsetPagingSelect(
           expressions,
@@ -139,7 +139,7 @@ const dialect = module.exports = {
       }
     }
     if (node.sortKey || node.junction.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
         keysetPagingSelect(
@@ -153,7 +153,7 @@ const dialect = module.exports = {
         )
       )
     } else if (node.orderBy || node.junction.orderBy) {
-      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect, expressions)
       tables.push(
         offsetPagingSelect(
           expressions,
@@ -172,7 +172,7 @@ const dialect = module.exports = {
   handlePaginationAtRoot: async function(parent, node, context, expressions, tables) {
     const pagingWhereConditions = []
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
         pagingWhereConditions.push(
@@ -181,7 +181,7 @@ const dialect = module.exports = {
       }
       tables.push(keysetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, node.as))
     } else if (node.orderBy) {
-      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect, expressions)
       if (node.where) {
         pagingWhereConditions.push(
           await node.where(`"${node.as}"`, node.args || {}, context, node)
@@ -202,7 +202,7 @@ const dialect = module.exports = {
     tables.push(tempTable)
     const lateralJoinCondition = `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect, expressions)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
         keysetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, node.as, {
@@ -210,7 +210,7 @@ const dialect = module.exports = {
         })
       )
     } else if (node.orderBy) {
-      const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
+      const { limit, offset, order } = interpretForOffsetPaging(node, dialect, expressions)
       tables.push(
         offsetPagingSelect(expressions, node.name, pagingWhereConditions, order, limit, offset, node.as, {
           joinCondition: lateralJoinCondition
