@@ -15,7 +15,11 @@ export function errCheck(t, errors) {
     t.log(errors[0].message)
     // the stack traces get super long with ava becuase it adds a ton of stack frames below each test case
     // lets chop the error messages to focues on the stuff coming from source code
-    t.log(errors[0].stack.split('\n').slice(0, -40).join('\n'))
+    let lines = errors[0].stack.split('\n')
+    if (lines.length > 40) {
+      lines = lines.slice(0, -40)
+    }
+    t.log(lines.join('\n'))
   }
   t.is(errors, undefined)
 }
