@@ -111,7 +111,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   }
 
   // then, get the field from the schema definition
-  let field = parentTypeNode._fields[fieldName]
+  let field = parentTypeNode.getFields()[fieldName]
   if (!field) {
     throw new Error(`The field "${fieldName}" is not in the ${parentTypeNode.name} type.`)
   }
@@ -146,7 +146,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   }
 
   // if its a relay connection, there are several things we need to do
-  if (isObjectType(gqlType) && gqlType._fields && gqlType._fields.edges && gqlType._fields.pageInfo) {
+  if (isObjectType(gqlType) && gqlType.getFields() && gqlType.getFields().edges && gqlType.getFields().pageInfo) {
     grabMany = true
     // grab the types and fields inside the connection
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments)
@@ -560,7 +560,7 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
 // if its a connection type, we need to look up the Node type inside their to find the relevant SQL info
 function stripRelayConnection(gqlType, queryASTNode, fragments) {
   // get the GraphQL Type inside the list of edges inside the Node from the schema definition
-  const strippedType = gqlType._fields.edges.type.ofType._fields.node.type
+  const strippedType = gqlType.getFields().edges.type.ofType.getFields().node.type
   // let's remember those arguments on the connection
   const args = queryASTNode.arguments
   // and then find the fields being selected on the underlying type, also buried within edges and Node

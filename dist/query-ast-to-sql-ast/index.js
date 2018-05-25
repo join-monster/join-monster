@@ -112,7 +112,7 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
     return;
   }
 
-  let field = parentTypeNode._fields[fieldName];
+  let field = parentTypeNode.getFields()[fieldName];
   if (!field) {
     throw new Error(`The field "${fieldName}" is not in the ${parentTypeNode.name} type.`);
   }
@@ -140,7 +140,7 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
     grabMany = true;
   }
 
-  if (isObjectType(gqlType) && gqlType._fields && gqlType._fields.edges && gqlType._fields.pageInfo) {
+  if (isObjectType(gqlType) && gqlType.getFields() && gqlType.getFields().edges && gqlType.getFields().pageInfo) {
     grabMany = true;
 
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments);
@@ -447,7 +447,7 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
 }
 
 function stripRelayConnection(gqlType, queryASTNode, fragments) {
-  const strippedType = gqlType._fields.edges.type.ofType._fields.node.type;
+  const strippedType = gqlType.getFields().edges.type.ofType.getFields().node.type;
 
   const args = queryASTNode.arguments;
 
