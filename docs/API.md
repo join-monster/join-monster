@@ -120,7 +120,7 @@ Function for generating a `JOIN` condition.
 <a name="thunk"></a>
 
 ## thunk : <code>function</code>
-Rather than a constant value, its a function to dynamically return the value.
+Rather than a constant value, it's a function to dynamically return the value.
 
 
 | Param | Type | Description |
