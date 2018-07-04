@@ -12,7 +12,7 @@ const User = new GraphQLObjectType({
     },
     email: {
       type: GraphQLString,
-      // if the column name is different, it must be specified specified
+      // if the column name is different, it must be specified
       sqlColumn: 'email_address'
     },
     idEncoded: {
