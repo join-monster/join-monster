@@ -148,8 +148,8 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
 
   // is this a table in SQL?
   if (
-    !field.jmIgnoreTable &&
-    TABLE_TYPES.includes(gqlType.constructor.name)
+    !field.jmIgnoreTable
+    && TABLE_TYPES.includes(gqlType.constructor.name)
     && config.sqlTable
   ) {
     if (depth >= 1) {
@@ -501,7 +501,8 @@ function toClumsyName(keyArr) {
 function keyToASTChild(key, namespace) {
   if (typeof key === 'string') {
     return columnToASTChild(key, namespace)
-  } else if (Array.isArray(key)) {
+  }
+  if (Array.isArray(key)) {
     const clumsyName = toClumsyName(key)
     return {
       type: 'composite',

@@ -35,4 +35,3 @@ test('should handle data from the junction table', async t => {
   }
   t.deepEqual(expect, data)
 })
-

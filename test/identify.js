@@ -110,4 +110,3 @@ test('it should handle composite keys', async t => {
   }
   t.deepEqual(expect, data)
 })
-

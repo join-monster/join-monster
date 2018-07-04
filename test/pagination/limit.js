@@ -63,4 +63,3 @@ test('should handle limit for many-to-many', async t => {
   }
   t.deepEqual(expect, data)
 })
-

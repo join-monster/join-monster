@@ -65,7 +65,8 @@ function arrToConnection(data, sqlAST) {
         pageInfo.endCursor = last(edges).cursor
       }
       return { edges, pageInfo, _paginated: true }
-    } else if (sqlAST.orderBy || (sqlAST.junction && sqlAST.junction.orderBy)) {
+    }
+    if (sqlAST.orderBy || (sqlAST.junction && sqlAST.junction.orderBy)) {
       let offset = 0
       if (idx(sqlAST, _ => _.args.after)) {
         offset = cursorToOffset(sqlAST.args.after) + 1
@@ -89,4 +90,3 @@ function recurseOnObjInData(dataObj, astChild) {
     dataObj[astChild.fieldName] = arrToConnection(dataObj[astChild.fieldName], astChild)
   }
 }
-

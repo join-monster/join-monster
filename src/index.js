@@ -164,4 +164,3 @@ joinMonster.getNode = getNode
 // expose the package version for debugging
 joinMonster.version = require('../package.json').version
 export default joinMonster
-
