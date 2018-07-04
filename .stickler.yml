@@ -1,7 +1,11 @@
 linters:
-  shellcheck:
-    shell: bash
+    shellcheck:
+        shell: bash
+    eslint:
+        config: './.eslintrc.js'
+
 files:
-  ignore:
-    - 'bower_components/*'
-    - 'node_modules/*'
+    ignore:
+        - 'node_modules/*'
+        - 'test-api/*'
+        - 'docs/*'
