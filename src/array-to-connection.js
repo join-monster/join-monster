@@ -1,5 +1,6 @@
 import { connectionFromArraySlice, cursorToOffset } from 'graphql-relay'
 import { objToCursor, wrap, last } from './util'
+import idx from 'idx'
 
 // a function for data manipulation AFTER its nested.
 // this is only necessary when using the SQL pagination

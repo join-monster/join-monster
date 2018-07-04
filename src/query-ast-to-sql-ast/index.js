@@ -2,6 +2,7 @@ import assert from 'assert'
 import { flatMap } from 'lodash'
 import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
+import idx from 'idx'
 
 import AliasNamespace from '../alias-namespace'
 import { wrap, ensure, unthunk, inspect } from '../util'

@@ -1,5 +1,7 @@
 import assert from 'assert'
 import { filter } from 'lodash'
+import idx from 'idx'
+
 import { validateSqlAST, inspect, wrap } from '../util'
 import {
   joinPrefix,
