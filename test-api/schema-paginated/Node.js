@@ -31,4 +31,3 @@ const { nodeInterface, nodeField } = nodeDefinitions(
 )
 
 export { nodeInterface, nodeField }
-
