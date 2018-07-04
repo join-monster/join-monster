@@ -10,7 +10,11 @@ Bugs and feature requests are tracked via GitHub issues. Make sure bug descripti
 
 ## Pull Requests
 
-Begin by forking our repository and cloning your fork. Once inside the directory, run `npm install` and `npm run db-build` to prepare the fixture data. You'll need to provide a PostgreSQL URI in your environment in the `PG_URL` variable (omit the database name from the URI, but keep the trailing slash, e.g. `postgres://user:pass@localhost/`). Check the `scripts` in the `package.json` for easily running the example data and the demo server with GraphiQL. Now you can begin coding.
+Begin by forking our repository and cloning your fork. Once inside the directory, you'll need to provide a PostgreSQL and MySQL URI in your environment in the `PG_URL` and `MYSQL_URL` variables (omit the database name from the URI, but keep the trailing slash, e.g. `postgres://user:pass@localhost/` and `mysql://user:pass@localhost/`).  
+
+You will also need to create the test databases in postgres and mysql - `test1` and `test2`, and install `sqlite3` to complete the tests.
+
+Run `npm install` and `npm run db-build` to prepare the fixture data. Check the `scripts` in the `package.json` for easily running the example data and the demo server with GraphiQL. Now you can begin coding.
 
 Before commiting your changes, **run the lint, tests, and coverage to make sure everything is green.** After making your commits, push it up to your fork and make a pull request to our master branch. We will review it ASAP.
 
