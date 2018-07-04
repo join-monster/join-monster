@@ -2,6 +2,7 @@ import assert from 'assert'
 import { flatMap } from 'lodash'
 import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
+import idx from 'idx'
 
 import AliasNamespace from '../alias-namespace'
 import { wrap, ensure, unthunk, inspect } from '../util'
@@ -66,10 +67,9 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   const parentType = resolveInfo.parentType
   populateASTNode.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options, context)
 
-  // make sure they started this party on a table
-  assert.equal(
-    sqlAST.type,
-    'table',
+  // make sure they started this party on a table, interface or union.
+  assert.ok(
+    [ 'table', 'union' ].indexOf(sqlAST.type) > -1,
     'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".'
   )
 

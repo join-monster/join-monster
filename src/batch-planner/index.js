@@ -1,6 +1,7 @@
 import { uniq, chain, map, groupBy, forIn } from 'lodash'
 import arrToConnection from '../array-to-connection'
 import { handleUserDbCall, maybeQuote, wrap, compileSqlAST } from '../util'
+import idx from 'idx'
 
 async function nextBatch(sqlAST, data, dbCall, context, options) {
   // paginated fields are wrapped in connections. strip those off for the batching

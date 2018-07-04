@@ -1,4 +1,5 @@
 import { validateSqlAST, inspect } from './util'
+import idx from 'idx'
 
 // generate an object that defines the correct nesting shape for our GraphQL
 // this will be used by the library NestHydrationJS, check out their docs

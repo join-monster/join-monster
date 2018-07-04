@@ -5,7 +5,7 @@ CREATE TABLE accounts (
   first_name VARCHAR(255),
   last_name VARCHAR(255),
   num_legs INT DEFAULT 2,
-  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
 );
 
 DROP TABLE IF EXISTS comments;
@@ -15,7 +15,7 @@ CREATE TABLE comments (
   post_id INT NOT NULL,
   author_id INT NOT NULL,
   archived BOOLEAN DEFAULT FALSE,
-  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
 );
 
 DROP TABLE IF EXISTS posts;
@@ -24,7 +24,7 @@ CREATE TABLE posts (
   body TEXT NOT NULL,
   author_id INT NOT NULL,
   archived BOOLEAN DEFAULT FALSE,
-  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
 );
 
 DROP TABLE IF EXISTS relationships;
@@ -32,7 +32,7 @@ CREATE TABLE relationships (
   follower_id INT NOT NULL,
   followee_id INT NOT NULL,
   closeness VARCHAR(255),
-  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
   UNIQUE (follower_id, followee_id)
 );
 
@@ -40,7 +40,7 @@ DROP TABLE IF EXISTS likes;
 CREATE TABLE likes (
   account_id INTEGER NOT NULL,
   comment_id INTEGER NOT NULL,
-  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
   UNIQUE (account_id, comment_id)
 );
 
@@ -50,6 +50,6 @@ CREATE TABLE sponsors (
   first_name VARCHAR(255),
   last_name VARCHAR(255),
   num_legs INT DEFAULT 2,
-  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
 );
 

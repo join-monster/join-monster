@@ -12,7 +12,7 @@ const User = new GraphQLObjectType({
     },
     email: {
       type: GraphQLString,
-      // if the column name is different, it must be specified specified
+      // if the column name is different, it must be specified
       sqlColumn: 'email_address'
     },
     idEncoded: {
@@ -21,7 +21,7 @@ const User = new GraphQLObjectType({
       sqlColumn: 'id',
       // this field uses a sqlColumn and applies a resolver function on the value
       // if a resolver is present, the `sqlColumn` MUST be specified even if it is the same name as the field
-      resolve: user => toBase64(user.idEncoded)
+      resolve: user => toBase64(user.id)
     }
   })
 })
