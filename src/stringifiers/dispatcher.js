@@ -172,8 +172,10 @@ async function _stringifySqlAST(
       break
     case 'composite':
       // If doing a batched junction, use the joining table name
-      const useJunctionTableName = !!idx(parent, _ => _.junction.sqlBatch)
-      if (useJunctionTableName) {
+      if (
+        parent.type === 'table' &&
+        parent.name === idx(parent, _ => _.junction.sqlTable)
+      ) {
         parentTable = parent.as
       }
       selections.push(
@@ -196,12 +198,6 @@ async function _stringifySqlAST(
       return
     default:
       throw new Error('unexpected/unknown node type reached: ' + inspect(node))
-  }
-  return {
-    selections,
-    tables,
-    wheres,
-    orders
   }
 }
 
