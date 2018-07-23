@@ -39,9 +39,20 @@ async function nextBatchChild(childAST, data, dbCall, context, options) {
       thisKey = childAST.sqlBatch.thisKey.fieldName
       parentKey = childAST.sqlBatch.parentKey.fieldName
     } else if (idx(childAST, _ => _.junction.sqlBatch)) {
-      childAST.children.push(childAST.junction.sqlBatch.thisKey)
-      thisKey = childAST.junction.sqlBatch.thisKey.fieldName
+      const junctionField = childAST.junction.sqlBatch.thisKey
+      // If the same column is being used on the junctioned table, alias the parent
+      if (childAST.children.find(childField => childField.fieldName === junctionField.fieldName)) {
+        const junctionKey = 'junc_' + junctionField.fieldName
+        junctionField.as = junctionKey
+        junctionField.fieldName = junctionKey
+        thisKey = junctionKey
+      } else {
+        thisKey = junctionField.fieldName
+      }
+
       parentKey = childAST.junction.sqlBatch.parentKey.fieldName
+
+      childAST.children.push(junctionField)
     }
 
     if (Array.isArray(data)) {
