@@ -68,7 +68,8 @@ async function _stringifySqlAST(
   dialect
 ) {
   const { quote: q } = dialect
-  const parentTable = node.fromOtherTable || (parent && parent.as)
+  let parentTable = node.fromOtherTable || (parent && parent.as)
+
   switch (node.type) {
     case 'table':
       await handleTable(
@@ -170,6 +171,11 @@ async function _stringifySqlAST(
       }
       break
     case 'composite':
+      // If doing a batched junction, use the joining table name
+      const useJunctionTableName = !!idx(parent, _ => _.junction.sqlBatch)
+      if (useJunctionTableName) {
+        parentTable = parent.as
+      }
       selections.push(
         `${dialect.compositeKey(parentTable, node.name)} AS ${q(
           joinPrefix(prefix) + node.as
@@ -191,7 +197,12 @@ async function _stringifySqlAST(
     default:
       throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
-  return { selections, tables, wheres, orders }
+  return {
+    selections,
+    tables,
+    wheres,
+    orders
+  }
 }
 
 async function handleTable(
@@ -425,7 +436,9 @@ async function handleTable(
   } else {
     assert(
       !parent,
-      `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`
+      `Object type for "${
+        node.fieldName
+      }" table must have a "sqlJoin" or "sqlBatch"`
     )
     tables.push(`FROM ${node.name} ${q(node.as)}`)
   }
