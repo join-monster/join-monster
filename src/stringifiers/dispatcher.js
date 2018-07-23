@@ -113,8 +113,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
     break
   case 'composite':
     // If doing a batched junction, use the joining table name
-    const useJunctionTableName = !!idx(parent, _ => _.junction.sqlBatch)
-    if (useJunctionTableName) {
+    if (parent.type === 'table' && parent.name === idx(parent, _ => _.junction.sqlTable)) {
       parentTable = parent.as
     }
     selections.push(
