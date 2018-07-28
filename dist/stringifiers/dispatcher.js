@@ -50,9 +50,9 @@ let _stringifySqlAST = (() => {
         selections.push(`${expr} AS ${q((0, _shared.joinPrefix)(prefix) + node.as)}`);
         break;
       case 'foreign_column':
-        const joinExpr = yield node.sqlJoinExpr(`${q(parent.as)}`, q(node.as), node.args || {}, context, node);
+        const table = yield node.sqlForeignTable(`${q(parent.as)}`, node.args || {}, context, node);
         selections.push(`${q(node.as)}.${q(node.name)} AS ${q((0, _shared.joinPrefix)(prefix) + node.as)}`);
-        tables.push(joinExpr);
+        tables.push(`LEFT JOIN LATERAL ${table} ${q(node.as)} ON TRUE`);
         break;
       case 'noop':
         return;
