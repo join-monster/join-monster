@@ -173,6 +173,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     sqlASTNode.as = namespace.generate('column', aliasFrom)
   // Is it a foreign column with a foreign table (1-to-1 join)?
   } else if ((field.sqlForeignColumn || !field.resolve) && field.sqlForeignTable) {
+    assert(options.dialect === 'pg', 'Foreign column is only supported for Postgres as it utilizes a LATERAL join.')
     sqlASTNode.type = 'foreign_column'
     sqlASTNode.sqlForeignTable = field.sqlForeignTable
     sqlASTNode.name = field.sqlForeignColumn || field.name
