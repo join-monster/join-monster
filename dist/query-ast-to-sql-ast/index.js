@@ -156,7 +156,7 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
       aliasFrom += '@' + parentTypeNode.name;
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom);
-  } else if (field.sqlJoinExpr && field.sqlColumn || !field.resolve) {
+  } else if (field.sqlJoinExpr && field.sqlColumn) {
     sqlASTNode.type = 'foreign_column';
     sqlASTNode.sqlJoinExpr = field.sqlJoinExpr;
     sqlASTNode.name = field.sqlColumn || field.name;
