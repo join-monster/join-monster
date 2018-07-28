@@ -171,6 +171,16 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
       aliasFrom += '@' + parentTypeNode.name
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom)
+  // Is it a one-to-one join with a specific join expression?
+  } else if ((field.sqlJoinExpr && field.sqlColumn) || !field.resolve) {
+    sqlASTNode.type = 'foreign_column'
+    sqlASTNode.sqlJoinExpr = field.sqlJoinExpr
+    sqlASTNode.name = field.sqlColumn || field.name
+    let aliasFrom = sqlASTNode.fieldName = field.name
+    if (sqlASTNode.defferedFrom) {
+      aliasFrom += '@' + parentTypeNode.name
+    }
+    sqlASTNode.as = namespace.generate('column', aliasFrom)
   // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
   } else if (field.sqlColumn || !field.resolve) {
     sqlASTNode.type = 'column'
