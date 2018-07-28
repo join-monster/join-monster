@@ -1,3 +1,6 @@
+
+import * as graphql from 'graphql'
+
 // Extend graphql objects and fields
 
 declare module 'graphql/type/definition' {
