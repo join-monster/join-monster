@@ -171,7 +171,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
       aliasFrom += '@' + parentTypeNode.name
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom)
-  // Is it a one-to-one join with a specific join expression?
+  // Is it a foreign column with a foreign table (1-to-1 join)?
   } else if ((field.sqlForeignColumn || !field.resolve) && field.sqlForeignTable) {
     sqlASTNode.type = 'foreign_column'
     sqlASTNode.sqlForeignTable = field.sqlForeignTable
