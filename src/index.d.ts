@@ -53,6 +53,7 @@ declare module 'graphql/type/definition' {
     sqlColumn?: string
     sqlDeps?: string[]
     sqlExpr?: (table: string, args: TArgs, context: TContext, sqlASTNode: any) => string
+    sqlJoin?: SqlJoin<TContext, TArgs>
     sqlForeignTable?: (table: string, args: TArgs, context: TContext, sqlASTNode: any) => string
     sqlForeignColumn?: string
     sqlPaginate?: boolean
