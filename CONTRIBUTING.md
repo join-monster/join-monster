@@ -29,9 +29,9 @@ createdb demo
 # install MySQL, create a user, and a database
 brew install mysql
 brew services start mysql
-mysql -u root -e "CREATE USER 'andy'@'localhost' IDENTIFIED BY 'password';"
-mysql -u root -e "ALTER USER 'andy'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';"
-mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'andy'@'localhost' WITH GRANT OPTION;"
+mysql -u root -e "CREATE USER 'andy'@'%' IDENTIFIED BY 'password';"
+mysql -u root -e "ALTER USER 'andy'@'%' IDENTIFIED WITH mysql_native_password BY 'password';"
+mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'andy'@'%' WITH GRANT OPTION;"
 mysql -u andy -p -e "CREATE DATABASE test1;"
 mysql -u andy -p -e "CREATE DATABASE test2;"
 

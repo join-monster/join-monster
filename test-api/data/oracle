@@ -1,0 +1,18 @@
+```sh
+docker pull sath89/oracle-12c
+export DN=ora12c1
+mkdir -p $HOME/Docker/oracle/$DN/data
+docker run --name $DN -d -p 8080:8080 -p 1521:1521 \
+    -v $HOME/Docker/oracle/$DN/data:/u01/app/oracle \
+    sath89/oracle-12c
+
+docker exec -it -u oracle ora12c1 bash
+sqlplus system/oracle@//localhost:1521/xe
+```
+
+```sql
+create user test1 identified by password;
+create user test2 identified by password;
+GRANT ALL PRIVILEGES TO test1;
+GRANT ALL PRIVILEGES TO test2;
+```

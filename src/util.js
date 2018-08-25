@@ -118,7 +118,7 @@ export function buildWhereFunction(type, condition, options) {
   // otherwise, we'll assume they gave us the value(s) of the unique key.
   }
   // determine the type of quotes necessary to escape the uniqueKey column
-  const quote = [ 'mysql', 'mariadb' ].includes(name) ? '`' : '"'
+  const quote = [ 'mysql', 'mysql8', 'mariadb' ].includes(name) ? '`' : '"'
 
   // determine the unique key so we know what to search by
   const uniqueKey = type._typeConfig.uniqueKey

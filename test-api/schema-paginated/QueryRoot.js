@@ -27,7 +27,7 @@ const options = {
   minify: process.env.MINIFY == 1
 }
 if (knex.client.config.client === 'mysql') {
-  options.dialect = PAGINATE ? 'mariadb' : 'mysql'
+  options.dialect = PAGINATE ? 'mysql8' : 'mysql'
 } else if (knex.client.config.client === 'pg') {
   options.dialect = 'pg'
 } else if (knex.client.config.client === 'oracledb') {
