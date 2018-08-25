@@ -19,7 +19,7 @@ deploy:
 
 addons:
   postgresql: "9.4"
-  mariadb: '10.2'
+  mariadb: "10.2"
   # need a C++ compiler for sqlite3
   apt:
     sources:
