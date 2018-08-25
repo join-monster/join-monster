@@ -1,5 +1,7 @@
 import assert from 'assert'
 import { filter } from 'lodash'
+import idx from 'idx'
+
 import { validateSqlAST, inspect, wrap } from '../util'
 import {
   joinPrefix,
@@ -33,9 +35,9 @@ export default async function stringifySqlAST(topNode, context, options) {
   if (!selections.length) return ''
 
   // put together the SQL query
-  let sql = 'SELECT\n  ' +
-    selections.join(',\n  ') + '\n' +
-    tables.join('\n')
+  let sql = 'SELECT\n  '
+    + selections.join(',\n  ') + '\n'
+    + tables.join('\n')
 
   wheres = filter(wheres)
   if (wheres.length) {
@@ -289,4 +291,3 @@ function sortKeyToOrderColumns(sortKey, args) {
   }
   return orderColumns
 }
-

@@ -23,6 +23,6 @@ assert(process.env.PG_URL, 'Environment variable PG_URL must be defined, e.g. "p
 })()
 .catch(err => {
   console.error(err)
-  throw err
+  process.exit(1)
 })
 

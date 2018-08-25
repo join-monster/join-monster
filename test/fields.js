@@ -181,4 +181,3 @@ test('it should handle duplicate of a field recursively', async t => {
   }
   t.deepEqual(expect, data.user)
 })
-

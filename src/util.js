@@ -118,7 +118,7 @@ export function buildWhereFunction(type, condition, options) {
   // otherwise, we'll assume they gave us the value(s) of the unique key.
   }
   // determine the type of quotes necessary to escape the uniqueKey column
-  const quote = [ 'mysql', 'mariadb' ].includes(name) ? '`' : '"'
+  const quote = [ 'mysql', 'mysql8', 'mariadb' ].includes(name) ? '`' : '"'
 
   // determine the unique key so we know what to search by
   const uniqueKey = type._typeConfig.uniqueKey
@@ -191,7 +191,7 @@ function validate(rows) {
   // its supposed to be an array of objects
   if (Array.isArray(rows)) return rows
   // a check for the most common error. a lot of ORMs return an object with the desired data on the `rows` property
-  else if (rows && rows.rows) return rows.rows
+  if (rows && rows.rows) return rows.rows
 
   throw new Error(
     `"dbCall" function must return/resolve an array of objects where each object is a row from the result set.
@@ -226,4 +226,3 @@ export async function compileSqlAST(sqlAST, context, options) {
   }
   return { sql, shapeDefinition }
 }
-

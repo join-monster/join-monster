@@ -9,7 +9,7 @@ const options = {
 }
 const { PAGINATE } = process.env
 if (knex.client.config.client === 'mysql') {
-  options.dialect = PAGINATE ? 'mariadb' : 'mysql'
+  options.dialect = PAGINATE ? 'mysql8' : 'mysql'
 } else if (knex.client.config.client === 'pg') {
   options.dialect = 'pg'
 } else if (knex.client.config.client === 'oracledb') {
@@ -31,4 +31,3 @@ const { nodeInterface, nodeField } = nodeDefinitions(
 )
 
 export { nodeInterface, nodeField }
-

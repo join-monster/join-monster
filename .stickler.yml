@@ -1,0 +1,11 @@
+linters:
+    shellcheck:
+        shell: bash
+    eslint:
+        config: './.eslintrc.js'
+
+files:
+    ignore:
+        - 'node_modules/*'
+        - 'test-api/*'
+        - 'docs/*'

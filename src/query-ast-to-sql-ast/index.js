@@ -2,6 +2,7 @@ import assert from 'assert'
 import { flatMap } from 'lodash'
 import deprecate from 'deprecate'
 import { getArgumentValues } from 'graphql/execution/values'
+import idx from 'idx'
 
 import AliasNamespace from '../alias-namespace'
 import { wrap, ensure, unthunk, inspect } from '../util'
@@ -66,10 +67,9 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   const parentType = resolveInfo.parentType
   populateASTNode.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options, context)
 
-  // make sure they started this party on a table
-  assert.equal(
-    sqlAST.type,
-    'table',
+  // make sure they started this party on a table, interface or union.
+  assert.ok(
+    [ 'table', 'union' ].indexOf(sqlAST.type) > -1,
     'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".'
   )
 
@@ -130,7 +130,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
     // grab the types and fields inside the connection
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments)
     // reassign those
-    gqlType = stripped.gqlType
+    gqlType = stripNonNullType(stripped.gqlType)
     queryASTNode = stripped.queryASTNode
     // we'll set a flag for pagination.
     if (field.sqlPaginate) {
@@ -148,8 +148,8 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
 
   // is this a table in SQL?
   if (
-    !field.jmIgnoreTable &&
-    TABLE_TYPES.includes(gqlType.constructor.name)
+    !field.jmIgnoreTable
+    && TABLE_TYPES.includes(gqlType.constructor.name)
     && config.sqlTable
   ) {
     if (depth >= 1) {
@@ -501,7 +501,8 @@ function toClumsyName(keyArr) {
 function keyToASTChild(key, namespace) {
   if (typeof key === 'string') {
     return columnToASTChild(key, namespace)
-  } else if (Array.isArray(key)) {
+  }
+  if (Array.isArray(key)) {
     const clumsyName = toClumsyName(key)
     return {
       type: 'composite',
@@ -539,7 +540,8 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
 // if its a connection type, we need to look up the Node type inside their to find the relevant SQL info
 function stripRelayConnection(gqlType, queryASTNode, fragments) {
   // get the GraphQL Type inside the list of edges inside the Node from the schema definition
-  const strippedType = gqlType._fields.edges.type.ofType._fields.node.type
+  const edgeType = stripNonNullType(gqlType._fields.edges.type)
+  const strippedType = stripNonNullType(stripNonNullType(edgeType.ofType)._fields.node.type)
   // let's remember those arguments on the connection
   const args = queryASTNode.arguments
   // and then find the fields being selected on the underlying type, also buried within edges and Node

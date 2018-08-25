@@ -1,6 +1,7 @@
 import { filter } from 'lodash'
 import { cursorToOffset } from 'graphql-relay'
 import { wrap, cursorToObj, maybeQuote } from '../util'
+import idx from 'idx'
 
 export function joinPrefix(prefix) {
   return prefix.slice(1).map(name => name + '__').join('')
@@ -209,9 +210,9 @@ function sortKeyToWhereCondition(keyObj, descending, sortTable, dialect) {
     sortValues.push(maybeQuote(keyObj[key], name))
   }
   const operator = descending ? '<' : '>'
-  return name === 'oracle' ?
-    recursiveWhereJoin(sortColumns, sortValues, operator) :
-    `(${sortColumns.join(', ')}) ${operator} (${sortValues.join(', ')})`
+  return name === 'oracle'
+    ? recursiveWhereJoin(sortColumns, sortValues, operator)
+    : `(${sortColumns.join(', ')}) ${operator} (${sortValues.join(', ')})`
 }
 
 function recursiveWhereJoin(columns, values, op) {
@@ -228,4 +229,3 @@ function _recursiveWhereJoin(columns, values, op, condition) {
   condition = `(${column} ${op} ${value} OR (${column} = ${value} AND ${condition}))`
   return _recursiveWhereJoin(columns, values, op, condition)
 }
-

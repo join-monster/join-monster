@@ -74,7 +74,7 @@ const User = new GraphQLObjectType({
     //...
     following: {
       type: new GraphQLList(User),
-      // only get followers who's account is still active
+      // only get followees who's account is still active
       where: accountTable => `${accountTable}.is_active = TRUE`,
       junction: {
         sqlTable: 'relationships',

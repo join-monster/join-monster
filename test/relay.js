@@ -283,6 +283,19 @@ test('should handle a post without an author', async t => {
   t.deepEqual(expect, data)
 })
 
+test('should pass context to getNode resolver', async t => {
+  const query = `{
+    node(id: "${toGlobalId('ContextPost', 1)}") {
+      ... on ContextPost { body }
+    }
+  }`
+
+  const { data, errors } = await run(query, null, { table: 'posts' })
+  errCheck(t, errors)
+  const expect = { node: { body: 'If I could marry a programming language, it would be Haskell.' } }
+  t.deepEqual(expect, data)
+})
+
 test('should handle fragments recursively', async t => {
   const query = `
     {
@@ -359,4 +372,3 @@ test('should handle fragments recursively', async t => {
   }
   t.deepEqual(expect, data)
 })
-
