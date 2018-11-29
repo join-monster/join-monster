@@ -18,8 +18,10 @@ import { nodeField } from './Node'
 import ContextPost from './ContextPost'
 
 import joinMonster from '../../src/index'
+import {joinMonsterParameterize} from '../../src/index'
 import dbCall from '../data/fetch'
-import { q } from '../shared'
+import { q, concat_str } from '../shared'
+import { sb, sv } from 'sqlbind'
 
 const { PAGINATE, DB } = process.env
 
@@ -73,10 +75,11 @@ export default new GraphQLObjectType({
       },
       where: (table, args) => {
         // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
-        if (args.search) return `(lower(${table}.${q('first_name', DB)}) LIKE lower('%${args.search}%') OR lower(${table}.${q('last_name', DB)}) LIKE lower('%${args.search}%'))`
+        //if (args.search) return `(lower(${table}.${q('first_name', DB)}) LIKE lower('%${args.search}%') OR lower(${table}.${q('last_name', DB)}) LIKE lower('%${args.search}%'))`
+        if (args.search) return sb`(lower(${table}.${q('first_name', DB)}) LIKE lower(${concat_str(['%', args.search, '%'], DB)}) OR lower(${table}.${q('last_name', DB)}) LIKE lower(${concat_str(['%', args.search,'%'], DB)}))`
       },
       resolve: async (parent, args, context, resolveInfo) => {
-        const data = await joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        const data = await joinMonsterParameterize(resolveInfo, context, sql => dbCall(sql, knex, context), options)
         return PAGINATE ? data : connectionFromArray(data, args)
       }
     },
@@ -85,7 +88,7 @@ export default new GraphQLObjectType({
       limit: 2,
       orderBy: 'id',
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonsterParameterize(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },
     user: {
@@ -97,18 +100,18 @@ export default new GraphQLObjectType({
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
+        if (args.id) return sb`${usersTable}.${q('id', DB)} = ${sv(args.id)}`
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonsterParameterize(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },
     sponsors: {
       type: new GraphQLList(Sponsor),
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time
-        return joinMonster(resolveInfo, context, (sql, done) => {
-          knex.raw(sql)
+        return joinMonsterParameterize(resolveInfo, context, (sql, done) => {
+          knex.raw(sql.str, sql.bindings)
           .then(data => done(null, data))
           .catch(done)
         }, options)
@@ -118,8 +121,8 @@ export default new GraphQLObjectType({
       type: new GraphQLList(ContextPost),
         resolve: (parent, args, context, resolveInfo) => {
           // use the callback version this time
-          return joinMonster(resolveInfo, context, (sql, done) => {
-            knex.raw(sql)
+          return joinMonsterParameterize(resolveInfo, context, (sql, done) => {
+            knex.raw(sql.str, sql.bindings)
               .then(data => done(null, data))
               .catch(done)
           }, options)

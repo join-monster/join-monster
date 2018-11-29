@@ -2,6 +2,7 @@ import { filter } from 'lodash'
 import { cursorToOffset } from 'graphql-relay'
 import { wrap, cursorToObj, maybeQuote } from '../util'
 import idx from 'idx'
+import { sb } from 'sqlbind'
 
 export function joinPrefix(prefix) {
   return prefix.slice(1).map(name => name + '__').join('')
@@ -38,7 +39,7 @@ export function keysetPagingSelect(table, whereCondition, order, limit, as, opti
   //whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
 
   whereCondition = filter(whereCondition)
-    .reduce((acc,v)=>!acc? sb(v):sb(acc, ' AND ', v)) || 'TRUE'
+    .reduce((acc,v)=>!acc? sb(v):sb(acc, ' AND ', v), '') || 'TRUE'
 
   if (joinCondition) {
     return sb`\
@@ -67,7 +68,7 @@ export function offsetPagingSelect(table, pagingWhereConditions, order, limit, o
   q = q || doubleQuote
   //const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
   const whereCondition = filter(pagingWhereConditions)
-    .reduce((acc, v)=>!acc?sb(v):sb(acc, ' AND ', v)) || 'TRUE'
+    .reduce((acc, v)=>!acc?sb(v):sb(acc, ' AND ', v), '') || 'TRUE'
 
   if (joinCondition) {
     return sb`\

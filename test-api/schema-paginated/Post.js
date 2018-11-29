@@ -18,6 +18,7 @@ import { CommentConnection } from './Comment'
 import { Authored } from './Authored/Interface'
 import { nodeInterface } from './Node'
 import { q, bool } from '../shared'
+import { sb, sv } from 'sqlbind'
 
 const { PAGINATE, STRATEGY, DB } = process.env
 
@@ -86,11 +87,11 @@ export const Post = new GraphQLObjectType({
               thisKey: 'post_id',
               parentKey: 'id'
             },
-            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
+            where: (table, args) => args.active ? sb`${table}.${q('archived', DB)} = ${sv(bool(false, DB))}` : null
           })
         } else {
           ({
-            sqlJoin: (postTable, commentTable, args) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}` 
+            sqlJoin: (postTable, commentTable, args) => sb`${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)} ${args.active ? sb`AND ${commentTable}.${q('archived', DB)} = ${sv(bool(false, DB))}` : ''}` 
           })
         }
       }

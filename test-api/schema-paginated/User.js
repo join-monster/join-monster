@@ -20,7 +20,8 @@ import { PostConnection } from './Post'
 import { Comment, CommentConnection } from './Comment'
 import { nodeInterface } from './Node'
 import { AuthoredConnection } from './Authored/Interface'
-import { q, bool } from '../shared'
+import { q, bool, concat_str } from '../shared'
+import { sb, sv } from 'sqlbind'
 
 const { PAGINATE, STRATEGY, DB } = process.env
 
@@ -80,11 +81,11 @@ const User = new GraphQLObjectType({
               thisKey: 'author_id',
               parentKey: 'id'
             },
-            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
+            where: (table, args) => args.active ? sb`${table}.${q('archived', DB)} = ${sv(bool(false, DB))}` : null
           })
         } else {
           ({
-            sqlJoin: (userTable, commentTable, args) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}`
+            sqlJoin: (userTable, commentTable, args) => sb`${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? sb`AND ${commentTable}.${q('archived', DB)} = ${sv(bool(false, DB))}` : ''}`
           })
         }
       }
@@ -99,7 +100,7 @@ const User = new GraphQLObjectType({
           parentKey: 'id'
         }
       } : {
-        sqlJoin: (userTable, commentTable) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
+        sqlJoin: (userTable, commentTable) => sb`${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
       }
     },
     posts: {
@@ -135,7 +136,7 @@ const User = new GraphQLObjectType({
         }
       },
       where: (table, args) => {
-        if (args.search) return `lower(${table}.${q('body', DB)}) LIKE lower('%${args.search}%')`
+        if (args.search) return sb`lower(${table}.${q('body', DB)}) LIKE lower(${concat_str(['%', args.search, '%'], DB)})`
       },
       ... do {
         if (STRATEGY === 'batch') {
@@ -187,7 +188,7 @@ const User = new GraphQLObjectType({
       },
       junction: {
         sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
-        where: (table, args) => args.intimacy ? `${table}.${q('closeness', DB)} = '${args.intimacy}'` : null,
+        where: (table, args) => args.intimacy ? sb`${table}.${q('closeness', DB)} = ${sv(args.intimacy)}` : null,
         include: {
           friendship: {
             sqlColumn: 'closeness',

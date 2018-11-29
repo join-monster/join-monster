@@ -56,13 +56,15 @@ export default async function stringifySqlAST(topNode, context, options) {
   // put together the SQL query
   let sql = sb(
     'SELECT\n  ',
-    selections.reduce((acc,v)=>!acc? sb(v): sb(acc, ',\n  ', v)),
-    tables.reduce((acc, v)=>!acc? sb(v): sb(acc, '\n', v))
+    selections.reduce((acc,v)=>!acc? sb(v): sb(acc, ',\n  ', v), ''),
+    tables.reduce((acc, v)=>!acc? sb(v): sb(acc, '\n', v), '')
   );
 
   wheres = filter(wheres)
   if (wheres.length) {
-    sql = sb(sql,  '\nWHERE ', wheres.reduce((acc,v)=>!acc? sb(v): sb(acc, ' AND ', v)));
+    sql = sb(sql,  '\nWHERE ', 
+      wheres.reduce((acc,v)=>!acc? sb(v): sb(acc, ' AND ', v), '')
+    );
   }
 
   if (orders.length) {
