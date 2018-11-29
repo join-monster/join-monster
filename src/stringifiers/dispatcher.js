@@ -8,6 +8,7 @@ import {
   thisIsNotTheEndOfThisBatch,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
+import {sb, sv} from "sqlbind"
 
 export default async function stringifySqlAST(topNode, context, options) {
   validateSqlAST(topNode)
@@ -31,6 +32,7 @@ export default async function stringifySqlAST(topNode, context, options) {
   // GraphQL does not prevent queries with duplicate fields
   selections = [ ...new Set(selections) ]
 
+    /*
   // bail out if they made no selections
   if (!selections.length) return ''
 
@@ -46,6 +48,25 @@ export default async function stringifySqlAST(topNode, context, options) {
 
   if (orders.length) {
     sql += '\nORDER BY ' + stringifyOuterOrder(orders, dialect.quote)
+  }
+  */
+
+  if (!selections.length) return sb``
+
+  // put together the SQL query
+  let sql = sb(
+    'SELECT\n  ',
+    selections.reduce((acc,v)=>!acc? sb(v): sb(acc, ',\n  ', v)),
+    tables.reduce((acc, v)=>!acc? sb(v): sb(acc, '\n', v))
+  );
+
+  wheres = filter(wheres)
+  if (wheres.length) {
+    sql = sb(sql,  '\nWHERE ', wheres.reduce((acc,v)=>!acc? sb(v): sb(acc, ' AND ', v)));
+  }
+
+  if (orders.length) {
+    sql = sb(sql, '\nORDER BY ' + stringifyOuterOrder(orders, dialect.quote))
   }
 
   return sql
@@ -118,7 +139,7 @@ async function _stringifySqlAST(parent, node, prefix, context, selections, table
   case 'expression':
     const expr = await node.sqlExpr(`${q(parentTable)}`, node.args || {}, context, node)
     selections.push(
-      `${expr} AS ${q(joinPrefix(prefix) + node.as)}`
+      sb`${expr} AS ${q(joinPrefix(prefix) + node.as)}`
     )
     break
   case 'noop':
@@ -184,7 +205,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
     // otherwite, just a regular left join on the table
     } else {
       tables.push(
-        `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
+        sb`LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
       )
     }
 
@@ -205,8 +226,8 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
         await dialect.handleBatchedManyToManyPaginated(parent, node, context, tables, batchScope, joinCondition)
       } else {
         tables.push(
-          `FROM ${node.junction.sqlTable} ${q(node.junction.as)}`,
-          `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
+          sb`FROM ${node.junction.sqlTable} ${q(node.junction.as)}`,
+          sb`LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
         )
         // ensures only the correct records are fetched using the value of the parent key
         wheres.push(`${q(node.junction.as)}.${q(node.junction.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`)
@@ -227,11 +248,11 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
       await dialect.handleJoinedManyToManyPaginated(parent, node, context, tables, joinCondition1, joinCondition2)
     } else {
       tables.push(
-        `LEFT JOIN ${node.junction.sqlTable} ${q(node.junction.as)} ON ${joinCondition1}`
+        sb`LEFT JOIN ${node.junction.sqlTable} ${q(node.junction.as)} ON ${joinCondition1}`
       )
     }
     tables.push(
-      `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition2}`
+      sb`LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition2}`
     )
 
   // one-to-many with batching
@@ -248,7 +269,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
       // otherwite, just a regular left join on the table
     } else {
       tables.push(
-        `FROM ${node.name} ${q(node.as)}`
+        sb`FROM ${node.name} ${q(node.as)}`
       )
       wheres.push(`${q(node.as)}.${q(node.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`)
     }
@@ -261,7 +282,7 @@ async function handleTable(parent, node, prefix, context, selections, tables, wh
   } else {
     assert(!parent, `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`)
     tables.push(
-      `FROM ${node.name} ${q(node.as)}`
+      sb`FROM ${node.name} ${q(node.as)}`
     )
   }
 }

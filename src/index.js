@@ -81,7 +81,7 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  * @param {Object} options.dialectModule - An alternative to options.dialect. You can provide a custom implementation of one of the supported dialects.
  * @returns {Promise.<Object>} The correctly nested data from the database.
  */
-async function joinMonster(resolveInfo, context, dbCall, options = {}) {
+async function joinMonsterParameterize(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
   const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options, context)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
@@ -115,6 +115,8 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
 }
 
 
+
+
 /**
  * A helper for resolving the Node type in Relay.
  * @param {String} typeName - The Name of the GraphQLObjectType
@@ -125,7 +127,7 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
  * @param {Object} [options] - Same as `joinMonster` function's options.
  * @returns {Promise.<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
-async function getNode(typeName, resolveInfo, context, condition, dbCall, options = {}) {
+async function getNodeParameterize (typeName, resolveInfo, context, condition, dbCall, options = {}) {
   // get the GraphQL type from the schema using the name
   const type = resolveInfo.schema._typeMap[typeName]
   assert(type, `Type "${typeName}" not found in your schema.`)
@@ -158,7 +160,35 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   return data
 }
 
-joinMonster.getNode = getNode
+function dbCallHook(dbCall){
+  if(dbCall.length == 2) {
+    return function(sql, cb){
+      if(sql.bindings.length >= 1){
+        throw new Error("that sql statement already bind parameter, you must be use joinMonsterParameterize instead of joinMonster");
+      }
+      return dbCall(sql.str, cb);
+    }
+  }else{
+    return function(sql){
+      if(sql.bindings.length >= 1){
+        throw new Error("that sql statement already bind parameter, you must be use joinMonsterParameterize instead of joinMonster");
+      }
+      return dbCall(sql.str);
+    }
+  }
+}
+
+
+function joinMonster(resolveInfo, context, dbCall, options = {}) {
+  return joinMonsterParameterize(resolveInfo, context, dbCallHook(dbCall),options);
+}
+function getNode(typeName, resolveInfo, context, condition, dbCall, options = {}) {
+  return getNodeParameterize(typeName, resolveInfo, context, condition, dbCallHook(dbCall), options);
+}
+
+joinMonster.getNode = getNode;
+joinMonster.joinMonsterParameterize = joinMonsterParameterize;
+joinMonster.getNodeParameterize = getNodeParameterize;
 
 
 // expose the package version for debugging
