@@ -19,6 +19,8 @@ import pgModule from '../../src/stringifiers/dialects/pg'
 import sqlite3Module from '../../src/stringifiers/dialects/sqlite3'
 
 import joinMonster from '../../src/index'
+import {joinMonsterParameterize} from '../../src/index'
+import {sb, sv} from 'sqlbind'
 
 const { MINIFY, DB } = process.env
 const options = {
@@ -54,7 +56,7 @@ export default new GraphQLObjectType({
       where: (table, args) => args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
       orderBy: 'id',
       resolve: async (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonsterParameterize(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },
     user: {
@@ -74,12 +76,12 @@ export default new GraphQLObjectType({
         }
       },
       where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
-        if (args.idEncoded) return `${usersTable}.${q('id', DB)} = ${fromBase64(args.idEncoded)}`
-        if (args.idAsync) return Promise.resolve(`${usersTable}.${q('id', DB)} = ${args.idAsync}`)
+        if (args.id) return sb`${usersTable}.${q('id', DB)} = ${sv(args.id)}`
+        if (args.idEncoded) return sb`${usersTable}.${q('id', DB)} = ${sv(fromBase64(args.idEncoded))}`
+        if (args.idAsync) return Promise.resolve(sb`${usersTable}.${q('id', DB)} = ${sv(args.idAsync)}`)
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonsterParameterize(resolveInfo, context, sql => dbCall(sql, knex, context), options)
       }
     },
     sponsors: {

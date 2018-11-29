@@ -18,6 +18,7 @@ import Person from './Person'
 import AuthoredInterface from './Authored/Interface'
 import AuthoredUnion from './Authored/Union'
 import { toBase64, q, bool } from '../shared'
+import { sb, sv } from 'sqlbind'
 
 const { STRATEGY, DB } = process.env
 
@@ -72,9 +73,9 @@ const User = new GraphQLObjectType({
           thisKey: 'author_id',
           parentKey: 'id'
         },
-        where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
+        where: (table, args) => args.active ? sb`${table}.${q('archived', DB)} = ${sv(bool(false, DB))}` : null
       } : {
-        sqlJoin: (userTable, commentTable, args) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}`
+        sqlJoin: (userTable, commentTable, args) => sb`${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? sb`AND ${commentTable}.${q('archived', DB)} = ${sv(bool(false, DB))}` : ''}`
       }
     },
     posts: {
@@ -86,7 +87,7 @@ const User = new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
-      where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null,
+      where: (table, args) => args.active ? sb`${table}.${q('archived', DB)} = ${sv(bool(false, DB))}` : null,
       orderBy: { body: 'desc' },
       ...STRATEGY === 'batch' ? {
         sqlBatch: {

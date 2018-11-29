@@ -187,10 +187,11 @@ function getNode(typeName, resolveInfo, context, condition, dbCall, options = {}
 }
 
 joinMonster.getNode = getNode;
-joinMonster.joinMonsterParameterize = joinMonsterParameterize;
-joinMonster.getNodeParameterize = getNodeParameterize;
-
 
 // expose the package version for debugging
 joinMonster.version = require('../package.json').version
 export default joinMonster
+export {
+  joinMonsterParameterize,
+  getNodeParameterize
+}
