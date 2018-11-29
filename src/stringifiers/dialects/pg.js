@@ -6,6 +6,8 @@ import {
   generateCastExpressionFromValueType
 } from '../shared'
 
+import {sb} from 'sqlbind';
+
 const dialect = module.exports = {
   name: 'pg',
 
@@ -91,7 +93,7 @@ const dialect = module.exports = {
         )
       )
     }
-    tables.push(`LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`)
+    tables.push(sb`LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`)
   },
 
   handleJoinedManyToManyPaginated: async function(parent, node, context, tables, joinCondition1, joinCondition2) {

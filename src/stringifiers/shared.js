@@ -35,9 +35,13 @@ export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, 
 export function keysetPagingSelect(table, whereCondition, order, limit, as, options = {}) {
   let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
-  whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
+  //whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
+
+  whereCondition = filter(whereCondition)
+    .reduce((acc,v)=>!acc? sb(v):sb(acc, ' AND ', v)) || 'TRUE'
+
   if (joinCondition) {
-    return `\
+    return sb`\
 ${joinType || ''} JOIN LATERAL (
   SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
@@ -48,7 +52,7 @@ ${joinType || ''} JOIN LATERAL (
   LIMIT ${limit}
 ) ${q(as)} ON ${joinCondition}`
   }
-  return `\
+  return sb`\
 FROM (
   SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
@@ -61,9 +65,12 @@ FROM (
 export function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
   let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
-  const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
+  //const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
+  const whereCondition = filter(pagingWhereConditions)
+    .reduce((acc, v)=>!acc?sb(v):sb(acc, ' AND ', v)) || 'TRUE'
+
   if (joinCondition) {
-    return `\
+    return sb`\
 ${joinType || ''} JOIN LATERAL (
   SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
@@ -74,7 +81,7 @@ ${joinType || ''} JOIN LATERAL (
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)} ON ${joinCondition}`
   }
-  return `\
+  return sb`\
 FROM (
   SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
