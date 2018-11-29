@@ -7,6 +7,7 @@ import {
 } from '../shared'
 
 import { filter } from 'lodash'
+import { sb } from 'sqlbind'
 
 
 function quote(str) {
@@ -14,18 +15,26 @@ function quote(str) {
 }
 
 function joinUnions(unions, as) {
+  /*
   return `FROM (
 ${unions.join('\nUNION\n')}
 ) AS ${quote(as)}`
+*/
+  return sb(
+    'FROM (',
+    unions.reduce((acc,v)=>!acc? sb(v): sb(acc, '\nUNION\n', v),''),
+    ') AS ',
+    quote(as)
+  );
 }
 
 function paginatedSelect(table, as, whereConditions, order, limit, offset, opts = {}) {
   const { extraJoin, withTotal } = opts
   as = quote(as)
-  return `\
+  return sb`\
   (SELECT ${as}.*${withTotal ? ', count(*) OVER () AS `$total`' : ''}
   FROM ${table} ${as}
-  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${quote(extraJoin.as)}
+  ${extraJoin ? sb`LEFT JOIN ${extraJoin.name} ${quote(extraJoin.as)}
     ON ${extraJoin.condition}` : ''}
   WHERE ${whereConditions}
   ORDER BY ${orderColumnsToString(order.columns, quote, order.table)}
@@ -82,7 +91,9 @@ const dialect = module.exports = {
       pagingWhereConditions.push(whereAddendum)
       const unions = batchScope.map(val => {
         let whereConditions = [ ...pagingWhereConditions, `${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} = ${val}` ]
-        whereConditions = filter(whereConditions).join(' AND ') || '1'
+        //whereConditions = filter(whereConditions).join(' AND ') || '1'
+        whereConditions = filter(whereConditions)
+          .reduce((acc,v)=>!acc? sb(v): sb(acc, ' AND ', v), '') || '1'
         return paginatedSelect(node.name, node.as, whereConditions, order, limit, null)
       })
       tables.push(joinUnions(unions, node.as))
@@ -90,7 +101,10 @@ const dialect = module.exports = {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       const unions = batchScope.map(val => {
         let whereConditions = [ ...pagingWhereConditions, `${quote(node.as)}.${quote(node.sqlBatch.thisKey.name)} = ${val}` ]
-        whereConditions = filter(whereConditions).join(' AND ') || '1'
+        //whereConditions = filter(whereConditions).join(' AND ') || '1'
+        whereConditions = filter(whereConditions)
+          .reduce((acc,v)=>!acc? sb(v): sb(acc, ' AND ', v), '') || '1'
+
         return paginatedSelect(node.name, node.as, whereConditions, order, limit, offset, { withTotal: true })
       })
       tables.push(joinUnions(unions, node.as))
@@ -125,7 +139,9 @@ const dialect = module.exports = {
           ...pagingWhereConditions,
           `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}`
         ]
-        whereConditions = filter(whereConditions).join(' AND ') || '1'
+        //whereConditions = filter(whereConditions).join(' AND ') || '1'
+        whereConditions = filter(whereConditions)
+          .reduce((acc,v)=>!acc? sb(v): sb(acc, ' AND ', v), '') || '1'
         return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, order, limit, null, { extraJoin })
       })
       tables.push(joinUnions(unions, node.junction.as))
@@ -136,7 +152,10 @@ const dialect = module.exports = {
           ...pagingWhereConditions,
           `${quote(node.junction.as)}.${quote(node.junction.sqlBatch.thisKey.name)} = ${val}`
         ]
-        whereConditions = filter(whereConditions).join(' AND ') || '1'
+        //whereConditions = filter(whereConditions).join(' AND ') || '1'
+        whereConditions = filter(whereConditions)
+          .reduce((acc,v)=>!acc? sb(v): sb(acc, ' AND ', v), '') || '1'
+
         return paginatedSelect(node.junction.sqlTable, node.junction.as, whereConditions, order, limit, offset, {
           withTotal: true,
           extraJoin
@@ -144,6 +163,6 @@ const dialect = module.exports = {
       })
       tables.push(joinUnions(unions, node.junction.as))
     }
-    tables.push(`LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`)
+    tables.push(sb`LEFT JOIN ${node.name} AS ${quote(node.as)} ON ${joinCondition}`)
   }
 }
