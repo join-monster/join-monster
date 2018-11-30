@@ -13,7 +13,7 @@
   "scripts": {
     "build": "rm -rf dist && babel src --no-comments --out-dir dist --copy-files --ignore README.md",
     "watch": "rm -rf dist && babel src --watch --source-maps true --out-dir dist",
-    "test": "bin/test --no-oracle --no-mysql",
+    "test": "bin/test --no-oracle",
     "testsqlite3": "NODE_ENV=test ava test/*.js",
     "testpg": "NODE_ENV=test DB=PG ava test/*.js",
     "testpg-paging": "NODE_ENV=test DB=PG PAGINATE=keyset ava test/pagination/keyset-paging.js && NODE_ENV=test DB=PG PAGINATE=offset ava test/pagination/offset-paging.js",
