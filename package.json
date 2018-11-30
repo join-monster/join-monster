@@ -1,5 +1,5 @@
 {
-  "name": "join-monster",
+  "name": "@s97712/join-monster",
   "version": "2.1.0",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
   "scripts": {
     "build": "rm -rf dist && babel src --no-comments --out-dir dist --copy-files --ignore README.md",
     "watch": "rm -rf dist && babel src --watch --source-maps true --out-dir dist",
-    "test": "bin/test --no-oracle",
+    "test": "bin/test --no-oracle --no-mysql",
     "testsqlite3": "NODE_ENV=test ava test/*.js",
     "testpg": "NODE_ENV=test DB=PG ava test/*.js",
     "testpg-paging": "NODE_ENV=test DB=PG PAGINATE=keyset ava test/pagination/keyset-paging.js && NODE_ENV=test DB=PG PAGINATE=offset ava test/pagination/offset-paging.js",
@@ -111,6 +111,6 @@
     "generatorics": "^1.0.8",
     "graphql-relay": "^0.5.0",
     "lodash": "^4.13.1",
-    "sqlbind": "^0.0.7"
+    "sqlbind": "^0.0.9"
   }
 }

@@ -5647,10 +5647,10 @@ sprintf-js@~1.0.2:
   resolved "https://registry.npmjs.org/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=
 
-sqlbind@^0.0.7:
-  version "0.0.7"
-  resolved "https://registry.npmjs.org/sqlbind/-/sqlbind-0.0.7.tgz#578c73d6fdc89b61060a4ac923de702eee89b7ca"
-  integrity sha512-dktaQZvGpo0p27W/BydrTmzvzJpCzJo0w5WQ7UNl7rHA3TD//neQCdtcVPBZUtv5KHJuS6+hr9+SF3+10vaHKw==
+sqlbind@^0.0.9:
+  version "0.0.9"
+  resolved "https://registry.npmjs.org/sqlbind/-/sqlbind-0.0.9.tgz#9b38c8849a4bd7234fd187a7e3cfe532f15dc353"
+  integrity sha512-LS10t80lQkIdOVruo+rhjIlJMeUoW9HiI+mX7ddAddn6yRiIQmwV0uqA4g8WlMg/NHzfS2fKXwrY0oEW5EpQiA==
 
 sqlite3@^4.0.0:
   version "4.0.4"

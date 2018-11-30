@@ -1,18 +1,19 @@
 
 import * as graphql from 'graphql'
+import {SqlBind} from 'sqlbind';
 
 // Extend graphql objects and fields
 
 declare module 'graphql/type/definition' {
-  type SqlJoin<TContext, TArgs> = (table1: string, table2: string, args: TArgs, context: TContext, sqlASTNode: any) => string
-  type Where<TContext, TArgs> = (usersTable: string, args: TArgs, context: TContext, sqlASTNode: any) => string | void
+  type SqlJoin<TContext, TArgs> = (table1: string, table2: string, args: TArgs, context: TContext, sqlASTNode: any) => string | SqlBind
+  type Where<TContext, TArgs> = (usersTable: string, args: TArgs, context: TContext, sqlASTNode: any) => string | void | SqlBind
   type Order = 'ASC' | 'asc' | 'DESC' | 'desc'
   type OrderBy = string | { [key: string]: Order }
   type ThunkWithArgsCtx<T, TContext, TArgs> = ((args: TArgs, context: TContext) => T) | T;
 
   export interface GraphQLObjectTypeConfig<TSource, TContext> {
     alwaysFetch?: string
-    sqlTable?: ThunkWithArgsCtx<string, any, TContext>
+    sqlTable?: ThunkWithArgsCtx<string | SqlBind, any, TContext>
     uniqueKey?: string | string[]
   }
 
@@ -22,7 +23,7 @@ declare module 'graphql/type/definition' {
     junction?: {
       include?: ThunkWithArgsCtx<{
         sqlColumn?: string
-        sqlExpr?: string
+        sqlExpr?: string | SqlBind
         sqlDeps?: string | string[]
       }, TContext, TArgs>
       orderBy?: ThunkWithArgsCtx<OrderBy, TContext, TArgs>
@@ -36,7 +37,7 @@ declare module 'graphql/type/definition' {
         sqlJoin: SqlJoin<TContext, TArgs>
       }
       sqlJoins?: [SqlJoin<TContext, TArgs>, SqlJoin<TContext, TArgs>]
-      sqlTable: ThunkWithArgsCtx<string, TContext, TArgs>
+      sqlTable: ThunkWithArgsCtx<string | SqlBind, TContext, TArgs>
       uniqueKey?: string | string[]
       where?: Where<TContext, TArgs>
     }
@@ -79,10 +80,14 @@ type Dialect = 'pg' | 'oracle' | 'mariadb' | 'mysql' | 'sqlite3'
 type JoinMonsterOptions = { minify?: boolean, dialect?: Dialect, dialectModule?: DialectModule }
 
 type Rows = any
-type DbCallCallback = (sql:string, done: (err?: any, rows?: Rows) => void) => void
-type DbCallPromise = (sql: string) => Promise<Rows>
-type DbCall = DbCallCallback | DbCallPromise
+type DbCallCallback<T> = (sql:T, done: (err?: any, rows?: Rows) => void) => void
+type DbCallPromise<T> = (sql: T) => Promise<Rows>
 
-declare function joinMonster(resolveInfo: any, context: any, dbCall: DbCallCallback | DbCallPromise, options?: JoinMonsterOptions) : Promise<any>
+type DbCall = DbCallCallback<string> | DbCallPromise<string>
+type DbCallParameterize = DbCallCallback<SqlBind> | DbCallPromise<SqlBind>
+
+declare function joinMonster(resolveInfo: any, context: any, dbCall: DbCall, options?: JoinMonsterOptions) : Promise<any>
+declare function joinMonsterParameterize(resolveInfo: any, context: any, dbCall: DbCallParameterize, options?: JoinMonsterOptions) : Promise<any>
 
 export default joinMonster
+export {joinMonsterParameterize}
