@@ -59,7 +59,7 @@ let getNode = (() => {
     const sqlAST = {};
     const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs;
 
-    queryAST.populateASTNode.call(resolveInfo, fieldNodes[0], fakeParentNode, sqlAST, namespace, 0, options);
+    queryAST.populateASTNode.call(resolveInfo, fieldNodes[0], fakeParentNode, sqlAST, namespace, 0, options, context);
     queryAST.pruneDuplicateSqlDeps(sqlAST, namespace);
     const { sql, shapeDefinition } = yield (0, _util.compileSqlAST)(sqlAST, context, options);
     const data = (0, _arrayToConnection2.default)((yield (0, _util.handleUserDbCall)(dbCall, sql, sqlAST, shapeDefinition)), sqlAST);

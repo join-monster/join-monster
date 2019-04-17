@@ -33,9 +33,9 @@ function arrToConnection(data, sqlAST) {
   }
 
   if (sqlAST.paginate && !data._paginated) {
-    var _ref;
+    var _ref3;
 
-    if (sqlAST.sortKey || ((_ref = sqlAST) != null ? (_ref = _ref.junction) != null ? _ref.sortKey : _ref : _ref)) {
+    if (sqlAST.sortKey || ((_ref3 = sqlAST) != null ? (_ref3 = _ref3.junction) != null ? _ref3.sortKey : _ref3 : _ref3)) {
       var _ref2;
 
       if ((_ref2 = sqlAST) != null ? (_ref2 = _ref2.args) != null ? _ref2.first : _ref2 : _ref2) {
@@ -65,11 +65,12 @@ function arrToConnection(data, sqlAST) {
         pageInfo.endCursor = (0, _util.last)(edges).cursor;
       }
       return { edges, pageInfo, _paginated: true };
-    } else if (sqlAST.orderBy || sqlAST.junction && sqlAST.junction.orderBy) {
-      var _ref3;
+    }
+    if (sqlAST.orderBy || sqlAST.junction && sqlAST.junction.orderBy) {
+      var _ref;
 
       let offset = 0;
-      if ((_ref3 = sqlAST) != null ? (_ref3 = _ref3.args) != null ? _ref3.after : _ref3 : _ref3) {
+      if ((_ref = sqlAST) != null ? (_ref = _ref.args) != null ? _ref.after : _ref : _ref) {
         offset = (0, _graphqlRelay.cursorToOffset)(sqlAST.args.after) + 1;
       }
 

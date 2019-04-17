@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.joinPrefix = joinPrefix;
+exports.generateCastExpressionFromValueType = generateCastExpressionFromValueType;
 exports.thisIsNotTheEndOfThisBatch = thisIsNotTheEndOfThisBatch;
 exports.whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch = whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch;
 exports.keysetPagingSelect = keysetPagingSelect;
@@ -23,20 +24,32 @@ function joinPrefix(prefix) {
   return prefix.slice(1).map(name => name + '__').join('');
 }
 
+function generateCastExpressionFromValueType(key, val) {
+  const castTypes = {
+    string: 'TEXT'
+  };
+  const type = castTypes[typeof val] || null;
+
+  if (type) {
+    return `CAST(${key} AS ${type})`;
+  }
+  return key;
+}
+
 function doubleQuote(str) {
   return `"${str}"`;
 }
 
 function thisIsNotTheEndOfThisBatch(node, parent) {
-  var _ref;
+  var _ref8;
 
-  return !node.sqlBatch && !((_ref = node) != null ? (_ref = _ref.junction) != null ? _ref.sqlBatch : _ref : _ref) || !parent;
+  return !node.sqlBatch && !((_ref8 = node) != null ? (_ref8 = _ref8.junction) != null ? _ref8.sqlBatch : _ref8 : _ref8) || !parent;
 }
 
 function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent) {
-  var _ref2;
+  var _ref7;
 
-  return !node.paginate && (!(node.sqlBatch || ((_ref2 = node) != null ? (_ref2 = _ref2.junction) != null ? _ref2.sqlBatch : _ref2 : _ref2)) || !parent);
+  return !node.paginate && (!(node.sqlBatch || ((_ref7 = node) != null ? (_ref7 = _ref7.junction) != null ? _ref7.sqlBatch : _ref7 : _ref7)) || !parent);
 }
 
 function keysetPagingSelect(table, whereCondition, order, limit, as, options = {}) {
@@ -100,10 +113,10 @@ function orderColumnsToString(orderColumns, q, as) {
 }
 
 function interpretForOffsetPaging(node, dialect) {
-  var _ref3, _ref4;
+  var _ref5, _ref6;
 
   const { name } = dialect;
-  if ((_ref3 = node) != null ? (_ref3 = _ref3.args) != null ? _ref3.last : _ref3 : _ref3) {
+  if ((_ref6 = node) != null ? (_ref6 = _ref6.args) != null ? _ref6.last : _ref6 : _ref6) {
     throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead');
   }
 
@@ -118,7 +131,7 @@ function interpretForOffsetPaging(node, dialect) {
 
   let limit = ['mariadb', 'mysql', 'oracle'].includes(name) ? '18446744073709551615' : 'ALL';
   let offset = 0;
-  if ((_ref4 = node) != null ? (_ref4 = _ref4.args) != null ? _ref4.first : _ref4 : _ref4) {
+  if ((_ref5 = node) != null ? (_ref5 = _ref5.args) != null ? _ref5.first : _ref5 : _ref5) {
     limit = parseInt(node.args.first, 10);
 
     if (node.paginate) {
@@ -132,7 +145,7 @@ function interpretForOffsetPaging(node, dialect) {
 }
 
 function interpretForKeysetPaging(node, dialect) {
-  var _ref7, _ref8;
+  var _ref, _ref2;
 
   const { name } = dialect;
 
@@ -141,13 +154,13 @@ function interpretForKeysetPaging(node, dialect) {
   let descending;
   const order = { columns: {} };
   if (node.sortKey) {
-    var _ref5;
+    var _ref4;
 
     sortKey = node.sortKey;
     descending = sortKey.order.toUpperCase() === 'DESC';
     sortTable = node.as;
 
-    if ((_ref5 = node) != null ? (_ref5 = _ref5.args) != null ? _ref5.last : _ref5 : _ref5) {
+    if ((_ref4 = node) != null ? (_ref4 = _ref4.args) != null ? _ref4.last : _ref4 : _ref4) {
       descending = !descending;
     }
     for (let column of (0, _util.wrap)(sortKey.key)) {
@@ -155,13 +168,13 @@ function interpretForKeysetPaging(node, dialect) {
     }
     order.table = node.as;
   } else {
-    var _ref6;
+    var _ref3;
 
     sortKey = node.junction.sortKey;
     descending = sortKey.order.toUpperCase() === 'DESC';
     sortTable = node.junction.as;
 
-    if ((_ref6 = node) != null ? (_ref6 = _ref6.args) != null ? _ref6.last : _ref6 : _ref6) {
+    if ((_ref3 = node) != null ? (_ref3 = _ref3.args) != null ? _ref3.last : _ref3 : _ref3) {
       descending = !descending;
     }
     for (let column of (0, _util.wrap)(sortKey.key)) {
@@ -172,7 +185,7 @@ function interpretForKeysetPaging(node, dialect) {
 
   let limit = ['mariadb', 'mysql', 'oracle'].includes(name) ? '18446744073709551615' : 'ALL';
   let whereCondition = '';
-  if ((_ref7 = node) != null ? (_ref7 = _ref7.args) != null ? _ref7.first : _ref7 : _ref7) {
+  if ((_ref2 = node) != null ? (_ref2 = _ref2.args) != null ? _ref2.first : _ref2 : _ref2) {
     limit = parseInt(node.args.first, 10) + 1;
     if (node.args.after) {
       const cursorObj = (0, _util.cursorToObj)(node.args.after);
@@ -182,7 +195,7 @@ function interpretForKeysetPaging(node, dialect) {
     if (node.args.before) {
       throw new Error('Using "before" with "first" is nonsensical.');
     }
-  } else if ((_ref8 = node) != null ? (_ref8 = _ref8.args) != null ? _ref8.last : _ref8 : _ref8) {
+  } else if ((_ref = node) != null ? (_ref = _ref.args) != null ? _ref.last : _ref : _ref) {
     limit = parseInt(node.args.last, 10) + 1;
     if (node.args.before) {
       const cursorObj = (0, _util.cursorToObj)(node.args.before);

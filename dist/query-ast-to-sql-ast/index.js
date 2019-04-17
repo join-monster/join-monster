@@ -95,7 +95,7 @@ function queryASTToSqlAST(resolveInfo, options, context) {
   const parentType = resolveInfo.parentType;
   populateASTNode.call(resolveInfo, queryAST, parentType, sqlAST, namespace, 0, options, context);
 
-  _assert2.default.equal(sqlAST.type, 'table', 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".');
+  _assert2.default.ok(['table', 'union'].indexOf(sqlAST.type) > -1, 'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".');
 
   pruneDuplicateSqlDeps(sqlAST, namespace);
 
@@ -103,7 +103,7 @@ function queryASTToSqlAST(resolveInfo, options, context) {
 }
 
 function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, depth, options, context) {
-  var _ref;
+  var _ref5;
 
   const fieldName = queryASTNode.name.value;
 
@@ -118,7 +118,7 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
   }
 
   let fieldIncludes;
-  if ((_ref = sqlASTNode) != null ? (_ref = _ref.parent) != null ? (_ref = _ref.junction) != null ? (_ref = _ref.include) != null ? _ref[fieldName] : _ref : _ref : _ref : _ref) {
+  if ((_ref5 = sqlASTNode) != null ? (_ref5 = _ref5.parent) != null ? (_ref5 = _ref5.junction) != null ? (_ref5 = _ref5.include) != null ? _ref5[fieldName] : _ref5 : _ref5 : _ref5 : _ref5) {
     fieldIncludes = sqlASTNode.parent.junction.include[fieldName];
     field = _extends({}, field, fieldIncludes);
     sqlASTNode.fromOtherTable = sqlASTNode.parent.junction.as;
@@ -145,7 +145,7 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
 
     const stripped = stripRelayConnection(gqlType, queryASTNode, this.fragments);
 
-    gqlType = stripped.gqlType;
+    gqlType = stripNonNullType(stripped.gqlType);
     queryASTNode = stripped.queryASTNode;
 
     if (field.sqlPaginate) {
@@ -158,7 +158,7 @@ function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namespace, de
 
   const config = gqlType._typeConfig;
 
-  if (!field.jmIgnoreTable && isTableType(gqlType) && config.sqlTable) {
+  if (!field.jmIgnoreTable && TABLE_TYPES.includes(gqlType.constructor.name) && config.sqlTable) {
     if (depth >= 1) {
       (0, _assert2.default)(!field.junctionTable, '"junctionTable" has been replaced with a new API.');
       (0, _assert2.default)(field.sqlJoin || field.sqlBatch || field.junction, `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table,
@@ -411,7 +411,8 @@ function toClumsyName(keyArr) {
 function keyToASTChild(key, namespace) {
   if (typeof key === 'string') {
     return columnToASTChild(key, namespace);
-  } else if (Array.isArray(key)) {
+  }
+  if (Array.isArray(key)) {
     const clumsyName = toClumsyName(key);
     return {
       type: 'composite',
@@ -423,9 +424,9 @@ function keyToASTChild(key, namespace) {
 }
 
 function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
-  var _ref2, _ref3;
+  var _ref3, _ref4;
 
-  if (sqlASTNode.sortKey || ((_ref2 = sqlASTNode) != null ? (_ref2 = _ref2.junction) != null ? _ref2.sortKey : _ref2 : _ref2)) {
+  if (sqlASTNode.sortKey || ((_ref4 = sqlASTNode) != null ? (_ref4 = _ref4.junction) != null ? _ref4.sortKey : _ref4 : _ref4)) {
     const sortKey = sqlASTNode.sortKey || sqlASTNode.junction.sortKey;
     (0, _assert2.default)(sortKey.order, '"sortKey" must have "order"');
 
@@ -447,7 +448,8 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
 }
 
 function stripRelayConnection(gqlType, queryASTNode, fragments) {
-  const strippedType = gqlType.getFields().edges.type.ofType.getFields().node.type;
+  const edgeType = stripNonNullType(gqlType._fields.edges.type);
+  const strippedType = stripNonNullType(stripNonNullType(edgeType.ofType)._fields.node.type);
 
   const args = queryASTNode.arguments;
 
@@ -509,7 +511,7 @@ function pruneDuplicateSqlDeps(sqlAST, namespace) {
 }
 
 function getSortColumns(field, sqlASTNode, context) {
-  var _ref4, _ref5;
+  var _ref, _ref2;
 
   if (field.sortKey) {
     sqlASTNode.sortKey = (0, _util.unthunk)(field.sortKey, sqlASTNode.args || {}, context);
@@ -534,10 +536,10 @@ function getSortColumns(field, sqlASTNode, context) {
       throw new Error('"sortKey" or "orderBy" required if "sqlPaginate" is true');
     }
   }
-  if (sqlASTNode.sortKey && ((_ref4 = sqlASTNode) != null ? (_ref4 = _ref4.junction) != null ? _ref4.sortKey : _ref4 : _ref4)) {
+  if (sqlASTNode.sortKey && ((_ref2 = sqlASTNode) != null ? (_ref2 = _ref2.junction) != null ? _ref2.sortKey : _ref2 : _ref2)) {
     throw new Error('"sortKey" must be on junction or main table, not both');
   }
-  if (sqlASTNode.orderBy && ((_ref5 = sqlASTNode) != null ? (_ref5 = _ref5.junction) != null ? _ref5.orderBy : _ref5 : _ref5)) {
+  if (sqlASTNode.orderBy && ((_ref = sqlASTNode) != null ? (_ref = _ref.junction) != null ? _ref.orderBy : _ref : _ref)) {
     throw new Error('"orderBy" must be on junction or main table, not both');
   }
 }

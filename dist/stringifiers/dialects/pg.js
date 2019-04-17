@@ -42,7 +42,8 @@ const dialect = module.exports = {
 
   handleBatchedManyToManyPaginated: (() => {
     var _ref2 = _asyncToGenerator(function* (parent, node, context, tables, batchScope, joinCondition) {
-      const pagingWhereConditions = [`"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}" = temp."${node.junction.sqlBatch.parentKey.name}"`];
+      const thisKeyOperand = (0, _shared.generateCastExpressionFromValueType)(`"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}"`, batchScope[0]);
+      const pagingWhereConditions = [`${thisKeyOperand} = temp."${node.junction.sqlBatch.parentKey.name}"`];
       if (node.junction.where) {
         pagingWhereConditions.push((yield node.junction.where(`"${node.junction.as}"`, node.args || {}, context, node)));
       }
@@ -54,7 +55,7 @@ const dialect = module.exports = {
         return `(${val})`;
       })}) temp("${node.junction.sqlBatch.parentKey.name}")`;
       tables.push(tempTable);
-      const lateralJoinCondition = `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}" = temp."${node.junction.sqlBatch.parentKey.name}"`;
+      const lateralJoinCondition = `${thisKeyOperand} = temp."${node.junction.sqlBatch.parentKey.name}"`;
 
       const lateralJoinOptions = { joinCondition: lateralJoinCondition, joinType: 'LEFT' };
       if (node.where || node.orderBy) {
@@ -139,7 +140,8 @@ const dialect = module.exports = {
 
   handleBatchedOneToManyPaginated: (() => {
     var _ref5 = _asyncToGenerator(function* (parent, node, context, tables, batchScope) {
-      const pagingWhereConditions = [`"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`];
+      const thisKeyOperand = (0, _shared.generateCastExpressionFromValueType)(`"${node.as}"."${node.sqlBatch.thisKey.name}"`, batchScope[0]);
+      const pagingWhereConditions = [`${thisKeyOperand} = temp."${node.sqlBatch.parentKey.name}"`];
       if (node.where) {
         pagingWhereConditions.push((yield node.where(`"${node.as}"`, node.args || {}, context, node)));
       }
@@ -147,7 +149,7 @@ const dialect = module.exports = {
         return `(${val})`;
       })}) temp("${node.sqlBatch.parentKey.name}")`;
       tables.push(tempTable);
-      const lateralJoinCondition = `"${node.as}"."${node.sqlBatch.thisKey.name}" = temp."${node.sqlBatch.parentKey.name}"`;
+      const lateralJoinCondition = `${thisKeyOperand} = temp."${node.sqlBatch.parentKey.name}"`;
       if (node.sortKey) {
         const { limit, order, whereCondition: whereAddendum } = (0, _shared.interpretForKeysetPaging)(node, dialect);
         pagingWhereConditions.push(whereAddendum);

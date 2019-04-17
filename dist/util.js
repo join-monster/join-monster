@@ -175,7 +175,7 @@ function buildWhereFunction(type, condition, options) {
     return condition;
   }
 
-  const quote = ['mysql', 'mariadb'].includes(name) ? '`' : '"';
+  const quote = ['mysql', 'mysql8', 'mariadb'].includes(name) ? '`' : '"';
 
   const uniqueKey = type._typeConfig.uniqueKey;
 
@@ -230,7 +230,9 @@ function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition) {
 }
 
 function validate(rows) {
-  if (Array.isArray(rows)) return rows;else if (rows && rows.rows) return rows.rows;
+  if (Array.isArray(rows)) return rows;
+
+  if (rows && rows.rows) return rows.rows;
 
   throw new Error(`"dbCall" function must return/resolve an array of objects where each object is a row from the result set.
     Instead got ${_util2.default.inspect(rows, { depth: 3 })}`);

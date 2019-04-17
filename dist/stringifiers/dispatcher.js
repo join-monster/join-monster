@@ -64,14 +64,14 @@ let _stringifySqlAST = (() => {
 
 let handleTable = (() => {
   var _ref8 = _asyncToGenerator(function* (parent, node, prefix, context, selections, tables, wheres, orders, batchScope, dialect) {
-    var _ref4, _ref5;
+    var _ref, _ref2;
 
     const { quote: q } = dialect;
 
     if ((0, _shared.whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch)(node, parent)) {
-      var _ref;
+      var _ref5;
 
-      if ((_ref = node) != null ? (_ref = _ref.junction) != null ? _ref.where : _ref : _ref) {
+      if ((_ref5 = node) != null ? (_ref5 = _ref5.junction) != null ? _ref5.where : _ref5 : _ref5) {
         wheres.push((yield node.junction.where(`${q(node.junction.as)}`, node.args || {}, context, node)));
       }
       if (node.where) {
@@ -80,9 +80,9 @@ let handleTable = (() => {
     }
 
     if ((0, _shared.thisIsNotTheEndOfThisBatch)(node, parent)) {
-      var _ref2, _ref3;
+      var _ref3, _ref4;
 
-      if ((_ref2 = node) != null ? (_ref2 = _ref2.junction) != null ? _ref2.orderBy : _ref2 : _ref2) {
+      if ((_ref4 = node) != null ? (_ref4 = _ref4.junction) != null ? _ref4.orderBy : _ref4 : _ref4) {
         orders.push({
           table: node.junction.as,
           columns: node.junction.orderBy
@@ -119,7 +119,7 @@ let handleTable = (() => {
       } else {
         tables.push(`LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`);
       }
-    } else if ((_ref4 = node) != null ? (_ref4 = _ref4.junction) != null ? _ref4.sqlBatch : _ref4 : _ref4) {
+    } else if ((_ref2 = node) != null ? (_ref2 = _ref2.junction) != null ? _ref2.sqlBatch : _ref2 : _ref2) {
       if (parent) {
         selections.push(`${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} AS ${q((0, _shared.joinPrefix)(prefix) + node.junction.sqlBatch.parentKey.as)}`);
       } else {
@@ -135,7 +135,7 @@ let handleTable = (() => {
           wheres.push(`${q(node.junction.as)}.${q(node.junction.sqlBatch.thisKey.name)} IN (${batchScope.join(',')})`);
         }
       }
-    } else if ((_ref5 = node) != null ? (_ref5 = _ref5.junction) != null ? _ref5.sqlTable : _ref5 : _ref5) {
+    } else if ((_ref = node) != null ? (_ref = _ref.junction) != null ? _ref.sqlTable : _ref : _ref) {
       const joinCondition1 = yield node.junction.sqlJoins[0](`${q(parent.as)}`, q(node.junction.as), node.args || {}, context, node);
       const joinCondition2 = yield node.junction.sqlJoins[1](`${q(node.junction.as)}`, q(node.as), node.args || {}, context, node);
 
