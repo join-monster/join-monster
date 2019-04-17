@@ -143,4 +143,3 @@ test('it should get user 1 with comments and particular posts with active commen
 
   t.deepEqual(expect, data)
 })
-

@@ -2,13 +2,13 @@ language: node_js
 dist: precise
 node_js:
   - 6
-  - 7
   - 8
+  - 10
 
 deploy:
   - provider: npm
     skip_cleanup: true
-    email: andrew@stem.is
+    email: acarl005@g.ucla.edu
     # only tagged commits will trigger deploy. all other commits simply run the lint and tests
     on:
       tags: true
@@ -19,7 +19,7 @@ deploy:
 
 addons:
   postgresql: "9.4"
-  mariadb: '10.2'
+  mariadb: "10.2"
   # need a C++ compiler for sqlite3
   apt:
     sources:
@@ -31,7 +31,6 @@ before_script:
   # create the databases
   - psql -c "CREATE DATABASE test1 LC_COLLATE 'en_US.UTF-8';" -U postgres
   - psql -c "CREATE DATABASE test2 LC_COLLATE 'en_US.UTF-8';" -U postgres
-  - psql -c "CREATE DATABASE test3 LC_COLLATE 'en_US.UTF-8';" -U postgres
   - psql -c "CREATE DATABASE demo LC_COLLATE 'en_US.UTF-8';" -U postgres
   - echo "CREATE DATABASE test1" | mysql -u travis
   - echo "CREATE DATABASE test2" | mysql -u travis

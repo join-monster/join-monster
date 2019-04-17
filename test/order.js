@@ -98,4 +98,3 @@ test('it sould handle order on many-to-many', async t => {
   }
   t.deepEqual(expect, data)
 })
-

@@ -73,7 +73,7 @@ const QueryRoot = new GraphQLObjectType({
 ## Adding Context
 
 Most often, we'll be asking for the *logged-in* user.
-The `joinMonster` function has a second parameter which is basically an arbitrary object with useful contextual information that your `where` functions might depend on.
+The `joinMonster` function has a third parameter which is basically an arbitrary object with useful contextual information that your `where` functions might depend on.
 For example, you can pass in the ID of the logged in user to incorporate it into the `WHERE` condition.
 
 ```javascript

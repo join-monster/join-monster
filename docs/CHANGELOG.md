@@ -1,3 +1,8 @@
+### v2.1.0 (Aug. 25, 2018)
+- Numerous bug fixes
+- TypeScript type definitions
+- New 'mysql8' dialect which supports some pagination
+
 ### v2.0.13 (Sep. 4, 2017)
 - Don't write to debug module unless it's actually enabled.
 

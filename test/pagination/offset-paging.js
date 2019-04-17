@@ -745,4 +745,3 @@ test('should handle an interface type', async t => {
   }
   t.deepEqual(expect, data.user.writtenMaterial)
 })
-

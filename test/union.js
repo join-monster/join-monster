@@ -148,4 +148,3 @@ test('it should an interface type', async t => {
   }
   t.deepEqual(expect, data)
 })
-

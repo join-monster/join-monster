@@ -19,4 +19,3 @@ export function errCheck(t, errors) {
   }
   t.is(errors, undefined)
 }
-

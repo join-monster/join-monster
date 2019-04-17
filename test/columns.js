@@ -363,4 +363,3 @@ test('it should handle raw SQL expressions', async t => {
   errCheck(t, errors)
   t.is(data.user.fullName.split(' ')[1].toUpperCase(), data.user.capitalizedLastName)
 })
-

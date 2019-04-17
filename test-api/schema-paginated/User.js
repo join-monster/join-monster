@@ -1,5 +1,6 @@
 import {
   GraphQLObjectType,
+  GraphQLNonNull,
   GraphQLList,
   GraphQLString,
   GraphQLInt,
@@ -333,7 +334,7 @@ const User = new GraphQLObjectType({
   })
 })
 
-const connectionConfig = { nodeType: User }
+const connectionConfig = { nodeType: GraphQLNonNull(User) }
 if (PAGINATE === 'offset') {
   connectionConfig.connectionFields = {
     total: { type: GraphQLInt }
