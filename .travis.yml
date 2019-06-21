@@ -1,44 +1,52 @@
+# .travis.yml
 language: node_js
-dist: precise
-node_js:
-  - 6
-  - 8
-  - 10
+dist: xenial
+sudo: required
 
-deploy:
-  - provider: npm
-    skip_cleanup: true
-    email: acarl005@g.ucla.edu
-    # only tagged commits will trigger deploy. all other commits simply run the lint and tests
-    on:
-      tags: true
-      branch: master
-    # NPM API key, encrypted with public key crypto. only travis has the private key.
-    api_key:
-      secure: PcwMn5hXRyFOEV3RFp1MWMvZnj2T2nSJ2vV/8vdVNDL+QwVaQGICWLeUGbcMmtliowMVCpNswZ8+cVyg+HUlvdF8dlpNTzuHA4Cv1V/+RUfJbtTaZVPIezswtjbxcOxS69ZNCJbRJXoWojiYUSXzBjdGFHRWGFzFYbdhMgXYt8sgkN3FSdny7MdHMsOk5TISFdVu9XppFO4SCru1jf6iyXQe+6ZaH/XyI9BdPbQ3SPl7NpvLwJBSGeTdxaI779r74wRUBlBlIO52U7IsTb4zhES25E1+dMBc3mOGRScj4/wx6p4880jhJupDA/feQnkStdAjVDzMtqXNwmlRMcvQX5xD4cSHYTInMkO6Y3d3MsV9DX7LTVTX6x5oDrsHA6SkToL09w5OFB9FU2M6j7vqRLws1hv85seOsEwaqqYeYyBtlFSN0vKfvF4R3yZJ/3GPkKTvevNyZZQ1GN09ZQzKp2tkCHl/vKzXTb2HCD8ql8/lhaqX1qA8vC5X1SDNhAEIjqmjFJPa/IeT8lK219KWa4fURs9fQAhQO5f0r735TTEL0SY99BXrTXfiYLje5dGV4cM9ABp3ENLDJH1oMj9j+W0tZ0192/tJOdoKQ62vBlFxQ7MWe1A49PjqVNLBUGnuVyq7xAXHMF5Iwf5Pq2Pg7QUptin5QKxcutH057xDSn0=
+cache:
+  directories:
+    - 'node_modules'
 
-addons:
-  postgresql: "9.4"
-  mariadb: "10.2"
-  # need a C++ compiler for sqlite3
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-4.8
+matrix:
+  fast_finish: true
+  include:
+    - node_js: '12'
+      env: KNEX_TEST_TIMEOUT=60000 MYSQL_URL=mysql://root:testrootpassword@localhost:23306/ PG_URL=postgres://testuser:testpassword@localhost:25432/
+    - node_js: '10'
+      env: KNEX_TEST_TIMEOUT=60000 MYSQL_URL=mysql://root:testrootpassword@localhost:23306/ PG_URL=postgres://testuser:testpassword@localhost:25432/
+    - node_js: '8'
+      env: KNEX_TEST_TIMEOUT=60000 MYSQL_URL=mysql://root:testrootpassword@localhost:23306/ PG_URL=postgres://testuser:testpassword@localhost:25432/
+install:
+  - npm i
+  # - (echo $DB | grep oracledb) && npm install oracledb || true
 
 before_script:
+  - npm run db:start
+  # - echo "Install oracle client libs to db container and copy to hosts ~/lib for node oracledb driver..."
+  # - docker-compose -f scripts/docker-compose.yml exec oracledbxe curl http://yum.oracle.com/public-yum-ol7.repo -o /etc/yum.repos.d/public-yum-ol7.repo
+  # - docker-compose -f scripts/docker-compose.yml exec oracledbxe yum install -y yum-utils
+  # - docker-compose -f scripts/docker-compose.yml exec oracledbxe yum-config-manager --enable ol7_oracle_instantclient
+  # - docker-compose -f scripts/docker-compose.yml exec oracledbxe yum install -y oracle-instantclient18.3-basiclite
+  # - docker cp oracledbxe_container:/usr/lib/oracle/18.3/client64/lib/ ~/
+  # - sudo sh -c "echo $HOME/lib > /etc/ld.so.conf.d/oracle-instantclient.conf"
+  # - sudo ldconfig
   # create the databases
-  - psql -c "CREATE DATABASE test1 LC_COLLATE 'en_US.UTF-8';" -U postgres
-  - psql -c "CREATE DATABASE test2 LC_COLLATE 'en_US.UTF-8';" -U postgres
-  - psql -c "CREATE DATABASE demo LC_COLLATE 'en_US.UTF-8';" -U postgres
-  - echo "CREATE DATABASE test1" | mysql -u travis
-  - echo "CREATE DATABASE test2" | mysql -u travis
+  - docker-compose -f scripts/docker-compose.yml exec postgres psql -c "CREATE DATABASE test1 LC_COLLATE 'en_US.utf8';" -U testuser
+  - docker-compose -f scripts/docker-compose.yml exec postgres psql -c "CREATE DATABASE test2 LC_COLLATE 'en_US.utf8';" -U testuser
+  - docker-compose -f scripts/docker-compose.yml exec postgres psql -c "CREATE DATABASE demo LC_COLLATE 'en_US.utf8';" -U testuser
+  - docker-compose -f scripts/docker-compose.yml exec mysql bash -c 'echo "CREATE DATABASE test1" | mysql -uroot -ptestrootpassword'
+  - docker-compose -f scripts/docker-compose.yml exec mysql bash -c 'echo "CREATE DATABASE test2" | mysql -uroot -ptestrootpassword'
   # populate them with data
   - npm run db-build
-env:
-  - MYSQL_URL=mysql://travis@localhost/ PG_URL=postgres://postgres@localhost/ CXX=g++-4.8
+
+script:
+  - npm test
+
+after_success:
+  - npm run coveralls
 
 notifications:
   email: false
 
+services:
+  - docker

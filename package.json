@@ -28,6 +28,7 @@
     "jsdoc": "babel src/index.js -o temp.js && (jsdoc2md temp.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md) && rm temp.js",
     "prepublishOnly": "/bin/sh ./scripts/prepublish.sh && npm run build",
     "preversion": ". ./scripts/checkgit.sh && npm test",
+    "db:start": "docker-compose -f scripts/docker-compose.yml up --build -d mysql postgres; docker-compose -f scripts/docker-compose.yml up waitmysql waitpostgres",
     "db-build": "TZ=UTC babel-node test-api/data/build.js",
     "db-shell": "sqlite3 --column --header test-api/data/db/demo-data.sl3"
   },
