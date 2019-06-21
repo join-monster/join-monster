@@ -4,8 +4,9 @@ dist: xenial
 sudo: required
 
 cache:
+  yarn: true
   directories:
-    - 'node_modules'
+    - node_modules
 
 matrix:
   fast_finish: true
@@ -17,11 +18,11 @@ matrix:
     - node_js: '8'
       env: KNEX_TEST_TIMEOUT=60000 MYSQL_URL=mysql://root:testrootpassword@localhost:23306/ PG_URL=postgres://testuser:testpassword@localhost:25432/
 install:
-  - npm i
+  - yarn install --frozen-lockfile
   # - (echo $DB | grep oracledb) && npm install oracledb || true
 
 before_script:
-  - npm run db:start
+  - yarn db:start
   # - echo "Install oracle client libs to db container and copy to hosts ~/lib for node oracledb driver..."
   # - docker-compose -f scripts/docker-compose.yml exec oracledbxe curl http://yum.oracle.com/public-yum-ol7.repo -o /etc/yum.repos.d/public-yum-ol7.repo
   # - docker-compose -f scripts/docker-compose.yml exec oracledbxe yum install -y yum-utils
@@ -37,10 +38,10 @@ before_script:
   - docker-compose -f scripts/docker-compose.yml exec mysql bash -c 'echo "CREATE DATABASE test1" | mysql -uroot -ptestrootpassword'
   - docker-compose -f scripts/docker-compose.yml exec mysql bash -c 'echo "CREATE DATABASE test2" | mysql -uroot -ptestrootpassword'
   # populate them with data
-  - npm run db-build
+  - yarn db-build
 
 script:
-  - npm test
+  - yarn test
 
 after_success:
   - npm run coveralls

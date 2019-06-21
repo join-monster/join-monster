@@ -4,7 +4,7 @@ import schemaRelay from '../../test-api/schema-paginated/index'
 import { partial } from 'lodash'
 import { toGlobalId, fromGlobalId } from 'graphql-relay'
 import { objToCursor } from '../../src/util'
-import { errCheck } from '../_util'
+import { errCheck } from '../helpers/_util'
 
 // monkey-patch the array prototype because these are tests and IDGAF
 Object.defineProperty(Array.prototype, 'last', {

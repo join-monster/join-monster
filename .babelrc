@@ -1,4 +1,13 @@
 {
-  "presets": [ "node6", "stage-1" ],
-  "plugins": [ "transform-do-expressions", "object-values-to-object-keys", "idx" ]
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "node": "8.9.4"
+        }
+      }
+    ]
+  ],
+  "plugins": ["transform-do-expressions", "@babel/plugin-transform-modules-commonjs", "idx"]
 }

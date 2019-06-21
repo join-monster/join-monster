@@ -3,7 +3,7 @@ import { graphql } from 'graphql'
 import { toGlobalId, offsetToCursor } from 'graphql-relay'
 import schemaRelay from '../test-api/schema-paginated/index'
 import { partial } from 'lodash'
-import { errCheck } from './_util'
+import { errCheck } from './helpers/_util'
 
 const run = partial(graphql, schemaRelay)
 

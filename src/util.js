@@ -1,12 +1,14 @@
 import util from 'util'
 import assert from 'assert'
-import { nest } from '@stem/nesthydrationjs'
+import nesthydrationjs from 'nesthydrationjs'
 import stringifySQL from './stringifiers/dispatcher'
 import resolveUnions from './resolve-unions'
 import deprecate from 'deprecate'
 const debug = require('debug')('join-monster')
 
 import defineObjectShape from './define-object-shape'
+
+const NestHydrationJS = nesthydrationjs()
 
 export function emphasize(str, colorCode = 33) {
   return `\n\x1b[1;${colorCode}m${str}\x1b[0m\n`
@@ -153,7 +155,7 @@ export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition) {
             debug(emphasize('RAW_DATA'), inspect(rows.slice(0, 8)))
             debug(`${rows.length} rows...`)
           }
-          const data = nest(rows, shapeDefinition)
+          const data = NestHydrationJS.nest(rows, shapeDefinition)
           resolveUnions(data, sqlAST)
           if (debug.enabled) {
             debug(emphasize('SHAPED_DATA', inspect(data)))
@@ -175,7 +177,7 @@ export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition) {
       }
       // hydrate the data
       // take that shape definition we produced and pass it to the NestHydrationJS library
-      const data = nest(rows, shapeDefinition)
+      const data = NestHydrationJS.nest(rows, shapeDefinition)
       resolveUnions(data, sqlAST)
       if (debug.enabled) {
         debug(emphasize('SHAPED_DATA'), inspect(data))
