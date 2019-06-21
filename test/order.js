@@ -2,7 +2,7 @@ import test from 'ava'
 import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
 import { partial } from 'lodash'
-import { errCheck } from './_util'
+import { errCheck } from './helpers/_util'
 
 function makeQuery(asc) {
   return `{
