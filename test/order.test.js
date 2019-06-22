@@ -1,4 +1,3 @@
-import test from 'ava';
 import {graphql} from 'graphql';
 import schemaBasic from '../test-api/schema-basic/index';
 import {partial} from 'lodash';
@@ -22,29 +21,27 @@ function makeQuery(asc) {
 
 const run = partial(graphql, schemaBasic);
 
-test('it should handle nested ordering with both ASC', async (t) => {
+test('it should handle nested ordering with both ASC', async () => {
   const query = makeQuery(true);
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(
-    [{id: 4}, {id: 5}, {id: 6}, {id: 7}, {id: 8}],
+  errCheck(errors);
+  expect([{id: 4}, {id: 5}, {id: 6}, {id: 7}, {id: 8}]).toEqual(
     data.user.posts[0].comments
   );
-  t.deepEqual([{id: 1}, {id: 4}, {id: 6}, {id: 8}], data.user.comments);
+  expect([{id: 1}, {id: 4}, {id: 6}, {id: 8}]).toEqual(data.user.comments);
 });
 
-test('it should handle nested ordering with one ASC and one DESC', async (t) => {
+test('it should handle nested ordering with one ASC and one DESC', async () => {
   const query = makeQuery(false);
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(
-    [{id: 8}, {id: 7}, {id: 6}, {id: 5}, {id: 4}],
+  errCheck(errors);
+  expect([{id: 8}, {id: 7}, {id: 6}, {id: 5}, {id: 4}]).toEqual(
     data.user.posts[0].comments
   );
-  t.deepEqual([{id: 1}, {id: 4}, {id: 6}, {id: 8}], data.user.comments);
+  expect([{id: 1}, {id: 4}, {id: 6}, {id: 8}]).toEqual(data.user.comments);
 });
 
-test('it should handle order on many-to-many', async (t) => {
+test('it should handle order on many-to-many', async () => {
   const query = `{
     user(id: 3) {
       fullName
@@ -55,8 +52,8 @@ test('it should handle order on many-to-many', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'foo bar',
       following: [
@@ -71,10 +68,10 @@ test('it should handle order on many-to-many', async (t) => {
       ],
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it sould handle order on many-to-many', async (t) => {
+test('it sould handle order on many-to-many', async () => {
   const query = `{
     user(id: 3) {
       fullName
@@ -85,8 +82,8 @@ test('it sould handle order on many-to-many', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'foo bar',
       following: [
@@ -101,5 +98,5 @@ test('it sould handle order on many-to-many', async (t) => {
       ],
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });

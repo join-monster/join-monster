@@ -1,4 +1,3 @@
-import test from 'ava';
 import {graphql} from 'graphql';
 import schemaRelay from '../../test-api/schema-paginated/index';
 import {partial} from 'lodash';
@@ -43,11 +42,11 @@ function makeUsersQuery(args) {
   }`;
 }
 
-test('should handle pagination at the root', async (t) => {
+test('should handle pagination at the root', async () => {
   const query = makeUsersQuery();
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data.users.pageInfo, {
+  errCheck(errors);
+  expect(data.users.pageInfo).toEqual({
     hasNextPage: false,
     hasPreviousPage: false,
     startCursor: objToCursor({id: 1}),
@@ -58,128 +57,91 @@ test('should handle pagination at the root', async (t) => {
     toGlobalId('User', i + 1)
   );
   const ids = data.users.edges.map((edge) => edge.node.id);
-  t.deepEqual(expectedIds, ids);
-  t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor);
+  expect(expectedIds).toEqual(ids);
+  expect(data.users.edges.last().cursor).toBe(data.users.pageInfo.endCursor);
 });
 
-test('should handle root pagination with "first" arg', async (t) => {
+test('should handle root pagination with "first" arg', async () => {
   const query = makeUsersQuery({first: 2});
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(
-    data.users.pageInfo,
-    {
-      hasNextPage: true,
-      hasPreviousPage: false,
-      startCursor: objToCursor({id: 1}),
-      endCursor: objToCursor({id: 2}),
+  errCheck(errors);
+  expect(data.users.pageInfo).toEqual({
+    hasNextPage: true,
+    hasPreviousPage: false,
+    startCursor: objToCursor({id: 1}),
+    endCursor: objToCursor({id: 2}),
+  });
+  expect(data.users.edges[0]).toEqual({
+    cursor: objToCursor({id: 1}),
+    node: {
+      id: toGlobalId('User', 1),
+      fullName: 'Alivia Waelchi',
+      email: 'Mohammed.Hayes@hotmail.com',
     },
-    'page info is accurate'
-  );
-  t.deepEqual(
-    data.users.edges[0],
-    {
-      cursor: objToCursor({id: 1}),
-      node: {
-        id: toGlobalId('User', 1),
-        fullName: 'Alivia Waelchi',
-        email: 'Mohammed.Hayes@hotmail.com',
-      },
-    },
-    'the first node is accurate'
-  );
-  t.is(
-    data.users.edges.last().cursor,
-    data.users.pageInfo.endCursor,
-    'the last cursor in edges matches the end cursor in page info'
-  );
+  });
+  expect(data.users.edges.last().cursor).toBe(data.users.pageInfo.endCursor);
 });
 
-test('should reject an invalid cursor', async (t) => {
+test('should reject an invalid cursor', async () => {
   const query = makeUsersQuery({
     first: 2,
     after: objToCursor({id: 2, created_at: '2016-01-01'}),
   });
   const {errors} = await run(query);
-  t.truthy(errors.length);
-  t.regex(
-    errors[0] && errors[0].message,
+  expect(errors.length).toBeTruthy();
+  expect(errors[0] && errors[0].message).toMatch(
     /Invalid cursor. The column "created_at" is not in the sort key./
   );
 });
 
-test('should handle root pagination with "first" and "after" args', async (t) => {
+test('should handle root pagination with "first" and "after" args', async () => {
   const query = makeUsersQuery({first: 2, after: objToCursor({id: 2})});
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(
-    data.users.pageInfo,
-    {
-      hasNextPage: true,
-      hasPreviousPage: false,
-      startCursor: objToCursor({id: 3}),
-      endCursor: objToCursor({id: 4}),
+  errCheck(errors);
+  expect(data.users.pageInfo).toEqual({
+    hasNextPage: true,
+    hasPreviousPage: false,
+    startCursor: objToCursor({id: 3}),
+    endCursor: objToCursor({id: 4}),
+  });
+  expect(data.users.edges[0]).toEqual({
+    cursor: objToCursor({id: 3}),
+    node: {
+      id: toGlobalId('User', 3),
+      fullName: 'Coleman Abernathy',
+      email: 'Lurline79@gmail.com',
     },
-    'page info is accurate'
-  );
-  t.deepEqual(
-    data.users.edges[0],
-    {
-      cursor: objToCursor({id: 3}),
-      node: {
-        id: toGlobalId('User', 3),
-        fullName: 'Coleman Abernathy',
-        email: 'Lurline79@gmail.com',
-      },
-    },
-    'the first node is accurate'
-  );
-  t.is(
-    data.users.edges.last().cursor,
-    data.users.pageInfo.endCursor,
-    'the last cursor in edges matches the end cursor in page info'
-  );
+  });
+  expect(data.users.edges.last().cursor).toBe(data.users.pageInfo.endCursor);
 });
 
-test('should handle the last page of root pagination', async (t) => {
+test('should handle the last page of root pagination', async () => {
   const query = makeUsersQuery({first: 2, after: objToCursor({id: 5})});
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(
-    data.users.pageInfo,
-    {
-      hasNextPage: false,
-      hasPreviousPage: false,
-      startCursor: objToCursor({id: 6}),
-      endCursor: objToCursor({id: 6}),
+  errCheck(errors);
+  expect(data.users.pageInfo).toEqual({
+    hasNextPage: false,
+    hasPreviousPage: false,
+    startCursor: objToCursor({id: 6}),
+    endCursor: objToCursor({id: 6}),
+  });
+  expect(data.users.edges.length).toBe(1);
+  expect(data.users.edges[0]).toEqual({
+    cursor: objToCursor({id: 6}),
+    node: {
+      id: toGlobalId('User', 6),
+      email: 'andrew@stem.is',
+      fullName: 'Andrew Carlson',
     },
-    'page info is accurate'
-  );
-  t.is(data.users.edges.length, 1);
-  t.deepEqual(
-    data.users.edges[0],
-    {
-      cursor: objToCursor({id: 6}),
-      node: {
-        id: toGlobalId('User', 6),
-        email: 'andrew@stem.is',
-        fullName: 'Andrew Carlson',
-      },
-    },
-    'the first node is accurate'
-  );
-  t.is(
-    data.users.edges.last().cursor,
-    data.users.pageInfo.endCursor,
-    'the last cursor in edges matches the end cursor in page info'
-  );
+  });
+  expect(data.users.edges.last().cursor).toBe(data.users.pageInfo.endCursor);
 });
 
-test('should return nothing after the end of root pagination', async (t) => {
+test('should return nothing after the end of root pagination', async () => {
   const query = makeUsersQuery({first: 3, after: objToCursor({id: 6})});
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data.users, {
+  errCheck(errors);
+  expect(data.users).toEqual({
     pageInfo: {
       hasNextPage: false,
       hasPreviousPage: false,
@@ -190,31 +152,31 @@ test('should return nothing after the end of root pagination', async (t) => {
   });
 });
 
-test('should handle backward pagination at root with "last" arg', async (t) => {
+test('should handle backward pagination at root with "last" arg', async () => {
   const query = makeUsersQuery({last: 2});
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data.users.pageInfo, {
+  errCheck(errors);
+  expect(data.users.pageInfo).toEqual({
     hasNextPage: false,
     hasPreviousPage: true,
     startCursor: objToCursor({id: 5}),
     endCursor: objToCursor({id: 6}),
   });
-  t.is(data.users.edges[0].node.id, toGlobalId('User', 5));
-  t.is(data.users.edges[1].node.id, toGlobalId('User', 6));
+  expect(data.users.edges[0].node.id).toBe(toGlobalId('User', 5));
+  expect(data.users.edges[1].node.id).toBe(toGlobalId('User', 6));
 });
 
-test('should handle backward pagination at root with "last" and "before" args', async (t) => {
+test('should handle backward pagination at root with "last" and "before" args', async () => {
   const query = makeUsersQuery({last: 1, before: objToCursor({id: 2})});
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data.users.pageInfo, {
+  errCheck(errors);
+  expect(data.users.pageInfo).toEqual({
     hasNextPage: false,
     hasPreviousPage: false,
     startCursor: objToCursor({id: 1}),
     endCursor: objToCursor({id: 1}),
   });
-  t.is(data.users.edges.length, 1);
+  expect(data.users.edges.length).toBe(1);
 });
 
 function makePostsQuery(args) {
@@ -232,70 +194,66 @@ function makePostsQuery(args) {
   }`;
 }
 
-test('should handle pagination in a nested field', async (t) => {
+test('should handle pagination in a nested field', async () => {
   const query = makePostsQuery();
   const {data, errors} = await run(query);
-  errCheck(t, errors);
+  errCheck(errors);
   const posts = data.user.posts;
-  t.deepEqual(posts.pageInfo, {
+  expect(posts.pageInfo).toEqual({
     hasNextPage: false,
     hasPreviousPage: false,
     startCursor: objToCursor({created_at: '2016-04-17T18:49:15.942Z', id: 2}),
     endCursor: objToCursor({created_at: '2015-11-15T08:26:11.331Z', id: 30}),
   });
-  t.is(posts.edges.length, 8);
-  t.deepEqual(
-    posts.edges[0],
-    {
-      cursor: objToCursor({created_at: '2016-04-17T18:49:15.942Z', id: 2}),
-      node: {
-        id: toGlobalId('Post', 2),
-        body: [
-          'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
-          'Deserunt nemo pariatur sed facere accusantium quis.',
-          'Nobis aut voluptate inventore quidem explicabo.',
-        ].join(' '),
-      },
+  expect(posts.edges.length).toBe(8);
+  expect(posts.edges[0]).toEqual({
+    cursor: objToCursor({created_at: '2016-04-17T18:49:15.942Z', id: 2}),
+    node: {
+      id: toGlobalId('Post', 2),
+      body: [
+        'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+        'Deserunt nemo pariatur sed facere accusantium quis.',
+        'Nobis aut voluptate inventore quidem explicabo.',
+      ].join(' '),
     },
-    "post number 2 happens to be first since this field's first sort column is created_at"
-  );
-  t.is(posts.edges.last().cursor, posts.pageInfo.endCursor);
+  });
+  expect(posts.edges.last().cursor).toBe(posts.pageInfo.endCursor);
 });
 
-test('nested paging should handle "first" arg', async (t) => {
+test('nested paging should handle "first" arg', async () => {
   const query = makePostsQuery({first: 3});
   const {data, errors} = await run(query);
-  errCheck(t, errors);
+  errCheck(errors);
   const posts = data.user.posts;
-  t.deepEqual(posts.pageInfo, {
+  expect(posts.pageInfo).toEqual({
     hasNextPage: true,
     hasPreviousPage: false,
     startCursor: objToCursor({created_at: '2016-04-17T18:49:15.942Z', id: 2}),
     endCursor: objToCursor({created_at: '2016-04-13T15:07:15.119Z', id: 33}),
   });
-  t.is(posts.edges.length, 3);
-  t.is(posts.edges.last().cursor, posts.pageInfo.endCursor);
+  expect(posts.edges.length).toBe(3);
+  expect(posts.edges.last().cursor).toBe(posts.pageInfo.endCursor);
 });
 
-test('nested paging should handle "last" and "before" args', async (t) => {
+test('nested paging should handle "last" and "before" args', async () => {
   const query = makePostsQuery({
     last: 2,
     before: objToCursor({created_at: '2016-04-13T15:07:15.119Z', id: 33}),
   });
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     hasNextPage: false,
     hasPreviousPage: false,
     startCursor: objToCursor({created_at: '2016-04-17T18:49:15.942Z', id: 2}),
     endCursor: objToCursor({created_at: '2016-04-15T03:29:31.212Z', id: 28}),
   };
-  t.deepEqual(data.user.posts.pageInfo, expect);
-  t.is(data.user.posts.edges[0].node.id, toGlobalId('Post', 2));
-  t.is(data.user.posts.edges[1].node.id, toGlobalId('Post', 28));
+  expect(data.user.posts.pageInfo).toEqual(expect);
+  expect(data.user.posts.edges[0].node.id).toBe(toGlobalId('Post', 2));
+  expect(data.user.posts.edges[1].node.id).toBe(toGlobalId('Post', 28));
 });
 
-test('can handle nested pagination', async (t) => {
+test('can handle nested pagination', async () => {
   const query = `{
     users(first: 2) {
       edges {
@@ -311,12 +269,11 @@ test('can handle nested pagination', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.is(data.users.edges.length, 2);
-  t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi');
-  t.is(data.users.edges[0].node.posts.edges.length, 2);
-  t.is(
-    data.users.edges[0].node.posts.edges[0].node.body,
+  errCheck(errors);
+  expect(data.users.edges.length).toBe(2);
+  expect(data.users.edges[0].node.fullName).toBe('Alivia Waelchi');
+  expect(data.users.edges[0].node.posts.edges.length).toBe(2);
+  expect(data.users.edges[0].node.posts.edges[0].node.body).toBe(
     [
       'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
       'Deserunt nemo pariatur sed facere accusantium quis.',
@@ -325,7 +282,7 @@ test('can handle nested pagination', async (t) => {
   );
 });
 
-test('can handle deeply nested pagination', async (t) => {
+test('can handle deeply nested pagination', async () => {
   const query = `{
     users(first: 1) {
       edges {
@@ -356,16 +313,16 @@ test('can handle deeply nested pagination', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
+  errCheck(errors);
   const comments = data.users.edges[0].node.posts.edges[0].node.comments;
-  const expect = {
+  const expected = {
     hasNextPage: true,
     startCursor: objToCursor({id: 233}),
     endCursor: objToCursor({id: 116}),
   };
-  t.deepEqual(comments.pageInfo, expect);
-  t.is(comments.edges.length, 3);
-  t.deepEqual(comments.edges[0], {
+  expect(comments.pageInfo).toEqual(expect);
+  expect(comments.edges.length).toBe(3);
+  expect(comments.edges[0]).toEqual({
     cursor: objToCursor({id: 233}),
     node: {
       id: toGlobalId('Comment', 233),
@@ -376,10 +333,10 @@ test('can handle deeply nested pagination', async (t) => {
       },
     },
   });
-  t.is(comments.edges.last().cursor, comments.pageInfo.endCursor);
+  expect(comments.edges.last().cursor).toBe(comments.pageInfo.endCursor);
 });
 
-test('handle a conection type with a many-to-many', async (t) => {
+test('handle a conection type with a many-to-many', async () => {
   const query = `{
     user(id: 2) {
       following(first: 2, after: "${objToCursor({
@@ -402,8 +359,8 @@ test('handle a conection type with a many-to-many', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data.user.following.pageInfo, {
+  errCheck(errors);
+  expect(data.user.following.pageInfo).toEqual({
     hasNextPage: true,
     startCursor: objToCursor({
       created_at: '2016-05-18T21:35:54.601Z',
@@ -414,7 +371,7 @@ test('handle a conection type with a many-to-many', async (t) => {
       followee_id: 2,
     }),
   });
-  t.deepEqual(data.user.following.edges, [
+  expect(data.user.following.edges).toEqual([
     {
       node: {
         id: toGlobalId('User', 3),
@@ -432,7 +389,7 @@ test('handle a conection type with a many-to-many', async (t) => {
   ]);
 });
 
-test('should handle pagination with duplicate objects', async (t) => {
+test('should handle pagination with duplicate objects', async () => {
   const user1Id = toGlobalId('User', 1);
   // notice the cyclical nature of this query. we get a user. then we get their posts.
   // then we get the author, who is that same user
@@ -467,7 +424,7 @@ test('should handle pagination with duplicate objects', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
+  errCheck(errors);
   const following = {
     edges: [{node: {id: toGlobalId('User', 4)}}],
   };
@@ -478,7 +435,7 @@ test('should handle pagination with duplicate objects', async (t) => {
     email: 'Mohammed.Hayes@hotmail.com',
     following,
   };
-  const expect = {
+  const expected = {
     node: {
       ...user1,
       posts: {
@@ -513,10 +470,10 @@ test('should handle pagination with duplicate objects', async (t) => {
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('handle filtered pagination at the root', async (t) => {
+test('handle filtered pagination at the root', async () => {
   const query = `{
     users(search: "c%i") {
       edges {
@@ -527,8 +484,8 @@ test('handle filtered pagination at the root', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data, {
+  errCheck(errors);
+  expect(data).toEqual({
     users: {
       edges: [
         {
@@ -542,7 +499,7 @@ test('handle filtered pagination at the root', async (t) => {
   });
 });
 
-test('filtering on one-to-many-nested field', async (t) => {
+test('filtering on one-to-many-nested field', async () => {
   const query = `{
     user(id: 1) {
       posts(search: "ad") {
@@ -555,8 +512,8 @@ test('filtering on one-to-many-nested field', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data.user.posts.edges, [
+  errCheck(errors);
+  expect(data.user.posts.edges).toEqual([
     {
       node: {
         body: [
@@ -577,7 +534,7 @@ test('filtering on one-to-many-nested field', async (t) => {
   ]);
 });
 
-test('should handle emptiness', async (t) => {
+test('should handle emptiness', async () => {
   const query = `{
     user(id: 6) {
       following {
@@ -604,8 +561,8 @@ test('should handle emptiness', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       following: {
         edges: [],
@@ -615,10 +572,10 @@ test('should handle emptiness', async (t) => {
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('should handle a "where" condition on a paginated field', async (t) => {
+test('should handle a "where" condition on a paginated field', async () => {
   const query = `{
     users(first: 1) {
       edges {
@@ -641,14 +598,14 @@ test('should handle a "where" condition on a paginated field', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.is(data.users.edges.length, 1);
-  t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi');
+  errCheck(errors);
+  expect(data.users.edges.length).toBe(1);
+  expect(data.users.edges[0].node.fullName).toBe('Alivia Waelchi');
   const comments = data.users.edges[0].node.comments.edges.map((edge) => ({
     id: parseInt(fromGlobalId(edge.node.id).id, 10),
     archived: edge.node.archived,
   }));
-  const expect = [
+  const expected = [
     {
       id: 278,
       archived: false,
@@ -666,10 +623,10 @@ test('should handle a "where" condition on a paginated field', async (t) => {
       archived: false,
     },
   ];
-  t.deepEqual(expect, comments);
+  expect(expected).toEqual(comments);
 });
 
-test('should handle "where" condition on main table of many-to-many relation', async (t) => {
+test('should handle "where" condition on main table of many-to-many relation', async () => {
   const query = `{
     user(id: 3) {
       fullName
@@ -685,8 +642,8 @@ test('should handle "where" condition on main table of many-to-many relation', a
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'Coleman Abernathy',
       following: {
@@ -702,10 +659,10 @@ test('should handle "where" condition on main table of many-to-many relation', a
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('should handle order columns on the main table', async (t) => {
+test('should handle order columns on the main table', async () => {
   const query = `{
     user(id: 2) {
       fullName
@@ -723,8 +680,8 @@ test('should handle order columns on the main table', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'Hudson Hyatt',
       following: {
@@ -745,10 +702,10 @@ test('should handle order columns on the main table', async (t) => {
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('should handle order columns on the junction table', async (t) => {
+test('should handle order columns on the junction table', async () => {
   const cursor = objToCursor({
     created_at: '2016-01-01T16:28:00.051Z',
     followee_id: 1,
@@ -767,8 +724,8 @@ test('should handle order columns on the junction table', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'Hudson Hyatt',
       following: {
@@ -789,10 +746,10 @@ test('should handle order columns on the junction table', async (t) => {
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('should handle an interface type', async (t) => {
+test('should handle an interface type', async () => {
   const query = `{
     user(id: 1) {
       writtenMaterial(first: 3) {
@@ -812,8 +769,8 @@ test('should handle an interface type', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     pageInfo: {
       hasNextPage: true,
       hasPreviousPage: false,
@@ -852,5 +809,5 @@ test('should handle an interface type', async (t) => {
       },
     ],
   };
-  t.deepEqual(expect, data.user.writtenMaterial);
+  expect(expected).toEqual(data.user.writtenMaterial);
 });

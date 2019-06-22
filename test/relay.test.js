@@ -1,4 +1,3 @@
-import test from 'ava';
 import {graphql} from 'graphql';
 import {toGlobalId, offsetToCursor} from 'graphql-relay';
 import schemaRelay from '../test-api/schema-paginated/index';
@@ -10,33 +9,33 @@ const run = partial(graphql, schemaRelay);
 const user1Id = toGlobalId('User', 1);
 const cursor0 = offsetToCursor(0);
 
-test('it should get a globalId', async (t) => {
+test('it should get a globalId', async () => {
   const query = `{
     user(id:1) { id }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {user: {id: user1Id}};
-  t.deepEqual(expect, data);
+  errCheck(errors);
+  const expected = {user: {id: user1Id}};
+  expect(expected).toEqual(data);
 });
 
-test('it should fetch a Node type with inline fragments', async (t) => {
+test('it should fetch a Node type with inline fragments', async () => {
   const query = `{
     node(id: "${toGlobalId('Post', 1)}") {
       ... on Post { body }
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     node: {
       body: 'If I could marry a programming language, it would be Haskell.',
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should fetch a Node type with named fragments', async (t) => {
+test('it should fetch a Node type with named fragments', async () => {
   const query = `
     {
       node(id: "${user1Id}") {
@@ -51,8 +50,8 @@ test('it should fetch a Node type with named fragments', async (t) => {
     }
   `;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     node: {
       fullName: 'andrew carlson',
       comments: {
@@ -60,10 +59,10 @@ test('it should fetch a Node type with named fragments', async (t) => {
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should fetch a Node type with a variable', async (t) => {
+test('it should fetch a Node type with a variable', async () => {
   const query = `
     query node($id: ID!){
       node(id: $id) {
@@ -81,16 +80,16 @@ test('it should fetch a Node type with a variable', async (t) => {
     null,
     variables
   );
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     node: {
       fullName: 'andrew carlson',
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should not error when no record is returned ', async (t) => {
+test('it should not error when no record is returned ', async () => {
   const query = `
     query node($id: ID!){
       node(id: $id) {
@@ -108,14 +107,14 @@ test('it should not error when no record is returned ', async (t) => {
     null,
     variables
   );
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     node: null,
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle the relay connection type', async (t) => {
+test('it should handle the relay connection type', async () => {
   const query = `{
     user(id: 1) {
       fullName
@@ -150,8 +149,8 @@ test('it should handle the relay connection type', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'andrew carlson',
       posts: {
@@ -194,10 +193,10 @@ test('it should handle the relay connection type', async (t) => {
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle nested connection types', async (t) => {
+test('it should handle nested connection types', async () => {
   const query = `{
     user(id: 1) {
       fullName
@@ -230,8 +229,8 @@ test('it should handle nested connection types', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'andrew carlson',
       posts: {
@@ -272,10 +271,10 @@ test('it should handle nested connection types', async (t) => {
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('should handle a post without an author', async (t) => {
+test('should handle a post without an author', async () => {
   const query = `{
     node(id: "${toGlobalId('Post', 4)}") {
       id
@@ -288,18 +287,18 @@ test('should handle a post without an author', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     node: {
       id: toGlobalId('Post', 4),
       body: 'I have no valid author...',
       author: null,
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('should pass context to getNode resolver', async (t) => {
+test('should pass context to getNode resolver', async () => {
   const query = `{
     node(id: "${toGlobalId('ContextPost', 1)}") {
       ... on ContextPost { body }
@@ -307,16 +306,16 @@ test('should pass context to getNode resolver', async (t) => {
   }`;
 
   const {data, errors} = await run(query, null, {table: 'posts'});
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     node: {
       body: 'If I could marry a programming language, it would be Haskell.',
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('should handle fragments recursively', async (t) => {
+test('should handle fragments recursively', async () => {
   const query = `
     {
       user(id: 1) {
@@ -358,8 +357,8 @@ test('should handle fragments recursively', async (t) => {
     }
   `;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'andrew carlson',
       comments: {
@@ -390,5 +389,5 @@ test('should handle fragments recursively', async (t) => {
       },
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });

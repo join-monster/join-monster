@@ -1,4 +1,3 @@
-import test from 'ava';
 import {graphql} from 'graphql';
 import {toGlobalId} from 'graphql-relay';
 import schemaBasic from '../test-api/schema-basic/index';
@@ -13,20 +12,20 @@ function wrap(query) {
 
 const run = partial(graphql, schemaBasic);
 
-test('get a field with the same name as the SQL column', async (t) => {
+test('get a field with the same name as the SQL column', async () => {
   const query = wrap('id');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data, {
+  errCheck(errors);
+  expect(data).toEqual({
     users: [{id: 1}, {id: 2}, {id: 3}],
   });
 });
 
-test('get a field with a different SQL column name and field name', async (t) => {
+test('get a field with a different SQL column name and field name', async () => {
   const query = wrap('email');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data, {
+  errCheck(errors);
+  expect(data).toEqual({
     users: [
       {email: 'andrew@stem.is'},
       {email: 'matt@stem.is'},
@@ -35,20 +34,20 @@ test('get a field with a different SQL column name and field name', async (t) =>
   });
 });
 
-test('get a field that has a resolver on top of the SQL column', async (t) => {
+test('get a field that has a resolver on top of the SQL column', async () => {
   const query = wrap('idEncoded');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data, {
+  errCheck(errors);
+  expect(data).toEqual({
     users: [{idEncoded: 'MQ=='}, {idEncoded: 'Mg=='}, {idEncoded: 'Mw=='}],
   });
 });
 
-test('get a globalID field', async (t) => {
+test('get a globalID field', async () => {
   const query = wrap('globalId');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data, {
+  errCheck(errors);
+  expect(data).toEqual({
     users: [
       {globalId: toGlobalId('User', 1)},
       {globalId: toGlobalId('User', 2)},
@@ -57,11 +56,11 @@ test('get a globalID field', async (t) => {
   });
 });
 
-test('get a field that depends on multiple sql columns', async (t) => {
+test('get a field that depends on multiple sql columns', async () => {
   const query = wrap('fullName');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.deepEqual(data, {
+  errCheck(errors);
+  expect(data).toEqual({
     users: [
       {fullName: 'andrew carlson'},
       {fullName: 'matt elder'},
@@ -70,21 +69,21 @@ test('get a field that depends on multiple sql columns', async (t) => {
   });
 });
 
-test('it should disambiguate two entities with identical fields', async (t) => {
+test('it should disambiguate two entities with identical fields', async () => {
   const query = wrap('numLegs');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     users: [
       {numLegs: 2}, // andy
       {numLegs: 2}, // matt
       {numLegs: 2},
     ],
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle fragments at the top level', async (t) => {
+test('it should handle fragments at the top level', async () => {
   const query = `
     {
       users {
@@ -94,14 +93,14 @@ test('it should handle fragments at the top level', async (t) => {
     fragment F0 on User { id }
   `;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     users: [{id: 1}, {id: 2}, {id: 3}],
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle an inline fragment', async (t) => {
+test('it should handle an inline fragment', async () => {
   const query = `
     {
       users {
@@ -110,18 +109,18 @@ test('it should handle an inline fragment', async (t) => {
     }
   `;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     users: [
       {fullName: 'andrew carlson'},
       {fullName: 'matt elder'},
       {fullName: 'foo bar'},
     ],
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle nested fragments', async (t) => {
+test('it should handle nested fragments', async () => {
   const query = `
     {
       users {
@@ -135,18 +134,18 @@ test('it should handle nested fragments', async (t) => {
     }
   `;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     users: [
       {id: 1, fullName: 'andrew carlson', email: 'andrew@stem.is'},
       {id: 2, fullName: 'matt elder', email: 'matt@stem.is'},
       {id: 3, fullName: 'foo bar', email: 'foo@example.org'},
     ],
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle named fragments on an interface', async (t) => {
+test('it should handle named fragments on an interface', async () => {
   const query = `
     {
       sponsors {
@@ -168,8 +167,8 @@ test('it should handle named fragments on an interface', async (t) => {
     }
   `;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     sponsors: [
       {fullName: 'erlich bachman', generation: 1},
       {fullName: 'andrew bachman', generation: 1},
@@ -179,10 +178,10 @@ test('it should handle named fragments on an interface', async (t) => {
     ],
     user: {fullName: 'andrew carlson', email: 'andrew@stem.is'},
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle inline fragments on an interface', async (t) => {
+test('it should handle inline fragments on an interface', async () => {
   const query = `
     {
       sponsors {
@@ -210,8 +209,8 @@ test('it should handle inline fragments on an interface', async (t) => {
     }
   `;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     sponsors: [
       {fullName: 'erlich bachman', generation: 1},
       {fullName: 'andrew bachman', generation: 1},
@@ -221,62 +220,62 @@ test('it should handle inline fragments on an interface', async (t) => {
     ],
     user: {fullName: 'andrew carlson', email: 'andrew@stem.is'},
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle a column that resolves independantly of SQL', async (t) => {
+test('it should handle a column that resolves independantly of SQL', async () => {
   const query = wrap('id, favNums');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     users: [
       {id: 1, favNums: [1, 2, 3]},
       {id: 2, favNums: [1, 2, 3]},
       {id: 3, favNums: [1, 2, 3]},
     ],
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle a query that gets nothing from the database', async (t) => {
+test('it should handle a query that gets nothing from the database', async () => {
   const query = `{
     user(id:2) {
       favNums
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {favNums: [1, 2, 3]},
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle duplicate fields', async (t) => {
+test('it should handle duplicate fields', async () => {
   const query = wrap('id id id id idEncoded fullName fullName');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     users: [
       {id: 1, idEncoded: 'MQ==', fullName: 'andrew carlson'},
       {id: 2, idEncoded: 'Mg==', fullName: 'matt elder'},
       {id: 3, idEncoded: 'Mw==', fullName: 'foo bar'},
     ],
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should not be tripped up by the introspection queries', async (t) => {
+test('it should not be tripped up by the introspection queries', async () => {
   const query = wrap('__typename');
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     users: [{__typename: 'User'}, {__typename: 'User'}, {__typename: 'User'}],
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle numeric variables', async (t) => {
+test('it should handle numeric variables', async () => {
   const query = `
     query user($userId: Int) {
       user(id: $userId) {
@@ -293,17 +292,17 @@ test('it should handle numeric variables', async (t) => {
     null,
     variables
   );
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       id: 1,
       fullName: 'andrew carlson',
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle string variables', async (t) => {
+test('it should handle string variables', async () => {
   const query = `
     query user($encodedUserId: String) {
       user(idEncoded: $encodedUserId) {
@@ -320,17 +319,17 @@ test('it should handle string variables', async (t) => {
     null,
     variables
   );
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       idEncoded: 'MQ==',
       fullName: 'andrew carlson',
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle boolean variables', async (t) => {
+test('it should handle boolean variables', async () => {
   const query = `
     query sponsors($filter: Boolean) {
       sponsors(filterLegless: $filter) {
@@ -346,14 +345,14 @@ test('it should handle boolean variables', async (t) => {
     null,
     variables
   );
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     sponsors: [],
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle raw SQL expressions', async (t) => {
+test('it should handle raw SQL expressions', async () => {
   const query = `{
     user(id: 2) {
       fullName
@@ -361,9 +360,8 @@ test('it should handle raw SQL expressions', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  t.is(
-    data.user.fullName.split(' ')[1].toUpperCase(),
+  errCheck(errors);
+  expect(data.user.fullName.split(' ')[1].toUpperCase()).toBe(
     data.user.capitalizedLastName
   );
 });

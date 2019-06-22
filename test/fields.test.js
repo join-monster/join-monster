@@ -1,4 +1,3 @@
-import test from 'ava';
 import {graphql} from 'graphql';
 import schemaBasic from '../test-api/schema-basic/index';
 import {partial} from 'lodash';
@@ -6,7 +5,7 @@ import {errCheck} from './helpers/_util';
 
 const run = partial(graphql, schemaBasic);
 
-test('it should handle duplicate scalar field', async (t) => {
+test('it should handle duplicate scalar field', async () => {
   const query = `{
     user(id: 1) {
       fullName
@@ -14,16 +13,16 @@ test('it should handle duplicate scalar field', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       fullName: 'andrew carlson',
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle duplicate object type field', async (t) => {
+test('it should handle duplicate object type field', async () => {
   const query = `{
     user(id: 1) {
       posts {
@@ -36,8 +35,8 @@ test('it should handle duplicate object type field', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       posts: [
         {
@@ -47,32 +46,32 @@ test('it should handle duplicate object type field', async (t) => {
       ],
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test.skip('it should handle duplicate object type fields with different arguments', async (t) => {
+test.skip('it should handle duplicate object type fields with different arguments', async () => {
   const query = `{
-    user(id: 3) {
-      comments: comments(active: true) {
-        id
+      user(id: 3) {
+        comments: comments(active: true) {
+          id
+        }
+        archivedComments: comments(active: false) {
+          id
+        }
       }
-      archivedComments: comments(active: false) {
-        id
-      }
-    }
-  }`;
+    }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     user: {
       comments: [{id: 3}, {id: 5}, {id: 9}],
       archivedComments: [{id: 2}, {id: 3}, {id: 5}, {id: 9}],
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle duplicate of a field off the query root', async (t) => {
+test('it should handle duplicate of a field off the query root', async () => {
   const query = `{
     user(id: 1) {
       fullName
@@ -82,15 +81,15 @@ test('it should handle duplicate of a field off the query root', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     fullName: 'andrew carlson',
     email: 'andrew@stem.is',
   };
-  t.deepEqual(expect, data.user);
+  expect(expected).toEqual(data.user);
 });
 
-test('it should handle duplicate of a field off the query root with aliases', async (t) => {
+test('it should handle duplicate of a field off the query root with aliases', async () => {
   const query = `{
     thing1: user(id: 1) {
       fullName
@@ -100,8 +99,8 @@ test('it should handle duplicate of a field off the query root with aliases', as
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     thing1: {
       fullName: 'andrew carlson',
     },
@@ -109,10 +108,10 @@ test('it should handle duplicate of a field off the query root with aliases', as
       email: 'andrew@stem.is',
     },
   };
-  t.deepEqual(expect, data);
+  expect(expected).toEqual(data);
 });
 
-test('it should handle duplicate of a field recursively', async (t) => {
+test('it should handle duplicate of a field recursively', async () => {
   const query = `{
     user(id: 2) {
       fullName
@@ -132,8 +131,8 @@ test('it should handle duplicate of a field recursively', async (t) => {
     }
   }`;
   const {data, errors} = await run(query);
-  errCheck(t, errors);
-  const expect = {
+  errCheck(errors);
+  const expected = {
     fullName: 'matt elder',
     posts: [
       {
@@ -170,5 +169,5 @@ test('it should handle duplicate of a field recursively', async (t) => {
       },
     ],
   };
-  t.deepEqual(expect, data.user);
+  expect(expected).toEqual(data.user);
 });
