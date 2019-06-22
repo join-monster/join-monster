@@ -66,28 +66,29 @@ export const Post = new GraphQLObjectType({
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs),
       },
       sqlPaginate: !!PAGINATE,
-      ...do {
+      ...(function() {
         if (PAGINATE === 'offset') {
-          ({orderBy: 'id'});
-        } else if (PAGINATE === 'keyset') {
-          ({
+          return {orderBy: 'id'};
+        }
+
+        if (PAGINATE === 'keyset') {
+          return {
             sortKey: {
               order: 'DESC',
               key: 'id',
             },
-          });
-        } else {
-          ({
-            resolve: (user, args) => {
-              user.comments.sort((a, b) => a.id - b.id);
-              return connectionFromArray(user.comments, args);
-            },
-          });
+          };
         }
-      },
-      ...do {
+        return {
+          resolve: (user, args) => {
+            user.comments.sort((a, b) => a.id - b.id);
+            return connectionFromArray(user.comments, args);
+          },
+        };
+      })(),
+      ...(function() {
         if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-          ({
+          return {
             sqlBatch: {
               thisKey: 'post_id',
               parentKey: 'id',
@@ -96,24 +97,23 @@ export const Post = new GraphQLObjectType({
               args.active
                 ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
                 : null,
-          });
-        } else {
-          ({
-            sqlJoin: (postTable, commentTable, args) =>
-              `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
-                'id',
-                DB
-              )} ${
-                args.active
-                  ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
-                      false,
-                      DB
-                    )}`
-                  : ''
-              }`,
-          });
+          };
         }
-      },
+        return {
+          sqlJoin: (postTable, commentTable, args) =>
+            `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
+              'id',
+              DB
+            )} ${
+              args.active
+                ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
+                    false,
+                    DB
+                  )}`
+                : ''
+            }`,
+        };
+      })(),
     },
     numComments: {
       description: 'How many comments this post has',

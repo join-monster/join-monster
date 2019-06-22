@@ -61,18 +61,17 @@ export default new GraphQLObjectType({
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs),
       },
       sqlPaginate: !!PAGINATE,
-      ...do {
+      ...(function() {
         if (PAGINATE === 'offset') {
-          ({orderBy: 'id'});
-        } else if (PAGINATE === 'keyset') {
-          ({
-            sortKey: {
-              order: 'asc',
-              key: 'id',
-            },
-          });
+          return {orderBy: 'id'};
         }
-      },
+        return {
+          sortKey: {
+            order: 'asc',
+            key: 'id',
+          },
+        };
+      })(),
       where: (table, args) => {
         // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
         if (args.search)

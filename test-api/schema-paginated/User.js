@@ -54,28 +54,30 @@ const User = new GraphQLObjectType({
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs),
       },
       sqlPaginate: !!PAGINATE,
-      ...do {
+      ...(function() {
         if (PAGINATE === 'offset') {
-          ({orderBy: 'id'});
-        } else if (PAGINATE === 'keyset') {
-          ({
+          return {orderBy: 'id'};
+        }
+
+        if (PAGINATE === 'keyset') {
+          return {
             sortKey: {
               order: 'desc',
               key: 'id',
             },
-          });
-        } else {
-          ({
-            resolve: (user, args) => {
-              user.comments.sort((a, b) => a.id - b.id);
-              return connectionFromArray(user.comments, args);
-            },
-          });
+          };
         }
-      },
-      ...do {
+
+        return {
+          resolve: (user, args) => {
+            user.comments.sort((a, b) => a.id - b.id);
+            return connectionFromArray(user.comments, args);
+          },
+        };
+      })(),
+      ...(function() {
         if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-          ({
+          return {
             sqlBatch: {
               thisKey: 'author_id',
               parentKey: 'id',
@@ -84,24 +86,24 @@ const User = new GraphQLObjectType({
               args.active
                 ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
                 : null,
-          });
-        } else {
-          ({
-            sqlJoin: (userTable, commentTable, args) =>
-              `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
-                'id',
-                DB
-              )} ${
-                args.active
-                  ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
-                      false,
-                      DB
-                    )}`
-                  : ''
-              }`,
-          });
+          };
         }
-      },
+
+        return {
+          sqlJoin: (userTable, commentTable, args) =>
+            `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
+              'id',
+              DB
+            )} ${
+              args.active
+                ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
+                    false,
+                    DB
+                  )}`
+                : ''
+            }`,
+        };
+      })(),
     },
     commentsLast2: {
       type: new GraphQLList(Comment),
@@ -130,56 +132,55 @@ const User = new GraphQLObjectType({
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs),
       },
       sqlPaginate: !!PAGINATE,
-      ...do {
+      ...(function() {
         if (PAGINATE === 'offset') {
-          ({
+          return {
             orderBy: (args) => ({
               // eslint-disable-line no-unused-vars
               created_at: 'desc',
               id: 'asc',
             }),
-          });
-        } else if (PAGINATE === 'keyset') {
-          ({
+          };
+        }
+
+        if (PAGINATE === 'keyset') {
+          return {
             sortKey: (args) => ({
               // eslint-disable-line no-unused-vars
               order: 'desc',
               key: ['created_at', 'id'],
             }),
-          });
-        } else {
-          ({
-            resolve: (user, args) => {
-              user.posts.sort((a, b) => a.id - b.id);
-              return connectionFromArray(user.posts, args);
-            },
-          });
+          };
         }
-      },
+
+        return {
+          resolve: (user, args) => {
+            user.posts.sort((a, b) => a.id - b.id);
+            return connectionFromArray(user.posts, args);
+          },
+        };
+      })(),
       where: (table, args) => {
         if (args.search)
           return `lower(${table}.${q('body', DB)}) LIKE lower('%${
             args.search
           }%')`;
       },
-      ...do {
+      ...(function() {
         if (STRATEGY === 'batch') {
-          ({
+          return {
             sqlBatch: {
               thisKey: 'author_id',
               parentKey: 'id',
             },
-          });
-        } else {
-          ({
-            sqlJoin: (userTable, postTable) =>
-              `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
-                'id',
-                DB
-              )}`,
-          });
+          };
         }
-      },
+
+        return {
+          sqlJoin: (userTable, postTable) =>
+            `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`,
+        };
+      })(),
     },
     following: {
       description: 'Users that this user is following',
@@ -191,9 +192,9 @@ const User = new GraphQLObjectType({
       },
       where: (table) => `${table}.${q('email_address', DB)} IS NOT NULL`,
       sqlPaginate: !!PAGINATE,
-      ...do {
+      ...(function() {
         if (PAGINATE === 'offset') {
-          ({
+          return {
             orderBy: (args) =>
               args.sortOnMain
                 ? {
@@ -201,9 +202,11 @@ const User = new GraphQLObjectType({
                     id: 'ASC',
                   }
                 : null,
-          });
-        } else if (PAGINATE === 'keyset') {
-          ({
+          };
+        }
+
+        if (PAGINATE === 'keyset') {
+          return {
             sortKey: (args) =>
               args.sortOnMain
                 ? {
@@ -211,15 +214,14 @@ const User = new GraphQLObjectType({
                     key: ['created_at', 'id'],
                   }
                 : null,
-          });
-        } else {
-          ({
-            resolve: (user, args) => {
-              return connectionFromArray(user.following, args);
-            },
-          });
+          };
         }
-      },
+        return {
+          resolve: (user, args) => {
+            return connectionFromArray(user.following, args);
+          },
+        };
+      })(),
       junction: {
         sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
         where: (table, args) =>
@@ -240,9 +242,9 @@ const User = new GraphQLObjectType({
             jmIgnoreAll: false,
           },
         },
-        ...do {
+        ...(function() {
           if (PAGINATE === 'offset') {
-            ({
+            return {
               orderBy: (args) =>
                 args.sortOnMain
                   ? null
@@ -250,9 +252,10 @@ const User = new GraphQLObjectType({
                       created_at: 'DESC',
                       followee_id: 'ASC',
                     },
-            });
-          } else if (PAGINATE === 'keyset') {
-            ({
+            };
+          }
+          if (PAGINATE === 'keyset') {
+            return {
               sortKey: (args) =>
                 args.sortOnMain
                   ? null
@@ -260,12 +263,12 @@ const User = new GraphQLObjectType({
                       order: 'ASC',
                       key: ['created_at', 'followee_id'],
                     },
-            });
+            };
           }
-        },
-        ...do {
+        })(),
+        ...(function() {
           if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-            ({
+            return {
               uniqueKey: ['follower_id', 'followee_id'],
               sqlBatch: {
                 thisKey: 'follower_id',
@@ -276,24 +279,23 @@ const User = new GraphQLObjectType({
                     DB
                   )} = ${followeeTable}.${q('id', DB)}`,
               },
-            });
-          } else {
-            ({
-              sqlJoins: [
-                (followerTable, relationTable) =>
-                  `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
-                    'follower_id',
-                    DB
-                  )}`,
-                (relationTable, followeeTable) =>
-                  `${relationTable}.${q(
-                    'followee_id',
-                    DB
-                  )} = ${followeeTable}.${q('id', DB)}`,
-              ],
-            });
+            };
           }
-        },
+          return {
+            sqlJoins: [
+              (followerTable, relationTable) =>
+                `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
+                  'follower_id',
+                  DB
+                )}`,
+              (relationTable, followeeTable) =>
+                `${relationTable}.${q(
+                  'followee_id',
+                  DB
+                )} = ${followeeTable}.${q('id', DB)}`,
+            ],
+          };
+        })(),
       },
     },
     followingFirst: {
@@ -302,9 +304,9 @@ const User = new GraphQLObjectType({
       orderBy: 'followee_id',
       junction: {
         sqlTable: q('relationships', DB),
-        ...do {
+        ...(function() {
           if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-            ({
+            return {
               uniqueKey: ['follower_id', 'followee_id'],
               sqlBatch: {
                 thisKey: 'follower_id',
@@ -315,54 +317,55 @@ const User = new GraphQLObjectType({
                     DB
                   )} = ${followeeTable}.${q('id', DB)}`,
               },
-            });
-          } else {
-            ({
-              sqlJoins: [
-                (followerTable, relationTable) =>
-                  `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
-                    'follower_id',
-                    DB
-                  )}`,
-                (relationTable, followeeTable) =>
-                  `${relationTable}.${q(
-                    'followee_id',
-                    DB
-                  )} = ${followeeTable}.${q('id', DB)}`,
-              ],
-            });
+            };
           }
-        },
+          return {
+            sqlJoins: [
+              (followerTable, relationTable) =>
+                `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
+                  'follower_id',
+                  DB
+                )}`,
+              (relationTable, followeeTable) =>
+                `${relationTable}.${q(
+                  'followee_id',
+                  DB
+                )} = ${followeeTable}.${q('id', DB)}`,
+            ],
+          };
+        })(),
       },
     },
     writtenMaterial: {
       type: AuthoredConnection,
       args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
       sqlPaginate: !!PAGINATE,
-      ...do {
+      ...(function() {
         if (PAGINATE === 'offset') {
-          ({
+          return {
             orderBy: {
               id: 'ASC',
               created_at: 'ASC',
             },
-          });
-        } else if (PAGINATE === 'keyset') {
-          ({
+          };
+        }
+
+        if (PAGINATE === 'keyset') {
+          return {
             sortKey: {
               order: 'ASC',
               key: ['id', 'created_at'],
             },
-          });
-        } else {
-          ({
-            orderBy: 'id',
-            resolve: (user, args) => {
-              return connectionFromArray(user.following, args);
-            },
-          });
+          };
         }
-      },
+
+        return {
+          orderBy: 'id',
+          resolve: (user, args) => {
+            return connectionFromArray(user.following, args);
+          },
+        };
+      })(),
       ...(STRATEGY === 'batch'
         ? {
             sqlBatch: {

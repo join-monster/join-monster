@@ -9,5 +9,5 @@
       }
     ]
   ],
-  "plugins": ["transform-do-expressions", "@babel/plugin-transform-modules-commonjs", "idx"]
+  "plugins": ["@babel/plugin-transform-modules-commonjs", "idx"]
 }
