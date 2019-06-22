@@ -1,12 +1,8 @@
-import  {
-  GraphQLInterfaceType,
-  GraphQLInt,
-  GraphQLString
-} from 'graphql'
+import {GraphQLInterfaceType, GraphQLInt, GraphQLString} from 'graphql';
 
-import { q } from '../../shared'
+import {q} from '../../shared';
 
-const { DB } = process.env
+const {DB} = process.env;
 
 export default new GraphQLInterfaceType({
   name: 'AuthoredInterface',
@@ -29,20 +25,19 @@ export default new GraphQLInterfaceType({
       'Comment' AS ${q('$type', DB)}
     FROM ${q('comments', DB)}
   )`,
-  uniqueKey: [ 'id', '$type' ],
+  uniqueKey: ['id', '$type'],
   alwaysFetch: '$type',
   fields: () => ({
     id: {
-      type: GraphQLInt
+      type: GraphQLInt,
     },
     body: {
-      type: GraphQLString
+      type: GraphQLString,
     },
     authorId: {
       type: GraphQLInt,
-      sqlColumn: 'author_id'
-    }
+      sqlColumn: 'author_id',
+    },
   }),
-  resolveType: obj => obj.$type
-})
-
+  resolveType: (obj) => obj.$type,
+});

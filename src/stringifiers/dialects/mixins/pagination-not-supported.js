@@ -1,5 +1,5 @@
 function throwErr() {
-  throw new Error('This type of pagination not supported on this dialect')
+  throw new Error('This type of pagination not supported on this dialect');
 }
 
 module.exports = {
@@ -7,5 +7,5 @@ module.exports = {
   handleJoinedOneToManyPaginated: throwErr,
   handleBatchedOneToManyPaginated: throwErr,
   handleJoinedManyToManyPaginated: throwErr,
-  handleBatchedManyToManyPaginated: throwErr
-}
+  handleBatchedManyToManyPaginated: throwErr,
+};

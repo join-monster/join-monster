@@ -41,6 +41,7 @@ before_script:
   - yarn db-build
 
 script:
+  - yarn lint
   - yarn test
 
 after_success:

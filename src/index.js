@@ -1,11 +1,10 @@
-import assert from 'assert'
+import assert from 'assert';
 
-import * as queryAST from './query-ast-to-sql-ast'
-import arrToConnection from './array-to-connection'
-import AliasNamespace from './alias-namespace'
-import nextBatch from './batch-planner'
-import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
-
+import * as queryAST from './query-ast-to-sql-ast';
+import arrToConnection from './array-to-connection';
+import AliasNamespace from './alias-namespace';
+import nextBatch from './batch-planner';
+import {buildWhereFunction, handleUserDbCall, compileSqlAST} from './util';
 
 /*         _ _ _                _
   ___ __ _| | | |__   __ _  ___| | __
@@ -83,37 +82,36 @@ import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
  */
 async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
-  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options, context)
-  const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
-  if (!sql) return {}
+  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options, context);
+  const {sql, shapeDefinition} = await compileSqlAST(sqlAST, context, options);
+  if (!sql) return {};
 
   // call their function for querying the DB, handle the different cases, do some validation, return a promise of the object
-  let data = await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition)
+  let data = await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition);
 
   // if they are paginating, we'll get back an array which is essentially a "slice" of the whole data.
   // this function goes through the data tree and converts the arrays to Connection Objects
-  data = arrToConnection(data, sqlAST)
+  data = arrToConnection(data, sqlAST);
 
   // so far we handled the first "batch". up until now, additional batches were ignored
   // this function recursively scanss the sqlAST and runs remaining batches
-  await nextBatch(sqlAST, data, dbCall, context, options)
+  await nextBatch(sqlAST, data, dbCall, context, options);
 
   // check for batch data
   if (Array.isArray(data)) {
-    const childrenToCheck = sqlAST.children.filter(child => child.sqlBatch)
-    return data.filter(d => {
+    const childrenToCheck = sqlAST.children.filter((child) => child.sqlBatch);
+    return data.filter((d) => {
       for (const child of childrenToCheck) {
         if (d[child.fieldName] == null) {
-          return false
+          return false;
         }
       }
-      return true
-    })
+      return true;
+    });
   }
 
-  return data
+  return data;
 }
-
 
 /**
  * A helper for resolving the Node type in Relay.
@@ -125,14 +123,24 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
  * @param {Object} [options] - Same as `joinMonster` function's options.
  * @returns {Promise.<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
-async function getNode(typeName, resolveInfo, context, condition, dbCall, options = {}) {
+async function getNode(
+  typeName,
+  resolveInfo,
+  context,
+  condition,
+  dbCall,
+  options = {}
+) {
   // get the GraphQL type from the schema using the name
-  const type = resolveInfo.schema._typeMap[typeName]
-  assert(type, `Type "${typeName}" not found in your schema.`)
-  assert(type._typeConfig.sqlTable, `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`)
+  const type = resolveInfo.schema._typeMap[typeName];
+  assert(type, `Type "${typeName}" not found in your schema.`);
+  assert(
+    type._typeConfig.sqlTable,
+    `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`
+  );
 
   // we need to determine what the WHERE function should be
-  let where = buildWhereFunction(type, condition, options)
+  let where = buildWhereFunction(type, condition, options);
 
   // our getGraphQLType expects every requested field to be in the schema definition. "node" isn't a parent of whatever type we're getting, so we'll just wrap that type in an object that LOOKS that same as a hypothetical Node type
   const fakeParentNode = {
@@ -140,27 +148,38 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
       node: {
         type,
         name: type.name.toLowerCase(),
-        where
-      }
-    }
-  }
-  const namespace = new AliasNamespace(options.minify)
-  const sqlAST = {}
-  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
+        where,
+      },
+    },
+  };
+  const namespace = new AliasNamespace(options.minify);
+  const sqlAST = {};
+  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs;
   // uses the same underlying function as the main `joinMonster`
-  queryAST.populateASTNode.call(resolveInfo, fieldNodes[0], fakeParentNode, sqlAST, namespace, 0, options, context)
-  queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
-  const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
-  const data = arrToConnection(await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition), sqlAST)
-  await nextBatch(sqlAST, data, dbCall, context, options)
-  if (!data) return data
-  data.__type__ = type
-  return data
+  queryAST.populateASTNode.call(
+    resolveInfo,
+    fieldNodes[0],
+    fakeParentNode,
+    sqlAST,
+    namespace,
+    0,
+    options,
+    context
+  );
+  queryAST.pruneDuplicateSqlDeps(sqlAST, namespace);
+  const {sql, shapeDefinition} = await compileSqlAST(sqlAST, context, options);
+  const data = arrToConnection(
+    await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition),
+    sqlAST
+  );
+  await nextBatch(sqlAST, data, dbCall, context, options);
+  if (!data) return data;
+  data.__type__ = type;
+  return data;
 }
 
-joinMonster.getNode = getNode
-
+joinMonster.getNode = getNode;
 
 // expose the package version for debugging
-joinMonster.version = require('../package.json').version
-export default joinMonster
+joinMonster.version = require('../package.json').version;
+export default joinMonster;

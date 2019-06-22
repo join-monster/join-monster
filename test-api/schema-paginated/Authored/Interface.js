@@ -1,15 +1,15 @@
-import  {
+import {
   GraphQLInterfaceType,
   GraphQLID,
   GraphQLInt,
-  GraphQLString
-} from 'graphql'
+  GraphQLString,
+} from 'graphql';
 
-import { connectionDefinitions } from 'graphql-relay'
+import {connectionDefinitions} from 'graphql-relay';
 
-import { q } from '../../shared'
+import {q} from '../../shared';
 
-const { DB, PAGINATE } = process.env
+const {DB, PAGINATE} = process.env;
 
 export const Authored = new GraphQLInterfaceType({
   name: 'AuthoredInterface',
@@ -32,29 +32,30 @@ export const Authored = new GraphQLInterfaceType({
       'Comment' AS ${q('$type', DB)}
     FROM ${q('comments', DB)}
   )`,
-  uniqueKey: [ 'id', '$type' ],
+  uniqueKey: ['id', '$type'],
   alwaysFetch: '$type',
   fields: () => ({
     id: {
-      type: GraphQLID
+      type: GraphQLID,
     },
     body: {
-      type: GraphQLString
+      type: GraphQLString,
     },
     authorId: {
       type: GraphQLInt,
-      sqlColumn: 'author_id'
-    }
+      sqlColumn: 'author_id',
+    },
   }),
-  resolveType: obj => obj.$type
-})
+  resolveType: (obj) => obj.$type,
+});
 
-const connectionConfig = { nodeType: Authored }
+const connectionConfig = {nodeType: Authored};
 if (PAGINATE === 'offset') {
   connectionConfig.connectionFields = {
-    total: { type: GraphQLInt }
-  }
+    total: {type: GraphQLInt},
+  };
 }
-const { connectionType: AuthoredConnection } = connectionDefinitions(connectionConfig)
-export { AuthoredConnection }
-
+const {connectionType: AuthoredConnection} = connectionDefinitions(
+  connectionConfig
+);
+export {AuthoredConnection};

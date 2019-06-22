@@ -1,12 +1,12 @@
-import test from 'ava'
-import { graphql } from 'graphql'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
-import { errCheck } from './helpers/_util'
+import test from 'ava';
+import {graphql} from 'graphql';
+import schemaBasic from '../test-api/schema-basic/index';
+import {partial} from 'lodash';
+import {errCheck} from './helpers/_util';
 
-const run = partial(graphql, schemaBasic)
+const run = partial(graphql, schemaBasic);
 
-test('it should a union type', async t => {
+test('it should a union type', async (t) => {
   const query = `
     {
       user(id: 1) {
@@ -31,9 +31,9 @@ test('it should a union type', async t => {
       body
       authorId
     }
-  `
-  const { data, errors } = await run(query)
-  errCheck(t, errors)
+  `;
+  const {data, errors} = await run(query);
+  errCheck(t, errors);
   const expect = {
     user: {
       writtenMaterial1: [
@@ -43,13 +43,13 @@ test('it should a union type', async t => {
           body: 'Wow this is a great post, Matt.',
           postId: 1,
           authorId: 1,
-          likers: [ { fullName: 'matt elder' } ]
+          likers: [{fullName: 'matt elder'}],
         },
         {
           id: 2,
           __typename: 'Post',
           authorId: 1,
-          body: 'Check out this cool new GraphQL library, Join Monster.'
+          body: 'Check out this cool new GraphQL library, Join Monster.',
         },
         {
           __typename: 'Comment',
@@ -57,7 +57,7 @@ test('it should a union type', async t => {
           body: 'Do not forget to check out the demo.',
           authorId: 1,
           postId: 2,
-          likers: []
+          likers: [],
         },
         {
           __typename: 'Comment',
@@ -65,23 +65,24 @@ test('it should a union type', async t => {
           body: 'Also, submit a PR if you have a feature you want to add.',
           authorId: 1,
           postId: 2,
-          likers: []
+          likers: [],
         },
         {
           __typename: 'Comment',
           id: 8,
-          body: 'Somebody please help me with this library. It is so much work.',
+          body:
+            'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
-          likers: []
-        }
-      ]
-    }
-  }
-  t.deepEqual(expect, data)
-})
+          likers: [],
+        },
+      ],
+    },
+  };
+  t.deepEqual(expect, data);
+});
 
-test('it should an interface type', async t => {
+test('it should an interface type', async (t) => {
   const query = `
     {
       user(id: 1) {
@@ -99,9 +100,9 @@ test('it should an interface type', async t => {
         }
       }
     }
-  `
-  const { data, errors } = await run(query)
-  errCheck(t, errors)
+  `;
+  const {data, errors} = await run(query);
+  errCheck(t, errors);
   const expect = {
     user: {
       writtenMaterial2: [
@@ -111,13 +112,13 @@ test('it should an interface type', async t => {
           body: 'Wow this is a great post, Matt.',
           postId: 1,
           authorId: 1,
-          likers: [ { fullName: 'matt elder' } ]
+          likers: [{fullName: 'matt elder'}],
         },
         {
           id: 2,
           __typename: 'Post',
           authorId: 1,
-          body: 'Check out this cool new GraphQL library, Join Monster.'
+          body: 'Check out this cool new GraphQL library, Join Monster.',
         },
         {
           __typename: 'Comment',
@@ -125,7 +126,7 @@ test('it should an interface type', async t => {
           body: 'Do not forget to check out the demo.',
           authorId: 1,
           postId: 2,
-          likers: []
+          likers: [],
         },
         {
           __typename: 'Comment',
@@ -133,18 +134,19 @@ test('it should an interface type', async t => {
           body: 'Also, submit a PR if you have a feature you want to add.',
           authorId: 1,
           postId: 2,
-          likers: []
+          likers: [],
         },
         {
           __typename: 'Comment',
           id: 8,
-          body: 'Somebody please help me with this library. It is so much work.',
+          body:
+            'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
-          likers: []
-        }
-      ]
-    }
-  }
-  t.deepEqual(expect, data)
-})
+          likers: [],
+        },
+      ],
+    },
+  };
+  t.deepEqual(expect, data);
+});

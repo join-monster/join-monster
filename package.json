@@ -13,6 +13,7 @@
   "scripts": {
     "build": "rm -rf dist && babel src --no-comments --out-dir dist --copy-files --ignore README.md",
     "watch": "rm -rf dist && babel src --watch --source-maps true --out-dir dist",
+    "format": "prettier --write \"./{src,test,test-api}/**/*.{ts,js}\"",
     "test": "bin/test --no-oracle",
     "testsqlite3": "NODE_ENV=test ava test/*.js",
     "testpg": "NODE_ENV=test DB=PG ava test/*.js",
@@ -37,7 +38,7 @@
     "verbose": false,
     "failFast": true,
     "require": [
-			"@babel/register"
+      "@babel/register"
     ]
   },
   "nyc": {
@@ -84,6 +85,8 @@
     "babel-watch": "^7.0.0",
     "eslint": "^5.0.1",
     "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-config-prettier": "^5.0.0",
+    "eslint-plugin-prettier": "^3.1.0",
     "faker": "^4.1.0",
     "graphql": "^0.13.0",
     "graphsiql": "0.2.0",
@@ -98,6 +101,7 @@
     "mysql": "^2.14.1",
     "nyc": "^14.1.1",
     "pg": "^7.3.2",
+    "prettier": "^1.18.2",
     "sinon": "^6.1.0",
     "sqlite3": "^4.0.0"
   },
@@ -108,5 +112,11 @@
     "graphql-relay": "^0.6.0",
     "lodash": "^4.13.1",
     "nesthydrationjs": "1.0.5"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "arrowParens": "always",
+    "bracketSpacing": false
   }
 }

@@ -3,35 +3,35 @@ import {
   GraphQLList,
   GraphQLString,
   GraphQLInt,
-  GraphQLBoolean
-} from 'graphql'
+  GraphQLBoolean,
+} from 'graphql';
 
-import knex from './database'
-import dbCall from '../data/fetch'
+import knex from './database';
+import dbCall from '../data/fetch';
 
-import User from './User'
-import Sponsor from './Sponsor'
-import { fromBase64, q } from '../shared'
+import User from './User';
+import Sponsor from './Sponsor';
+import {fromBase64, q} from '../shared';
 
-import mysqlModule from '../../src/stringifiers/dialects/mysql'
-import oracleModule from '../../src/stringifiers/dialects/oracle'
-import pgModule from '../../src/stringifiers/dialects/pg'
-import sqlite3Module from '../../src/stringifiers/dialects/sqlite3'
+import mysqlModule from '../../src/stringifiers/dialects/mysql';
+import oracleModule from '../../src/stringifiers/dialects/oracle';
+import pgModule from '../../src/stringifiers/dialects/pg';
+import sqlite3Module from '../../src/stringifiers/dialects/sqlite3';
 
-import joinMonster from '../../src/index'
+import joinMonster from '../../src/index';
 
-const { MINIFY, DB } = process.env
+const {MINIFY, DB} = process.env;
 const options = {
-  minify: MINIFY == 1
-}
+  minify: MINIFY == 1,
+};
 if (knex.client.config.client === 'mysql') {
-  options.dialectModule = mysqlModule
+  options.dialectModule = mysqlModule;
 } else if (knex.client.config.client === 'pg') {
-  options.dialectModule = pgModule
+  options.dialectModule = pgModule;
 } else if (knex.client.config.client === 'oracledb') {
-  options.dialectModule = oracleModule
+  options.dialectModule = oracleModule;
 } else if (knex.client.config.client === 'sqlite3') {
-  options.dialectModule = sqlite3Module
+  options.dialectModule = sqlite3Module;
 }
 
 export default new GraphQLObjectType({
@@ -40,74 +40,100 @@ export default new GraphQLObjectType({
   fields: () => ({
     version: {
       type: GraphQLString,
-      resolve: () => joinMonster.version
+      resolve: () => joinMonster.version,
     },
     database: {
       type: GraphQLString,
-      resolve: () => knex.client.config.client + ' ' + JSON.stringify(knex.client.config.connection).replace(/"/g, '  ')
+      resolve: () =>
+        knex.client.config.client +
+        ' ' +
+        JSON.stringify(knex.client.config.connection).replace(/"/g, '  '),
     },
     users: {
       type: new GraphQLList(User),
       args: {
-        ids: { type: new GraphQLList(GraphQLInt) }
+        ids: {type: new GraphQLList(GraphQLInt)},
       },
-      where: (table, args) => args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
+      where: (table, args) =>
+        args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
       orderBy: 'id',
       resolve: async (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
-      }
+        return joinMonster(
+          resolveInfo,
+          context,
+          (sql) => dbCall(sql, knex, context),
+          options
+        );
+      },
     },
     user: {
       type: User,
       args: {
         id: {
           description: 'The users ID number',
-          type: GraphQLInt
+          type: GraphQLInt,
         },
         idEncoded: {
           description: 'The users encoded ID number',
-          type: GraphQLString
+          type: GraphQLString,
         },
         idAsync: {
           description: 'The users ID number, with an async where function',
-          type: GraphQLInt
-        }
+          type: GraphQLInt,
+        },
       },
-      where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
-        if (args.idEncoded) return `${usersTable}.${q('id', DB)} = ${fromBase64(args.idEncoded)}`
-        if (args.idAsync) return Promise.resolve(`${usersTable}.${q('id', DB)} = ${args.idAsync}`)
+      where: (usersTable, args, context) => {
+        // eslint-disable-line no-unused-vars
+        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`;
+        if (args.idEncoded)
+          return `${usersTable}.${q('id', DB)} = ${fromBase64(args.idEncoded)}`;
+        if (args.idAsync)
+          return Promise.resolve(
+            `${usersTable}.${q('id', DB)} = ${args.idAsync}`
+          );
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
-      }
+        return joinMonster(
+          resolveInfo,
+          context,
+          (sql) => dbCall(sql, knex, context),
+          options
+        );
+      },
     },
     sponsors: {
       type: new GraphQLList(Sponsor),
       args: {
         filterLegless: {
           description: 'Exclude sponsors with no leg info',
-          type: GraphQLBoolean
-        }
+          type: GraphQLBoolean,
+        },
       },
-      where: (sponsorsTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.filterLegless) return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
+      where: (sponsorsTable, args, context) => {
+        // eslint-disable-line no-unused-vars
+        if (args.filterLegless)
+          return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`;
       },
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time
-        return joinMonster(resolveInfo, context, (sql, done) => {
-          knex.raw(sql)
-          .then(result => {
-            if (options.dialectModule.name === 'mysql') {
-              done(null, result[0])
-            } else {
-              done(null, result)
-            }
-          })
-          .catch(done)
-        }, options)
-      }
-    }
-  })
-})
-
+        return joinMonster(
+          resolveInfo,
+          context,
+          (sql, done) => {
+            knex
+              .raw(sql)
+              .then((result) => {
+                if (options.dialectModule.name === 'mysql') {
+                  done(null, result[0]);
+                } else {
+                  done(null, result);
+                }
+              })
+              .catch(done);
+          },
+          options
+        );
+      },
+    },
+  }),
+});

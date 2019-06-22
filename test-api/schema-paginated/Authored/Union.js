@@ -1,12 +1,10 @@
-import  {
-  GraphQLUnionType,
-} from 'graphql'
+import {GraphQLUnionType} from 'graphql';
 
-import Comment from '../Comment'
-import Post from '../Post'
-import { q } from '../../shared'
+import Comment from '../Comment';
+import Post from '../Post';
+import {q} from '../../shared';
 
-const { DB } = process.env
+const {DB} = process.env;
 
 export default new GraphQLUnionType({
   name: 'AuthoredUnion',
@@ -29,9 +27,8 @@ export default new GraphQLUnionType({
       'Comment' AS ${q('$type', DB)}
     FROM ${q('comments', DB)}
   )`,
-  uniqueKey: [ 'id', '$type' ],
-  types: () => [ Comment, Post ],
+  uniqueKey: ['id', '$type'],
+  types: () => [Comment, Post],
   alwaysFetch: '$type',
-  resolveType: obj => obj.$type
-})
-
+  resolveType: (obj) => obj.$type,
+});
