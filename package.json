@@ -84,7 +84,7 @@
     "eslint": "^5.0.1",
     "eslint-config-airbnb-base": "^13.0.0",
     "faker": "^4.1.0",
-    "graphql": "^0.13.0",
+    "graphql": "^14.4.0",
     "graphsiql": "0.2.0",
     "jsdoc-to-markdown": "^4.0.0",
     "kcors": "^2.2.1",
