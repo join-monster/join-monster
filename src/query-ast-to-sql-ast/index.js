@@ -288,7 +288,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 
   if (config.alwaysFetch) {
     for (let column of wrap(config.alwaysFetch)) {
-      children.push(columnToASTChild(column, namespace))
+      children.push(columnToASTChild(unthunk(column, sqlASTNode.as, sqlASTNode.args || {}, context, sqlASTNode), namespace))
     }
   }
 
