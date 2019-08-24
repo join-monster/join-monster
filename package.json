@@ -81,7 +81,7 @@
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-1": "^6.24.1",
     "babel-watch": "^2.0.3-rc0",
-    "eslint": "^6.0.0",
+    "eslint": "^6.2.2",
     "eslint-config-airbnb-base": "^13.0.0",
     "faker": "^4.1.0",
     "graphql": "^0.13.0",
