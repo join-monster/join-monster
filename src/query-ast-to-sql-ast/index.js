@@ -147,7 +147,7 @@ export function populateASTNode(
   // the actual type might be wrapped in a GraphQLNonNull type
   let gqlType = stripNonNullType(field.type)
 
-  sqlASTNode.args = getArgumentValues(field, queryASTNode, this.variableValues)
+  sqlASTNode.args = field.args ? getArgumentValues(field, queryASTNode, this.variableValues) : {}
 
   // if list then mark flag true & get the type inside the GraphQLList container type
   if (gqlType.constructor.name === 'GraphQLList') {
