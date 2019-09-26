@@ -21,11 +21,11 @@ class SQLASTNode {
 }
 
 // an enumeration of all the types that can map to SQL tables
-const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
+const TABLE_TYPES = ['GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType']
 
 
 function mergeAll(fieldNodes) {
-  const newFieldNodes = [ ...fieldNodes ]
+  const newFieldNodes = [...fieldNodes]
   while (newFieldNodes.length > 1) {
     newFieldNodes.push(merge(newFieldNodes.pop(), newFieldNodes.pop()))
   }
@@ -37,7 +37,7 @@ function merge(dest, src) {
     ...dest,
     selectionSet: {
       ...dest.selectionSet,
-      selections: [ ...dest.selectionSet.selections, ...src.selectionSet.selections ]
+      selections: [...dest.selectionSet.selections, ...src.selectionSet.selections]
     }
   }
 }
@@ -69,7 +69,7 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
 
   // make sure they started this party on a table, interface or union.
   assert.ok(
-    [ 'table', 'union' ].indexOf(sqlAST.type) > -1,
+    ['table', 'union'].indexOf(sqlAST.type) > -1,
     'Must call joinMonster in a resolver on a field where the type is decorated with "sqlTable".'
   )
 
@@ -116,7 +116,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
   // the actual type might be wrapped in a GraphQLNonNull type
   let gqlType = stripNonNullType(field.type)
 
-  sqlASTNode.args = getArgumentValues(field, queryASTNode, this.variableValues)
+  sqlASTNode.args = field.args ? getArgumentValues(field, queryASTNode, this.variableValues) : {}
 
   // if list then mark flag true & get the type inside the GraphQLList container type
   if (gqlType.constructor.name === 'GraphQLList') {
@@ -162,7 +162,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
       )
     }
     handleTable.call(this, sqlASTNode, queryASTNode, field, gqlType, namespace, grabMany, depth, options, context)
-  // is this a computed column from a raw expression?
+    // is this a computed column from a raw expression?
   } else if (field.sqlExpr) {
     sqlASTNode.type = 'expression'
     sqlASTNode.sqlExpr = field.sqlExpr
@@ -171,7 +171,7 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
       aliasFrom += '@' + parentTypeNode.name
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom)
-  // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
+    // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
   } else if (field.sqlColumn || !field.resolve) {
     sqlASTNode.type = 'column'
     sqlASTNode.name = field.sqlColumn || field.name
@@ -180,11 +180,11 @@ export function populateASTNode(queryASTNode, parentTypeNode, sqlASTNode, namesp
       aliasFrom += '@' + parentTypeNode.name
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom)
-  // or maybe it just depends on some SQL columns
+    // or maybe it just depends on some SQL columns
   } else if (field.sqlDeps) {
     sqlASTNode.type = 'columnDeps'
     sqlASTNode.names = field.sqlDeps
-  // maybe this node wants no business with your SQL, because it has its own resolver
+    // maybe this node wants no business with your SQL, because it has its own resolver
   } else {
     sqlASTNode.type = 'noop'
   }
@@ -223,7 +223,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
   // are they doing a one-to-many sql join?
   if (field.sqlJoin) {
     sqlASTNode.sqlJoin = field.sqlJoin
-  // or a many-to-many?
+    // or a many-to-many?
   } else if (field.junction) {
     const junctionTable = unthunk(ensure(field.junction, 'sqlTable'), sqlASTNode.args || {}, context)
     const junction = sqlASTNode.junction = {
@@ -260,7 +260,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
     } else {
       throw new Error('junction requires either a `sqlJoins` or `sqlBatch`')
     }
-  // or are they doing a one-to-many with batching
+    // or are they doing a one-to-many with batching
   } else if (field.sqlBatch) {
     sqlASTNode.sqlBatch = {
       thisKey: columnToASTChild(ensure(field.sqlBatch, 'thisKey'), namespace),
@@ -294,7 +294,7 @@ function handleTable(sqlASTNode, queryASTNode, field, gqlType, namespace, grabMa
 
   // this was created for helping resolve types in union types
   // its been generalized to `alwaysFetch`, as its a useful feature for more than just unions
-  if (config.typeHint && [ 'GraphQLUnionType', 'GraphQLInterfaceType' ].includes(gqlType.constructor.name)) {
+  if (config.typeHint && ['GraphQLUnionType', 'GraphQLInterfaceType'].includes(gqlType.constructor.name)) {
     deprecate('`typeHint` is deprecated. Use `alwaysFetch` instead.')
     children.push(columnToASTChild(config.typeHint, namespace))
   }
@@ -339,68 +339,68 @@ function handleUnionSelections(
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
-    case 'Field':
-      // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
-      const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
-      let newNode = new SQLASTNode(sqlASTNode)
-      if (existingNode) {
-        newNode = existingNode
-      } else {
-        children.push(newNode)
-      }
-      if (internalOptions.defferedFrom) {
-        newNode.defferedFrom = internalOptions.defferedFrom
-      }
-      populateASTNode.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
-      break
-    // if its an inline fragment, it has some fields and we gotta recurse thru all them
-    case 'InlineFragment':
-      {
-        const selectionNameOfType = selection.typeCondition.name.value
-        // normally, we would scan for the extra join-monster data on the current gqlType.
-        // but the gqlType is the Union. The data isn't there, its on each of the types that make up the union
-        // lets find that type and handle the selections based on THAT type instead
-        const deferredType = this.schema._typeMap[selectionNameOfType]
-        const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
-        const handler = deferToObjectType ? handleSelections : handleUnionSelections
-        if (deferToObjectType) {
-          const typedChildren = sqlASTNode.typedChildren
-          children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
-          internalOptions.defferedFrom = gqlType
+      case 'Field':
+        // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
+        const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
+        let newNode = new SQLASTNode(sqlASTNode)
+        if (existingNode) {
+          newNode = existingNode
+        } else {
+          children.push(newNode)
         }
-        handler.call(
-          this, sqlASTNode, children,
-          selection.selectionSet.selections, deferredType, namespace,
-          depth, options, context,
-          internalOptions
-        )
-      }
-      break
-    // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
-    case 'FragmentSpread':
-      {
-        const fragmentName = selection.name.value
-        const fragment = this.fragments[fragmentName]
-        const fragmentNameOfType = fragment.typeCondition.name.value
-        const deferredType = this.schema._typeMap[fragmentNameOfType]
-        const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
-        const handler = deferToObjectType ? handleSelections : handleUnionSelections
-        if (deferToObjectType) {
-          const typedChildren = sqlASTNode.typedChildren
-          children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
-          internalOptions.defferedFrom = gqlType
+        if (internalOptions.defferedFrom) {
+          newNode.defferedFrom = internalOptions.defferedFrom
         }
-        handler.call(
-          this, sqlASTNode, children,
-          fragment.selectionSet.selections, deferredType, namespace,
-          depth, options, context,
-          internalOptions
-        )
-      }
-      break
-    /* istanbul ignore next */
-    default:
-      throw new Error('Unknown selection kind: ' + selection.kind)
+        populateASTNode.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
+        break
+      // if its an inline fragment, it has some fields and we gotta recurse thru all them
+      case 'InlineFragment':
+        {
+          const selectionNameOfType = selection.typeCondition.name.value
+          // normally, we would scan for the extra join-monster data on the current gqlType.
+          // but the gqlType is the Union. The data isn't there, its on each of the types that make up the union
+          // lets find that type and handle the selections based on THAT type instead
+          const deferredType = this.schema._typeMap[selectionNameOfType]
+          const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
+          const handler = deferToObjectType ? handleSelections : handleUnionSelections
+          if (deferToObjectType) {
+            const typedChildren = sqlASTNode.typedChildren
+            children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
+            internalOptions.defferedFrom = gqlType
+          }
+          handler.call(
+            this, sqlASTNode, children,
+            selection.selectionSet.selections, deferredType, namespace,
+            depth, options, context,
+            internalOptions
+          )
+        }
+        break
+      // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
+      case 'FragmentSpread':
+        {
+          const fragmentName = selection.name.value
+          const fragment = this.fragments[fragmentName]
+          const fragmentNameOfType = fragment.typeCondition.name.value
+          const deferredType = this.schema._typeMap[fragmentNameOfType]
+          const deferToObjectType = deferredType.constructor.name === 'GraphQLObjectType'
+          const handler = deferToObjectType ? handleSelections : handleUnionSelections
+          if (deferToObjectType) {
+            const typedChildren = sqlASTNode.typedChildren
+            children = typedChildren[deferredType.name] = typedChildren[deferredType.name] || []
+            internalOptions.defferedFrom = gqlType
+          }
+          handler.call(
+            this, sqlASTNode, children,
+            fragment.selectionSet.selections, deferredType, namespace,
+            depth, options, context,
+            internalOptions
+          )
+        }
+        break
+      /* istanbul ignore next */
+      default:
+        throw new Error('Unknown selection kind: ' + selection.kind)
     }
   }
 }
@@ -420,60 +420,60 @@ function handleSelections(
   for (let selection of selections) {
     // we need to figure out what kind of selection this is
     switch (selection.kind) {
-    // if its another field, recurse through that
-    case 'Field':
-      // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
-      const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
-      let newNode = new SQLASTNode(sqlASTNode)
-      if (existingNode) {
-        newNode = existingNode
-      } else {
-        children.push(newNode)
-      }
-      if (internalOptions.defferedFrom) {
-        newNode.defferedFrom = internalOptions.defferedFrom
-      }
-      populateASTNode.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
-      break
-    // if its an inline fragment, it has some fields and we gotta recurse thru all them
-    case 'InlineFragment':
-      {
-        // check to make sure the type of this fragment (or one of the interfaces it implements) matches the type being queried
-        const selectionNameOfType = selection.typeCondition.name.value
-        const sameType = selectionNameOfType === gqlType.name
-        const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
-        if (sameType || interfaceType) {
-          handleSelections.call(
-            this, sqlASTNode, children,
-            selection.selectionSet.selections, gqlType, namespace,
-            depth, options, context,
-            internalOptions
-          )
+      // if its another field, recurse through that
+      case 'Field':
+        // has this field been requested once already? GraphQL does not protect against duplicates so we have to check for it
+        const existingNode = children.find(child => child.fieldName === selection.name.value && child.type === 'table')
+        let newNode = new SQLASTNode(sqlASTNode)
+        if (existingNode) {
+          newNode = existingNode
+        } else {
+          children.push(newNode)
         }
-      }
-      break
-    // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
-    case 'FragmentSpread':
-      {
-        const fragmentName = selection.name.value
-        const fragment = this.fragments[fragmentName]
-        // make sure fragment type (or one of the interfaces it implements) matches the type being queried
-        const fragmentNameOfType = fragment.typeCondition.name.value
-        const sameType = fragmentNameOfType === gqlType.name
-        const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
-        if (sameType || interfaceType) {
-          handleSelections.call(
-            this, sqlASTNode, children,
-            fragment.selectionSet.selections, gqlType, namespace,
-            depth, options, context,
-            internalOptions
-          )
+        if (internalOptions.defferedFrom) {
+          newNode.defferedFrom = internalOptions.defferedFrom
         }
-      }
-      break
-    /* istanbul ignore next */
-    default:
-      throw new Error('Unknown selection kind: ' + selection.kind)
+        populateASTNode.call(this, selection, gqlType, newNode, namespace, depth + 1, options, context)
+        break
+      // if its an inline fragment, it has some fields and we gotta recurse thru all them
+      case 'InlineFragment':
+        {
+          // check to make sure the type of this fragment (or one of the interfaces it implements) matches the type being queried
+          const selectionNameOfType = selection.typeCondition.name.value
+          const sameType = selectionNameOfType === gqlType.name
+          const interfaceType = (gqlType._interfaces || []).map(iface => iface.name).includes(selectionNameOfType)
+          if (sameType || interfaceType) {
+            handleSelections.call(
+              this, sqlASTNode, children,
+              selection.selectionSet.selections, gqlType, namespace,
+              depth, options, context,
+              internalOptions
+            )
+          }
+        }
+        break
+      // if its a named fragment, we need to grab the fragment definition by its name and recurse over those fields
+      case 'FragmentSpread':
+        {
+          const fragmentName = selection.name.value
+          const fragment = this.fragments[fragmentName]
+          // make sure fragment type (or one of the interfaces it implements) matches the type being queried
+          const fragmentNameOfType = fragment.typeCondition.name.value
+          const sameType = fragmentNameOfType === gqlType.name
+          const interfaceType = gqlType._interfaces.map(iface => iface.name).indexOf(fragmentNameOfType) >= 0
+          if (sameType || interfaceType) {
+            handleSelections.call(
+              this, sqlASTNode, children,
+              fragment.selectionSet.selections, gqlType, namespace,
+              depth, options, context,
+              internalOptions
+            )
+          }
+        }
+        break
+      /* istanbul ignore next */
+      default:
+        throw new Error('Unknown selection kind: ' + selection.kind)
     }
   }
 }
@@ -590,7 +590,7 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
           depsByTable[keyName].add(name)
         })
         children.splice(i, 1)
-      // or if its another table, recurse on it
+        // or if its another table, recurse on it
       } else if (child.type === 'table' || child.type === 'union') {
         pruneDuplicateSqlDeps(child, namespace)
       }
@@ -653,18 +653,18 @@ function getSortColumns(field, sqlASTNode, context) {
 function spreadFragments(selections, fragments, typeName) {
   return flatMap(selections, selection => {
     switch (selection.kind) {
-    case 'FragmentSpread':
-      const fragmentName = selection.name.value
-      const fragment = fragments[fragmentName]
-      return spreadFragments(fragment.selectionSet.selections, fragments, typeName)
-    case 'InlineFragment':
-      if (selection.typeCondition.name.value === typeName) {
-        return spreadFragments(selection.selectionSet.selections, fragments, typeName)
-      }
-      return []
+      case 'FragmentSpread':
+        const fragmentName = selection.name.value
+        const fragment = fragments[fragmentName]
+        return spreadFragments(fragment.selectionSet.selections, fragments, typeName)
+      case 'InlineFragment':
+        if (selection.typeCondition.name.value === typeName) {
+          return spreadFragments(selection.selectionSet.selections, fragments, typeName)
+        }
+        return []
 
-    default:
-      return selection
+      default:
+        return selection
     }
   })
 }
