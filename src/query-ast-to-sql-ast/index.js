@@ -27,7 +27,7 @@ const TABLE_TYPES = [
   'GraphQLInterfaceType'
 ]
 
-function mergeAll(fieldNodes) {
+export function mergeAll(fieldNodes) {
   const newFieldNodes = [...fieldNodes]
   while (newFieldNodes.length > 1) {
     newFieldNodes.push(merge(newFieldNodes.pop(), newFieldNodes.pop()))
@@ -147,7 +147,9 @@ export function populateASTNode(
   // the actual type might be wrapped in a GraphQLNonNull type
   let gqlType = stripNonNullType(field.type)
 
-  sqlASTNode.args = field.args ? getArgumentValues(field, queryASTNode, this.variableValues) : {}
+  sqlASTNode.args = field.args
+    ? getArgumentValues(field, queryASTNode, this.variableValues)
+    : {}
 
   // if list then mark flag true & get the type inside the GraphQLList container type
   if (gqlType.constructor.name === 'GraphQLList') {
@@ -173,7 +175,9 @@ export function populateASTNode(
     }
   } else if (field.sqlPaginate) {
     throw new Error(
-      `To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec.
+      `To paginate the ${
+        gqlType.name
+      } type, it must be a GraphQLObjectType that fulfills the relay spec.
       The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`
     )
   }
@@ -195,7 +199,9 @@ export function populateASTNode(
         field.sqlJoin || field.sqlBatch || field.junction,
         `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table,
         you must define "sqlJoin", "sqlBatch", or "junction" on that field to tell joinMonster how to fetch it.
-        Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`
+        Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${
+          parentTypeNode.name
+        }" type.`
       )
     }
     handleTable.call(
@@ -734,7 +740,10 @@ function stripRelayConnection(gqlType, queryASTNode, fragments) {
   }
   // place the arguments on this inner field, so our SQL AST picks it up later
   queryASTNode.arguments = args
-  return { gqlType: strippedType, queryASTNode }
+  return {
+    gqlType: strippedType,
+    queryASTNode
+  }
 }
 
 function stripNonNullType(type) {

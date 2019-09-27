@@ -154,7 +154,7 @@ async function getNode(
   }
   const namespace = new AliasNamespace(options.minify)
   const sqlAST = {}
-  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
+  const fieldNodes = queryAST.mergeAll(resolveInfo.fieldNodes || resolveInfo.fieldASTs)
   // uses the same underlying function as the main `joinMonster`
   queryAST.populateASTNode.call(
     resolveInfo,
