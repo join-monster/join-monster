@@ -24,7 +24,7 @@ class SQLASTNode {
 const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
 
 
-function mergeAll(fieldNodes) {
+export function mergeAll(fieldNodes) {
   const newFieldNodes = [ ...fieldNodes ]
   while (newFieldNodes.length > 1) {
     newFieldNodes.push(merge(newFieldNodes.pop(), newFieldNodes.pop()))

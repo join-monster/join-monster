@@ -146,7 +146,7 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   }
   const namespace = new AliasNamespace(options.minify)
   const sqlAST = {}
-  const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
+  const fieldNodes = queryAST.mergeAll(resolveInfo.fieldNodes || resolveInfo.fieldASTs)
   // uses the same underlying function as the main `joinMonster`
   queryAST.populateASTNode.call(resolveInfo, fieldNodes[0], fakeParentNode, sqlAST, namespace, 0, options, context)
   queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
