@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
@@ -106,6 +106,6 @@
     "deprecate": "^1.0.0",
     "generatorics": "^1.0.8",
     "graphql-relay": "^0.5.0",
-    "lodash": "^4.13.1"
+    "lodash": "^4.17.15"
   }
 }
