@@ -88,7 +88,7 @@
     "graphsiql": "0.2.0",
     "jsdoc-to-markdown": "^5.0.0",
     "kcors": "^2.2.1",
-    "knex": "^0.17.6",
+    "knex": "^0.20.6",
     "koa": "^2.0.1",
     "koa-custom-graphiql": "1.0.1",
     "koa-graphql": "^0.8.0",
