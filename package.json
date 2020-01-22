@@ -92,7 +92,7 @@
     "koa": "^2.0.1",
     "koa-custom-graphiql": "1.0.1",
     "koa-graphql": "^0.8.0",
-    "koa-router": "^7.1.1",
+    "koa-router": "^8.0.6",
     "koa-static": "^5.0.0",
     "mysql": "^2.14.1",
     "nyc": "^14.1.1",
