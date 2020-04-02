@@ -16,6 +16,21 @@ function arrToConnection(data, sqlAST) {
       recurseOnObjInData(data, astChild)
     }
   }
+  if (sqlAST.typedChildren) {
+    for (let astType in sqlAST.typedChildren) {
+      if (Object.prototype.hasOwnProperty.call(sqlAST.typedChildren, astType)) {
+        for (let astChild of sqlAST.typedChildren[astType] || []) {
+          if (Array.isArray(data)) {
+            for (let dataItem of data) {
+              recurseOnObjInData(dataItem, astChild)
+            }
+          } else if (data) {
+            recurseOnObjInData(data, astChild)
+          }
+        }
+      }
+    }
+  }
   const pageInfo = {
     hasNextPage: false,
     hasPreviousPage: false
