@@ -1,7 +1,7 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import schemaRelay from '../../test-api/schema-paginated/index'
-import { partial } from 'lodash'
+import { isEmpty, partial } from 'lodash'
 import { toGlobalId, fromGlobalId } from 'graphql-relay'
 import { objToCursor } from '../../src/util'
 import { errCheck } from '../_util'
@@ -454,6 +454,35 @@ test('should handle pagination with duplicate objects', async t => {
     }
   }
   t.deepEqual(expect, data)
+})
+
+test('should handle fragment usage with connections inside union or fragment ', async t => {
+  const query = `{
+    user(id: 1) {
+      writtenMaterial {
+        edges {
+          node {
+            ...postInfo
+          }
+        }
+      }
+    }
+  }
+
+  fragment postInfo on Post {
+    comments {
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  const firstPost = data.user.writtenMaterial.edges.filter(e => !isEmpty(e.node))[0]
+  t.truthy(firstPost)
+  t.truthy(firstPost.node.comments.edges)
 })
 
 test('handle filtered pagination at the root', async t => {
