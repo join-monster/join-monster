@@ -1,4 +1,5 @@
 const assert = require('assert')
+require('dotenv-expand')(require('dotenv').config())
 
 assert(process.env.MYSQL_URL, 'Environment variable MYSQL_URL must be defined, e.g. "mysql://user:pass@localhost/"')
 assert(process.env.PG_URL, 'Environment variable PG_URL must be defined, e.g. "postgres://user:pass@localhost/"')
