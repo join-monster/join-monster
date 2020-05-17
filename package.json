@@ -4,7 +4,7 @@
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=10.0.0"
   },
   "files": [
     "dist/"
