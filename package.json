@@ -22,6 +22,7 @@
     "testmysql": "NODE_ENV=test DB=MYSQL ava test/*.js",
     "testmysql-paging": "NODE_ENV=test DB=MYSQL PAGINATE=offset ava test/pagination/offset-paging.js && NODE_ENV=test DB=MYSQL PAGINATE=keyset ava test/pagination/keyset-paging.js",
     "coverage": "nyc --reporter=html npm run test",
+    "view-coverage": "open coverage/index.html",
     "lint": "eslint src test",
     "start": "babel-watch ./test-api/server.js",
     "docs": "mkdocs serve",
