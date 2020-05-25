@@ -1,3 +1,11 @@
+### v2.1.2 (May 25, 2020)
+#### Fixed 
+- Connections inside union fragments [#407](https://github.com/join-monster/join-monster/pull/407)
+
+### v2.1.1 (Nov. 21, 2019)
+#### Fixed 
+- Updated vulnerable version of lodash (`eed0264`)
+
 ### v2.1.0 (Aug. 25, 2018)
 - Numerous bug fixes
 - TypeScript type definitions
