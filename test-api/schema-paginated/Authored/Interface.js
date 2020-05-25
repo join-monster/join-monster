@@ -1,4 +1,4 @@
-import  {
+import {
   GraphQLInterfaceType,
   GraphQLID,
   GraphQLInt,
@@ -32,7 +32,7 @@ export const Authored = new GraphQLInterfaceType({
       'Comment' AS ${q('$type', DB)}
     FROM ${q('comments', DB)}
   )`,
-  uniqueKey: [ 'id', '$type' ],
+  uniqueKey: ['id', '$type'],
   alwaysFetch: '$type',
   fields: () => ({
     id: {
@@ -55,6 +55,7 @@ if (PAGINATE === 'offset') {
     total: { type: GraphQLInt }
   }
 }
-const { connectionType: AuthoredConnection } = connectionDefinitions(connectionConfig)
+const { connectionType: AuthoredConnection } = connectionDefinitions(
+  connectionConfig
+)
 export { AuthoredConnection }
-

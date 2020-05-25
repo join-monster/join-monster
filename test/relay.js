@@ -28,7 +28,11 @@ test('it should fetch a Node type with inline fragments', async t => {
   }`
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  const expect = { node: { body: 'If I could marry a programming language, it would be Haskell.' } }
+  const expect = {
+    node: {
+      body: 'If I could marry a programming language, it would be Haskell.'
+    }
+  }
   t.deepEqual(expect, data)
 })
 
@@ -70,7 +74,13 @@ test('it should fetch a Node type with a variable', async t => {
     }
   `
   const variables = { id: user1Id }
-  const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
+  const { data, errors } = await graphql(
+    schemaRelay,
+    query,
+    null,
+    null,
+    variables
+  )
   errCheck(t, errors)
   const expect = {
     node: {
@@ -91,7 +101,13 @@ test('it should not error when no record is returned ', async t => {
     }
   `
   const variables = { id: toGlobalId('User', 999) }
-  const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
+  const { data, errors } = await graphql(
+    schemaRelay,
+    query,
+    null,
+    null,
+    variables
+  )
   errCheck(t, errors)
   const expect = {
     node: null
@@ -292,7 +308,11 @@ test('should pass context to getNode resolver', async t => {
 
   const { data, errors } = await run(query, null, { table: 'posts' })
   errCheck(t, errors)
-  const expect = { node: { body: 'If I could marry a programming language, it would be Haskell.' } }
+  const expect = {
+    node: {
+      body: 'If I could marry a programming language, it would be Haskell.'
+    }
+  }
   t.deepEqual(expect, data)
 })
 

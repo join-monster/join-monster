@@ -43,7 +43,7 @@ test('it should a union type', async t => {
           body: 'Wow this is a great post, Matt.',
           postId: 1,
           authorId: 1,
-          likers: [ { fullName: 'matt elder' } ]
+          likers: [{ fullName: 'matt elder' }]
         },
         {
           id: 2,
@@ -70,7 +70,8 @@ test('it should a union type', async t => {
         {
           __typename: 'Comment',
           id: 8,
-          body: 'Somebody please help me with this library. It is so much work.',
+          body:
+            'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
           likers: []
@@ -111,7 +112,7 @@ test('it should an interface type', async t => {
           body: 'Wow this is a great post, Matt.',
           postId: 1,
           authorId: 1,
-          likers: [ { fullName: 'matt elder' } ]
+          likers: [{ fullName: 'matt elder' }]
         },
         {
           id: 2,
@@ -138,7 +139,8 @@ test('it should an interface type', async t => {
         {
           __typename: 'Comment',
           id: 8,
-          body: 'Somebody please help me with this library. It is so much work.',
+          body:
+            'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
           likers: []

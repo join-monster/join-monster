@@ -6,10 +6,7 @@ import {
   GraphQLBoolean
 } from 'graphql'
 
-import {
-  globalIdField,
-  connectionDefinitions
-} from 'graphql-relay'
+import { globalIdField, connectionDefinitions } from 'graphql-relay'
 
 import { Post } from './Post'
 import { User } from './User'
@@ -24,11 +21,11 @@ export const Comment = new GraphQLObjectType({
   name: 'Comment',
   sqlTable: `(SELECT * FROM ${q('comments', DB)})`,
   uniqueKey: 'id',
-  interfaces: () => [ nodeInterface, Authored ],
+  interfaces: () => [nodeInterface, Authored],
   fields: () => ({
     id: {
       ...globalIdField(),
-      sqlDeps: [ 'id' ]
+      sqlDeps: ['id']
     },
     body: {
       description: 'The content of the comment',
@@ -37,7 +34,8 @@ export const Comment = new GraphQLObjectType({
     post: {
       description: 'The post that the comment belongs to',
       type: Post,
-      sqlJoin: (commentTable, postTable) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)}`
+      sqlJoin: (commentTable, postTable) =>
+        `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)}`
     },
     authorId: {
       type: GraphQLInt,
@@ -46,7 +44,8 @@ export const Comment = new GraphQLObjectType({
     author: {
       description: 'The user who wrote the comment',
       type: User,
-      sqlJoin: (commentTable, userTable) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
+      sqlJoin: (commentTable, userTable) =>
+        `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
     },
     archived: {
       type: GraphQLBoolean
@@ -57,8 +56,13 @@ export const Comment = new GraphQLObjectType({
       junction: {
         sqlTable: 'likes',
         sqlJoins: [
-          (commentTable, likesTable) => `${commentTable}.${q('id', DB)} = ${likesTable}.${q('comment_id', DB)}`,
-          (likesTable, userTable) => `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
+          (commentTable, likesTable) =>
+            `${commentTable}.${q('id', DB)} = ${likesTable}.${q(
+              'comment_id',
+              DB
+            )}`,
+          (likesTable, userTable) =>
+            `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
         ]
       }
     },
@@ -76,6 +80,7 @@ if (PAGINATE === 'offset') {
     total: { type: GraphQLInt }
   }
 }
-const { connectionType: CommentConnection } = connectionDefinitions(connectionConfig)
+const { connectionType: CommentConnection } = connectionDefinitions(
+  connectionConfig
+)
 export { CommentConnection }
-

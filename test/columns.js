@@ -18,11 +18,7 @@ test('get a field with the same name as the SQL column', async t => {
   const { data, errors } = await run(query)
   errCheck(t, errors)
   t.deepEqual(data, {
-    users: [
-      { id: 1 },
-      { id: 2 },
-      { id: 3 }
-    ]
+    users: [{ id: 1 }, { id: 2 }, { id: 3 }]
   })
 })
 
@@ -44,11 +40,7 @@ test('get a field that has a resolver on top of the SQL column', async t => {
   const { data, errors } = await run(query)
   errCheck(t, errors)
   t.deepEqual(data, {
-    users: [
-      { idEncoded: 'MQ==' },
-      { idEncoded: 'Mg==' },
-      { idEncoded: 'Mw==' }
-    ]
+    users: [{ idEncoded: 'MQ==' }, { idEncoded: 'Mg==' }, { idEncoded: 'Mw==' }]
   })
 })
 
@@ -104,15 +96,10 @@ test('it should handle fragments at the top level', async t => {
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {
-    users: [
-      { id: 1 },
-      { id: 2 },
-      { id: 3 }
-    ]
+    users: [{ id: 1 }, { id: 2 }, { id: 3 }]
   }
   t.deepEqual(expect, data)
 })
-
 
 test('it should handle an inline fragment', async t => {
   const query = `
@@ -243,9 +230,9 @@ test('it should handle a column that resolves independantly of SQL', async t => 
   errCheck(t, errors)
   const expect = {
     users: [
-      { id: 1, favNums: [ 1, 2, 3 ] },
-      { id: 2, favNums: [ 1, 2, 3 ] },
-      { id: 3, favNums: [ 1, 2, 3 ] }
+      { id: 1, favNums: [1, 2, 3] },
+      { id: 2, favNums: [1, 2, 3] },
+      { id: 3, favNums: [1, 2, 3] }
     ]
   }
   t.deepEqual(expect, data)
@@ -260,7 +247,7 @@ test('it should handle a query that gets nothing from the database', async t => 
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {
-    user: { favNums: [ 1, 2, 3 ] }
+    user: { favNums: [1, 2, 3] }
   }
   t.deepEqual(expect, data)
 })
@@ -303,7 +290,13 @@ test('it should handle numeric variables', async t => {
     }
   `
   const variables = { userId: 1 }
-  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  const { data, errors } = await graphql(
+    schemaBasic,
+    query,
+    null,
+    null,
+    variables
+  )
   errCheck(t, errors)
   const expect = {
     user: {
@@ -324,7 +317,13 @@ test('it should handle string variables', async t => {
     }
   `
   const variables = { encodedUserId: 'MQ==' }
-  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  const { data, errors } = await graphql(
+    schemaBasic,
+    query,
+    null,
+    null,
+    variables
+  )
   errCheck(t, errors)
   const expect = {
     user: {
@@ -344,7 +343,13 @@ test('it should handle boolean variables', async t => {
     }
   `
   const variables = { filter: true }
-  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  const { data, errors } = await graphql(
+    schemaBasic,
+    query,
+    null,
+    null,
+    variables
+  )
   errCheck(t, errors)
   const expect = {
     sponsors: []
@@ -361,5 +366,8 @@ test('it should handle raw SQL expressions', async t => {
   }`
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.is(data.user.fullName.split(' ')[1].toUpperCase(), data.user.capitalizedLastName)
+  t.is(
+    data.user.fullName.split(' ')[1].toUpperCase(),
+    data.user.capitalizedLastName
+  )
 })

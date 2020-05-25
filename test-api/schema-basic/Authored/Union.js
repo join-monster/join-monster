@@ -1,6 +1,4 @@
-import  {
-  GraphQLUnionType,
-} from 'graphql'
+import { GraphQLUnionType } from 'graphql'
 
 import Comment from '../Comment'
 import Post from '../Post'
@@ -29,9 +27,8 @@ export default new GraphQLUnionType({
       'Comment' AS ${q('$type', DB)}
     FROM ${q('comments', DB)}
   )`,
-  uniqueKey: [ 'id', '$type' ],
-  types: () => [ Comment, Post ],
+  uniqueKey: ['id', '$type'],
+  types: () => [Comment, Post],
   alwaysFetch: '$type',
   resolveType: obj => obj.$type
 })
-

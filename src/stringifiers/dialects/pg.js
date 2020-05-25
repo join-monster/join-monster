@@ -6,7 +6,7 @@ import {
   generateCastExpressionFromValueType
 } from '../shared'
 
-const dialect = module.exports = {
+const dialect = (module.exports = {
   name: 'pg',
 
   quote(str) {
@@ -18,9 +18,21 @@ const dialect = module.exports = {
     return `NULLIF(CONCAT(${keys.join(', ')}), '')`
   },
 
-  handleJoinedOneToManyPaginated: async function(parent, node, context, tables, joinCondition) {
+  handleJoinedOneToManyPaginated: async function(
+    parent,
+    node,
+    context,
+    tables,
+    joinCondition
+  ) {
     const pagingWhereConditions = [
-      await node.sqlJoin(`"${parent.as}"`, `"${node.as}"`, node.args || {}, context, node)
+      await node.sqlJoin(
+        `"${parent.as}"`,
+        `"${node.as}"`,
+        node.args || {},
+        context,
+        node
+      )
     ]
     if (node.where) {
       pagingWhereConditions.push(
@@ -30,31 +42,64 @@ const dialect = module.exports = {
 
     // which type of pagination are they using?
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const {
+        limit,
+        order,
+        whereCondition: whereAddendum
+      } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
-        keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { joinCondition, joinType: 'LEFT' })
+        keysetPagingSelect(
+          node.name,
+          pagingWhereConditions,
+          order,
+          limit,
+          node.as,
+          { joinCondition, joinType: 'LEFT' }
+        )
       )
     } else if (node.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
-        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, {
-          joinCondition, joinType: 'LEFT'
-        })
+        offsetPagingSelect(
+          node.name,
+          pagingWhereConditions,
+          order,
+          limit,
+          offset,
+          node.as,
+          {
+            joinCondition,
+            joinType: 'LEFT'
+          }
+        )
       )
     }
   },
 
-  handleBatchedManyToManyPaginated: async function(parent, node, context, tables, batchScope, joinCondition) {
+  handleBatchedManyToManyPaginated: async function(
+    parent,
+    node,
+    context,
+    tables,
+    batchScope,
+    joinCondition
+  ) {
     const thisKeyOperand = generateCastExpressionFromValueType(
-      `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}"`, batchScope[0]
+      `"${node.junction.as}"."${node.junction.sqlBatch.thisKey.name}"`,
+      batchScope[0]
     )
     const pagingWhereConditions = [
       `${thisKeyOperand} = temp."${node.junction.sqlBatch.parentKey.name}"`
     ]
     if (node.junction.where) {
       pagingWhereConditions.push(
-        await node.junction.where(`"${node.junction.as}"`, node.args || {}, context, node)
+        await node.junction.where(
+          `"${node.junction.as}"`,
+          node.args || {},
+          context,
+          node
+        )
       )
     }
     if (node.where) {
@@ -63,12 +108,16 @@ const dialect = module.exports = {
       )
     }
 
-    const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.junction.sqlBatch.parentKey.name}")`
+    const tempTable = `FROM (VALUES ${batchScope.map(
+      val => `(${val})`
+    )}) temp("${node.junction.sqlBatch.parentKey.name}")`
     tables.push(tempTable)
-    const lateralJoinCondition =
-      `${thisKeyOperand} = temp."${node.junction.sqlBatch.parentKey.name}"`
+    const lateralJoinCondition = `${thisKeyOperand} = temp."${node.junction.sqlBatch.parentKey.name}"`
 
-    const lateralJoinOptions = { joinCondition: lateralJoinCondition, joinType: 'LEFT' }
+    const lateralJoinOptions = {
+      joinCondition: lateralJoinCondition,
+      joinType: 'LEFT'
+    }
     if (node.where || node.orderBy) {
       lateralJoinOptions.extraJoin = {
         name: node.name,
@@ -77,30 +126,64 @@ const dialect = module.exports = {
       }
     }
     if (node.sortKey || node.junction.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const {
+        limit,
+        order,
+        whereCondition: whereAddendum
+      } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
-        keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, node.junction.as, lateralJoinOptions)
+        keysetPagingSelect(
+          node.junction.sqlTable,
+          pagingWhereConditions,
+          order,
+          limit,
+          node.junction.as,
+          lateralJoinOptions
+        )
       )
     } else if (node.orderBy || node.junction.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
         offsetPagingSelect(
-          node.junction.sqlTable, pagingWhereConditions, order,
-          limit, offset, node.junction.as, lateralJoinOptions
+          node.junction.sqlTable,
+          pagingWhereConditions,
+          order,
+          limit,
+          offset,
+          node.junction.as,
+          lateralJoinOptions
         )
       )
     }
     tables.push(`LEFT JOIN ${node.name} AS "${node.as}" ON ${joinCondition}`)
   },
 
-  handleJoinedManyToManyPaginated: async function(parent, node, context, tables, joinCondition1, joinCondition2) {
+  handleJoinedManyToManyPaginated: async function(
+    parent,
+    node,
+    context,
+    tables,
+    joinCondition1,
+    joinCondition2
+  ) {
     const pagingWhereConditions = [
-      await node.junction.sqlJoins[0](`"${parent.as}"`, `"${node.junction.as}"`, node.args || {}, context, node)
+      await node.junction.sqlJoins[0](
+        `"${parent.as}"`,
+        `"${node.junction.as}"`,
+        node.args || {},
+        context,
+        node
+      )
     ]
     if (node.junction.where) {
       pagingWhereConditions.push(
-        await node.junction.where(`"${node.junction.as}"`, node.args || {}, context, node)
+        await node.junction.where(
+          `"${node.junction.as}"`,
+          node.args || {},
+          context,
+          node
+        )
       )
     }
     if (node.where) {
@@ -109,7 +192,10 @@ const dialect = module.exports = {
       )
     }
 
-    const lateralJoinOptions = { joinCondition: joinCondition1, joinType: 'LEFT' }
+    const lateralJoinOptions = {
+      joinCondition: joinCondition1,
+      joinType: 'LEFT'
+    }
     if (node.where || node.orderBy) {
       lateralJoinOptions.extraJoin = {
         name: node.name,
@@ -118,17 +204,33 @@ const dialect = module.exports = {
       }
     }
     if (node.sortKey || node.junction.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const {
+        limit,
+        order,
+        whereCondition: whereAddendum
+      } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
-        keysetPagingSelect(node.junction.sqlTable, pagingWhereConditions, order, limit, node.junction.as, lateralJoinOptions)
+        keysetPagingSelect(
+          node.junction.sqlTable,
+          pagingWhereConditions,
+          order,
+          limit,
+          node.junction.as,
+          lateralJoinOptions
+        )
       )
     } else if (node.orderBy || node.junction.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
         offsetPagingSelect(
-          node.junction.sqlTable, pagingWhereConditions, order,
-          limit, offset, node.junction.as, lateralJoinOptions
+          node.junction.sqlTable,
+          pagingWhereConditions,
+          order,
+          limit,
+          offset,
+          node.junction.as,
+          lateralJoinOptions
         )
       )
     }
@@ -137,7 +239,11 @@ const dialect = module.exports = {
   handlePaginationAtRoot: async function(parent, node, context, tables) {
     const pagingWhereConditions = []
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const {
+        limit,
+        order,
+        whereCondition: whereAddendum
+      } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       if (node.where) {
         pagingWhereConditions.push(
@@ -145,7 +251,13 @@ const dialect = module.exports = {
         )
       }
       tables.push(
-        keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as)
+        keysetPagingSelect(
+          node.name,
+          pagingWhereConditions,
+          order,
+          limit,
+          node.as
+        )
       )
     } else if (node.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
@@ -155,13 +267,29 @@ const dialect = module.exports = {
         )
       }
       tables.push(
-        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as)
+        offsetPagingSelect(
+          node.name,
+          pagingWhereConditions,
+          order,
+          limit,
+          offset,
+          node.as
+        )
       )
     }
   },
 
-  handleBatchedOneToManyPaginated: async function(parent, node, context, tables, batchScope) {
-    const thisKeyOperand = generateCastExpressionFromValueType(`"${node.as}"."${node.sqlBatch.thisKey.name}"`, batchScope[0])
+  handleBatchedOneToManyPaginated: async function(
+    parent,
+    node,
+    context,
+    tables,
+    batchScope
+  ) {
+    const thisKeyOperand = generateCastExpressionFromValueType(
+      `"${node.as}"."${node.sqlBatch.thisKey.name}"`,
+      batchScope[0]
+    )
     const pagingWhereConditions = [
       `${thisKeyOperand} = temp."${node.sqlBatch.parentKey.name}"`
     ]
@@ -170,23 +298,43 @@ const dialect = module.exports = {
         await node.where(`"${node.as}"`, node.args || {}, context, node)
       )
     }
-    const tempTable = `FROM (VALUES ${batchScope.map(val => `(${val})`)}) temp("${node.sqlBatch.parentKey.name}")`
+    const tempTable = `FROM (VALUES ${batchScope.map(
+      val => `(${val})`
+    )}) temp("${node.sqlBatch.parentKey.name}")`
     tables.push(tempTable)
     const lateralJoinCondition = `${thisKeyOperand} = temp."${node.sqlBatch.parentKey.name}"`
     if (node.sortKey) {
-      const { limit, order, whereCondition: whereAddendum } = interpretForKeysetPaging(node, dialect)
+      const {
+        limit,
+        order,
+        whereCondition: whereAddendum
+      } = interpretForKeysetPaging(node, dialect)
       pagingWhereConditions.push(whereAddendum)
       tables.push(
-        keysetPagingSelect(node.name, pagingWhereConditions, order, limit, node.as, { joinCondition: lateralJoinCondition })
+        keysetPagingSelect(
+          node.name,
+          pagingWhereConditions,
+          order,
+          limit,
+          node.as,
+          { joinCondition: lateralJoinCondition }
+        )
       )
     } else if (node.orderBy) {
       const { limit, offset, order } = interpretForOffsetPaging(node, dialect)
       tables.push(
-        offsetPagingSelect(node.name, pagingWhereConditions, order, limit, offset, node.as, {
-          joinCondition: lateralJoinCondition
-        })
+        offsetPagingSelect(
+          node.name,
+          pagingWhereConditions,
+          order,
+          limit,
+          offset,
+          node.as,
+          {
+            joinCondition: lateralJoinCondition
+          }
+        )
       )
     }
   }
-
-}
+})

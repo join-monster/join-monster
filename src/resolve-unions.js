@@ -21,7 +21,10 @@ export default function resolveUnions(data, sqlAST) {
             delete obj[qualifiedName]
             if (obj[fieldName] == null && qualifiedValue != null) {
               obj[fieldName] = qualifiedValue
-            } else if (isEmptyArray(obj[fieldName]) && !isEmptyArray(qualifiedValue)) {
+            } else if (
+              isEmptyArray(obj[fieldName]) &&
+              !isEmptyArray(qualifiedValue)
+            ) {
               obj[fieldName] = qualifiedValue
             }
           }
@@ -38,7 +41,10 @@ export default function resolveUnions(data, sqlAST) {
           delete data[qualifiedName]
           if (data[fieldName] == null && qualifiedValue != null) {
             data[fieldName] = qualifiedValue
-          } else if (isEmptyArray(data[fieldName]) && !isEmptyArray(qualifiedValue)) {
+          } else if (
+            isEmptyArray(data[fieldName]) &&
+            !isEmptyArray(qualifiedValue)
+          ) {
             data[fieldName] = qualifiedValue
           }
           if (child.type === 'table' || child.type === 'union') {
@@ -50,7 +56,10 @@ export default function resolveUnions(data, sqlAST) {
   }
   if (sqlAST.type === 'table' || sqlAST.type === 'union') {
     for (let child of sqlAST.children) {
-      if ((child.type === 'table' || child.type === 'union') && !child.sqlBatch) {
+      if (
+        (child.type === 'table' || child.type === 'union') &&
+        !child.sqlBatch
+      ) {
         const fieldName = child.fieldName
         if (Array.isArray(data)) {
           const nextLevelData = chain(data)

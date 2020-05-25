@@ -104,6 +104,7 @@
     "@stem/nesthydrationjs": "0.4.0",
     "debug": "^4.1.0",
     "deprecate": "^1.0.0",
+    "eslint-config-prettier": "^6.11.0",
     "generatorics": "^1.0.8",
     "graphql-relay": "^0.5.0",
     "lodash": "^4.17.15"

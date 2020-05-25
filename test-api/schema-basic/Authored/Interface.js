@@ -1,8 +1,4 @@
-import  {
-  GraphQLInterfaceType,
-  GraphQLInt,
-  GraphQLString
-} from 'graphql'
+import { GraphQLInterfaceType, GraphQLInt, GraphQLString } from 'graphql'
 
 import { q } from '../../shared'
 
@@ -29,7 +25,7 @@ export default new GraphQLInterfaceType({
       'Comment' AS ${q('$type', DB)}
     FROM ${q('comments', DB)}
   )`,
-  uniqueKey: [ 'id', '$type' ],
+  uniqueKey: ['id', '$type'],
   alwaysFetch: '$type',
   fields: () => ({
     id: {
@@ -45,4 +41,3 @@ export default new GraphQLInterfaceType({
   }),
   resolveType: obj => obj.$type
 })
-

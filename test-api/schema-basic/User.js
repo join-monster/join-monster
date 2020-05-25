@@ -7,9 +7,7 @@ import {
   GraphQLBoolean
 } from 'graphql'
 
-import {
-  globalIdField
-} from 'graphql-relay'
+import { globalIdField } from 'graphql-relay'
 
 import IntimacyLevel from '../enums/IntimacyLevel'
 import Comment from './Comment'
@@ -26,7 +24,7 @@ const User = new GraphQLObjectType({
   name: 'User',
   sqlTable: () => q('accounts', DB),
   uniqueKey: 'id',
-  interfaces: [ Person ],
+  interfaces: [Person],
   fields: () => ({
     id: {
       type: GraphQLInt
@@ -44,12 +42,12 @@ const User = new GraphQLObjectType({
     globalId: {
       description: 'The global ID for the Relay spec',
       ...globalIdField('User'),
-      sqlDeps: [ 'id' ]
+      sqlDeps: ['id']
     },
     fullName: {
-      description: 'A user\'s first and last name',
+      description: "A user's first and last name",
       type: GraphQLString,
-      sqlDeps: [ 'first_name', 'last_name' ],
+      sqlDeps: ['first_name', 'last_name'],
       resolve: user => `${user.first_name} ${user.last_name}`
     },
     capitalizedLastName: {
@@ -58,7 +56,7 @@ const User = new GraphQLObjectType({
       sqlExpr: (table, args, context) => `upper(${table}.${q('last_name', DB)})` // eslint-disable-line no-unused-vars
     },
     comments: {
-      description: 'Comments the user has written on people\'s posts',
+      description: "Comments the user has written on people's posts",
       type: new GraphQLList(new GraphQLNonNull(Comment)),
       args: {
         active: {
@@ -67,15 +65,31 @@ const User = new GraphQLObjectType({
         }
       },
       orderBy: { id: 'asc' },
-      ...[ 'batch', 'mix' ].includes(STRATEGY) ? {
-        sqlBatch: {
-          thisKey: 'author_id',
-          parentKey: 'id'
-        },
-        where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
-      } : {
-        sqlJoin: (userTable, commentTable, args) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}`
-      }
+      ...(['batch', 'mix'].includes(STRATEGY)
+        ? {
+            sqlBatch: {
+              thisKey: 'author_id',
+              parentKey: 'id'
+            },
+            where: (table, args) =>
+              args.active
+                ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
+                : null
+          }
+        : {
+            sqlJoin: (userTable, commentTable, args) =>
+              `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
+                'id',
+                DB
+              )} ${
+                args.active
+                  ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
+                      false,
+                      DB
+                    )}`
+                  : ''
+              }`
+          })
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -86,16 +100,22 @@ const User = new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
-      where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null,
+      where: (table, args) =>
+        args.active
+          ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
+          : null,
       orderBy: { body: 'desc' },
-      ...STRATEGY === 'batch' ? {
-        sqlBatch: {
-          thisKey: 'author_id',
-          parentKey: 'id'
-        }
-      } : {
-        sqlJoin: (userTable, postTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
-      }
+      ...(STRATEGY === 'batch'
+        ? {
+            sqlBatch: {
+              thisKey: 'author_id',
+              parentKey: 'id'
+            }
+          }
+        : {
+            sqlJoin: (userTable, postTable) =>
+              `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
+          })
     },
     following: {
       description: 'Users that this user is following',
@@ -106,11 +126,15 @@ const User = new GraphQLObjectType({
         intimacy: { type: IntimacyLevel }
       },
       orderBy: 'first_name',
-      where: (table, args) => args.name ? `${table}.${q('first_name', DB)} = '${args.name}'` : false,
+      where: (table, args) =>
+        args.name ? `${table}.${q('first_name', DB)} = '${args.name}'` : false,
       junction: {
         sqlTable: q('relationships', DB),
-        orderBy: args => args.oldestFirst ? { followee_id: 'desc' } : null,
-        where: (table, args) => args.intimacy ? `${table}.${q('closeness', DB)} = '${args.intimacy}'` : false,
+        orderBy: args => (args.oldestFirst ? { followee_id: 'desc' } : null),
+        where: (table, args) =>
+          args.intimacy
+            ? `${table}.${q('closeness', DB)} = '${args.intimacy}'`
+            : false,
         include: {
           friendship: {
             sqlColumn: 'closeness',
@@ -121,23 +145,37 @@ const User = new GraphQLObjectType({
             jmIgnoreAll: false
           },
           closeness: {
-            sqlDeps: [ 'closeness' ],
+            sqlDeps: ['closeness'],
             jmIgnoreAll: false
           }
         },
-        ...[ 'batch', 'mix' ].includes(STRATEGY) ? {
-          uniqueKey: [ 'follower_id', 'followee_id' ],
-          sqlBatch: {
-            thisKey: 'follower_id',
-            parentKey: 'id',
-            sqlJoin: (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
-          }
-        } : {
-          sqlJoins: [
-            (followerTable, relationTable) => `${followerTable}.${q('id', DB)} = ${relationTable}.${q('follower_id', DB)}`,
-            (relationTable, followeeTable) => `${relationTable}.${q('followee_id', DB)} = ${followeeTable}.${q('id', DB)}`
-          ]
-        }
+        ...(['batch', 'mix'].includes(STRATEGY)
+          ? {
+              uniqueKey: ['follower_id', 'followee_id'],
+              sqlBatch: {
+                thisKey: 'follower_id',
+                parentKey: 'id',
+                sqlJoin: (relationTable, followeeTable) =>
+                  `${relationTable}.${q(
+                    'followee_id',
+                    DB
+                  )} = ${followeeTable}.${q('id', DB)}`
+              }
+            }
+          : {
+              sqlJoins: [
+                (followerTable, relationTable) =>
+                  `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
+                    'follower_id',
+                    DB
+                  )}`,
+                (relationTable, followeeTable) =>
+                  `${relationTable}.${q(
+                    'followee_id',
+                    DB
+                  )} = ${followeeTable}.${q('id', DB)}`
+              ]
+            })
       }
     },
     friendship: {
@@ -154,7 +192,7 @@ const User = new GraphQLObjectType({
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),
-      resolve: () => [ 1, 2, 3 ]
+      resolve: () => [1, 2, 3]
     },
     numLegs: {
       description: 'How many legs this user has',
@@ -164,35 +202,46 @@ const User = new GraphQLObjectType({
     numFeet: {
       description: 'How many feet this user has',
       type: GraphQLInt,
-      sqlDeps: [ 'num_legs' ],
+      sqlDeps: ['num_legs'],
       resolve: user => user.num_legs
     },
     writtenMaterial1: {
       type: new GraphQLList(AuthoredUnion),
       orderBy: 'id',
-      ...STRATEGY === 'batch' ? {
-        sqlBatch: {
-          thisKey: 'author_id',
-          parentKey: 'id'
-        }
-      } : {
-        sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
-      }
+      ...(STRATEGY === 'batch'
+        ? {
+            sqlBatch: {
+              thisKey: 'author_id',
+              parentKey: 'id'
+            }
+          }
+        : {
+            sqlJoin: (userTable, unionTable) =>
+              `${userTable}.${q('id', DB)} = ${unionTable}.${q(
+                'author_id',
+                DB
+              )}`
+          })
     },
     writtenMaterial2: {
       type: new GraphQLList(AuthoredInterface),
       orderBy: 'id',
-      ...STRATEGY === 'batch' ? {
-        sqlBatch: {
-          thisKey: 'author_id',
-          parentKey: 'id'
-        }
-      } : {
-        sqlJoin: (userTable, unionTable) => `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
-      }
+      ...(STRATEGY === 'batch'
+        ? {
+            sqlBatch: {
+              thisKey: 'author_id',
+              parentKey: 'id'
+            }
+          }
+        : {
+            sqlJoin: (userTable, unionTable) =>
+              `${userTable}.${q('id', DB)} = ${unionTable}.${q(
+                'author_id',
+                DB
+              )}`
+          })
     }
   })
 })
 
 export default User
-

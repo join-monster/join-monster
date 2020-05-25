@@ -26,11 +26,11 @@ export const Post = new GraphQLObjectType({
   name: 'Post',
   sqlTable: `(SELECT * FROM ${q('posts', DB)})`,
   uniqueKey: 'id',
-  interfaces: () => [ nodeInterface, Authored ],
+  interfaces: () => [nodeInterface, Authored],
   fields: () => ({
     id: {
       ...globalIdField(),
-      sqlDeps: [ 'id' ]
+      sqlDeps: ['id']
     },
     body: {
       description: 'The content of the post',
@@ -43,35 +43,38 @@ export const Post = new GraphQLObjectType({
     author: {
       description: 'The user that created the post',
       type: User,
-      ...STRATEGY === 'batch' ? {
-        sqlBatch: {
-          thisKey: 'id',
-          parentKey: 'author_id'
-        }
-      } : {
-        sqlJoin: (postTable, userTable) => `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
-      }
+      ...(STRATEGY === 'batch'
+        ? {
+            sqlBatch: {
+              thisKey: 'id',
+              parentKey: 'author_id'
+            }
+          }
+        : {
+            sqlJoin: (postTable, userTable) =>
+              `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
+          })
     },
     comments: {
       description: 'The comments on this post',
       type: CommentConnection,
       args: {
         active: { type: GraphQLBoolean },
-        ...PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs
+        ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
       sqlPaginate: !!PAGINATE,
-      ... do {
+      ...do {
         if (PAGINATE === 'offset') {
-          ({ orderBy: 'id' })
+          ;({ orderBy: 'id' })
         } else if (PAGINATE === 'keyset') {
-          ({
+          ;({
             sortKey: {
               order: 'DESC',
               key: 'id'
             }
           })
         } else {
-          ({
+          ;({
             resolve: (user, args) => {
               user.comments.sort((a, b) => a.id - b.id)
               return connectionFromArray(user.comments, args)
@@ -79,18 +82,32 @@ export const Post = new GraphQLObjectType({
           })
         }
       },
-      ... do {
+      ...do {
         if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-          ({
+          ;({
             sqlBatch: {
               thisKey: 'post_id',
               parentKey: 'id'
             },
-            where: (table, args) => args.active ? `${table}.${q('archived', DB)} = ${bool(false, DB)}` : null
+            where: (table, args) =>
+              args.active
+                ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
+                : null
           })
         } else {
-          ({
-            sqlJoin: (postTable, commentTable, args) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)} ${args.active ? `AND ${commentTable}.${q('archived', DB)} = ${bool(false, DB)}` : ''}` 
+          ;({
+            sqlJoin: (postTable, commentTable, args) =>
+              `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
+                'id',
+                DB
+              )} ${
+                args.active
+                  ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
+                      false,
+                      DB
+                    )}`
+                  : ''
+              }`
           })
         }
       }
@@ -99,7 +116,11 @@ export const Post = new GraphQLObjectType({
       description: 'How many comments this post has',
       type: GraphQLInt,
       // you can info from a correlated subquery
-      sqlExpr: table => `(SELECT count(*) from ${q('comments', DB)} WHERE ${table}.${q('id', DB)} = comments.${q('post_id', DB)})`
+      sqlExpr: table =>
+        `(SELECT count(*) from ${q('comments', DB)} WHERE ${table}.${q(
+          'id',
+          DB
+        )} = comments.${q('post_id', DB)})`
     },
     archived: {
       type: GraphQLBoolean
@@ -117,6 +138,7 @@ if (PAGINATE === 'offset') {
     total: { type: GraphQLInt }
   }
 }
-const { connectionType: PostConnection } = connectionDefinitions(connectionConfig)
+const { connectionType: PostConnection } = connectionDefinitions(
+  connectionConfig
+)
 export { PostConnection }
-

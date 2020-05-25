@@ -8,7 +8,9 @@ export default class AliasNamespace {
 
     // a generator for infinite alias names, starting with the shortest possible
     // this is helpful for generating the names when minifying
-    this.mininym = G.baseNAll('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#$')
+    this.mininym = G.baseNAll(
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#$'
+    )
 
     // keep track of all the table names we've used since these have to be unique in each query
     this.usedTableAliases = new Set()
@@ -40,7 +42,10 @@ export default class AliasNamespace {
       return name
     }
 
-    name = name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 10)
+    name = name
+      .replace(/\s+/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .slice(0, 10)
     // the table aliases must be unique
     // just append a "$" until its a unique name
     while (this.usedTableAliases.has(name)) {

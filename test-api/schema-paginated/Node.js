@@ -1,7 +1,4 @@
-import {
-  nodeDefinitions,
-  fromGlobalId
-} from 'graphql-relay'
+import { nodeDefinitions, fromGlobalId } from 'graphql-relay'
 
 import joinMonster from '../../src/index'
 const options = {
@@ -22,7 +19,11 @@ import knex from './database'
 const { nodeInterface, nodeField } = nodeDefinitions(
   (globalId, context, resolveInfo) => {
     const { type, id } = fromGlobalId(globalId)
-    return joinMonster.getNode(type, resolveInfo, context, parseInt(id),
+    return joinMonster.getNode(
+      type,
+      resolveInfo,
+      context,
+      parseInt(id),
       sql => dbCall(sql, knex, context),
       options
     )

@@ -18,7 +18,7 @@ export default new GraphQLObjectType({
   name: 'Comment',
   sqlTable: q('comments', DB),
   uniqueKey: 'id',
-  interfaces: () => [ Authored ],
+  interfaces: () => [Authored],
   fields: () => ({
     id: {
       type: GraphQLInt
@@ -34,14 +34,20 @@ export default new GraphQLObjectType({
     post: {
       description: 'The post that the comment belongs to',
       type: Post,
-      ...STRATEGY === 'batch' ? {
-        sqlBatch: {
-          thisKey: 'id',
-          parentKey: 'post_id'
-        }
-      } : {
-        sqlJoin: (commentTable, postTable) => `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)}`
-      }
+      ...(STRATEGY === 'batch'
+        ? {
+            sqlBatch: {
+              thisKey: 'id',
+              parentKey: 'post_id'
+            }
+          }
+        : {
+            sqlJoin: (commentTable, postTable) =>
+              `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
+                'id',
+                DB
+              )}`
+          })
     },
     authorId: {
       type: GraphQLInt,
@@ -50,14 +56,20 @@ export default new GraphQLObjectType({
     author: {
       description: 'The user who wrote the comment',
       type: User,
-      ...STRATEGY === 'batch' ? {
-        sqlBatch: {
-          thisKey: 'id',
-          parentKey: 'author_id'
-        }
-      } : {
-        sqlJoin: (commentTable, userTable) => `${commentTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
-      }
+      ...(STRATEGY === 'batch'
+        ? {
+            sqlBatch: {
+              thisKey: 'id',
+              parentKey: 'author_id'
+            }
+          }
+        : {
+            sqlJoin: (commentTable, userTable) =>
+              `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
+                'id',
+                DB
+              )}`
+          })
     },
     likers: {
       description: 'Which users have liked this comment',
@@ -65,8 +77,13 @@ export default new GraphQLObjectType({
       junction: {
         sqlTable: q('likes', DB),
         sqlJoins: [
-          (commentTable, likesTable) => `${commentTable}.${q('id', DB)} = ${likesTable}.${q('comment_id', DB)}`,
-          (likesTable, userTable) => `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
+          (commentTable, likesTable) =>
+            `${commentTable}.${q('id', DB)} = ${likesTable}.${q(
+              'comment_id',
+              DB
+            )}`,
+          (likesTable, userTable) =>
+            `${likesTable}.${q('account_id', DB)} = ${userTable}.${q('id', DB)}`
         ]
       }
     },
@@ -80,4 +97,3 @@ export default new GraphQLObjectType({
     }
   })
 })
-

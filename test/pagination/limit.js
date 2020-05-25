@@ -15,10 +15,7 @@ test('should handle limit at the root', async t => {
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {
-    usersFirst2: [
-      { fullName: 'andrew carlson' },
-      { fullName: 'matt elder' }
-    ]
+    usersFirst2: [{ fullName: 'andrew carlson' }, { fullName: 'matt elder' }]
   }
   t.deepEqual(expect, data)
 })
@@ -35,10 +32,7 @@ test('should handle limit for one-to-many', async t => {
   errCheck(t, errors)
   const expect = {
     user: {
-      commentsLast2: [
-        { id: 'Q29tbWVudDo4' },
-        { id: 'Q29tbWVudDo2' }
-      ]
+      commentsLast2: [{ id: 'Q29tbWVudDo4' }, { id: 'Q29tbWVudDo2' }]
     }
   }
   t.deepEqual(expect, data)
@@ -56,9 +50,7 @@ test('should handle limit for many-to-many', async t => {
   errCheck(t, errors)
   const expect = {
     user: {
-      followingFirst: [
-        { fullName: 'andrew carlson' }
-      ]
+      followingFirst: [{ fullName: 'andrew carlson' }]
     }
   }
   t.deepEqual(expect, data)

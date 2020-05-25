@@ -88,7 +88,10 @@ function arrToConnection(data, sqlAST) {
       }
       // $total was a special column for determining the total number of items
       const arrayLength = data[0] && parseInt(data[0].$total, 10)
-      const connection = connectionFromArraySlice(data, sqlAST.args || {}, { sliceStart: offset, arrayLength })
+      const connection = connectionFromArraySlice(data, sqlAST.args || {}, {
+        sliceStart: offset,
+        arrayLength
+      })
       connection.total = arrayLength || 0
       connection._paginated = true
       return connection
@@ -102,6 +105,9 @@ export default arrToConnection
 function recurseOnObjInData(dataObj, astChild) {
   const dataChild = dataObj[astChild.fieldName]
   if (dataChild) {
-    dataObj[astChild.fieldName] = arrToConnection(dataObj[astChild.fieldName], astChild)
+    dataObj[astChild.fieldName] = arrToConnection(
+      dataObj[astChild.fieldName],
+      astChild
+    )
   }
 }

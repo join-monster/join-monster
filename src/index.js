@@ -6,7 +6,6 @@ import AliasNamespace from './alias-namespace'
 import nextBatch from './batch-planner'
 import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
 
-
 /*         _ _ _                _
   ___ __ _| | | |__   __ _  ___| | __
  / __/ _` | | | '_ \ / _` |/ __| |/ /
@@ -114,7 +113,6 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   return data
 }
 
-
 /**
  * A helper for resolving the Node type in Relay.
  * @param {String} typeName - The Name of the GraphQLObjectType
@@ -125,11 +123,21 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
  * @param {Object} [options] - Same as `joinMonster` function's options.
  * @returns {Promise.<Object>} The correctly nested data from the database. The GraphQL Type is added to the "\_\_type\_\_" property, which is helpful for the `resolveType` function in the `nodeDefinitions` of **graphql-relay-js**.
  */
-async function getNode(typeName, resolveInfo, context, condition, dbCall, options = {}) {
+async function getNode(
+  typeName,
+  resolveInfo,
+  context,
+  condition,
+  dbCall,
+  options = {}
+) {
   // get the GraphQL type from the schema using the name
   const type = resolveInfo.schema._typeMap[typeName]
   assert(type, `Type "${typeName}" not found in your schema.`)
-  assert(type._typeConfig.sqlTable, `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`)
+  assert(
+    type._typeConfig.sqlTable,
+    `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`
+  )
 
   // we need to determine what the WHERE function should be
   let where = buildWhereFunction(type, condition, options)
@@ -148,10 +156,22 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
   const sqlAST = {}
   const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
   // uses the same underlying function as the main `joinMonster`
-  queryAST.populateASTNode.call(resolveInfo, fieldNodes[0], fakeParentNode, sqlAST, namespace, 0, options, context)
+  queryAST.populateASTNode.call(
+    resolveInfo,
+    fieldNodes[0],
+    fakeParentNode,
+    sqlAST,
+    namespace,
+    0,
+    options,
+    context
+  )
   queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
-  const data = arrToConnection(await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition), sqlAST)
+  const data = arrToConnection(
+    await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition),
+    sqlAST
+  )
   await nextBatch(sqlAST, data, dbCall, context, options)
   if (!data) return data
   data.__type__ = type
@@ -159,7 +179,6 @@ async function getNode(typeName, resolveInfo, context, condition, dbCall, option
 }
 
 joinMonster.getNode = getNode
-
 
 // expose the package version for debugging
 joinMonster.version = require('../package.json').version
