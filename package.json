@@ -4,7 +4,7 @@
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=10.0.0"
   },
   "files": [
     "dist/"
@@ -29,16 +29,18 @@
     "prepublishOnly": "/bin/sh ./scripts/prepublish.sh && npm run build",
     "preversion": ". ./scripts/checkgit.sh && npm test",
     "db-build": "TZ=UTC babel-node test-api/data/build.js",
-    "db-shell": "sqlite3 --column --header test-api/data/db/demo-data.sl3"
+    "db-shell": "sqlite3 --column --header test-api/data/db/demo-data.sl3",
+    "db-up": "docker-compose -f ./docker/docker-compose.yml up -d",
+    "db-down": "docker-compose -f ./docker/docker-compose.yml down --remove-orphans -v"
   },
   "ava": {
-    "concurrency": 10,
-    "verbose": false,
+    "verbose": true,
     "failFast": true,
-    "require": "babel-register",
-    "babel": {
-      "babelrc": true
-    }
+    "require": [
+      "@babel/register"
+    ],
+    "babel": true,
+    "timeout": "20s"
   },
   "nyc": {
     "include": [
@@ -72,23 +74,27 @@
     "graphql": "0.6 || 0.7 || 0.8 || 0.9 || 0.10 || 0.11 || 0.12 || 0.13"
   },
   "devDependencies": {
-    "ava": "^0.25.0",
-    "babel-cli": "^6.14.0",
-    "babel-eslint": "^10.0.1",
-    "babel-plugin-idx": "^2.2.0",
-    "babel-plugin-object-values-to-object-keys": "^1.0.2",
-    "babel-plugin-transform-do-expressions": "^6.22.0",
-    "babel-preset-node6": "^11.0.0",
-    "babel-preset-stage-1": "^6.24.1",
+    "@ava/babel": "^1.0.1",
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.6",
+    "@babel/node": "^7.8.7",
+    "@babel/plugin-proposal-do-expressions": "^7.8.3",
+    "@babel/preset-env": "^7.9.6",
+    "@babel/register": "^7.9.0",
+    "ava": "^3.8.2",
+    "babel-plugin-idx": "^2.4.0",
     "babel-watch": "^2.0.3-rc0",
+    "dotenv": "8.2.0",
+    "dotenv-expand": "^5.1.0",
     "eslint": "^6.0.0",
     "eslint-config-airbnb-base": "^13.0.0",
     "faker": "^4.1.0",
     "graphql": "^0.13.0",
     "graphsiql": "0.2.0",
+    "idx": "^2.5.6",
     "jsdoc-to-markdown": "^5.0.0",
     "kcors": "^2.2.1",
-    "knex": "^0.17.6",
+    "knex": "^0.21.1",
     "koa": "^2.0.1",
     "koa-custom-graphiql": "1.0.1",
     "koa-graphql": "^0.8.0",
@@ -96,7 +102,7 @@
     "koa-static": "^5.0.0",
     "mysql": "^2.14.1",
     "nyc": "^14.1.1",
-    "pg": "^7.1.0",
+    "pg": "^8.2.1",
     "sinon": "^7.2.4",
     "sqlite3": "^4.0.9"
   },
