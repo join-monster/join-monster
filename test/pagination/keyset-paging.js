@@ -27,7 +27,8 @@ function stringifyArgs(args) {
   return `(${argArr.join(', ')})`
 }
 
-const pageInfo = 'pageInfo { hasNextPage, hasPreviousPage, startCursor, endCursor }'
+const pageInfo =
+  'pageInfo { hasNextPage, hasPreviousPage, startCursor, endCursor }'
 
 function makeUsersQuery(args) {
   let argString = stringifyArgs(args)
@@ -53,7 +54,9 @@ test('should handle pagination at the root', async t => {
     endCursor: objToCursor({ id: 6 })
   })
   // generate globalIds for users 1 thru 5
-  const expectedIds = Array.apply(null, Array(6)).map((_, i) => toGlobalId('User', i + 1))
+  const expectedIds = Array.apply(null, Array(6)).map((_, i) =>
+    toGlobalId('User', i + 1)
+  )
   const ids = data.users.edges.map(edge => edge.node.id)
   t.deepEqual(expectedIds, ids)
   t.is(data.users.edges.last().cursor, data.users.pageInfo.endCursor)
@@ -63,20 +66,28 @@ test('should handle root pagination with "first" arg', async t => {
   const query = makeUsersQuery({ first: 2 })
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual(data.users.pageInfo, {
-    hasNextPage: true,
-    hasPreviousPage: false,
-    startCursor: objToCursor({ id: 1 }),
-    endCursor: objToCursor({ id: 2 })
-  }, 'page info is accurate')
-  t.deepEqual(data.users.edges[0], {
-    cursor: objToCursor({ id: 1 }),
-    node: {
-      id: toGlobalId('User', 1),
-      fullName: 'Alivia Waelchi',
-      email: 'Mohammed.Hayes@hotmail.com'
-    }
-  }, 'the first node is accurate')
+  t.deepEqual(
+    data.users.pageInfo,
+    {
+      hasNextPage: true,
+      hasPreviousPage: false,
+      startCursor: objToCursor({ id: 1 }),
+      endCursor: objToCursor({ id: 2 })
+    },
+    'page info is accurate'
+  )
+  t.deepEqual(
+    data.users.edges[0],
+    {
+      cursor: objToCursor({ id: 1 }),
+      node: {
+        id: toGlobalId('User', 1),
+        fullName: 'Alivia Waelchi',
+        email: 'Mohammed.Hayes@hotmail.com'
+      }
+    },
+    'the first node is accurate'
+  )
   t.is(
     data.users.edges.last().cursor,
     data.users.pageInfo.endCursor,
@@ -85,30 +96,44 @@ test('should handle root pagination with "first" arg', async t => {
 })
 
 test('should reject an invalid cursor', async t => {
-  const query = makeUsersQuery({ first: 2, after: objToCursor({ id: 2, created_at: '2016-01-01' }) })
+  const query = makeUsersQuery({
+    first: 2,
+    after: objToCursor({ id: 2, created_at: '2016-01-01' })
+  })
   const { errors } = await run(query)
   t.truthy(errors.length)
-  t.regex(errors[0] && errors[0].message, /Invalid cursor. The column "created_at" is not in the sort key./)
+  t.regex(
+    errors[0] && errors[0].message,
+    /Invalid cursor. The column "created_at" is not in the sort key./
+  )
 })
 
 test('should handle root pagination with "first" and "after" args', async t => {
   const query = makeUsersQuery({ first: 2, after: objToCursor({ id: 2 }) })
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual(data.users.pageInfo, {
-    hasNextPage: true,
-    hasPreviousPage: false,
-    startCursor: objToCursor({ id: 3 }),
-    endCursor: objToCursor({ id: 4 })
-  }, 'page info is accurate')
-  t.deepEqual(data.users.edges[0], {
-    cursor: objToCursor({ id: 3 }),
-    node: {
-      id: toGlobalId('User', 3),
-      fullName: 'Coleman Abernathy',
-      email: 'Lurline79@gmail.com'
-    }
-  }, 'the first node is accurate')
+  t.deepEqual(
+    data.users.pageInfo,
+    {
+      hasNextPage: true,
+      hasPreviousPage: false,
+      startCursor: objToCursor({ id: 3 }),
+      endCursor: objToCursor({ id: 4 })
+    },
+    'page info is accurate'
+  )
+  t.deepEqual(
+    data.users.edges[0],
+    {
+      cursor: objToCursor({ id: 3 }),
+      node: {
+        id: toGlobalId('User', 3),
+        fullName: 'Coleman Abernathy',
+        email: 'Lurline79@gmail.com'
+      }
+    },
+    'the first node is accurate'
+  )
   t.is(
     data.users.edges.last().cursor,
     data.users.pageInfo.endCursor,
@@ -120,21 +145,29 @@ test('should handle the last page of root pagination', async t => {
   const query = makeUsersQuery({ first: 2, after: objToCursor({ id: 5 }) })
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual(data.users.pageInfo, {
-    hasNextPage: false,
-    hasPreviousPage: false,
-    startCursor: objToCursor({ id: 6 }),
-    endCursor: objToCursor({ id: 6 })
-  }, 'page info is accurate')
+  t.deepEqual(
+    data.users.pageInfo,
+    {
+      hasNextPage: false,
+      hasPreviousPage: false,
+      startCursor: objToCursor({ id: 6 }),
+      endCursor: objToCursor({ id: 6 })
+    },
+    'page info is accurate'
+  )
   t.is(data.users.edges.length, 1)
-  t.deepEqual(data.users.edges[0], {
-    cursor: objToCursor({ id: 6 }),
-    node: {
-      id: toGlobalId('User', 6),
-      email: 'andrew@stem.is',
-      fullName: 'Andrew Carlson'
-    }
-  }, 'the first node is accurate')
+  t.deepEqual(
+    data.users.edges[0],
+    {
+      cursor: objToCursor({ id: 6 }),
+      node: {
+        id: toGlobalId('User', 6),
+        email: 'andrew@stem.is',
+        fullName: 'Andrew Carlson'
+      }
+    },
+    'the first node is accurate'
+  )
   t.is(
     data.users.edges.last().cursor,
     data.users.pageInfo.endCursor,
@@ -211,17 +244,21 @@ test('should handle pagination in a nested field', async t => {
     endCursor: objToCursor({ created_at: '2015-11-15T08:26:11.331Z', id: 30 })
   })
   t.is(posts.edges.length, 8)
-  t.deepEqual(posts.edges[0], {
-    cursor: objToCursor({ created_at: '2016-04-17T18:49:15.942Z', id: 2 }),
-    node: {
-      id: toGlobalId('Post', 2),
-      body: [
-        'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
-        'Deserunt nemo pariatur sed facere accusantium quis.',
-        'Nobis aut voluptate inventore quidem explicabo.'
-      ].join(' ')
-    }
-  }, 'post number 2 happens to be first since this field\'s first sort column is created_at')
+  t.deepEqual(
+    posts.edges[0],
+    {
+      cursor: objToCursor({ created_at: '2016-04-17T18:49:15.942Z', id: 2 }),
+      node: {
+        id: toGlobalId('Post', 2),
+        body: [
+          'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+          'Deserunt nemo pariatur sed facere accusantium quis.',
+          'Nobis aut voluptate inventore quidem explicabo.'
+        ].join(' ')
+      }
+    },
+    "post number 2 happens to be first since this field's first sort column is created_at"
+  )
   t.is(posts.edges.last().cursor, posts.pageInfo.endCursor)
 })
 
@@ -241,7 +278,10 @@ test('nested paging should handle "first" arg', async t => {
 })
 
 test('nested paging should handle "last" and "before" args', async t => {
-  const query = makePostsQuery({ last: 2, before: objToCursor({ created_at: '2016-04-13T15:07:15.119Z', id: 33 }) })
+  const query = makePostsQuery({
+    last: 2,
+    before: objToCursor({ created_at: '2016-04-13T15:07:15.119Z', id: 33 })
+  })
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {
@@ -254,7 +294,6 @@ test('nested paging should handle "last" and "before" args', async t => {
   t.is(data.user.posts.edges[0].node.id, toGlobalId('Post', 2))
   t.is(data.user.posts.edges[1].node.id, toGlobalId('Post', 28))
 })
-
 
 test('can handle nested pagination', async t => {
   const query = `{
@@ -330,7 +369,8 @@ test('can handle deeply nested pagination', async t => {
     cursor: objToCursor({ id: 233 }),
     node: {
       id: toGlobalId('Comment', 233),
-      body: 'I\'ll reboot the digital SCSI system, that should bus the USB protocol!',
+      body:
+        "I'll reboot the digital SCSI system, that should bus the USB protocol!",
       author: {
         fullName: 'Coleman Abernathy'
       }
@@ -342,7 +382,10 @@ test('can handle deeply nested pagination', async t => {
 test('handle a conection type with a many-to-many', async t => {
   const query = `{
     user(id: 2) {
-      following(first: 2, after: "${objToCursor({ created_at: '2016-01-01T16:28:00.051Z', followee_id: 1 })}") {
+      following(first: 2, after: "${objToCursor({
+        created_at: '2016-01-01T16:28:00.051Z',
+        followee_id: 1
+      })}") {
         pageInfo {
           hasNextPage
           startCursor
@@ -362,12 +405,30 @@ test('handle a conection type with a many-to-many', async t => {
   errCheck(t, errors)
   t.deepEqual(data.user.following.pageInfo, {
     hasNextPage: true,
-    startCursor: objToCursor({ created_at: '2016-05-18T21:35:54.601Z', followee_id: 3 }),
-    endCursor: objToCursor({ created_at: '2016-06-15T08:56:18.519Z', followee_id: 2 })
+    startCursor: objToCursor({
+      created_at: '2016-05-18T21:35:54.601Z',
+      followee_id: 3
+    }),
+    endCursor: objToCursor({
+      created_at: '2016-06-15T08:56:18.519Z',
+      followee_id: 2
+    })
   })
   t.deepEqual(data.user.following.edges, [
-    { node: { id: toGlobalId('User', 3), fullName: 'Coleman Abernathy', intimacy: 'acquaintance' } },
-    { node: { id: toGlobalId('User', 2), fullName: 'Hudson Hyatt', intimacy: 'acquaintance' } }
+    {
+      node: {
+        id: toGlobalId('User', 3),
+        fullName: 'Coleman Abernathy',
+        intimacy: 'acquaintance'
+      }
+    },
+    {
+      node: {
+        id: toGlobalId('User', 2),
+        fullName: 'Hudson Hyatt',
+        intimacy: 'acquaintance'
+      }
+    }
   ])
 })
 
@@ -408,9 +469,7 @@ test('should handle pagination with duplicate objects', async t => {
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const following = {
-    edges: [
-      { node: { id: toGlobalId('User', 4) } }
-    ]
+    edges: [{ node: { id: toGlobalId('User', 4) } }]
   }
   // this object gets duplicated in the result 4 times!
   const user1 = {
@@ -436,7 +495,8 @@ test('should handle pagination with duplicate objects', async t => {
           },
           {
             node: {
-              body: 'Eum iure laudantium officia doloremque et ut fugit ut. Magni eveniet ipsa.',
+              body:
+                'Eum iure laudantium officia doloremque et ut fugit ut. Magni eveniet ipsa.',
               author: user1
             }
           },
@@ -480,7 +540,9 @@ test('should handle fragment usage with connections inside union or fragment ', 
   }`
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  const firstPost = data.user.writtenMaterial.edges.filter(e => !isEmpty(e.node))[0]
+  const firstPost = data.user.writtenMaterial.edges.filter(
+    e => !isEmpty(e.node)
+  )[0]
   t.truthy(firstPost)
   t.truthy(firstPost.node.comments.edges)
 })
@@ -678,7 +740,10 @@ test('should handle order columns on the main table', async t => {
   const query = `{
     user(id: 2) {
       fullName
-      following(first: 2, sortOnMain: true, after: "${objToCursor({ created_at: '2015-10-19T05:48:04.537Z', id: 3 })}") {
+      following(first: 2, sortOnMain: true, after: "${objToCursor({
+        created_at: '2015-10-19T05:48:04.537Z',
+        id: 3
+      })}") {
         edges {
           node {
             id
@@ -715,7 +780,10 @@ test('should handle order columns on the main table', async t => {
 })
 
 test('should handle order columns on the junction table', async t => {
-  const cursor = objToCursor({ created_at: '2016-01-01T16:28:00.051Z', followee_id: 1 })
+  const cursor = objToCursor({
+    created_at: '2016-01-01T16:28:00.051Z',
+    followee_id: 1
+  })
   const query = `{
     user(id: 2) {
       fullName
@@ -780,14 +848,17 @@ test('should handle an interface type', async t => {
     pageInfo: {
       hasNextPage: true,
       hasPreviousPage: false,
-      startCursor: 'eyJpZCI6MSwiY3JlYXRlZF9hdCI6IjIwMTYtMDctMTFUMDA6MjE6MjIuNTEwWiJ9',
-      endCursor: 'eyJpZCI6MywiY3JlYXRlZF9hdCI6IjIwMTYtMDEtMzFUMDk6MTA6MTIuOTQ2WiJ9'
+      startCursor:
+        'eyJpZCI6MSwiY3JlYXRlZF9hdCI6IjIwMTYtMDctMTFUMDA6MjE6MjIuNTEwWiJ9',
+      endCursor:
+        'eyJpZCI6MywiY3JlYXRlZF9hdCI6IjIwMTYtMDEtMzFUMDk6MTA6MTIuOTQ2WiJ9'
     },
     edges: [
       {
         node: {
           id: 'Q29tbWVudDox',
-          body: 'Try to input the RSS circuit, maybe it will copy the auxiliary sensor!'
+          body:
+            'Try to input the RSS circuit, maybe it will copy the auxiliary sensor!'
         }
       },
       {

@@ -4,9 +4,11 @@ import { wrap, cursorToObj, maybeQuote } from '../util'
 import idx from 'idx'
 
 export function joinPrefix(prefix) {
-  return prefix.slice(1).map(name => name + '__').join('')
+  return prefix
+    .slice(1)
+    .map(name => name + '__')
+    .join('')
 }
-
 
 export function generateCastExpressionFromValueType(key, val) {
   const castTypes = {
@@ -25,14 +27,27 @@ function doubleQuote(str) {
 }
 
 export function thisIsNotTheEndOfThisBatch(node, parent) {
-  return (!node.sqlBatch && !(idx(node, _ => _.junction.sqlBatch))) || !parent
+  return (!node.sqlBatch && !idx(node, _ => _.junction.sqlBatch)) || !parent
 }
 
-export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent) {
-  return !node.paginate && (!(node.sqlBatch || (idx(node, _ => _.junction.sqlBatch))) || !parent)
+export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(
+  node,
+  parent
+) {
+  return (
+    !node.paginate &&
+    (!(node.sqlBatch || idx(node, _ => _.junction.sqlBatch)) || !parent)
+  )
 }
 
-export function keysetPagingSelect(table, whereCondition, order, limit, as, options = {}) {
+export function keysetPagingSelect(
+  table,
+  whereCondition,
+  order,
+  limit,
+  as,
+  options = {}
+) {
   let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
   whereCondition = filter(whereCondition).join(' AND ') || 'TRUE'
@@ -41,8 +56,12 @@ export function keysetPagingSelect(table, whereCondition, order, limit, as, opti
 ${joinType || ''} JOIN LATERAL (
   SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
-  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
-    ON ${extraJoin.condition}` : ''}
+  ${
+    extraJoin
+      ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}`
+      : ''
+  }
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit}
@@ -58,7 +77,15 @@ FROM (
 ) ${q(as)}`
 }
 
-export function offsetPagingSelect(table, pagingWhereConditions, order, limit, offset, as, options = {}) {
+export function offsetPagingSelect(
+  table,
+  pagingWhereConditions,
+  order,
+  limit,
+  offset,
+  as,
+  options = {}
+) {
   let { joinCondition, joinType, extraJoin, q } = options
   q = q || doubleQuote
   const whereCondition = filter(pagingWhereConditions).join(' AND ') || 'TRUE'
@@ -67,8 +94,12 @@ export function offsetPagingSelect(table, pagingWhereConditions, order, limit, o
 ${joinType || ''} JOIN LATERAL (
   SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
-  ${extraJoin ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
-    ON ${extraJoin.condition}` : ''}
+  ${
+    extraJoin
+      ? `LEFT JOIN ${extraJoin.name} ${q(extraJoin.as)}
+    ON ${extraJoin.condition}`
+      : ''
+  }
   WHERE ${whereCondition}
   ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
@@ -87,7 +118,9 @@ FROM (
 export function orderColumnsToString(orderColumns, q, as) {
   const conditions = []
   for (let column in orderColumns) {
-    conditions.push(`${as ? q(as) + '.' : ''}${q(column)} ${orderColumns[column]}`)
+    conditions.push(
+      `${as ? q(as) + '.' : ''}${q(column)} ${orderColumns[column]}`
+    )
   }
   return conditions.join(', ')
 }
@@ -96,7 +129,9 @@ export function orderColumnsToString(orderColumns, q, as) {
 export function interpretForOffsetPaging(node, dialect) {
   const { name } = dialect
   if (idx(node, _ => _.args.last)) {
-    throw new Error('Backward pagination not supported with offsets. Consider using keyset pagination instead')
+    throw new Error(
+      'Backward pagination not supported with offsets. Consider using keyset pagination instead'
+    )
   }
 
   const order = {}
@@ -108,7 +143,9 @@ export function interpretForOffsetPaging(node, dialect) {
     order.columns = node.junction.orderBy
   }
 
-  let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
+  let limit = ['mariadb', 'mysql', 'oracle'].includes(name)
+    ? '18446744073709551615'
+    : 'ALL'
   let offset = 0
   if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first, 10)
@@ -156,14 +193,21 @@ export function interpretForKeysetPaging(node, dialect) {
     order.table = node.junction.as
   }
 
-  let limit = [ 'mariadb', 'mysql', 'oracle' ].includes(name) ? '18446744073709551615' : 'ALL'
+  let limit = ['mariadb', 'mysql', 'oracle'].includes(name)
+    ? '18446744073709551615'
+    : 'ALL'
   let whereCondition = ''
   if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first, 10) + 1
     if (node.args.after) {
       const cursorObj = cursorToObj(node.args.after)
       validateCursor(cursorObj, wrap(sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, sortTable, dialect)
+      whereCondition = sortKeyToWhereCondition(
+        cursorObj,
+        descending,
+        sortTable,
+        dialect
+      )
     }
     if (node.args.before) {
       throw new Error('Using "before" with "first" is nonsensical.')
@@ -173,7 +217,12 @@ export function interpretForKeysetPaging(node, dialect) {
     if (node.args.before) {
       const cursorObj = cursorToObj(node.args.before)
       validateCursor(cursorObj, wrap(sortKey.key))
-      whereCondition = sortKeyToWhereCondition(cursorObj, descending, sortTable, dialect)
+      whereCondition = sortKeyToWhereCondition(
+        cursorObj,
+        descending,
+        sortTable,
+        dialect
+      )
     }
     if (node.args.after) {
       throw new Error('Using "after" with "last" is nonsensical.')
@@ -190,12 +239,16 @@ export function validateCursor(cursorObj, expectedKeys) {
   const actualKeySet = new Set(actualKeys)
   for (let key of actualKeys) {
     if (!expectedKeySet.has(key)) {
-      throw new Error(`Invalid cursor. The column "${key}" is not in the sort key.`)
+      throw new Error(
+        `Invalid cursor. The column "${key}" is not in the sort key.`
+      )
     }
   }
   for (let key of expectedKeys) {
     if (!actualKeySet.has(key)) {
-      throw new Error(`Invalid cursor. The column "${key}" is not in the cursor.`)
+      throw new Error(
+        `Invalid cursor. The column "${key}" is not in the cursor.`
+      )
     }
   }
 }

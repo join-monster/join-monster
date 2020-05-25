@@ -27,47 +27,25 @@ test('it should get user 1 with comments and particular posts', async t => {
         {
           id: 1,
           post: {
-            comments: [
-              { id: 3 },
-              { id: 2 },
-              { id: 1 }
-            ]
+            comments: [{ id: 3 }, { id: 2 }, { id: 1 }]
           }
         },
         {
           id: 4,
           post: {
-            comments: [
-              { id: 8 },
-              { id: 7 },
-              { id: 6 },
-              { id: 5 },
-              { id: 4 }
-            ]
+            comments: [{ id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 }]
           }
         },
         {
           id: 6,
           post: {
-            comments: [
-              { id: 8 },
-              { id: 7 },
-              { id: 6 },
-              { id: 5 },
-              { id: 4 }
-            ]
+            comments: [{ id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 }]
           }
         },
         {
           id: 8,
           post: {
-            comments: [
-              { id: 8 },
-              { id: 7 },
-              { id: 6 },
-              { id: 5 },
-              { id: 4 }
-            ]
+            comments: [{ id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 }]
           }
         }
       ]
@@ -98,43 +76,25 @@ test('it should get user 1 with comments and particular posts with active commen
         {
           id: 1,
           post: {
-            comments: [
-              { id: 3 },
-              { id: 1 }
-            ]
+            comments: [{ id: 3 }, { id: 1 }]
           }
         },
         {
           id: 4,
           post: {
-            comments: [
-              { id: 8 },
-              { id: 6 },
-              { id: 5 },
-              { id: 4 }
-            ]
+            comments: [{ id: 8 }, { id: 6 }, { id: 5 }, { id: 4 }]
           }
         },
         {
           id: 6,
           post: {
-            comments: [
-              { id: 8 },
-              { id: 6 },
-              { id: 5 },
-              { id: 4 }
-            ]
+            comments: [{ id: 8 }, { id: 6 }, { id: 5 }, { id: 4 }]
           }
         },
         {
           id: 8,
           post: {
-            comments: [
-              { id: 8 },
-              { id: 6 },
-              { id: 5 },
-              { id: 4 }
-            ]
+            comments: [{ id: 8 }, { id: 6 }, { id: 5 }, { id: 4 }]
           }
         }
       ]

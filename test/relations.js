@@ -40,7 +40,8 @@ test('should join a one-to-many relation', async t => {
           },
           {
             id: 8,
-            body: 'Somebody please help me with this library. It is so much work.'
+            body:
+              'Somebody please help me with this library. It is so much work.'
           }
         ]
       },
@@ -58,11 +59,11 @@ test('should join a one-to-many relation', async t => {
         comments: [
           {
             id: 2,
-            body: 'That\'s super weird dude.'
+            body: "That's super weird dude."
           },
           {
             id: 3,
-            body: 'That\'s ultra weird bro.'
+            body: "That's ultra weird bro."
           },
           {
             id: 5,
@@ -110,7 +111,8 @@ test('should join on a nested relation', async t => {
           },
           {
             id: 8,
-            body: 'Somebody please help me with this library. It is so much work.',
+            body:
+              'Somebody please help me with this library. It is so much work.',
             author: { fullName: 'andrew carlson' }
           }
         ]
@@ -128,12 +130,12 @@ test('should join on a nested relation', async t => {
         comments: [
           {
             id: 2,
-            body: 'That\'s super weird dude.',
+            body: "That's super weird dude.",
             author: { fullName: 'foo bar' }
           },
           {
             id: 3,
-            body: 'That\'s ultra weird bro.',
+            body: "That's ultra weird bro.",
             author: { fullName: 'foo bar' }
           },
           {
@@ -154,7 +156,8 @@ test('should join on a nested relation', async t => {
 })
 
 test('should handle where conditions on the relations', async t => {
-  const query = wrap(`
+  const query = wrap(
+    `
     posts(active: true) {
       id
       body
@@ -171,7 +174,9 @@ test('should handle where conditions on the relations', async t => {
       archived
       body
     }
-  `, 2)
+  `,
+    2
+  )
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {
@@ -185,7 +190,7 @@ test('should handle where conditions on the relations', async t => {
           comments: [
             {
               id: 3,
-              body: 'That\'s ultra weird bro.',
+              body: "That's ultra weird bro.",
               archived: false
             },
             {
@@ -203,29 +208,31 @@ test('should handle where conditions on the relations', async t => {
 })
 
 test('should handle where condition on many-to-many relation', async t => {
-  const query = wrap(`
+  const query = wrap(
+    `
     id
     fullName
     following(name: "matt") {
       fullName
     }
-  `, 3)
+  `,
+    3
+  )
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {
     user: {
       id: 3,
       fullName: 'foo bar',
-      following: [
-        { fullName: 'matt elder' }
-      ]
+      following: [{ fullName: 'matt elder' }]
     }
   }
   t.deepEqual(expect, data)
 })
 
 test('should include data from the junction table', async t => {
-  const query = wrap(`
+  const query = wrap(
+    `
     id
     fullName
     following {
@@ -235,7 +242,9 @@ test('should include data from the junction table', async t => {
       intimacy # this one tests sqlExpr
       closeness # and this one tests sqlDeps
     }
-  `, 3)
+  `,
+    3
+  )
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {
@@ -264,14 +273,17 @@ test('should include data from the junction table', async t => {
 })
 
 test('should handle where condition on junction in many-to-many', async t => {
-  const query = wrap(`
+  const query = wrap(
+    `
     id
     fullName
     following(intimacy: best) {
       fullName
       intimacy
     }
-  `, 3)
+  `,
+    3
+  )
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {
@@ -324,7 +336,8 @@ test('should handle joins with the same table name', async t => {
             },
             post: {
               id: 1,
-              body: 'If I could marry a programming language, it would be Haskell.',
+              body:
+                'If I could marry a programming language, it would be Haskell.',
               author: {
                 fullName: 'matt elder'
               }
@@ -360,7 +373,8 @@ test('should handle joins with the same table name', async t => {
           },
           {
             id: 8,
-            body: 'Somebody please help me with this library. It is so much work.',
+            body:
+              'Somebody please help me with this library. It is so much work.',
             author: {
               fullName: 'andrew carlson'
             },
@@ -404,13 +418,14 @@ test('should handle joins with the same table name', async t => {
         comments: [
           {
             id: 2,
-            body: 'That\'s super weird dude.',
+            body: "That's super weird dude.",
             author: {
               fullName: 'foo bar'
             },
             post: {
               id: 1,
-              body: 'If I could marry a programming language, it would be Haskell.',
+              body:
+                'If I could marry a programming language, it would be Haskell.',
               author: {
                 fullName: 'matt elder'
               }
@@ -418,13 +433,14 @@ test('should handle joins with the same table name', async t => {
           },
           {
             id: 3,
-            body: 'That\'s ultra weird bro.',
+            body: "That's ultra weird bro.",
             author: {
               fullName: 'foo bar'
             },
             post: {
               id: 1,
-              body: 'If I could marry a programming language, it would be Haskell.',
+              body:
+                'If I could marry a programming language, it would be Haskell.',
               author: {
                 fullName: 'matt elder'
               }
@@ -452,7 +468,8 @@ test('should handle joins with the same table name', async t => {
             },
             post: {
               id: 3,
-              body: 'Here is who to contact if your brain has been ruined by Java.',
+              body:
+                'Here is who to contact if your brain has been ruined by Java.',
               author: {
                 fullName: 'matt elder'
               }
@@ -534,7 +551,8 @@ test('it should handle fragments nested lower', async t => {
             id: 1,
             body: 'Wow this is a great post, Matt.',
             post: {
-              body: 'If I could marry a programming language, it would be Haskell.'
+              body:
+                'If I could marry a programming language, it would be Haskell.'
             }
           },
           {
@@ -553,7 +571,8 @@ test('it should handle fragments nested lower', async t => {
           },
           {
             id: 8,
-            body: 'Somebody please help me with this library. It is so much work.',
+            body:
+              'Somebody please help me with this library. It is so much work.',
             post: {
               body: 'Check out this cool new GraphQL library, Join Monster.'
             }
@@ -577,16 +596,18 @@ test('it should handle fragments nested lower', async t => {
         comments: [
           {
             id: 2,
-            body: 'That\'s super weird dude.',
+            body: "That's super weird dude.",
             post: {
-              body: 'If I could marry a programming language, it would be Haskell.'
+              body:
+                'If I could marry a programming language, it would be Haskell.'
             }
           },
           {
             id: 3,
-            body: 'That\'s ultra weird bro.',
+            body: "That's ultra weird bro.",
             post: {
-              body: 'If I could marry a programming language, it would be Haskell.'
+              body:
+                'If I could marry a programming language, it would be Haskell.'
             }
           },
           {
@@ -600,7 +621,8 @@ test('it should handle fragments nested lower', async t => {
             id: 9,
             body: 'Yeah well Java 8 added lambdas.',
             post: {
-              body: 'Here is who to contact if your brain has been ruined by Java.'
+              body:
+                'Here is who to contact if your brain has been ruined by Java.'
             }
           }
         ]
@@ -611,14 +633,17 @@ test('it should handle fragments nested lower', async t => {
 })
 
 test('should handle a correlated subquery', async t => {
-  const query = wrap(`
+  const query = wrap(
+    `
     posts(active: false) {
       id
       body
       archived
       numComments
     }
-  `, 2)
+  `,
+    2
+  )
   const { data, errors } = await run(query)
   errCheck(t, errors)
   const expect = {

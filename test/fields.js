@@ -65,17 +65,8 @@ test.skip('it should handle duplicate object type fields with different argument
   errCheck(t, errors)
   const expect = {
     user: {
-      comments: [
-        { id: 3 },
-        { id: 5 },
-        { id: 9 }
-      ],
-      archivedComments: [
-        { id: 2 },
-        { id: 3 },
-        { id: 5 },
-        { id: 9 }
-      ]
+      comments: [{ id: 3 }, { id: 5 }, { id: 9 }],
+      archivedComments: [{ id: 2 }, { id: 3 }, { id: 5 }, { id: 9 }]
     }
   }
   t.deepEqual(expect, data)
@@ -150,13 +141,13 @@ test('it should handle duplicate of a field recursively', async t => {
         comments: [
           {
             authorId: 3,
-            bdy: 'That\'s ultra weird bro.',
-            body: 'That\'s ultra weird bro.'
+            bdy: "That's ultra weird bro.",
+            body: "That's ultra weird bro."
           },
           {
             authorId: 3,
-            bdy: 'That\'s super weird dude.',
-            body: 'That\'s super weird dude.'
+            bdy: "That's super weird dude.",
+            body: "That's super weird dude."
           },
           {
             authorId: 1,

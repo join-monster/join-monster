@@ -66,19 +66,27 @@ test('should handle root pagination with "first" arg', async t => {
   const query = makeUsersQuery({ first: 2 })
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual(data.users.pageInfo, {
-    hasNextPage: true,
-    startCursor: offsetToCursor(0),
-    endCursor: offsetToCursor(1)
-  }, 'page info is accurate')
-  t.deepEqual(data.users.edges[0], {
-    cursor: offsetToCursor(0),
-    node: {
-      id: toGlobalId('User', 1),
-      fullName: 'Alivia Waelchi',
-      email: 'Mohammed.Hayes@hotmail.com'
-    }
-  }, 'the first node is accurate')
+  t.deepEqual(
+    data.users.pageInfo,
+    {
+      hasNextPage: true,
+      startCursor: offsetToCursor(0),
+      endCursor: offsetToCursor(1)
+    },
+    'page info is accurate'
+  )
+  t.deepEqual(
+    data.users.edges[0],
+    {
+      cursor: offsetToCursor(0),
+      node: {
+        id: toGlobalId('User', 1),
+        fullName: 'Alivia Waelchi',
+        email: 'Mohammed.Hayes@hotmail.com'
+      }
+    },
+    'the first node is accurate'
+  )
   t.is(
     data.users.edges.last().cursor,
     data.users.pageInfo.endCursor,
@@ -90,19 +98,27 @@ test('should handle root pagination with "first" and "after" args', async t => {
   const query = makeUsersQuery({ first: 2, after: offsetToCursor(1) })
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual(data.users.pageInfo, {
-    hasNextPage: true,
-    startCursor: offsetToCursor(2),
-    endCursor: offsetToCursor(3)
-  }, 'page info is accurate')
-  t.deepEqual(data.users.edges[0], {
-    cursor: offsetToCursor(2),
-    node: {
-      id: toGlobalId('User', 3),
-      fullName: 'Coleman Abernathy',
-      email: 'Lurline79@gmail.com'
-    }
-  }, 'the first node is accurate')
+  t.deepEqual(
+    data.users.pageInfo,
+    {
+      hasNextPage: true,
+      startCursor: offsetToCursor(2),
+      endCursor: offsetToCursor(3)
+    },
+    'page info is accurate'
+  )
+  t.deepEqual(
+    data.users.edges[0],
+    {
+      cursor: offsetToCursor(2),
+      node: {
+        id: toGlobalId('User', 3),
+        fullName: 'Coleman Abernathy',
+        email: 'Lurline79@gmail.com'
+      }
+    },
+    'the first node is accurate'
+  )
   t.is(
     data.users.edges.last().cursor,
     data.users.pageInfo.endCursor,
@@ -114,20 +130,28 @@ test('should handle the last page of root pagination', async t => {
   const query = makeUsersQuery({ first: 2, after: offsetToCursor(4) })
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual(data.users.pageInfo, {
-    hasNextPage: false,
-    startCursor: offsetToCursor(5),
-    endCursor: offsetToCursor(5)
-  }, 'page info is accurate')
+  t.deepEqual(
+    data.users.pageInfo,
+    {
+      hasNextPage: false,
+      startCursor: offsetToCursor(5),
+      endCursor: offsetToCursor(5)
+    },
+    'page info is accurate'
+  )
   t.is(data.users.edges.length, 1)
-  t.deepEqual(data.users.edges[0], {
-    cursor: offsetToCursor(5),
-    node: {
-      id: toGlobalId('User', 6),
-      fullName: 'Andrew Carlson',
-      email: 'andrew@stem.is'
-    }
-  }, 'the first node is accurate')
+  t.deepEqual(
+    data.users.edges[0],
+    {
+      cursor: offsetToCursor(5),
+      node: {
+        id: toGlobalId('User', 6),
+        fullName: 'Andrew Carlson',
+        email: 'andrew@stem.is'
+      }
+    },
+    'the first node is accurate'
+  )
   t.is(
     data.users.edges.last().cursor,
     data.users.pageInfo.endCursor,
@@ -149,7 +173,6 @@ test('should return nothing after the end of root pagination', async t => {
     edges: []
   })
 })
-
 
 function makePostsQuery(args) {
   let argString = stringifyArgs(args)
@@ -179,17 +202,21 @@ test('should handle pagination in a nested field', async t => {
     endCursor: offsetToCursor(7)
   })
   t.is(posts.edges.length, 8)
-  t.deepEqual(posts.edges[0], {
-    cursor: offsetToCursor(0),
-    node: {
-      id: toGlobalId('Post', 2),
-      body: [
-        'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
-        'Deserunt nemo pariatur sed facere accusantium quis.',
-        'Nobis aut voluptate inventore quidem explicabo.'
-      ].join(' ')
-    }
-  }, 'post number 2 happens to be first since this field\'s first sort column is created_at')
+  t.deepEqual(
+    posts.edges[0],
+    {
+      cursor: offsetToCursor(0),
+      node: {
+        id: toGlobalId('Post', 2),
+        body: [
+          'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+          'Deserunt nemo pariatur sed facere accusantium quis.',
+          'Nobis aut voluptate inventore quidem explicabo.'
+        ].join(' ')
+      }
+    },
+    "post number 2 happens to be first since this field's first sort column is created_at"
+  )
   t.is(posts.edges.last().cursor, posts.pageInfo.endCursor)
 })
 
@@ -240,7 +267,10 @@ test('can handle nested pagination', async t => {
     }
   }`
   const { data, errors } = await run(query)
-  t.deepEqual(data.users.edges.map(edge => edge.node.posts.total), [ 8, 13 ])
+  t.deepEqual(
+    data.users.edges.map(edge => edge.node.posts.total),
+    [8, 13]
+  )
   errCheck(t, errors)
   t.is(data.users.edges.length, 2)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
@@ -277,12 +307,12 @@ test('can go to each second page in a nested connection', async t => {
   t.is(data.users.edges[0].node.id, toGlobalId('User', 1))
   t.deepEqual(
     data.users.edges[0].node.posts.edges.map(edge => edge.node.id),
-    [ toGlobalId('Post', 33), toGlobalId('Post', 38) ]
+    [toGlobalId('Post', 33), toGlobalId('Post', 38)]
   )
   t.is(data.users.edges[1].node.id, toGlobalId('User', 2))
   t.deepEqual(
     data.users.edges[1].node.posts.edges.map(edge => edge.node.id),
-    [ toGlobalId('Post', 1), toGlobalId('Post', 50) ]
+    [toGlobalId('Post', 1), toGlobalId('Post', 50)]
   )
 })
 
@@ -330,7 +360,8 @@ test('can handle deeply nested pagination', async t => {
     cursor: offsetToCursor(0),
     node: {
       id: toGlobalId('Comment', 18),
-      body: 'bypassing the hard drive won\'t do anything, we need to back up the primary EXE bandwidth!',
+      body:
+        "bypassing the hard drive won't do anything, we need to back up the primary EXE bandwidth!",
       author: {
         fullName: 'Coleman Abernathy'
       }
@@ -718,7 +749,8 @@ test('should handle an interface type', async t => {
       {
         node: {
           id: 'Q29tbWVudDox',
-          body: 'Try to input the RSS circuit, maybe it will copy the auxiliary sensor!'
+          body:
+            'Try to input the RSS circuit, maybe it will copy the auxiliary sensor!'
         }
       },
       {

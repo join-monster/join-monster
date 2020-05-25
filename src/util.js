@@ -25,7 +25,7 @@ export function wrap(maybeArr) {
   if (maybeArr.constructor === Array) {
     return maybeArr
   }
-  return [ maybeArr ]
+  return [maybeArr]
 }
 
 export function isEmptyArray(val) {
@@ -34,7 +34,10 @@ export function isEmptyArray(val) {
 
 export function ensure(obj, prop, name) {
   if (!obj[prop]) {
-    throw new Error(`property "${prop}" must be defined on object: ${name || util.inspect(obj)}`)
+    throw new Error(
+      `property "${prop}" must be defined on object: ${name ||
+        util.inspect(obj)}`
+    )
   }
   return obj[prop]
 }
@@ -66,26 +69,31 @@ export function maybeQuote(value, dialectName) {
 
   if (typeof value === 'number') return value
   if (value && typeof value.toSQL === 'function') return value.toSQL()
-  if (value instanceof Buffer
-    && typeof value === 'object'
-    && typeof value.toString === 'function') {
+  if (
+    value instanceof Buffer &&
+    typeof value === 'object' &&
+    typeof value.toString === 'function'
+  ) {
     return `X'${value.toString('hex')}'`
   }
-  if (dialectName === 'oracle' && value.match(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(.\d+)?Z?/)) {
+  if (
+    dialectName === 'oracle' &&
+    value.match(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(.\d+)?Z?/)
+  ) {
     return value.replace(
       /(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)(.\d+)?Z?/,
-      'TIMESTAMP \'$1 $2$3 UTC\''
+      "TIMESTAMP '$1 $2$3 UTC'"
     )
   }
 
   // Picked from https://github.com/brianc/node-postgres/blob/876018/lib/client.js#L235..L260
   // Ported from PostgreSQL 9.2.4 source code in src/interfaces/libpq/fe-exec.c
   let hasBackslash = false
-  let escaped = '\''
+  let escaped = "'"
 
   for (let i = 0; i < value.length; i++) {
     let c = value[i]
-    if (c === '\'') {
+    if (c === "'") {
       escaped += c + c
     } else if (c === '\\') {
       escaped += c + c
@@ -95,7 +103,7 @@ export function maybeQuote(value, dialectName) {
     }
   }
 
-  escaped += '\''
+  escaped += "'"
 
   if (hasBackslash === true) {
     escaped = ' E' + escaped
@@ -115,10 +123,10 @@ export function buildWhereFunction(type, condition, options) {
   const name = getDialectName(options)
   if (typeof condition === 'function') {
     return condition
-  // otherwise, we'll assume they gave us the value(s) of the unique key.
+    // otherwise, we'll assume they gave us the value(s) of the unique key.
   }
   // determine the type of quotes necessary to escape the uniqueKey column
-  const quote = [ 'mysql', 'mysql8', 'mariadb' ].includes(name) ? '`' : '"'
+  const quote = ['mysql', 'mysql8', 'mariadb'].includes(name) ? '`' : '"'
 
   // determine the unique key so we know what to search by
   const uniqueKey = type._typeConfig.uniqueKey
@@ -131,10 +139,17 @@ export function buildWhereFunction(type, condition, options) {
       uniqueKey.length,
       `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`
     )
-    return table => uniqueKey.map((key, i) => `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`).join(' AND ')
+    return table =>
+      uniqueKey
+        .map(
+          (key, i) =>
+            `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`
+        )
+        .join(' AND ')
     // single keys are simple
   }
-  return table => `${table}.${quote}${uniqueKey}${quote} = ${maybeQuote(condition)}`
+  return table =>
+    `${table}.${quote}${uniqueKey}${quote} = ${maybeQuote(condition)}`
 }
 
 // handles the different callback signatures and return values.

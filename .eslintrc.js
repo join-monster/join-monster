@@ -1,24 +1,16 @@
 module.exports = {
   env: {
     es6: true,
-    node: true
+    node: true,
   },
   globals: {
-    idx: true
+    idx: true,
   },
-  extends: 'airbnb-base/legacy',
+  extends: ['airbnb-base/legacy', 'prettier'],
   parser: 'babel-eslint',
   rules: {
-    indent: [
-      'error',
-      2
-    ],
     'no-extend-native': 0,
     'func-names': 0,
-    'space-before-function-paren': [
-      'error',
-      'never'
-    ],
     'guard-for-in': 0,
     'no-restricted-syntax': 0,
     'no-param-reassign': 0,
@@ -35,27 +27,9 @@ module.exports = {
     'no-void': 0,
     'function-paren-newline': 0,
     'object-curly-newline': 0,
-    'max-len': [
-      'warn',
-      125,
-      { ignoreComments: true }
-    ],
-    'array-bracket-spacing': [
-      'error',
-      'always'
-    ],
-    'linebreak-style': [
-      'error',
-      'unix'
-    ],
-    quotes: [
-      'error',
-      'single'
-    ],
-    semi: [
-      'error',
-      'never'
-    ],
+    'max-len': ['warn', 125, { ignoreComments: true }],
+    'linebreak-style': ['error', 'unix'],
+    semi: ['error', 'never'],
     'no-console': 0,
     'no-case-declarations': 0,
     'no-unused-vars': [
@@ -63,7 +37,7 @@ module.exports = {
       {
         argsIgnorePattern: '^__+$',
         varsIgnorePattern: '^__+$',
-      }
+      },
     ],
-  }
+  },
 }

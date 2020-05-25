@@ -20,23 +20,28 @@ function makeQuery(asc) {
   }`
 }
 
-
 const run = partial(graphql, schemaBasic)
 
 test('it should handle nested ordering with both ASC', async t => {
   const query = makeQuery(true)
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual([ { id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }, { id: 8 } ], data.user.posts[0].comments)
-  t.deepEqual([ { id: 1 }, { id: 4 }, { id: 6 }, { id: 8 } ], data.user.comments)
+  t.deepEqual(
+    [{ id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }, { id: 8 }],
+    data.user.posts[0].comments
+  )
+  t.deepEqual([{ id: 1 }, { id: 4 }, { id: 6 }, { id: 8 }], data.user.comments)
 })
 
 test('it should handle nested ordering with one ASC and one DESC', async t => {
   const query = makeQuery(false)
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual([ { id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 } ], data.user.posts[0].comments)
-  t.deepEqual([ { id: 1 }, { id: 4 }, { id: 6 }, { id: 8 } ], data.user.comments)
+  t.deepEqual(
+    [{ id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 }],
+    data.user.posts[0].comments
+  )
+  t.deepEqual([{ id: 1 }, { id: 4 }, { id: 6 }, { id: 8 }], data.user.comments)
 })
 
 test('it should handle order on many-to-many', async t => {

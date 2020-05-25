@@ -1,6 +1,5 @@
 import faker from 'faker'
 
-
 function* count(limit) {
   for (let i = 0; i < limit; i++) {
     yield i
@@ -55,7 +54,7 @@ module.exports = async db => {
 
   console.log('creating relationships...')
   const relationships = []
-  const used = new Set
+  const used = new Set()
   for (let __ of count(numRelationships)) {
     const follower_id = faker.random.number({ min: 1, max: numUsers })
     const followee_id = faker.random.number({ min: 1, max: numUsers })
@@ -74,7 +73,7 @@ module.exports = async db => {
 
   console.log('creating likes...')
   const likes = []
-  const usedLikes = new Set
+  const usedLikes = new Set()
   for (let __ of count(numLikes)) {
     const account_id = faker.random.number({ min: 1, max: numUsers })
     const comment_id = faker.random.number({ min: 1, max: numComments })
@@ -120,4 +119,3 @@ module.exports = async db => {
 
   await knex.destroy()
 }
-

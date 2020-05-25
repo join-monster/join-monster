@@ -83,6 +83,7 @@
     "babel-watch": "^2.0.3-rc0",
     "eslint": "^6.0.0",
     "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-config-prettier": "^6.11.0",
     "faker": "^4.1.0",
     "graphql": "^0.13.0",
     "graphsiql": "0.2.0",

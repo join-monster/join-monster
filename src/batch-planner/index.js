@@ -7,7 +7,10 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
   // paginated fields are wrapped in connections. strip those off for the batching
   if (sqlAST.paginate) {
     if (Array.isArray(data)) {
-      data = chain(data).flatMap('edges').map('node').value()
+      data = chain(data)
+        .flatMap('edges')
+        .map('node')
+        .value()
     } else {
       data = map(data.edges, 'node')
     }
@@ -17,10 +20,16 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
   }
 
   const children = sqlAST.children
-  Object.values(sqlAST.typedChildren || {}).forEach(typedChildren => children.push(...typedChildren))
+  Object.values(sqlAST.typedChildren || {}).forEach(typedChildren =>
+    children.push(...typedChildren)
+  )
 
   // loop through all the child fields that are tables
-  return Promise.all(children.map(childAST => nextBatchChild(childAST, data, dbCall, context, options)))
+  return Promise.all(
+    children.map(childAST =>
+      nextBatchChild(childAST, data, dbCall, context, options)
+    )
+  )
 }
 
 // processes a single child of the batch
@@ -48,9 +57,17 @@ async function nextBatchChild(childAST, data, dbCall, context, options) {
       // the "batch scope" is teh set of values to match this key against from the previous batch
       const batchScope = uniq(data.map(obj => maybeQuote(obj[parentKey])))
       // generate the SQL, with the batch scope values incorporated in a WHERE IN clause
-      const { sql, shapeDefinition } = await compileSqlAST(childAST, context, { ...options, batchScope })
+      const { sql, shapeDefinition } = await compileSqlAST(childAST, context, {
+        ...options,
+        batchScope
+      })
       // grab the data
-      let newData = await handleUserDbCall(dbCall, sql, childAST, wrap(shapeDefinition))
+      let newData = await handleUserDbCall(
+        dbCall,
+        sql,
+        childAST,
+        wrap(shapeDefinition)
+      )
       // group the rows by the key so we can match them with the previous batch
       newData = groupBy(newData, thisKey)
       // but if we paginate, we must convert to connection type first
@@ -62,14 +79,19 @@ async function nextBatchChild(childAST, data, dbCall, context, options) {
       // if we they want many rows, give them an array
       if (childAST.grabMany) {
         for (let obj of data) {
-          obj[fieldName] = newData[obj[parentKey]] || (childAST.paginate ? { total: 0, edges: [] } : [])
+          obj[fieldName] =
+            newData[obj[parentKey]] ||
+            (childAST.paginate ? { total: 0, edges: [] } : [])
         }
       } else {
         let matchedData = []
         for (let obj of data) {
           const ob = newData[obj[parentKey]]
           if (ob) {
-            obj[fieldName] = arrToConnection(newData[obj[parentKey]][0], childAST)
+            obj[fieldName] = arrToConnection(
+              newData[obj[parentKey]][0],
+              childAST
+            )
             matchedData.push(obj)
           } else {
             obj[fieldName] = null
@@ -86,9 +108,17 @@ async function nextBatchChild(childAST, data, dbCall, context, options) {
         .value()
       return nextBatch(childAST, nextLevelData, dbCall, context, options)
     }
-    const batchScope = [ maybeQuote(data[parentKey]) ]
-    const { sql, shapeDefinition } = await compileSqlAST(childAST, context, { ...options, batchScope })
-    let newData = await handleUserDbCall(dbCall, sql, childAST, wrap(shapeDefinition))
+    const batchScope = [maybeQuote(data[parentKey])]
+    const { sql, shapeDefinition } = await compileSqlAST(childAST, context, {
+      ...options,
+      batchScope
+    })
+    let newData = await handleUserDbCall(
+      dbCall,
+      sql,
+      childAST,
+      wrap(shapeDefinition)
+    )
     newData = groupBy(newData, thisKey)
     if (childAST.paginate) {
       const targets = newData[data[parentKey]]
@@ -103,7 +133,7 @@ async function nextBatchChild(childAST, data, dbCall, context, options) {
       return nextBatch(childAST, data[fieldName], dbCall, context, options)
     }
 
-  // otherwise, just bypass this and recurse down to the next level
+    // otherwise, just bypass this and recurse down to the next level
   } else if (Array.isArray(data)) {
     const nextLevelData = chain(data)
       .filter(obj => obj != null)
