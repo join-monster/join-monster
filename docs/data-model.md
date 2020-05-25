@@ -9,7 +9,7 @@ Here is a picture of the SQL schema.
 ![schema-example](img/schema-sql.png)
 
 I'll omit the code to set up the SQL tables.
-[Here](https://github.com/stems/join-monster/blob/master/test-api/data/schema/sqlite3.sql) is an example of how it might be done.
+[Here](https://github.com/join-monster/join-monster/blob/master/test-api/data/schema/sqlite3.sql) is an example of how it might be done.
 Now let's look at how the GraphQL API inteface on top of this will look.
 
 ![schema-graphql](img/schema-graphql.png)

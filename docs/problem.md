@@ -118,6 +118,6 @@ Although we made the round-trip problem go away, what if another query doesn't e
 
 During the execution of this request, it will wastefully join on the comments! Now we're over-fetching (and over-joining). The resolving phase essentially becomes a bunch of property lookups for a conglomerate result we prepared in the top-level. Our database might be able to handle it now, but this approach will not scale to more complex schema. Consider a schema like this:
 
-![schema-complex](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/schema-complex.png)
+![schema-complex](https://raw.githubusercontent.com/join-monster/join-monster/master/docs/img/schema-complex.png)
 
 Imagine doing all those joins up front. This is especially wasteful when client only wants a couple of those resources. We now have the inverse problem: **getting too much data.** We've also reduced the maintainability of our code. Changes to the schema will require changes to the SQL query that fetches all the data. Furthermore, there is the extra burden of converting the database result into the right Object shape, since many database drivers simply return a flat, tabular structure.

@@ -47,7 +47,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stems/join-monster.git"
+    "url": "git+https://github.com/join-monster/join-monster.git"
   },
   "keywords": [
     "graphql",
@@ -65,9 +65,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/stems/join-monster/issues"
+    "url": "https://github.com/join-monster/join-monster/issues"
   },
-  "homepage": "https://github.com/stems/join-monster#readme",
+  "homepage": "https://github.com/join-monster/join-monster#readme",
   "peerDependencies": {
     "graphql": "0.6 || 0.7 || 0.8 || 0.9 || 0.10 || 0.11 || 0.12 || 0.13"
   },
