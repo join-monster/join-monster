@@ -3,13 +3,13 @@ dist: precise
 node_js:
   - 8
   - 10
-  - 12
+  #- 12
 deploy:
   provider: npm
   skip_cleanup: 'true'
   email: 2yinyang2@gmail.com
   on:
-    tags: true
+    #tags: true
     repo: join-monster/join-monster
     branch: master
   api_key:
