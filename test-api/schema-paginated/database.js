@@ -1,3 +1,4 @@
+require('dotenv-expand')(require('dotenv').config())
 import assert from 'assert'
 import path from 'path'
 
@@ -25,7 +26,6 @@ if (process.env.NODE_ENV !== 'test') {
   client = 'oracledb'
 }
 
-console.log('connection to', { client, connection })
 export default require('knex')({
   client,
   connection,

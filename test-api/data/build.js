@@ -1,4 +1,5 @@
 const assert = require('assert')
+require('dotenv-expand')(require('dotenv').config())
 
 assert(
   process.env.MYSQL_URL,

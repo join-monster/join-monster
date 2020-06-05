@@ -1,4 +1,14 @@
 {
-  "presets": [ "node6", "stage-1" ],
-  "plugins": [ "transform-do-expressions", "object-values-to-object-keys", "idx" ]
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "node": "current"
+        },
+        "debug": false
+      }
+    ]
+  ],
+  "plugins": ["@babel/plugin-proposal-do-expressions", "babel-plugin-idx"]
 }

@@ -1,3 +1,4 @@
+require('dotenv-expand')(require('dotenv').config())
 import path from 'path'
 import assert from 'assert'
 
@@ -23,7 +24,6 @@ if (dbType === 'PG') {
   client = 'oracledb'
 }
 
-console.log('connection to', { client, connection })
 export default require('knex')({ client, connection, useNullAsDefault: true })
 
 function pgUrl(dbName) {
