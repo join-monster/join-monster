@@ -12,13 +12,21 @@ const User = new GraphQLObjectType({
     },
     email: {
       type: GraphQLString,
-      // if the column name is different, it must be specified
-      sqlColumn: 'email_address'
+      extensions: {
+        joinMonster: {
+          // if the column name is different, it must be specified
+          sqlColumn: 'email_address'
+        }
+      }
     },
     idEncoded: {
       description: 'The ID base-64 encoded',
       type: GraphQLString,
-      sqlColumn: 'id',
+      extensions: {
+        joinMonster: {
+          sqlColumn: 'id'
+        }
+      },
       // this field uses a sqlColumn and applies a resolver function on the value
       // if a resolver is present, the `sqlColumn` MUST be specified even if it is the same name as the field
       resolve: user => toBase64(user.id)
@@ -52,11 +60,15 @@ const User = new GraphQLObjectType({
   //...
   fields: () => ({
     fullName: {
-      description: 'A user\'s first and last name',
+      description: "A user's first and last name",
       type: GraphQLString,
-      // perhaps there is no 1-to-1 mapping of field to column
-      // this field depends on multiple columns
-      sqlDeps: [ 'first_name', 'last_name' ],
+      extensions: {
+        joinMonster: {
+          // perhaps there is no 1-to-1 mapping of field to column
+          // this field depends on multiple columns
+          sqlDeps: ['first_name', 'last_name']
+        }
+      },
       resolve: user => `${user.first_name} ${user.last_name}`
     }
   })
@@ -71,15 +83,22 @@ const User = new GraphQLObjectType({
   fields: () => ({
     capitalizedLastName: {
       type: GraphQLString,
-      // do a computed column in SQL with raw expression
-      sqlExpr: (table, args) => `UPPER(${table}.last_name)`
+      extensions: {
+        joinMonster: {
+          // do a computed column in SQL with raw expression
+          sqlExpr: (table, args) => `UPPER(${table}.last_name)`
+        }
+      }
     },
     fullNameAnotherWay: {
       description: 'Another way we can get the full name.',
       type: GraphQLString,
-      sqlExpr: table => `${table}.first_name || ' ' || ${table}.last_name`
-    },
+      extensions: {
+        joinMonster: {
+          sqlExpr: table => `${table}.first_name || ' ' || ${table}.last_name`
+        }
+      }
+    }
   })
 })
 ```
-

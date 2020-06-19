@@ -19,7 +19,12 @@ const Post = new GraphQLObjectType({
     author: {
       description: 'The user that created the post',
       type: User,
-      sqlJoin: (postTable, userTable, args, context) => `${postTable}.author_id = ${userTable}.id`
+      extensions: {
+        joinMonster: {
+          sqlJoin: (postTable, userTable, args, context) =>
+            `${postTable}.author_id = ${userTable}.id`
+        }
+      }
     }
   })
 })
@@ -31,12 +36,22 @@ const Comment = new GraphQLObjectType({
     post: {
       description: 'The post that the comment belongs to',
       type: Post,
-      sqlJoin: (commentTable, postTable) => `${commentTable}.post_id = ${postTable}.id`
+      extensions: {
+        joinMonster: {
+          sqlJoin: (commentTable, postTable) =>
+            `${commentTable}.post_id = ${postTable}.id`
+        }
+      }
     },
     author: {
       description: 'The user who wrote the comment',
       type: User,
-      sqlJoin: (commentTable, userTable) => `${commentTable}.author_id = ${userTable}.id`
+      extensions: {
+        joinMonster: {
+          sqlJoin: (commentTable, userTable) =>
+            `${commentTable}.author_id = ${userTable}.id`
+        }
+      }
     }
   })
 })
@@ -46,14 +61,22 @@ Now you can get the comments the user has written, the post on which each commen
 
 ```graphql
 {
-  users { 
-    id, email, fullName
+  users {
+    id
+    email
+    fullName
     comments {
-      id, body
-      author { fullName }
+      id
+      body
+      author {
+        fullName
+      }
       post {
-        id, body
-        author { fullName }
+        id
+        body
+        author {
+          fullName
+        }
       }
     }
   }
@@ -71,11 +94,21 @@ const User = new GraphQLObjectType({
     //...
     posts: {
       type: new GraphQLList(Post),
-      sqlJoin: (userTable, postTable, args) => `${userTable}.id = ${postTable}.author_id`
+      extensions: {
+        joinMonster: {
+          sqlJoin: (userTable, postTable, args) =>
+            `${userTable}.id = ${postTable}.author_id`
+        }
+      }
     },
     comments: {
       type: new GraphQLList(Comment),
-      sqlJoin: (userTable, commentTable, args) => `${userTable}.id = ${commentTable}.author_id`
+      extensions: {
+        joinMonster: {
+          sqlJoin: (userTable, commentTable, args) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      }
     }
   })
 })
@@ -91,15 +124,18 @@ const Post = new GraphQLObjectType({
     comments: {
       description: 'The comments on this post',
       type: new GraphQLList(Comment),
-      // the JOIN condition also checks that the comment is not archived
-      sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id AND ${commentTable}.archived = FALSE`,
+      extensions: {
+        joinMonster: {
+          // the JOIN condition also checks that the comment is not archived
+          sqlJoin: (postTable, commentTable) =>
+            `${postTable}.id = ${commentTable}.post_id AND ${commentTable}.archived = FALSE`
+        }
+      }
     }
   })
 })
-
 ```
 
 Again, the data is all fetched in a single query thanks to `JOIN`s.
 However, doing all these joins can be cumbersome on the database.
 We can split it into two, or perhaps more, separate queries to reduce the number of joins in the next section.
-

@@ -22,8 +22,12 @@ const User = new GraphQLObjectType({
     globalId: {
       description: 'The global ID for the Relay spec',
       ...globalIdField(),
-      sqlDeps: [ 'id' ]
-    },
+      extensions: {
+        joinMonster: {
+          sqlDeps: ['id']
+        }
+      }
+    }
     //...
   })
 })
@@ -90,4 +94,3 @@ const { nodeInterface, nodeField } = nodeDefinitions(
   obj => obj.__type__
 )
 ```
-

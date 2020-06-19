@@ -13,8 +13,13 @@ const Post = new GraphQLObjectType({
       description: 'The number of comments on this post',
       type: GraphQLInt,
       // use a correlated subquery in a raw SQL expression to do things like aggregation
-      sqlExpr: postTable => `(SELECT count(*) FROM comments WHERE post_id = ${postTable}.id AND archived = FALSE)`
-    },
+      extensions: {
+        joinMonster: {
+          sqlExpr: postTable =>
+            `(SELECT count(*) FROM comments WHERE post_id = ${postTable}.id AND archived = FALSE)`
+        }
+      }
+    }
   })
 })
 ```
@@ -57,8 +62,13 @@ const Post = new GraphQLObjectType({
   fields: () => ({
     commentsWithoutJoin: {
       type: new GraphQLList(SimpleComment),
-      sqlExpr: postTable => `(SELECT json_agg(comments) FROM comments WHERE comments.post_id = ${postTable}.id AND comments.archived = FALSE)`
-    },
+      extensions: {
+        joinMonster: {
+          sqlExpr: postTable =>
+            `(SELECT json_agg(comments) FROM comments WHERE comments.post_id = ${postTable}.id AND comments.archived = FALSE)`
+        }
+      }
+    }
   })
 })
 ```
@@ -76,7 +86,7 @@ This should work without any additional data munging if you're using `knex`, as 
       commentsWithoutJoin {
         id
         body
-      	authorId
+        authorId
       }
     }
   }
@@ -98,4 +108,3 @@ FROM accounts AS "user"
 LEFT JOIN posts AS "posts" ON "user".id = "posts".author_id
 WHERE "user".id = 2
 ```
-

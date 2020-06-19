@@ -7,9 +7,15 @@ We also need a unique identifier so it's unambiguous which objects are distinct 
 ```javascript
 const User = new GraphQLObjectType({
   name: 'User',
-  sqlTable: 'accounts', // the SQL table for this object type is called "accounts"
-  uniqueKey: 'id', // id is different for every row
-  fields: () => ({ /*...*/ })
+  extensions: {
+    joinMonster: {
+      sqlTable: 'accounts', // the SQL table for this object type is called "accounts"
+      uniqueKey: 'id' // id is different for every row
+    }
+  },
+  fields: () => ({
+    /*...*/
+  })
 })
 ```
 
@@ -20,9 +26,15 @@ If your table is on a SQL schema that is not the default, e.g. `public`, you can
 ```javascript
 const User = new GraphQLObjectType({
   name: 'User',
-  sqlTable: 'public."Accounts"', // the SQL table is on the schema "public" called "Accounts"
-  uniqueKey: 'id',
-  fields: () => ({ /*...*/ })
+  extensions: {
+    joinMonster: {
+      sqlTable: 'public."Accounts"', // the SQL table is on the schema "public" called "Accounts"
+      uniqueKey: 'id'
+    }
+  },
+  fields: () => ({
+    /*...*/
+  })
 })
 ```
 
@@ -31,9 +43,15 @@ The `sqlTable` can generalize to any **table expression**. Instead of a physical
 ```javascript
 const User = new GraphQLObjectType({
   name: 'User',
-  sqlTable: '(SELECT * FROM accounts WHERE active = 1)', // this can be an expression that generates a TABLE
-  uniqueKey: 'id',
-  fields: () => ({ /*...*/ })
+  extensions: {
+    joinMonster: {
+      sqlTable: '(SELECT * FROM accounts WHERE active = 1)', // this can be an expression that generates a TABLE
+      uniqueKey: 'id'
+    }
+  },
+  fields: () => ({
+    /*...*/
+  })
 })
 ```
 
@@ -59,8 +77,14 @@ Just make `uniqueKey` an array of string instead of a string. Join Monster will 
 ```javascript
 const User = new GraphQLObjectType({
   name: 'User',
-  sqlTable: 'accounts',
-  uniqueKey: [ 'generation', 'first_name', 'last_name' ],
-  fields: () => ({ /*...*/ })
+  extensions: {
+    joinMonster: {
+      sqlTable: 'accounts',
+      uniqueKey: ['generation', 'first_name', 'last_name']
+    }
+  },
+  fields: () => ({
+    /*...*/
+  })
 })
 ```

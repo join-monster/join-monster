@@ -1,9 +1,14 @@
+### v3.0.0 (unreleased)
+
+**Breaking changes:**
+- Update GraphQL requirement to version 15, which supports a new `extensions` property where join-monster config lives. The config keys and values are unchanged, but they must be nested under an `extensions: { joinMonster: ... }}` property on the GraphQLObjectTypes and fields using join-monster. For more information, see the upgrade guide:
+
 ### v2.1.2 (May 25, 2020)
-#### Fixed 
+#### Fixed
 - Connections inside union fragments [#407](https://github.com/join-monster/join-monster/pull/407)
 
 ### v2.1.1 (Nov. 21, 2019)
-#### Fixed 
+#### Fixed
 - Updated vulnerable version of lodash (`eed0264`)
 
 ### v2.1.0 (Aug. 25, 2018)

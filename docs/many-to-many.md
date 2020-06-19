@@ -10,15 +10,21 @@ const User = new GraphQLObjectType({
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
-      junction: {
-        // name the table that holds the two foreign keys
-        sqlTable: 'relationships',
-        sqlJoins: [
-          // first the parent table to the junction
-          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
-          // then the junction to the child
-          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
-        ]
+      extensions: {
+        joinMonster: {
+          junction: {
+            // name the table that holds the two foreign keys
+            sqlTable: 'relationships',
+            sqlJoins: [
+              // first the parent table to the junction
+              (followerTable, junctionTable, args) =>
+                `${followerTable}.id = ${junctionTable}.follower_id`,
+              // then the junction to the child
+              (junctionTable, followeeTable, args) =>
+                `${junctionTable}.followee_id = ${followeeTable}.id`
+            ]
+          }
+        }
       }
     }
   })
@@ -29,7 +35,7 @@ Now we have a self-referential, many-to-many relationship.
 
 ```grapql
 {
-  users { 
+  users {
     id
     email
     fullName
@@ -51,12 +57,18 @@ const Comment = new GraphQLObjectType({
     likers: {
       description: 'Which users have liked this comment',
       type: new GraphQLList(User),
-      junction: {
-        sqlTable: 'likes',
-        sqlJoins: [
-          (commentTable, likesTable) => `${commentTable}.id = ${likesTable}.comment_id`,
-          (likesTable, userTable) => `${likesTable}.account_id = ${userTable}.id`
-        ]
+      extensions: {
+        joinMonster: {
+          junction: {
+            sqlTable: 'likes',
+            sqlJoins: [
+              (commentTable, likesTable) =>
+                `${commentTable}.id = ${likesTable}.comment_id`,
+              (likesTable, userTable) =>
+                `${likesTable}.account_id = ${userTable}.id`
+            ]
+          }
+        }
       }
     }
   })
@@ -67,23 +79,30 @@ const Comment = new GraphQLObjectType({
 
 In a similar manner, `where` can be added to this field, and it will apply to the `accounts` table for the followees. You can also add a `where` in the `junction` object to apply a `WHERE` clause on the junction table.
 
-```javascript
+```js
 const User = new GraphQLObjectType({
   //...
   fields: () => ({
     //...
     following: {
       type: new GraphQLList(User),
-      // only get followees who's account is still active
-      where: accountTable => `${accountTable}.is_active = TRUE`,
-      junction: {
-        sqlTable: 'relationships',
-        // filter out where they are following themselves
-        where: junctionTable => `${junctionTable}.follower_id <> ${junctionTable}.followee_id`
-        sqlJoins: [
-          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
-          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
-        ]
+      extensions: {
+        joinMonster: {
+          // only get followees who's account is still active
+          where: accountTable => `${accountTable}.is_active = TRUE`,
+          junction: {
+            sqlTable: 'relationships',
+            // filter out where they are following themselves
+            where: junctionTable =>
+              `${junctionTable}.follower_id <> ${junctionTable}.followee_id`,
+            sqlJoins: [
+              (followerTable, junctionTable, args) =>
+                `${followerTable}.id = ${junctionTable}.follower_id`,
+              (junctionTable, followeeTable, args) =>
+                `${junctionTable}.followee_id = ${followeeTable}.id`
+            ]
+          }
+        }
       }
     }
   })
@@ -126,17 +145,23 @@ const User = new GraphQLObjectType({
     },
     following: {
       type: new GraphQLList(User),
-      junction: {
-        sqlTable: 'relationships',
-        include: {
-          closeness: {
-            sqlColumn: 'closeness'
+      extensions: {
+        joinMonster: {
+          junction: {
+            sqlTable: 'relationships',
+            include: {
+              closeness: {
+                sqlColumn: 'closeness'
+              }
+            },
+            sqlJoins: [
+              (followerTable, junctionTable, args) =>
+                `${followerTable}.id = ${junctionTable}.follower_id`,
+              (junctionTable, followeeTable, args) =>
+                `${junctionTable}.followee_id = ${followeeTable}.id`
+            ]
           }
-        },
-        sqlJoins: [
-          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
-          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
-        ]
+        }
       }
     }
   })
@@ -165,4 +190,3 @@ So now the query would look something like this:
 ```
 
 We've completed the schema diagram! We can theoretically resolve any GraphQL query with one SQL query! In the next section we'll see how we can batch the request different to reduce the number of joins.
-

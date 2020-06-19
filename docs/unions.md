@@ -14,24 +14,30 @@ If table `foo` has columns `a` and `b` and table `bar` has columns `a` and `c`, 
 ```js
 const FooBar = new GraphQLUnionType({
   name: 'FooBar',
-  types: [ Foo, Bar ],
-  // a derived table that combines the two tables into one via a UNION
-  sqlTable: `(
-    SELECT
-      a,
-      b,
-      NULL as c
-    FROM foo
-    UNION
-    SELECT
-      a,
-      NULL as b,
-      c
-    FROM bar
-  )`,
-  // specify unique key
-  uniqueKey: 'a',
-  resolveType: () => { /* TODO */ }
+  types: [Foo, Bar],
+  extensions: {
+    joinMonster: {
+      // a derived table that combines the two tables into one via a UNION
+      sqlTable: `(
+        SELECT
+          a,
+          b,
+          NULL as c
+        FROM foo
+        UNION
+        SELECT
+          a,
+          NULL as b,
+          c
+        FROM bar
+      )`,
+      // specify unique key
+      uniqueKey: 'a'
+    }
+  },
+  resolveType: () => {
+    /* TODO */
+  }
 })
 ```
 
@@ -49,27 +55,33 @@ We could add a computed column to guarantee a unique value. There is, however, s
 ```js
 const Authored = new GraphQLUnionType({
   name: 'Authored',
-  types: () => [ Comment, Post ],
-  sqlTable: `(
-    SELECT
-      id,
-      body,
-      author_id,
-      NULL AS post_id,  -- post has no post_id, so fill that in with NULL
-      'Post' AS "$type"
-    FROM posts
-    UNION ALL
-    SELECT
-      id,
-      body,
-      author_id,
-      post_id,
-      'Comment' AS "$type"
-    FROM comments
-  )`,
-  // the combination of `id` and `$type` will always be unique
-  uniqueKey: [ 'id', '$type' ],
-  resolveType: obj => { /* TODO */ }
+  types: () => [Comment, Post],
+  extensions: {
+    joinMonster: {
+      sqlTable: `(
+        SELECT
+          id,
+          body,
+          author_id,
+          NULL AS post_id,  -- post has no post_id, so fill that in with NULL
+          'Post' AS "$type"
+        FROM posts
+        UNION ALL
+        SELECT
+          id,
+          body,
+          author_id,
+          post_id,
+          'Comment' AS "$type"
+        FROM comments
+      )`,
+      // the combination of `id` and `$type` will always be unique
+      uniqueKey: ['id', '$type']
+    }
+  },
+  resolveType: obj => {
+    /* TODO */
+  }
 })
 ```
 
@@ -80,11 +92,15 @@ Join Monster provides an optional `alwaysFetch` property which forces that colum
 ```js
 const Authored = new GraphQLUnionType({
   name: 'Authored',
-  types: () => [ Comment, Post ],
-  sqlTable: `(...)`,
-  uniqueKey: [ 'id', '$type' ],
-  // tells join monster to always fetch the $type in the hydrated data
-  alwaysFetch: '$type',
+  types: () => [Comment, Post],
+  extensions: {
+    joinMonster: {
+      sqlTable: `(...)`,
+      uniqueKey: ['id', '$type'],
+      // tells join monster to always fetch the $type in the hydrated data
+      alwaysFetch: '$type'
+    }
+  },
   // easily gleaned from the column we added in SQL
   resolveType: obj => obj.$type
 })
@@ -98,30 +114,33 @@ This is GraphQL's other option for polymorphic types, but it has shared fields w
 Join Monster treats these nearly the same.
 The difference is that you must decorate the `fields` on the interface type defintion.
 
-
 ```js
 const Authored = new GraphQLInterfaceType({
   name: 'Authored',
-  sqlTable: `(
-    SELECT
-      id,
-      body,
-      author_id,
-      NULL AS post_id,
-      'Post' AS "$type"
-    FROM posts
-    UNION ALL
-    SELECT
-      id,
-      body,
-      author_id,
-      post_id,
-      'Comment' AS "$type"
-    FROM comments
-  )`,
-  // the combination of `id` and `$type` will always be unique
-  uniqueKey: [ 'id', '$type' ],
-  alwaysFetch: '$type',
+  extensions: {
+    joinMonster: {
+      sqlTable: `(
+        SELECT
+          id,
+          body,
+          author_id,
+          NULL AS post_id,
+          'Post' AS "$type"
+        FROM posts
+        UNION ALL
+        SELECT
+          id,
+          body,
+          author_id,
+          post_id,
+          'Comment' AS "$type"
+        FROM comments
+      )`,
+      // the combination of `id` and `$type` will always be unique
+      uniqueKey: ['id', '$type'],
+      alwaysFetch: '$type'
+    }
+  },
   fields: () => ({
     id: {
       // still assumed to have the same column name as the field name
@@ -131,9 +150,13 @@ const Authored = new GraphQLInterfaceType({
       type: GraphQLString
     },
     authorId: {
-      // but this column name is different
       type: GraphQLInt,
-      sqlColumn: 'author_id'
+      extensions: {
+        joinMonster: {
+          // but this column name is different
+          sqlColumn: 'author_id'
+        }
+      }
     }
   }),
   resolveType: obj => obj.$type
@@ -151,14 +174,19 @@ const User = new GraphQLObjectType({
     // ...
     writtenMaterial: {
       type: new GraphQLList(Authored),
-      orderBy: 'id',
-      // how to join on the derived table
-      sqlJoin: (userTable, unionTable) => `${userTable}.id = ${unionTable}.author_id`
-      // or we could have done it in a batch
-      // sqlBatch: {
-      //   thisKey: 'author_id',
-      //   parentKey: 'id'
-      // }
+      extensions: {
+        joinMonster: {
+          orderBy: 'id',
+          // how to join on the derived table
+          sqlJoin: (userTable, unionTable) =>
+            `${userTable}.id = ${unionTable}.author_id`
+          // or we could have done it in a batch
+          // sqlBatch: {
+          //   thisKey: 'author_id',
+          //   parentKey: 'id'
+          // }
+        }
+      }
     }
   })
 })

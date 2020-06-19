@@ -10,12 +10,17 @@ const User = new GraphQLObjectType({
     //...
     comments: {
       type: new GraphQLList(Comment),
-      // order these alphabetically, then by "id" if the comment body is the same
-      orderBy: {
-        body: 'asc',
-        id: 'desc'
-      },
-      sqlJoin: (userTable, commentTable, args) => `${userTable}.id = ${commentTable}.author_id`
+      extensions: {
+        joinMonster: {
+          // order these alphabetically, then by "id" if the comment body is the same
+          orderBy: {
+            body: 'asc',
+            id: 'desc'
+          },
+          sqlJoin: (userTable, commentTable, args) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      }
     }
   })
 })
@@ -25,11 +30,15 @@ const QueryRoot = new GraphQLObjectType({
   fields: () => ({
     users: {
       type: new GraphQLList(User),
-      orderBy: {
-        id: 'asc'
-      },
-      resolve: (parent, args, context, resolveInfo) => {
-        // joinMonster
+      extensions: {
+        joinMonster: {
+          orderBy: {
+            id: 'asc'
+          },
+          resolve: (parent, args, context, resolveInfo) => {
+            // joinMonster
+          }
+        }
       }
     }
   })
@@ -78,13 +87,18 @@ const User = new GraphQLObjectType({
       args: {
         by: { type: ColumnEnum }
       },
-      orderBy: args => {
-        const sortBy = args.by || 'id'
-        return {
-          [sortBy]: 'desc'
+      extensions: {
+        joinMonster: {
+          orderBy: args => {
+            const sortBy = args.by || 'id'
+            return {
+              [sortBy]: 'desc'
+            }
+          },
+          sqlJoin: (userTable, commentTable, args) =>
+            `${userTable}.id = ${commentTable}.author_id`
         }
-      },
-      sqlJoin: (userTable, commentTable, args) => `${userTable}.id = ${commentTable}.author_id`
+      }
     }
   })
 })
@@ -99,19 +113,24 @@ const User = new GraphQLObjectType({
     //...
     following: {
       type: new GraphQLList(User),
-      // order by the user id
-      orderBy: { id: 'DESC' },
-      junction: {
-        sqlTable: 'relationships',
-        // this would have been equivalent
-        //orderBy: { followee_id: 'DESC' },
-        sqlJoins: [
-          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
-          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
-        ]
+      extensions: {
+        joinMonster: {
+          // order by the user id
+          orderBy: { id: 'DESC' },
+          junction: {
+            sqlTable: 'relationships',
+            // this would have been equivalent
+            //orderBy: { followee_id: 'DESC' },
+            sqlJoins: [
+              (followerTable, junctionTable, args) =>
+                `${followerTable}.id = ${junctionTable}.follower_id`,
+              (junctionTable, followeeTable, args) =>
+                `${junctionTable}.followee_id = ${followeeTable}.id`
+            ]
+          }
+        }
       }
     }
   })
 })
 ```
-
