@@ -5,7 +5,13 @@ import { getArgumentValues } from 'graphql/execution/values'
 import idx from 'idx'
 
 import AliasNamespace from '../alias-namespace'
-import { wrap, ensure, unthunk, inspect } from '../util'
+import {
+  wrap,
+  ensure,
+  unthunk,
+  inspect,
+  getConfigFromSchemaObject
+} from '../util'
 
 class SQLASTNode {
   constructor(parentNode, props) {
@@ -129,15 +135,24 @@ export function populateASTNode(
   let fieldIncludes
   if (idx(sqlASTNode, _ => _.parent.junction.include[fieldName])) {
     fieldIncludes = sqlASTNode.parent.junction.include[fieldName]
+
     field = {
       ...field,
-      ...fieldIncludes
+      extensions: {
+        ...(field.extensions || {}),
+        joinMonster: {
+          ...getConfigFromSchemaObject(field),
+          ...fieldIncludes
+        }
+      }
     }
     sqlASTNode.fromOtherTable = sqlASTNode.parent.junction.as
   }
 
+  const fieldConfig = getConfigFromSchemaObject(field)
+
   // allow for explicit ignoring of fields
-  if (field.jmIgnoreAll) {
+  if (fieldConfig.ignoreAll) {
     sqlASTNode.type = 'noop'
     return
   }
@@ -168,34 +183,34 @@ export function populateASTNode(
     gqlType = stripNonNullType(stripped.gqlType)
     queryASTNode = stripped.queryASTNode
     // we'll set a flag for pagination.
-    if (field.sqlPaginate) {
+    if (fieldConfig.sqlPaginate) {
       sqlASTNode.paginate = true
     }
-  } else if (field.sqlPaginate) {
+  } else if (fieldConfig.sqlPaginate) {
     throw new Error(
       `To paginate the ${gqlType.name} type, it must be a GraphQLObjectType that fulfills the relay spec.
       The type must have a "pageInfo" and "edges" field. https://facebook.github.io/relay/graphql/connections.htm`
     )
   }
-  // the typeConfig has all the keyes from the GraphQLObjectType definition
-  const config = gqlType._typeConfig
+  const config = getConfigFromSchemaObject(gqlType)
 
   // is this a table in SQL?
   if (
-    !field.jmIgnoreTable &&
+    !fieldConfig.ignoreTable &&
     TABLE_TYPES.includes(gqlType.constructor.name) &&
     config.sqlTable
   ) {
     if (depth >= 1) {
       assert(
-        !field.junctionTable,
+        !fieldConfig.junctionTable,
         '"junctionTable" has been replaced with a new API.'
       )
       assert(
-        field.sqlJoin || field.sqlBatch || field.junction,
+        fieldConfig.sqlJoin || fieldConfig.sqlBatch || fieldConfig.junction,
         `If an Object type maps to a SQL table and has a child which is another Object type that also maps to a SQL table,
-        you must define "sqlJoin", "sqlBatch", or "junction" on that field to tell joinMonster how to fetch it.
-        Or you can ignore it with "jmIgnoreTable". Check the "${fieldName}" field on the "${parentTypeNode.name}" type.`
+        you must define "sqlJoin", "sqlBatch", or "junction" on that field's extensions to tell joinMonster how to fetch it.
+        Or you can ignore it with "ignoreTable".
+        Check the extensions.joinMonster property of "${fieldName}" field on the "${parentTypeNode.name}" type.`
       )
     }
     handleTable.call(
@@ -211,27 +226,27 @@ export function populateASTNode(
       context
     )
     // is this a computed column from a raw expression?
-  } else if (field.sqlExpr) {
+  } else if (fieldConfig.sqlExpr) {
     sqlASTNode.type = 'expression'
-    sqlASTNode.sqlExpr = field.sqlExpr
+    sqlASTNode.sqlExpr = fieldConfig.sqlExpr
     let aliasFrom = (sqlASTNode.fieldName = field.name)
     if (sqlASTNode.defferedFrom) {
       aliasFrom += '@' + parentTypeNode.name
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom)
     // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
-  } else if (field.sqlColumn || !field.resolve) {
+  } else if (fieldConfig.sqlColumn || !field.resolve) {
     sqlASTNode.type = 'column'
-    sqlASTNode.name = field.sqlColumn || field.name
+    sqlASTNode.name = fieldConfig.sqlColumn || field.name
     let aliasFrom = (sqlASTNode.fieldName = field.name)
     if (sqlASTNode.defferedFrom) {
       aliasFrom += '@' + parentTypeNode.name
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom)
     // or maybe it just depends on some SQL columns
-  } else if (field.sqlDeps) {
+  } else if (fieldConfig.sqlDeps) {
     sqlASTNode.type = 'columnDeps'
-    sqlASTNode.names = field.sqlDeps
+    sqlASTNode.names = fieldConfig.sqlDeps
     // maybe this node wants no business with your SQL, because it has its own resolver
   } else {
     sqlASTNode.type = 'noop'
@@ -249,7 +264,8 @@ function handleTable(
   options,
   context
 ) {
-  const config = gqlType._typeConfig
+  const config = getConfigFromSchemaObject(gqlType)
+  const fieldConfig = getConfigFromSchemaObject(field)
 
   sqlASTNode.type = 'table'
   const sqlTable = unthunk(config.sqlTable, sqlASTNode.args || {}, context)
@@ -259,9 +275,9 @@ function handleTable(
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
 
-  if (field.orderBy && !sqlASTNode.orderBy) {
+  if (fieldConfig.orderBy && !sqlASTNode.orderBy) {
     sqlASTNode.orderBy = handleOrderBy(
-      unthunk(field.orderBy, sqlASTNode.args || {}, context)
+      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
     )
   }
 
@@ -271,8 +287,8 @@ function handleTable(
   sqlASTNode.fieldName = field.name
   sqlASTNode.grabMany = grabMany
 
-  if (field.where) {
-    sqlASTNode.where = field.where
+  if (fieldConfig.where) {
+    sqlASTNode.where = fieldConfig.where
   }
 
   /*
@@ -281,12 +297,12 @@ function handleTable(
    */
 
   // are they doing a one-to-many sql join?
-  if (field.sqlJoin) {
-    sqlASTNode.sqlJoin = field.sqlJoin
+  if (fieldConfig.sqlJoin) {
+    sqlASTNode.sqlJoin = fieldConfig.sqlJoin
     // or a many-to-many?
-  } else if (field.junction) {
+  } else if (fieldConfig.junction) {
     const junctionTable = unthunk(
-      ensure(field.junction, 'sqlTable'),
+      ensure(fieldConfig.junction, 'sqlTable'),
       sqlASTNode.args || {},
       context
     )
@@ -294,42 +310,42 @@ function handleTable(
       sqlTable: junctionTable,
       as: namespace.generate('table', junctionTable)
     })
-    if (field.junction.include) {
+    if (fieldConfig.junction.include) {
       junction.include = unthunk(
-        field.junction.include,
+        fieldConfig.junction.include,
         sqlASTNode.args || {},
         context
       )
     }
 
-    if (field.junction.orderBy) {
+    if (fieldConfig.junction.orderBy) {
       junction.orderBy = handleOrderBy(
-        unthunk(field.junction.orderBy, sqlASTNode.args || {}, context)
+        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
       )
     }
 
-    if (field.junction.where) {
-      junction.where = field.junction.where
+    if (fieldConfig.junction.where) {
+      junction.where = fieldConfig.junction.where
     }
     // are they joining or batching?
-    if (field.junction.sqlJoins) {
-      junction.sqlJoins = field.junction.sqlJoins
-    } else if (field.junction.sqlBatch) {
+    if (fieldConfig.junction.sqlJoins) {
+      junction.sqlJoins = fieldConfig.junction.sqlJoins
+    } else if (fieldConfig.junction.sqlBatch) {
       children.push({
-        ...keyToASTChild(ensure(field.junction, 'uniqueKey'), namespace),
+        ...keyToASTChild(ensure(fieldConfig.junction, 'uniqueKey'), namespace),
         fromOtherTable: junction.as
       })
       junction.sqlBatch = {
-        sqlJoin: ensure(field.junction.sqlBatch, 'sqlJoin'),
+        sqlJoin: ensure(fieldConfig.junction.sqlBatch, 'sqlJoin'),
         thisKey: {
           ...columnToASTChild(
-            ensure(field.junction.sqlBatch, 'thisKey'),
+            ensure(fieldConfig.junction.sqlBatch, 'thisKey'),
             namespace
           ),
           fromOtherTable: junction.as
         },
         parentKey: columnToASTChild(
-          ensure(field.junction.sqlBatch, 'parentKey'),
+          ensure(fieldConfig.junction.sqlBatch, 'parentKey'),
           namespace
         )
       }
@@ -337,19 +353,26 @@ function handleTable(
       throw new Error('junction requires either a `sqlJoins` or `sqlBatch`')
     }
     // or are they doing a one-to-many with batching
-  } else if (field.sqlBatch) {
+  } else if (fieldConfig.sqlBatch) {
     sqlASTNode.sqlBatch = {
-      thisKey: columnToASTChild(ensure(field.sqlBatch, 'thisKey'), namespace),
+      thisKey: columnToASTChild(
+        ensure(fieldConfig.sqlBatch, 'thisKey'),
+        namespace
+      ),
       parentKey: columnToASTChild(
-        ensure(field.sqlBatch, 'parentKey'),
+        ensure(fieldConfig.sqlBatch, 'parentKey'),
         namespace
       )
     }
   }
 
-  if (field.limit) {
-    assert(field.orderBy, '`orderBy` is required with `limit`')
-    sqlASTNode.limit = unthunk(field.limit, sqlASTNode.args || {}, context)
+  if (fieldConfig.limit) {
+    assert(fieldConfig.orderBy, '`orderBy` is required with `limit`')
+    sqlASTNode.limit = unthunk(
+      fieldConfig.limit,
+      sqlASTNode.args || {},
+      context
+    )
   }
 
   if (sqlASTNode.paginate) {
@@ -793,25 +816,31 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
 }
 
 function getSortColumns(field, sqlASTNode, context) {
-  if (field.sortKey) {
-    sqlASTNode.sortKey = unthunk(field.sortKey, sqlASTNode.args || {}, context)
-  }
-  if (field.orderBy) {
-    sqlASTNode.orderBy = handleOrderBy(
-      unthunk(field.orderBy, sqlASTNode.args || {}, context)
+  const fieldConfig = getConfigFromSchemaObject(field)
+
+  if (fieldConfig.sortKey) {
+    sqlASTNode.sortKey = unthunk(
+      fieldConfig.sortKey,
+      sqlASTNode.args || {},
+      context
     )
   }
-  if (field.junction) {
-    if (field.junction.sortKey) {
+  if (fieldConfig.orderBy) {
+    sqlASTNode.orderBy = handleOrderBy(
+      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
+    )
+  }
+  if (fieldConfig.junction) {
+    if (fieldConfig.junction.sortKey) {
       sqlASTNode.junction.sortKey = unthunk(
-        field.junction.sortKey,
+        fieldConfig.junction.sortKey,
         sqlASTNode.args || {},
         context
       )
     }
-    if (field.junction.orderBy) {
+    if (fieldConfig.junction.orderBy) {
       sqlASTNode.junction.orderBy = handleOrderBy(
-        unthunk(field.junction.orderBy, sqlASTNode.args || {}, context)
+        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
       )
     }
   }

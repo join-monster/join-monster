@@ -54,9 +54,13 @@ export default new GraphQLObjectType({
       args: {
         ids: { type: new GraphQLList(GraphQLInt) }
       },
-      where: (table, args) =>
-        args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
-      orderBy: 'id',
+      extensions: {
+        joinMonster: {
+          where: (table, args) =>
+            args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
+          orderBy: 'id'
+        }
+      },
       resolve: async (parent, args, context, resolveInfo) => {
         return joinMonster(
           resolveInfo,
@@ -82,15 +86,21 @@ export default new GraphQLObjectType({
           type: GraphQLInt
         }
       },
-      where: (usersTable, args, context) => {
-        // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
-        if (args.idEncoded)
-          return `${usersTable}.${q('id', DB)} = ${fromBase64(args.idEncoded)}`
-        if (args.idAsync)
-          return Promise.resolve(
-            `${usersTable}.${q('id', DB)} = ${args.idAsync}`
-          )
+      extensions: {
+        joinMonster: {
+          where: (usersTable, args, context) => {
+            // eslint-disable-line no-unused-vars
+            if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
+            if (args.idEncoded)
+              return `${usersTable}.${q('id', DB)} = ${fromBase64(
+                args.idEncoded
+              )}`
+            if (args.idAsync)
+              return Promise.resolve(
+                `${usersTable}.${q('id', DB)} = ${args.idAsync}`
+              )
+          }
+        }
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(
@@ -109,10 +119,14 @@ export default new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
-      where: (sponsorsTable, args, context) => {
-        // eslint-disable-line no-unused-vars
-        if (args.filterLegless)
-          return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
+      extensions: {
+        joinMonster: {
+          where: (sponsorsTable, args, context) => {
+            // eslint-disable-line no-unused-vars
+            if (args.filterLegless)
+              return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
+          }
+        }
       },
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time

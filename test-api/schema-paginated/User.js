@@ -27,23 +27,39 @@ const { PAGINATE, STRATEGY, DB } = process.env
 const User = new GraphQLObjectType({
   description: 'a stem contract account',
   name: 'User',
-  sqlTable: `(SELECT * FROM ${q('accounts', DB)})`,
-  uniqueKey: 'id',
+  extensions: {
+    joinMonster: {
+      sqlTable: `(SELECT * FROM ${q('accounts', DB)})`,
+      uniqueKey: 'id'
+    }
+  },
   interfaces: [nodeInterface],
   fields: () => ({
     id: {
       description: 'The global ID for the Relay spec',
       ...globalIdField('User'),
-      sqlDeps: ['id']
+      extensions: {
+        joinMonster: {
+          sqlDeps: ['id']
+        }
+      }
     },
     email: {
       type: GraphQLString,
-      sqlColumn: 'email_address'
+      extensions: {
+        joinMonster: {
+          sqlColumn: 'email_address'
+        }
+      }
     },
     fullName: {
       description: "A user's first and last name",
       type: GraphQLString,
-      sqlDeps: ['first_name', 'last_name'],
+      extensions: {
+        joinMonster: {
+          sqlDeps: ['first_name', 'last_name']
+        }
+      },
       resolve: user => `${user.first_name} ${user.last_name}`
     },
     comments: {
@@ -53,74 +69,84 @@ const User = new GraphQLObjectType({
         active: { type: GraphQLBoolean },
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
-      sqlPaginate: !!PAGINATE,
-      ...do {
-        if (PAGINATE === 'offset') {
-          ;({ orderBy: 'id' })
-        } else if (PAGINATE === 'keyset') {
-          ;({
-            sortKey: {
-              order: 'desc',
-              key: 'id'
+      resolve: PAGINATE
+        ? undefined
+        : (user, args) => {
+            user.comments.sort((a, b) => a.id - b.id)
+            return connectionFromArray(user.comments, args)
+          },
+      extensions: {
+        joinMonster: {
+          sqlPaginate: !!PAGINATE,
+          ...do {
+            if (PAGINATE === 'offset') {
+              ;({ orderBy: 'id' })
+            } else if (PAGINATE === 'keyset') {
+              ;({
+                sortKey: {
+                  order: 'desc',
+                  key: 'id'
+                }
+              })
+            } else {
+              {
+              }
             }
-          })
-        } else {
-          ;({
-            resolve: (user, args) => {
-              user.comments.sort((a, b) => a.id - b.id)
-              return connectionFromArray(user.comments, args)
+          },
+          ...do {
+            if (STRATEGY === 'batch' || STRATEGY === 'mix') {
+              ;({
+                sqlBatch: {
+                  thisKey: 'author_id',
+                  parentKey: 'id'
+                },
+                where: (table, args) =>
+                  args.active
+                    ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
+                    : null
+              })
+            } else {
+              ;({
+                sqlJoin: (userTable, commentTable, args) =>
+                  `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
+                    'id',
+                    DB
+                  )} ${
+                    args.active
+                      ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
+                          false,
+                          DB
+                        )}`
+                      : ''
+                  }`
+              })
             }
-          })
-        }
-      },
-      ...do {
-        if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-          ;({
-            sqlBatch: {
-              thisKey: 'author_id',
-              parentKey: 'id'
-            },
-            where: (table, args) =>
-              args.active
-                ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
-                : null
-          })
-        } else {
-          ;({
-            sqlJoin: (userTable, commentTable, args) =>
-              `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
-                'id',
-                DB
-              )} ${
-                args.active
-                  ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
-                      false,
-                      DB
-                    )}`
-                  : ''
-              }`
-          })
+          }
         }
       }
     },
     commentsLast2: {
       type: new GraphQLList(Comment),
-      orderBy: { id: 'desc' },
-      limit: () => 2,
-      ...(STRATEGY === 'batch'
-        ? {
-            sqlBatch: {
-              thisKey: 'author_id',
-              parentKey: 'id'
-            }
-          }
-        : {
-            sqlJoin: (userTable, commentTable) =>
-              `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
-                'id',
-                DB
-              )}`
-          })
+      extensions: {
+        joinMonster: {
+          orderBy: { id: 'desc' },
+          limit: () => 2,
+          ...(STRATEGY === 'batch'
+            ? {
+                sqlBatch: {
+                  thisKey: 'author_id',
+                  parentKey: 'id'
+                }
+              }
+            : {
+                sqlJoin: (userTable, commentTable) =>
+                  `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
+                    'id',
+                    DB
+                  )}`
+              })
+        }
+      }
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -129,52 +155,61 @@ const User = new GraphQLObjectType({
         search: { type: GraphQLString },
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
-      sqlPaginate: !!PAGINATE,
-      ...do {
-        if (PAGINATE === 'offset') {
-          ;({
-            orderBy: args => ({
-              // eslint-disable-line no-unused-vars
-              created_at: 'desc',
-              id: 'asc'
-            })
-          })
-        } else if (PAGINATE === 'keyset') {
-          ;({
-            sortKey: args => ({
-              // eslint-disable-line no-unused-vars
-              order: 'desc',
-              key: ['created_at', 'id']
-            })
-          })
-        } else {
-          ;({
-            resolve: (user, args) => {
-              user.posts.sort((a, b) => a.id - b.id)
-              return connectionFromArray(user.posts, args)
+      resolve: PAGINATE
+        ? undefined
+        : (user, args) => {
+            user.posts.sort((a, b) => a.id - b.id)
+            return connectionFromArray(user.posts, args)
+          },
+      extensions: {
+        joinMonster: {
+          sqlPaginate: !!PAGINATE,
+          ...do {
+            if (PAGINATE === 'offset') {
+              ;({
+                orderBy: args => ({
+                  // eslint-disable-line no-unused-vars
+                  created_at: 'desc',
+                  id: 'asc'
+                })
+              })
+            } else if (PAGINATE === 'keyset') {
+              ;({
+                sortKey: args => ({
+                  // eslint-disable-line no-unused-vars
+                  order: 'desc',
+                  key: ['created_at', 'id']
+                })
+              })
+            } else {
+              {
+              }
             }
-          })
-        }
-      },
-      where: (table, args) => {
-        if (args.search)
-          return `lower(${table}.${q('body', DB)}) LIKE lower('%${
-            args.search
-          }%')`
-      },
-      ...do {
-        if (STRATEGY === 'batch') {
-          ;({
-            sqlBatch: {
-              thisKey: 'author_id',
-              parentKey: 'id'
+          },
+          where: (table, args) => {
+            if (args.search)
+              return `lower(${table}.${q('body', DB)}) LIKE lower('%${
+                args.search
+              }%')`
+          },
+          ...do {
+            if (STRATEGY === 'batch') {
+              ;({
+                sqlBatch: {
+                  thisKey: 'author_id',
+                  parentKey: 'id'
+                }
+              })
+            } else {
+              ;({
+                sqlJoin: (userTable, postTable) =>
+                  `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
+                    'id',
+                    DB
+                  )}`
+              })
             }
-          })
-        } else {
-          ;({
-            sqlJoin: (userTable, postTable) =>
-              `${postTable}.${q('author_id', DB)} = ${userTable}.${q('id', DB)}`
-          })
+          }
         }
       }
     },
@@ -186,148 +221,158 @@ const User = new GraphQLObjectType({
         intimacy: { type: IntimacyLevel },
         sortOnMain: { type: GraphQLBoolean }
       },
-      where: table => `${table}.${q('email_address', DB)} IS NOT NULL`,
-      sqlPaginate: !!PAGINATE,
-      ...do {
-        if (PAGINATE === 'offset') {
-          ;({
-            orderBy: args =>
-              args.sortOnMain
-                ? {
-                    created_at: 'ASC',
-                    id: 'ASC'
-                  }
-                : null
-          })
-        } else if (PAGINATE === 'keyset') {
-          ;({
-            sortKey: args =>
-              args.sortOnMain
-                ? {
-                    order: 'ASC',
-                    key: ['created_at', 'id']
-                  }
-                : null
-          })
-        } else {
-          ;({
-            resolve: (user, args) => {
-              return connectionFromArray(user.following, args)
-            }
-          })
-        }
-      },
-      junction: {
-        sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
-        where: (table, args) =>
-          args.intimacy
-            ? `${table}.${q('closeness', DB)} = '${args.intimacy}'`
-            : null,
-        include: {
-          friendship: {
-            sqlColumn: 'closeness',
-            jmIgnoreAll: false
+      resolve: PAGINATE
+        ? undefined
+        : (user, args) => {
+            return connectionFromArray(user.following, args)
           },
-          intimacy: {
-            sqlExpr: table => `${table}.${q('closeness', DB)}`,
-            jmIgnoreAll: false
-          },
-          closeness: {
-            sqlDeps: ['closeness'],
-            jmIgnoreAll: false
-          }
-        },
-        ...do {
-          if (PAGINATE === 'offset') {
-            ;({
-              orderBy: args =>
-                args.sortOnMain
-                  ? null
-                  : {
-                      created_at: 'DESC',
-                      followee_id: 'ASC'
-                    }
-            })
-          } else if (PAGINATE === 'keyset') {
-            ;({
-              sortKey: args =>
-                args.sortOnMain
-                  ? null
-                  : {
-                      order: 'ASC',
-                      key: ['created_at', 'followee_id']
-                    }
-            })
-          }
-        },
-        ...do {
-          if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-            ;({
-              uniqueKey: ['follower_id', 'followee_id'],
-              sqlBatch: {
-                thisKey: 'follower_id',
-                parentKey: 'id',
-                sqlJoin: (relationTable, followeeTable) =>
-                  `${relationTable}.${q(
-                    'followee_id',
-                    DB
-                  )} = ${followeeTable}.${q('id', DB)}`
+      extensions: {
+        joinMonster: {
+          where: table => `${table}.${q('email_address', DB)} IS NOT NULL`,
+          sqlPaginate: !!PAGINATE,
+          ...do {
+            if (PAGINATE === 'offset') {
+              ;({
+                orderBy: args =>
+                  args.sortOnMain
+                    ? {
+                        created_at: 'ASC',
+                        id: 'ASC'
+                      }
+                    : null
+              })
+            } else if (PAGINATE === 'keyset') {
+              ;({
+                sortKey: args =>
+                  args.sortOnMain
+                    ? {
+                        order: 'ASC',
+                        key: ['created_at', 'id']
+                      }
+                    : null
+              })
+            } else {
+              {
               }
-            })
-          } else {
-            ;({
-              sqlJoins: [
-                (followerTable, relationTable) =>
-                  `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
-                    'follower_id',
-                    DB
-                  )}`,
-                (relationTable, followeeTable) =>
-                  `${relationTable}.${q(
-                    'followee_id',
-                    DB
-                  )} = ${followeeTable}.${q('id', DB)}`
-              ]
-            })
+            }
+          },
+          junction: {
+            sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
+            where: (table, args) =>
+              args.intimacy
+                ? `${table}.${q('closeness', DB)} = '${args.intimacy}'`
+                : null,
+            include: {
+              friendship: {
+                sqlColumn: 'closeness',
+                ignoreAll: false
+              },
+              intimacy: {
+                sqlExpr: table => `${table}.${q('closeness', DB)}`,
+                ignoreAll: false
+              },
+              closeness: {
+                sqlDeps: ['closeness'],
+                ignoreAll: false
+              }
+            },
+            ...do {
+              if (PAGINATE === 'offset') {
+                ;({
+                  orderBy: args =>
+                    args.sortOnMain
+                      ? null
+                      : {
+                          created_at: 'DESC',
+                          followee_id: 'ASC'
+                        }
+                })
+              } else if (PAGINATE === 'keyset') {
+                ;({
+                  sortKey: args =>
+                    args.sortOnMain
+                      ? null
+                      : {
+                          order: 'ASC',
+                          key: ['created_at', 'followee_id']
+                        }
+                })
+              }
+            },
+            ...do {
+              if (STRATEGY === 'batch' || STRATEGY === 'mix') {
+                ;({
+                  uniqueKey: ['follower_id', 'followee_id'],
+                  sqlBatch: {
+                    thisKey: 'follower_id',
+                    parentKey: 'id',
+                    sqlJoin: (relationTable, followeeTable) =>
+                      `${relationTable}.${q(
+                        'followee_id',
+                        DB
+                      )} = ${followeeTable}.${q('id', DB)}`
+                  }
+                })
+              } else {
+                ;({
+                  sqlJoins: [
+                    (followerTable, relationTable) =>
+                      `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
+                        'follower_id',
+                        DB
+                      )}`,
+                    (relationTable, followeeTable) =>
+                      `${relationTable}.${q(
+                        'followee_id',
+                        DB
+                      )} = ${followeeTable}.${q('id', DB)}`
+                  ]
+                })
+              }
+            }
           }
         }
       }
     },
     followingFirst: {
       type: new GraphQLList(User),
-      limit: 1,
-      orderBy: 'followee_id',
-      junction: {
-        sqlTable: q('relationships', DB),
-        ...do {
-          if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-            ;({
-              uniqueKey: ['follower_id', 'followee_id'],
-              sqlBatch: {
-                thisKey: 'follower_id',
-                parentKey: 'id',
-                sqlJoin: (relationTable, followeeTable) =>
-                  `${relationTable}.${q(
-                    'followee_id',
-                    DB
-                  )} = ${followeeTable}.${q('id', DB)}`
+      extensions: {
+        joinMonster: {
+          limit: 1,
+          orderBy: 'followee_id',
+          junction: {
+            sqlTable: q('relationships', DB),
+            ...do {
+              if (STRATEGY === 'batch' || STRATEGY === 'mix') {
+                ;({
+                  uniqueKey: ['follower_id', 'followee_id'],
+                  sqlBatch: {
+                    thisKey: 'follower_id',
+                    parentKey: 'id',
+                    sqlJoin: (relationTable, followeeTable) =>
+                      `${relationTable}.${q(
+                        'followee_id',
+                        DB
+                      )} = ${followeeTable}.${q('id', DB)}`
+                  }
+                })
+              } else {
+                ;({
+                  sqlJoins: [
+                    (followerTable, relationTable) =>
+                      `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
+                        'follower_id',
+                        DB
+                      )}`,
+                    (relationTable, followeeTable) =>
+                      `${relationTable}.${q(
+                        'followee_id',
+                        DB
+                      )} = ${followeeTable}.${q('id', DB)}`
+                  ]
+                })
               }
-            })
-          } else {
-            ;({
-              sqlJoins: [
-                (followerTable, relationTable) =>
-                  `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
-                    'follower_id',
-                    DB
-                  )}`,
-                (relationTable, followeeTable) =>
-                  `${relationTable}.${q(
-                    'followee_id',
-                    DB
-                  )} = ${followeeTable}.${q('id', DB)}`
-              ]
-            })
+            }
           }
         }
       }
@@ -335,57 +380,75 @@ const User = new GraphQLObjectType({
     writtenMaterial: {
       type: AuthoredConnection,
       args: PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs,
-      sqlPaginate: !!PAGINATE,
-      ...do {
-        if (PAGINATE === 'offset') {
-          ;({
-            orderBy: {
-              id: 'ASC',
-              created_at: 'ASC'
+      resolve: PAGINATE
+        ? undefined
+        : (user, args) => {
+            return connectionFromArray(user.following, args)
+          },
+      extensions: {
+        joinMonster: {
+          sqlPaginate: !!PAGINATE,
+          ...do {
+            if (PAGINATE === 'offset') {
+              ;({
+                orderBy: {
+                  id: 'ASC',
+                  created_at: 'ASC'
+                }
+              })
+            } else if (PAGINATE === 'keyset') {
+              ;({
+                sortKey: {
+                  order: 'ASC',
+                  key: ['id', 'created_at']
+                }
+              })
+            } else {
+              ;({
+                orderBy: 'id'
+              })
             }
-          })
-        } else if (PAGINATE === 'keyset') {
-          ;({
-            sortKey: {
-              order: 'ASC',
-              key: ['id', 'created_at']
-            }
-          })
-        } else {
-          ;({
-            orderBy: 'id',
-            resolve: (user, args) => {
-              return connectionFromArray(user.following, args)
-            }
-          })
+          },
+          ...(STRATEGY === 'batch'
+            ? {
+                sqlBatch: {
+                  thisKey: 'author_id',
+                  parentKey: 'id'
+                }
+              }
+            : {
+                sqlJoin: (userTable, unionTable) =>
+                  `${userTable}.${q('id', DB)} = ${unionTable}.${q(
+                    'author_id',
+                    DB
+                  )}`
+              })
         }
-      },
-      ...(STRATEGY === 'batch'
-        ? {
-            sqlBatch: {
-              thisKey: 'author_id',
-              parentKey: 'id'
-            }
-          }
-        : {
-            sqlJoin: (userTable, unionTable) =>
-              `${userTable}.${q('id', DB)} = ${unionTable}.${q(
-                'author_id',
-                DB
-              )}`
-          })
+      }
     },
     friendship: {
       type: GraphQLString,
-      jmIgnoreAll: true
+      extensions: {
+        joinMonster: {
+          ignoreAll: true
+        }
+      }
     },
     intimacy: {
       type: GraphQLString,
-      jmIgnoreAll: true
+      extensions: {
+        joinMonster: {
+          ignoreAll: true
+        }
+      }
     },
     closeness: {
       type: GraphQLString,
-      jmIgnoreAll: true
+      extensions: {
+        joinMonster: {
+          ignoreAll: true
+        }
+      }
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),
@@ -394,12 +457,20 @@ const User = new GraphQLObjectType({
     numLegs: {
       description: 'How many legs this user has',
       type: GraphQLInt,
-      sqlColumn: 'num_legs'
+      extensions: {
+        joinMonster: {
+          sqlColumn: 'num_legs'
+        }
+      }
     },
     numFeet: {
       description: 'How many feet this user has',
       type: GraphQLInt,
-      sqlDeps: ['num_legs'],
+      extensions: {
+        joinMonster: {
+          sqlDeps: ['num_legs']
+        }
+      },
       resolve: user => user.num_legs
     }
   })
