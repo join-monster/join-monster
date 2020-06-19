@@ -24,6 +24,7 @@
     "coverage": "nyc --reporter=html npm run test",
     "view-coverage": "open coverage/index.html",
     "lint": "eslint src test",
+    "prettier": "prettier --write src/**/*.js test/**/*.js test-api/**/*.js",
     "start": "babel-watch ./test-api/server.js",
     "docs": "mkdocs serve",
     "jsdoc": "babel src/index.js -o temp.js && (jsdoc2md temp.js | sed '/\\*\\*Kind\\*\\*:/d' > docs/API.md) && rm temp.js",
