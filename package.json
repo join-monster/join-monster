@@ -83,6 +83,7 @@
     "@babel/preset-env": "^7.9.6",
     "@babel/register": "^7.9.0",
     "ava": "^3.8.2",
+    "babel-eslint": "^10.1.0",
     "babel-plugin-idx": "^2.4.0",
     "babel-watch": "^7.0.0",
     "dotenv": "8.2.0",
