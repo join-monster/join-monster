@@ -21,6 +21,7 @@
     "testoracle-paging": "NODE_ENV=test DB=ORACLE PAGINATE=offset ava test/pagination/offset-paging.js && NODE_ENV=test DB=ORACLE PAGINATE=keyset ava test/pagination/keyset-paging.js",
     "testmysql": "NODE_ENV=test DB=MYSQL ava test/*.js",
     "testmysql-paging": "NODE_ENV=test DB=MYSQL PAGINATE=offset ava test/pagination/offset-paging.js && NODE_ENV=test DB=MYSQL PAGINATE=keyset ava test/pagination/keyset-paging.js",
+    "testtsd": "npm run build && tsd",
     "coverage": "nyc --reporter=html npm run test",
     "view-coverage": "open coverage/index.html",
     "lint": "eslint src test",
@@ -108,7 +109,8 @@
     "nyc": "^15.0.1",
     "pg": "^8.2.1",
     "sinon": "^9.0.2",
-    "sqlite3": "^4.2.0"
+    "sqlite3": "^4.2.0",
+    "tsd": "^0.13.1"
   },
   "dependencies": {
     "@stem/nesthydrationjs": "0.4.0",

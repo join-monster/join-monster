@@ -34,9 +34,11 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
   junction?: {
     include?: ThunkWithArgsCtx<
       {
-        sqlColumn?: string
-        sqlExpr?: string
-        sqlDeps?: string | string[]
+        [column: string]: {
+          sqlColumn?: string
+          sqlExpr?: string
+          sqlDeps?: string | string[]
+        }
       },
       TContext,
       TArgs
@@ -58,9 +60,9 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
     sqlJoins?: [SqlJoin<TContext, TArgs>, SqlJoin<TContext, TArgs>]
     sqlTable: ThunkWithArgsCtx<string, TContext, TArgs>
     uniqueKey?: string | string[]
-    where?: Where<any, TArgs>
+    where?: Where<TContext, TArgs>
   }
-  limit?: ThunkWithArgsCtx<number, any, TContext>
+  limit?: ThunkWithArgsCtx<number, TContext, TArgs>
   orderBy?: ThunkWithArgsCtx<OrderBy, TContext, TArgs>
   sortKey?: ThunkWithArgsCtx<
     {
