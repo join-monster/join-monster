@@ -175,11 +175,11 @@ const User = new GraphQLObjectType({
               })
             } else if (PAGINATE === 'keyset') {
               ;({
-                sortKey: args => ({
+                sortKey: args => [
                   // eslint-disable-line no-unused-vars
-                  order: 'desc',
-                  key: ['created_at', 'id']
-                })
+                  { direction: 'desc', column: 'created_at' },
+                  { direction: 'desc', column: 'id' }
+                ]
               })
             } else {
               {
@@ -292,10 +292,10 @@ const User = new GraphQLObjectType({
                   sortKey: args =>
                     args.sortOnMain
                       ? null
-                      : {
-                          order: 'ASC',
-                          key: ['created_at', 'followee_id']
-                        }
+                      : [
+                          { direction: 'ASC', column: 'created_at' },
+                          { direction: 'ASC', column: 'followee_id' }
+                        ]
                 })
               }
             },

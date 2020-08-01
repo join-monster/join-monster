@@ -2,10 +2,11 @@ import assert from 'assert'
 import { filter } from 'lodash'
 import idx from 'idx'
 
-import { validateSqlAST, inspect, wrap } from '../util'
+import { validateSqlAST, inspect } from '../util'
 import {
   joinPrefix,
   thisIsNotTheEndOfThisBatch,
+  sortKeyToOrderings,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
 
@@ -242,13 +243,13 @@ async function handleTable(
     if (idx(node, _ => _.junction.sortKey)) {
       orders.push({
         table: node.junction.as,
-        columns: sortKeyToOrderColumns(node.junction.sortKey, node.args)
+        columns: sortKeyToOrderings(node.junction.sortKey, node.args)
       })
     }
     if (node.sortKey) {
       orders.push({
         table: node.as,
-        columns: sortKeyToOrderColumns(node.sortKey, node.args)
+        columns: sortKeyToOrderings(node.sortKey, node.args)
       })
     }
   }
@@ -443,16 +444,4 @@ function stringifyOuterOrder(orders, q) {
     }
   }
   return conditions.join(', ')
-}
-
-function sortKeyToOrderColumns(sortKey, args) {
-  let descending = sortKey.order.toUpperCase() === 'DESC'
-  if (args && args.last) {
-    descending = !descending
-  }
-  const orderings = []
-  for (let column of wrap(sortKey.key)) {
-    orderings.push({ column, direction: descending ? 'DESC' : 'ASC' })
-  }
-  return orderings
 }

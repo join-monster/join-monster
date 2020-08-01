@@ -1,3 +1,4 @@
+import assert from 'assert'
 import { filter } from 'lodash'
 import { cursorToOffset } from 'graphql-relay'
 import { wrap, cursorToObj, maybeQuote } from '../util'
@@ -40,6 +41,38 @@ export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(
   )
 }
 
+export function sortKeyToOrderings(sortKey, args) {
+  const orderColumns = []
+  let flip = false
+  // flip the sort order if doing backwards paging
+  if (args && args.last) {
+    flip = true
+  }
+
+  if (Array.isArray(sortKey)) {
+    for (const { column, direction } of sortKey) {
+      assert(
+        column,
+        `Each "sortKey" array entry must have a 'column' and a 'direction' property`
+      )
+      let descending = direction.toUpperCase() === 'DESC'
+      if (flip) descending = !descending
+
+      orderColumns.push({ column, direction: descending ? 'DESC' : 'ASC' })
+    }
+  } else {
+    assert(sortKey.order, 'A "sortKey" object must have an "order"')
+    let descending = sortKey.order.toUpperCase() === 'DESC'
+    if (flip) descending = !descending
+
+    for (const column of wrap(sortKey.key)) {
+      orderColumns.push({ column, direction: descending ? 'DESC' : 'ASC' })
+    }
+  }
+
+  return orderColumns
+}
+
 export function keysetPagingSelect(
   table,
   whereCondition,
@@ -67,6 +100,7 @@ ${joinType || ''} JOIN LATERAL (
   LIMIT ${limit}
 ) ${q(as)} ON ${joinCondition}`
   }
+
   return `\
 FROM (
   SELECT ${q(as)}.*
@@ -165,46 +199,33 @@ export function interpretForKeysetPaging(node, dialect) {
 
   let sortTable
   let sortKey
-  let descending
-  const order = { columns: [] }
   if (node.sortKey) {
     sortKey = node.sortKey
-    descending = sortKey.order.toUpperCase() === 'DESC'
     sortTable = node.as
-    // flip the sort order if doing backwards paging
-    if (idx(node, _ => _.args.last)) {
-      descending = !descending
-    }
-    for (let column of wrap(sortKey.key)) {
-      order.columns.push({ column, direction: descending ? 'DESC' : 'ASC' })
-    }
-    order.table = node.as
   } else {
     sortKey = node.junction.sortKey
-    descending = sortKey.order.toUpperCase() === 'DESC'
     sortTable = node.junction.as
-    // flip the sort order if doing backwards paging
-    if (idx(node, _ => _.args.last)) {
-      descending = !descending
-    }
-    for (let column of wrap(sortKey.key)) {
-      order.columns.push({ column, direction: descending ? 'DESC' : 'ASC' })
-    }
-    order.table = node.junction.as
   }
+
+  const order = {
+    table: sortTable,
+    columns: sortKeyToOrderings(sortKey, node.args)
+  }
+  const cursorKeys = order.columns.map(ordering => ordering.column)
 
   let limit = ['mariadb', 'mysql', 'oracle'].includes(name)
     ? '18446744073709551615'
     : 'ALL'
   let whereCondition = ''
+
   if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first, 10) + 1
     if (node.args.after) {
       const cursorObj = cursorToObj(node.args.after)
-      validateCursor(cursorObj, wrap(sortKey.key))
+      validateCursor(cursorObj, cursorKeys)
       whereCondition = sortKeyToWhereCondition(
         cursorObj,
-        descending,
+        order.columns,
         sortTable,
         dialect
       )
@@ -216,10 +237,10 @@ export function interpretForKeysetPaging(node, dialect) {
     limit = parseInt(node.args.last, 10) + 1
     if (node.args.before) {
       const cursorObj = cursorToObj(node.args.before)
-      validateCursor(cursorObj, wrap(sortKey.key))
+      validateCursor(cursorObj, cursorKeys)
       whereCondition = sortKeyToWhereCondition(
         cursorObj,
-        descending,
+        order.columns,
         sortTable,
         dialect
       )
@@ -253,32 +274,27 @@ export function validateCursor(cursorObj, expectedKeys) {
   }
 }
 
-// take the sort key and translate that for the where clause
-function sortKeyToWhereCondition(keyObj, descending, sortTable, dialect) {
-  const { name, quote: q } = dialect
-  const sortColumns = []
-  const sortValues = []
-  for (let key in keyObj) {
-    sortColumns.push(`${q(sortTable)}.${q(key)}`)
-    sortValues.push(maybeQuote(keyObj[key], name))
+// Returns the SQL implementation of the sort key cursor WHERE conditions
+// Note: This operation compares the first key, then the second key, then the third key, etc, in order and independently. It's not a A > B AND C > D because C and D should only be compared of A and B are equal. If there are many sortKeys, then we need to implement the heirarchical comparison between them.
+// See https://engineering.shopify.com/blogs/engineering/pagination-relative-cursors for an explanation of what this is doing
+function sortKeyToWhereCondition(keyObj, orderings, sortTable, dialect) {
+  const condition = (ordering, operator) => {
+    operator = operator || (ordering.direction === 'DESC' ? '<' : '>')
+    return `${dialect.quote(sortTable)}.${dialect.quote(
+      ordering.column
+    )} ${operator} ${maybeQuote(keyObj[ordering.column], dialect.name)}`
   }
-  const operator = descending ? '<' : '>'
-  return name === 'oracle'
-    ? recursiveWhereJoin(sortColumns, sortValues, operator)
-    : `(${sortColumns.join(', ')}) ${operator} (${sortValues.join(', ')})`
-}
 
-function recursiveWhereJoin(columns, values, op) {
-  const condition = `${columns.pop()} ${op} ${values.pop()}`
-  return _recursiveWhereJoin(columns, values, op, condition)
-}
+  orderings = [...orderings] // don't mutate caller's data
 
-function _recursiveWhereJoin(columns, values, op, condition) {
-  if (!columns.length) {
-    return condition
-  }
-  const column = columns.pop()
-  const value = values.pop()
-  condition = `(${column} ${op} ${value} OR (${column} = ${value} AND ${condition}))`
-  return _recursiveWhereJoin(columns, values, op, condition)
+  // this is some mind bendy stuff: we move from the most specific to the least specific ordering, wrapping the condition in successive equality checks to only use the more specific one if everthing less specific is equal
+  return (
+    '(' +
+    orderings.reduceRight((agg, ordering) => {
+      return `
+      ${condition(ordering)}
+      OR (${condition(ordering, '=')} AND ${agg})`
+    }, condition(orderings.pop())) +
+    ')'
+  )
 }

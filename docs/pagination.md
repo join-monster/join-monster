@@ -296,18 +296,20 @@ const User = new GraphQLObjectType({
 })
 ```
 
-You can make the `sortKey` dynamic by making it a function that returns the sort key object instead. This function will take the GraphQL args as the first parameter.
+You can make the `sortKey` dynamic by making it a function that returns the sort key array instead. This function will take the GraphQL args as the first parameter.
 
-The cursors will be formed from the sort key, which is the `'id'`. This cursor is not predictable, so we lose the ability to jump to pages in the middle. We also don't know the total number. However, we *can* page backwards.
+The cursors will be formed from the sort key, which in the example above is the `'id'`. This cursor is not predictable, so we lose the ability to jump to pages in the middle. We also don't know the total number. However, we _can_ page backwards, and, the database is able to use an index (if available) to jump right to the records it needs for whatever page is being requested.
 
 <div class="admonition danger">
   <p class="first admonition-title">Warning</p>
   <p class="last">
-    One must make sure the sort key is <strong>unique</strong>. If it is not, rows will be <em>silently skipped</em>. 
+    One must make sure the sort key is <strong>unique</strong>. If it is not, rows will be <em>silently skipped</em>.
   </p>
 </div>
 
- It is not recommended to use timestamps as the sort key. Even if they appear to be unique in the database, they may become non-unique if coerced to JavaScript `Date` objects. PostgreSQL's `timestamp`, for example, has microsecond precision. JavaScript's date object has only millisecond precision, meaning you can lose up to 3 decimal points by converting. Some libraries will try be helpful by doing this conversion automatically. In doing so, two timestamps which differ by only microseconds can become the same after being truncated as a JavaScript `Date`. Use an integer `id` as the sort key if you can. If your `id` does not produce the desired sort order (like a `uuid`), you can use a composite of a `timestamp` and an `id` to make it unique.
+It is not recommended to use timestamps as the sort key. Even if they appear to be unique in the database, they may become non-unique if coerced to JavaScript `Date` objects. PostgreSQL's `timestamp`, for example, has microsecond precision. JavaScript's date object has only millisecond precision, meaning you can lose up to 3 decimal points by converting. Some libraries will try be helpful by doing this conversion automatically. In doing so, two timestamps which differ by only microseconds can become the same after being truncated as a JavaScript `Date`. Use an integer `id` as the sort key if you can. If your `id` does not produce the desired sort order (like a `uuid`), you can use a composite of a `timestamp` and an `id` to make it unique.
+
+You can also use compound sort keys. To do so, pass more than one `{column, direction}` pair as `sortKey` property (or the result of the sortKey function):
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -322,11 +324,11 @@ const User = new GraphQLObjectType({
         joinMonster: {
           sqlPaginate: true,
           // orders on both `created_at` and `id`. the first property is the primary sort column.
-          // it only sorts on `id` if `created_at` is equivalent
-          sortKey: {
-            order: 'desc',
-            key: ['created_at', 'id']
-          },
+          // the database will only sort on `id` if `created_at` is equivalent
+          sortKey: [
+            { column: 'created_at', direction: 'desc' },
+            { column: 'id', direction: 'asc' }
+          ],
           sqlJoin: (userTable, commentTable) =>
             `${userTable}.id = ${commentTable}.author_id`
         }
@@ -336,8 +338,9 @@ const User = new GraphQLObjectType({
 })
 ```
 
-Because the cursor identifies it's object by a key, it will not be tripped up by insertions at the beginning.
-However, this uniqueness removes the possibility of "recursive paging" with nested connections, since each list of posts has a different sequence of cursors.
+When used with other arguments to the field, this is useful for paginating dynamically sorted connections.
+
+Because the cursor identifies its object by a key, it will not be tripped up by insertions at the beginning. However, this uniqueness removes the possibility of "recursive paging" with nested connections, since each list of posts has a different sequence of cursors.
 You can still get the beginning or end of nested connections though.
 
 ```gql
@@ -390,10 +393,7 @@ const Post = new GraphQLObjectType({
       extensions: {
         joinMonster: {
           sqlPaginate: true,
-          sortKey: {
-            order: 'desc',
-            key: ['created_at', 'id']
-          },
+          sortKey: [{ column: 'created_at', direction: 'desc' }],
           sqlBatch: {
             // which column to match up to the users
             thisKey: 'post_id',
