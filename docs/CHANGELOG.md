@@ -1,5 +1,30 @@
 ### v3.0.0 (unreleased)
 
+**New features:**
+
+- Add support for explicit `orderBy` column orderings by passing an array of `{ column, direction }` objects. Useful for dynamically generating `orderBy`s without relying on object insertion order. Example:
+
+```javascript
+const User = new GraphQLObjectType({
+  fields: () => ({
+    comments: {
+      type: new GraphQLList(Comment),
+      extensions: {
+        joinMonster: {
+          // order these alphabetically, then by "id" if the comment body is the same
+          orderBy: [
+            { column: 'body', direction: 'asc' },
+            { column: 'id', direction: 'desc' }
+          ],
+          sqlJoin: (userTable, commentTable, args) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      }
+    }
+  })
+})
+```
+
 **Breaking changes:**
 
 - Update GraphQL requirement to version 15, which supports a new `extensions` property where join-monster config lives. The config keys and values are largely unchanged, but now they must be nested under an `extensions: { joinMonster: ... }}` property on the GraphQLObjectTypes and fields using join-monster. To upgrade, you must move any non-standard keys off of your `GraphQLObjectType`s or field configs into the `extensions` of the same field. So, something like this:

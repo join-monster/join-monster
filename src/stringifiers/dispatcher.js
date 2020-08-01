@@ -435,10 +435,11 @@ async function handleTable(
 // ordering inner(sub) queries DOES NOT guarantee the order of those results in the outer query
 function stringifyOuterOrder(orders, q) {
   const conditions = []
-  for (let condition of orders) {
-    for (let column in condition.columns) {
-      const direction = condition.columns[column]
-      conditions.push(`${q(condition.table)}.${q(column)} ${direction}`)
+  for (const condition of orders) {
+    for (const ordering of condition.columns) {
+      conditions.push(
+        `${q(condition.table)}.${q(ordering.column)} ${ordering.direction}`
+      )
     }
   }
   return conditions.join(', ')
@@ -449,9 +450,9 @@ function sortKeyToOrderColumns(sortKey, args) {
   if (args && args.last) {
     descending = !descending
   }
-  const orderColumns = {}
+  const orderings = []
   for (let column of wrap(sortKey.key)) {
-    orderColumns[column] = descending ? 'DESC' : 'ASC'
+    orderings.push({ column, direction: descending ? 'DESC' : 'ASC' })
   }
-  return orderColumns
+  return orderings
 }

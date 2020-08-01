@@ -16,8 +16,11 @@ export type Where<TContext, TArgs> = (
   context: TContext,
   sqlASTNode: any
 ) => string | void
-export type Order = 'ASC' | 'asc' | 'DESC' | 'desc'
-export type OrderBy = string | { [key: string]: Order }
+export type Direction = 'ASC' | 'asc' | 'DESC' | 'desc'
+export type OrderBy =
+  | string
+  | { [key: string]: Direction }
+  | { column: string; direction: Direction }[]
 export type ThunkWithArgsCtx<T, TContext, TArgs> =
   | ((args: TArgs, context: TContext) => T)
   | T
@@ -46,7 +49,7 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
     orderBy?: ThunkWithArgsCtx<OrderBy, TContext, TArgs>
     sortKey?: ThunkWithArgsCtx<
       {
-        order: Order
+        order: Direction
         key: string | string[]
       },
       TContext,
@@ -66,7 +69,7 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
   orderBy?: ThunkWithArgsCtx<OrderBy, TContext, TArgs>
   sortKey?: ThunkWithArgsCtx<
     {
-      order: Order
+      order: Direction
       key: string | string[]
     },
     TContext,

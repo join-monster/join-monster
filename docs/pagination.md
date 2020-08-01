@@ -158,10 +158,10 @@ const User = new GraphQLObjectType({
           sqlPaginate: true,
           // orders on both `created_at` and `id`. the first property is the primary sort column.
           // it only sorts on `id` if `created_at` is equivalent
-          orderBy: {
-            created_at: 'desc',
-            id: 'asc'
-          },
+          orderBy: [
+            { column: 'created_at', direction: 'desc' },
+            { column: 'id', direction: 'asc' }
+          ],
           sqlJoin: (userTable, commentTable) =>
             `${userTable}.id = ${commentTable}.author_id`
         }

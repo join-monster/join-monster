@@ -63,7 +63,7 @@ ${joinType || ''} JOIN LATERAL (
       : ''
   }
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${orderingsToString(order.columns, q, order.table)}
   LIMIT ${limit}
 ) ${q(as)} ON ${joinCondition}`
   }
@@ -72,7 +72,7 @@ FROM (
   SELECT ${q(as)}.*
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${orderingsToString(order.columns, q, order.table)}
   LIMIT ${limit}
 ) ${q(as)}`
 }
@@ -101,7 +101,7 @@ ${joinType || ''} JOIN LATERAL (
       : ''
   }
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${orderingsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)} ON ${joinCondition}`
   }
@@ -110,19 +110,19 @@ FROM (
   SELECT ${q(as)}.*, count(*) OVER () AS ${q('$total')}
   FROM ${table} ${q(as)}
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${orderingsToString(order.columns, q, order.table)}
   LIMIT ${limit} OFFSET ${offset}
 ) ${q(as)}`
 }
 
-export function orderColumnsToString(orderColumns, q, as) {
-  const conditions = []
-  for (let column in orderColumns) {
-    conditions.push(
-      `${as ? q(as) + '.' : ''}${q(column)} ${orderColumns[column]}`
+export function orderingsToString(orderings, q, as) {
+  const orderByClauses = []
+  for (const ordering of orderings) {
+    orderByClauses.push(
+      `${as ? q(as) + '.' : ''}${q(ordering.column)} ${ordering.direction}`
     )
   }
-  return conditions.join(', ')
+  return orderByClauses.join(', ')
 }
 
 // find out what the limit, offset, order by parts should be from the relay connection args if we're paginating
@@ -166,7 +166,7 @@ export function interpretForKeysetPaging(node, dialect) {
   let sortTable
   let sortKey
   let descending
-  const order = { columns: {} }
+  const order = { columns: [] }
   if (node.sortKey) {
     sortKey = node.sortKey
     descending = sortKey.order.toUpperCase() === 'DESC'
@@ -176,7 +176,7 @@ export function interpretForKeysetPaging(node, dialect) {
       descending = !descending
     }
     for (let column of wrap(sortKey.key)) {
-      order.columns[column] = descending ? 'DESC' : 'ASC'
+      order.columns.push({ column, direction: descending ? 'DESC' : 'ASC' })
     }
     order.table = node.as
   } else {
@@ -188,7 +188,7 @@ export function interpretForKeysetPaging(node, dialect) {
       descending = !descending
     }
     for (let column of wrap(sortKey.key)) {
-      order.columns[column] = descending ? 'DESC' : 'ASC'
+      order.columns.push({ column, direction: descending ? 'DESC' : 'ASC' })
     }
     order.table = node.junction.as
   }

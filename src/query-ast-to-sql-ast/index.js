@@ -895,21 +895,44 @@ function spreadFragments(selections, fragments, typeName) {
   })
 }
 
+const validateAndNormalizeDirection = direction => {
+  direction = direction.toUpperCase()
+  if (direction !== 'ASC' && direction !== 'DESC') {
+    throw new Error(direction + ' is not a valid sorting direction')
+  }
+  return direction
+}
+
+// Normalize the three styles of orderBy to an array of {column, direction} objects.
+// orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
 export function handleOrderBy(orderBy) {
   if (!orderBy) return undefined
-  const orderColumns = {}
-  if (typeof orderBy === 'object') {
+  const orderings = []
+  if (Array.isArray(orderBy)) {
+    for (const ordering of orderBy) {
+      assert(
+        ordering.column,
+        "'column' property must be defined on an ordering in an array"
+      )
+      orderings.push({
+        column: ordering.column,
+        direction: validateAndNormalizeDirection(ordering.direction)
+      })
+    }
+  } else if (typeof orderBy === 'object') {
     for (let column in orderBy) {
-      let direction = orderBy[column].toUpperCase()
-      if (direction !== 'ASC' && direction !== 'DESC') {
-        throw new Error(direction + ' is not a valid sorting direction')
-      }
-      orderColumns[column] = direction
+      orderings.push({
+        column,
+        direction: validateAndNormalizeDirection(orderBy[column])
+      })
     }
   } else if (typeof orderBy === 'string') {
-    orderColumns[orderBy] = 'ASC'
+    orderings.push({
+      column: orderBy,
+      direction: 'ASC'
+    })
   } else {
     throw new Error('"orderBy" is invalid type: ' + inspect(orderBy))
   }
-  return orderColumns
+  return orderings
 }
