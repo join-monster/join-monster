@@ -60,27 +60,31 @@ export default new GraphQLObjectType({
         search: { type: GraphQLString },
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
-      sqlPaginate: !!PAGINATE,
-      ...do {
-        if (PAGINATE === 'offset') {
-          ;({ orderBy: 'id' })
-        } else if (PAGINATE === 'keyset') {
-          ;({
-            sortKey: {
-              order: 'asc',
-              key: 'id'
+      extensions: {
+        joinMonster: {
+          sqlPaginate: !!PAGINATE,
+          ...do {
+            if (PAGINATE === 'offset') {
+              ;({ orderBy: 'id' })
+            } else if (PAGINATE === 'keyset') {
+              ;({
+                sortKey: {
+                  order: 'asc',
+                  key: 'id'
+                }
+              })
             }
-          })
+          },
+          where: (table, args) => {
+            // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
+            if (args.search)
+              return `(lower(${table}.${q('first_name', DB)}) LIKE lower('%${
+                args.search
+              }%') OR lower(${table}.${q('last_name', DB)}) LIKE lower('%${
+                args.search
+              }%'))`
+          }
         }
-      },
-      where: (table, args) => {
-        // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
-        if (args.search)
-          return `(lower(${table}.${q('first_name', DB)}) LIKE lower('%${
-            args.search
-          }%') OR lower(${table}.${q('last_name', DB)}) LIKE lower('%${
-            args.search
-          }%'))`
       },
       resolve: async (parent, args, context, resolveInfo) => {
         const data = await joinMonster(
@@ -94,8 +98,12 @@ export default new GraphQLObjectType({
     },
     usersFirst2: {
       type: new GraphQLList(User),
-      limit: 2,
-      orderBy: 'id',
+      extensions: {
+        joinMonster: {
+          limit: 2,
+          orderBy: 'id'
+        }
+      },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(
           resolveInfo,
@@ -113,9 +121,13 @@ export default new GraphQLObjectType({
           type: GraphQLInt
         }
       },
-      where: (usersTable, args, context) => {
-        // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
+      extensions: {
+        joinMonster: {
+          where: (usersTable, args, context) => {
+            // eslint-disable-line no-unused-vars
+            if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
+          }
+        }
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(

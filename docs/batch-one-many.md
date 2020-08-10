@@ -14,17 +14,21 @@ const Post = new GraphQLObjectType({
     comments: {
       description: 'The comments on this post',
       type: new GraphQLList(Comment),
-      // instead of doing yet another JOIN, we'll get these comments in a separate batch
-      // sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id AND ${commentTable}.archived = FALSE`,
-      sqlBatch: {
-        // which column to match up to the users
-        thisKey: 'post_id',
-        // the other column to compare to
-        parentKey: 'id'
-      },
-      // sqlBatch works with the `where` function too. get only non-archived comments
-      where: table => `${table}.archived = FALSE`
-    },
+      extensions: {
+        joinMonster: {
+          // instead of doing yet another JOIN, we'll get these comments in a separate batch
+          // sqlJoin: (postTable, commentTable) => `${postTable}.id = ${commentTable}.post_id AND ${commentTable}.archived = FALSE`,
+          sqlBatch: {
+            // which column to match up to the users
+            thisKey: 'post_id',
+            // the other column to compare to
+            parentKey: 'id'
+          },
+          // sqlBatch works with the `where` function too. get only non-archived comments
+          where: table => `${table}.archived = FALSE`
+        }
+      }
+    }
   })
 })
 ```
@@ -91,4 +95,3 @@ Two database queries are made regardless of the number of posts, another way to 
 
 Although this also works perfectly fine for a one-to-one relation, it is not recommended.
 Not much is gained by batching on a one-to-one since using a simple `JOIN` would not burden the database greatly.
-

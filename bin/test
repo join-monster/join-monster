@@ -104,5 +104,8 @@ if [ $PG = 1 ]; then
   STRATEGY=mix MINIFY=1 npm run testpg-paging
 fi
 
+echo -e "${YELLOW} testing typescript definitions${NC}"
+npm run testtsd
+
 echo -e "${GREEN} PASSED ${NC}"
 

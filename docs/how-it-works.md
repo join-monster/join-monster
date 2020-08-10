@@ -35,11 +35,19 @@ const User = new GraphQLObjectType({
   fields: () => ({
     id: {
       type: GraphQLInt,
-      sqlColumn: 'id'
+      extensions: {
+        joinMonster: {
+          sqlColumn: 'id'
+        }
+      }
     },
     email: {
       type: GraphQLString,
-      sqlColumn: 'email_address'
+      extensions: {
+        joinMonster: {
+          sqlColumn: 'email_address'
+        }
+      }
     },
     immortal: {
       type: graphQLBoolean,
@@ -47,7 +55,12 @@ const User = new GraphQLObjectType({
     },
     posts: {
       type: new GraphQLList(Post),
-      sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
+      extensions: {
+        joinMonster: {
+          sqlJoin: (userTable, postTable) =>
+            `${userTable}.id = ${postTable}.author_id`
+        }
+      }
     }
   })
 })
@@ -76,4 +89,3 @@ users: {
   }
 }
 ```
-

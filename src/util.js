@@ -1,5 +1,6 @@
 import util from 'util'
 import assert from 'assert'
+import idx from 'idx'
 import { nest } from '@stem/nesthydrationjs'
 import stringifySQL from './stringifiers/dispatcher'
 import resolveUnions from './resolve-unions'
@@ -49,6 +50,10 @@ export function unthunk(val, ...args) {
 export function validateSqlAST(topNode) {
   // TODO: this could be a bit more comprehensive
   assert(topNode.sqlJoin == null, 'root level field can not have "sqlJoin"')
+}
+
+export function getConfigFromSchemaObject(fieldOrType) {
+  return idx(fieldOrType, _ => _.extensions.joinMonster) || {}
 }
 
 export function objToCursor(obj) {
@@ -129,7 +134,7 @@ export function buildWhereFunction(type, condition, options) {
   const quote = ['mysql', 'mysql8', 'mariadb'].includes(name) ? '`' : '"'
 
   // determine the unique key so we know what to search by
-  const uniqueKey = type._typeConfig.uniqueKey
+  const uniqueKey = getConfigFromSchemaObject(type).uniqueKey
 
   // handle composite keys
   if (Array.isArray(uniqueKey)) {

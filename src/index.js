@@ -4,7 +4,12 @@ import * as queryAST from './query-ast-to-sql-ast'
 import arrToConnection from './array-to-connection'
 import AliasNamespace from './alias-namespace'
 import nextBatch from './batch-planner'
-import { buildWhereFunction, handleUserDbCall, compileSqlAST } from './util'
+import {
+  buildWhereFunction,
+  handleUserDbCall,
+  compileSqlAST,
+  getConfigFromSchemaObject
+} from './util'
 
 /*         _ _ _                _
   ___ __ _| | | |__   __ _  ___| | __
@@ -135,7 +140,7 @@ async function getNode(
   const type = resolveInfo.schema._typeMap[typeName]
   assert(type, `Type "${typeName}" not found in your schema.`)
   assert(
-    type._typeConfig.sqlTable,
+    getConfigFromSchemaObject(type).sqlTable,
     `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`
   )
 
@@ -148,7 +153,12 @@ async function getNode(
       node: {
         type,
         name: type.name.toLowerCase(),
-        where
+        args: {},
+        extensions: {
+          joinMonster: {
+            where
+          }
+        }
       }
     }
   }
