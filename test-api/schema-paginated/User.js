@@ -167,19 +167,19 @@ const User = new GraphQLObjectType({
           ...do {
             if (PAGINATE === 'offset') {
               ;({
-                orderBy: args => ({
+                orderBy: args => [
                   // eslint-disable-line no-unused-vars
-                  created_at: 'desc',
-                  id: 'asc'
-                })
+                  { column: 'created_at', direction: 'desc' },
+                  { column: 'id', direction: 'asc' }
+                ]
               })
             } else if (PAGINATE === 'keyset') {
               ;({
-                sortKey: args => ({
+                sortKey: args => [
                   // eslint-disable-line no-unused-vars
-                  order: 'desc',
-                  key: ['created_at', 'id']
-                })
+                  { direction: 'desc', column: 'created_at' },
+                  { direction: 'desc', column: 'id' }
+                ]
               })
             } else {
               {
@@ -235,10 +235,10 @@ const User = new GraphQLObjectType({
               ;({
                 orderBy: args =>
                   args.sortOnMain
-                    ? {
-                        created_at: 'ASC',
-                        id: 'ASC'
-                      }
+                    ? [
+                        { column: 'created_at', direction: 'ASC' },
+                        { column: 'id', direction: 'ASC' }
+                      ]
                     : null
               })
             } else if (PAGINATE === 'keyset') {
@@ -292,10 +292,10 @@ const User = new GraphQLObjectType({
                   sortKey: args =>
                     args.sortOnMain
                       ? null
-                      : {
-                          order: 'ASC',
-                          key: ['created_at', 'followee_id']
-                        }
+                      : [
+                          { direction: 'ASC', column: 'created_at' },
+                          { direction: 'ASC', column: 'followee_id' }
+                        ]
                 })
               }
             },
@@ -391,10 +391,10 @@ const User = new GraphQLObjectType({
           ...do {
             if (PAGINATE === 'offset') {
               ;({
-                orderBy: {
-                  id: 'ASC',
-                  created_at: 'ASC'
-                }
+                orderBy: [
+                  { column: 'id', direction: 'ASC' },
+                  { column: 'created_at', direction: 'ASC' }
+                ]
               })
             } else if (PAGINATE === 'keyset') {
               ;({

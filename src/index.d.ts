@@ -16,8 +16,21 @@ export type Where<TContext, TArgs> = (
   context: TContext,
   sqlASTNode: any
 ) => string | void
-export type Order = 'ASC' | 'asc' | 'DESC' | 'desc'
-export type OrderBy = string | { [key: string]: Order }
+
+export type Direction = 'ASC' | 'asc' | 'DESC' | 'desc'
+
+export type OrderBy =
+  | string
+  | { column: string; direction: Direction }[]
+  | { [key: string]: Direction }
+
+export type SortKey =
+  | { column: string; direction: Direction }[]
+  | {
+      order: Direction
+      key: string | string[]
+    } // this is the old, pre 3.0 style limited to one direction for many keys
+
 export type ThunkWithArgsCtx<T, TContext, TArgs> =
   | ((args: TArgs, context: TContext) => T)
   | T
@@ -44,14 +57,7 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
       TArgs
     >
     orderBy?: ThunkWithArgsCtx<OrderBy, TContext, TArgs>
-    sortKey?: ThunkWithArgsCtx<
-      {
-        order: Order
-        key: string | string[]
-      },
-      TContext,
-      TArgs
-    >
+    sortKey?: ThunkWithArgsCtx<SortKey, TContext, TArgs>
     sqlBatch?: {
       thisKey: string
       parentKey: string
@@ -64,14 +70,7 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
   }
   limit?: ThunkWithArgsCtx<number, TContext, TArgs>
   orderBy?: ThunkWithArgsCtx<OrderBy, TContext, TArgs>
-  sortKey?: ThunkWithArgsCtx<
-    {
-      order: Order
-      key: string | string[]
-    },
-    TContext,
-    TArgs
-  >
+  sortKey?: ThunkWithArgsCtx<SortKey, TContext, TArgs>
   sqlBatch?: {
     thisKey: string
     parentKey: string

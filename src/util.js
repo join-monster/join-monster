@@ -246,3 +246,18 @@ export async function compileSqlAST(sqlAST, context, options) {
   }
   return { sql, shapeDefinition }
 }
+
+// Normalize the two different sortKey styles into one list of strings representing all the columns that will be sorted on
+export function sortKeyColumns(sortKey) {
+  return Array.isArray(sortKey)
+    ? sortKey.map(sort => {
+        assert(
+          sort.column,
+          `Each sortKey entry in an array must have a 'column' property, got ${JSON.stringify(
+            sortKey
+          )} instead`
+        )
+        return sort.column
+      })
+    : wrap(sortKey.key)
+}

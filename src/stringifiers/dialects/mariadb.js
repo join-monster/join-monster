@@ -3,7 +3,7 @@ import {
   offsetPagingSelect,
   interpretForOffsetPaging,
   interpretForKeysetPaging,
-  orderColumnsToString
+  orderingsToString
 } from '../shared'
 
 import { filter } from 'lodash'
@@ -39,7 +39,7 @@ function paginatedSelect(
       : ''
   }
   WHERE ${whereConditions}
-  ORDER BY ${orderColumnsToString(order.columns, quote, order.table)}
+  ORDER BY ${orderingsToString(order.columns, quote, order.table)}
   LIMIT ${limit}${offset ? ' OFFSET ' + offset : ''})`
 }
 

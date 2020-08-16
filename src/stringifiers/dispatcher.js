@@ -2,10 +2,11 @@ import assert from 'assert'
 import { filter } from 'lodash'
 import idx from 'idx'
 
-import { validateSqlAST, inspect, wrap } from '../util'
+import { validateSqlAST, inspect } from '../util'
 import {
   joinPrefix,
   thisIsNotTheEndOfThisBatch,
+  sortKeyToOrderings,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
 
@@ -242,13 +243,13 @@ async function handleTable(
     if (idx(node, _ => _.junction.sortKey)) {
       orders.push({
         table: node.junction.as,
-        columns: sortKeyToOrderColumns(node.junction.sortKey, node.args)
+        columns: sortKeyToOrderings(node.junction.sortKey, node.args)
       })
     }
     if (node.sortKey) {
       orders.push({
         table: node.as,
-        columns: sortKeyToOrderColumns(node.sortKey, node.args)
+        columns: sortKeyToOrderings(node.sortKey, node.args)
       })
     }
   }
@@ -435,23 +436,12 @@ async function handleTable(
 // ordering inner(sub) queries DOES NOT guarantee the order of those results in the outer query
 function stringifyOuterOrder(orders, q) {
   const conditions = []
-  for (let condition of orders) {
-    for (let column in condition.columns) {
-      const direction = condition.columns[column]
-      conditions.push(`${q(condition.table)}.${q(column)} ${direction}`)
+  for (const condition of orders) {
+    for (const ordering of condition.columns) {
+      conditions.push(
+        `${q(condition.table)}.${q(ordering.column)} ${ordering.direction}`
+      )
     }
   }
   return conditions.join(', ')
-}
-
-function sortKeyToOrderColumns(sortKey, args) {
-  let descending = sortKey.order.toUpperCase() === 'DESC'
-  if (args && args.last) {
-    descending = !descending
-  }
-  const orderColumns = {}
-  for (let column of wrap(sortKey.key)) {
-    orderColumns[column] = descending ? 'DESC' : 'ASC'
-  }
-  return orderColumns
 }

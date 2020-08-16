@@ -1,7 +1,7 @@
 import {
   interpretForOffsetPaging,
   interpretForKeysetPaging,
-  orderColumnsToString
+  orderingsToString
 } from '../shared'
 import { filter } from 'lodash'
 
@@ -36,7 +36,7 @@ ${joinType === 'LEFT' ? 'OUTER' : 'CROSS'} APPLY (
       : ''
   }
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${orderingsToString(order.columns, q, order.table)}
   FETCH FIRST ${limit} ROWS ONLY
 ) ${q(as)}`
   }
@@ -45,7 +45,7 @@ FROM (
   SELECT "${as}".*
   FROM ${table} "${as}"
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${orderingsToString(order.columns, q, order.table)}
   FETCH FIRST ${limit} ROWS ONLY
 ) ${q(as)}`
 }
@@ -73,7 +73,7 @@ ${joinType === 'LEFT' ? 'OUTER' : 'CROSS'} APPLY (
       : ''
   }
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${orderingsToString(order.columns, q, order.table)}
   OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
 ) ${q(as)}`
   }
@@ -82,7 +82,7 @@ FROM (
   SELECT "${as}".*, count(*) OVER () AS ${q('$total')}
   FROM ${table} "${as}"
   WHERE ${whereCondition}
-  ORDER BY ${orderColumnsToString(order.columns, q, order.table)}
+  ORDER BY ${orderingsToString(order.columns, q, order.table)}
   OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
 ) ${q(as)}`
 }

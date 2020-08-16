@@ -31,12 +31,12 @@ new GraphQLObjectType<any, ExampleContext>({
           ignoreAll: true,
           ignoreTable: true,
           limit: 10,
-          orderBy: {
-            foo: 'ASC',
-            bar: 'DESC'
-          },
+          orderBy: [
+            { column: 'foo', direction: 'asc' },
+            { column: 'bar', direction: 'DESC' }
+          ],
           sortKey: {
-            order: 'ASC',
+            order: 'ASC', // old style of sortKey
             key: ['id']
           },
           sqlBatch: {
@@ -87,18 +87,20 @@ new GraphQLObjectType<any, ExampleContext>({
           orderBy: (args, context) => {
             expectType<ExampleArgs>(args)
             expectType<ExampleContext>(context)
-            return {
-              foo: 'ASC',
-              bar: 'DESC'
-            }
+            return [
+              { column: 'foo', direction: 'ASC' },
+              { column: 'bar', direction: 'DESC' }
+            ]
           },
           sortKey: (args, context) => {
             expectType<ExampleArgs>(args)
             expectType<ExampleContext>(context)
-            return {
-              order: 'ASC',
-              key: ['id']
-            }
+            return [
+              {
+                direction: 'ASC',
+                column: 'id'
+              }
+            ]
           }
         }
       }
