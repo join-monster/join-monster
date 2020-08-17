@@ -69,7 +69,7 @@ Before commiting your changes, **run the lint, tests, and coverage to make sure 
 
 ## Release on NPM
 
-We will make timely releases with any new changes, so you do not need to worry about publishing. Tagged commits to the master branch will trigger a new build on NPM. Travis-CI will publish the package. Do not publish manually from the command line. However, Travis doesn't currently set alpha and beta npm tags correctly, so after an alpha or beta version is published by Travis, fix it with e.g.:
+We will make timely releases with any new changes, so you do not need to worry about publishing. Tagged commits to the master branch with an updated `package.json` `"version"` will trigger a new build on NPM. Travis-CI will publish the package. Do not publish manually from the command line. However, Travis doesn't currently set alpha and beta npm tags correctly, so after an alpha or beta version is published by Travis, fix it with e.g.:
 
 ```
 npm dist-tag add join-monster@3.0.0-alpha.2 alpha
