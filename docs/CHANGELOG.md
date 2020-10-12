@@ -1,6 +1,8 @@
 ### v3.0.4 (September 10, 2021 )
-**New Feature**
-- Added sqlDefaultPageSizeLimit and sqlPageLimit field specs to allow user to configure a default page limit and maximum page size limit for paginated fields. 
+
+**New Features**
+
+- Added sqlDefaultPageSizeLimit and sqlPageLimit field specs to allow user to configure a default page limit and maximum page size limit for paginated fields.
 
 ```javascript
 const Post = new GraphQLObjectType({
@@ -19,6 +21,26 @@ const Post = new GraphQLObjectType({
       }
     }
   })
+})
+```
+
+- Add support for resolving GraphQL scalars backed by `sqlTable`s. Usually, scalars point to table columns, but this allows them to use the same `extensions` property to declare that the scalar is a whole table. This is often paired with a `resolve` function that takes what `join-monster` returns and turns it into a valid value for the scalar. An example would be a tags field that outputs a list of strings, but where each tag is actually stored as it's own row in a different table in the database, or backing a `JSONScalar` by a table to get around GraphQL's type strictness.
+
+```javascript
+export const Tag = new GraphQLScalarType({
+  name: 'Tag',
+  extensions: {
+    joinMonster: {
+      sqlTable: 'tags',
+      uniqueKey: 'id',
+      alwaysFetch: ['id', 'tag', 'tag_order']
+    }
+  },
+  parseValue: String,
+  serialize: String,
+  parseLiteral(ast) {
+    // ...
+  }
 })
 ```
 

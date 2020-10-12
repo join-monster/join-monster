@@ -91,13 +91,19 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
 }
 
 export interface UnionTypeExtension {
-  sqlTable?: string
+  sqlTable?: ThunkWithArgsCtx<string, any, any>
   uniqueKey?: string | string[]
   alwaysFetch?: string | string[]
 }
 
 export interface InterfaceTypeExtension {
-  sqlTable?: string
+  sqlTable?: ThunkWithArgsCtx<string, any, any>
+  uniqueKey?: string | string[]
+  alwaysFetch?: string | string[]
+}
+
+export interface ScalarTypeExtension {
+  sqlTable?: ThunkWithArgsCtx<string, any, any>
   uniqueKey?: string | string[]
   alwaysFetch?: string | string[]
 }
@@ -118,6 +124,9 @@ declare module 'graphql' {
   }
   interface GraphQLInterfaceTypeExtensions {
     joinMonster?: InterfaceTypeExtension
+  }
+  interface GraphQLScalarTypeExtensions {
+    joinMonster?: ScalarTypeExtension
   }
 }
 
