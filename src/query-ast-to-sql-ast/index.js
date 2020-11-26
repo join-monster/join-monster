@@ -615,45 +615,6 @@ function _createJoinmap(
             currentJAstNode.children.push(newNode)
           }
         }
-
-        /*
-            if (field.sqlJoin) {
-              newNode.sqlJoin = field.sqlJoin
-            } else if (field.junction) {
-              const junctionTable = unthunk(
-                ensure(field.junction, 'sqlTable'),
-                node.args || {},
-                context
-              )
-              const junction = newNode.junction = {
-                sqlTable: junctionTable,
-                as: namespace.generate('table', junctionTable)
-              }
-
-              if (field.junction.sqlJoins) {
-                junction.sqlJoins = field.junction.sqlJoins
-              }
-            }
-
-            currentJAstNode.children.push(newNode)
-            currentJAstNode = newNode
-          } else {
-            currentJAstNode = existingNode
-          }
-        } else {
-          if (!existingNode) {
-            const name = field.sqlColumn || part
-            const newNode = new SQLASTNode(currentJAstNode, {
-              type: 'column',
-              name: name,
-              as: namespace.generate('column', name),
-              fieldName: part
-            })
-
-            currentJAstNode.children.push(newNode)
-          }
-        }
-        */
       })
     } else {
       throw new Error(
