@@ -460,12 +460,7 @@ function _joinAstToLists(
           as: child,
           sql: `LEFT JOIN ${q(child.name)} ${q(child.as)} ON ${joinCondition}`
         })
-      } else if (
-        idx(
-          child,
-          _ => _.junction.sqlTable && idx(child, _ => _.junction.sqlJoins)
-        )
-      ) {
+      } else if (idx(child,_ => _.junction.sqlTable) && idx(child, _ => _.junction.sqlJoins)) {
         const joinCondition1 = child.junction.sqlJoins[0](
           q(currentNode.as),
           q(child.junction.as),

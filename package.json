@@ -94,6 +94,7 @@
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-config-prettier": "^6.11.0",
     "faker": "^4.1.0",
+    "graphql": "^15.4.0",
     "graphsiql": "0.2.0",
     "idx": "^2.5.6",
     "jsdoc-to-markdown": "^5.0.0",
