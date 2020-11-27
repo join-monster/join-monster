@@ -458,7 +458,7 @@ function _joinAstToLists(
 
         joins.push({
           as: child,
-          sql: `LEFT JOIN ${q(child.name)} ${q(child.as)} ON ${joinCondition}`
+          sql: `LEFT JOIN ${child.name} ${q(child.as)} ON ${joinCondition}`
         })
       } else if (idx(child,_ => _.junction.sqlTable) && idx(child, _ => _.junction.sqlJoins)) {
         const joinCondition1 = child.junction.sqlJoins[0](
@@ -777,6 +777,7 @@ async function handleTable(
       !parent,
       `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`
     )
+
     tables.push(`FROM ${node.name} ${q(node.as)}`)
   }
 }

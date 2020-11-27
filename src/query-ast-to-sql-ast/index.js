@@ -564,18 +564,20 @@ function _createJoinmap(
         )
 
         if (idx(type, _ => _.extensions.joinMonster.sqlTable)) {
+          const sqlTable = unthunk(ensure(type.extensions.joinMonster, 'sqlTable'), node.args || {}, context)
+          
           if (!existingNode) {
             const newNode = new SQLASTNode(currentJAstNode, {
               type: 'table',
-              name: type.extensions.joinMonster.sqlTable,
+              name: sqlTable,
               as: namespace.generate(
                 'table',
-                type.extensions.joinMonster.sqlTable
+                sqlTable
               ),
               fieldName: part,
               children: []
             })
-
+            
             if (field.extensions.joinMonster.sqlJoin) {
               newNode.sqlJoin = field.extensions.joinMonster.sqlJoin
             } else if (field.extensions.joinMonster.junction) {
@@ -602,7 +604,6 @@ function _createJoinmap(
           }
         } else {
           if (!existingNode) {
-            //const name = field.extensions.joinMonster.sqlColumn || part
             const name =
               idx(field, _ => _.extensions.joinMonster.sqlColumn) || part
             const newNode = new SQLASTNode(currentJAstNode, {
