@@ -399,15 +399,16 @@ async function handleFilteredJoin(
 
   const filterConditions = assembleFilterConditions(node, joinAst, q, 'join')
 
-  const str = `LEFT JOIN (
-           SELECT
-               ${q(node.as)}.*${selections.length > 0 ? ',' : ''}
-               ${selections.join(',\n')}
-           FROM ${node.name} ${q(node.as)}
-               ${joins.join('\n')}
-       ) AS ${q(node.as)}
-           ON ${standardJoinCondition}
-               AND ( ${filterConditions} )`
+  const str = 
+  `  LEFT JOIN (
+      SELECT
+        ${q(node.as)}.*${selections.length > 0 ? ',' : ''}
+        ${selections.length > 0 ? selections.join(',\n') : ''}
+      FROM ${node.name} ${q(node.as)}
+        ${joins.join('\n')}
+      ) AS ${q(node.as)}
+        ON ${standardJoinCondition}
+        AND ( ${filterConditions} )`
 
   return str
 }
@@ -458,7 +459,7 @@ function _joinAstToLists(
 
         joins.push({
           as: child,
-          sql: `LEFT JOIN ${child.name} ${q(child.as)} ON ${joinCondition}`
+          sql: `  LEFT JOIN ${child.name} ${q(child.as)} ON ${joinCondition}`
         })
       } else if (idx(child,_ => _.junction.sqlTable) && idx(child, _ => _.junction.sqlJoins)) {
         const joinCondition1 = child.junction.sqlJoins[0](
@@ -480,13 +481,13 @@ function _joinAstToLists(
         joins.push(
           {
             as: child.junction.as,
-            sql: `LEFT JOIN ${child.junction.sqlTable} ${q(
+            sql: `  LEFT JOIN ${child.junction.sqlTable} ${q(
               child.junction.as
             )} ON ${joinCondition1}`
           },
           {
             as: child.as,
-            sql: `LEFT JOIN ${child.name} ${q(child.as)} ON ${joinCondition2}`
+            sql: `  LEFT JOIN ${child.name} ${q(child.as)} ON ${joinCondition2}`
           }
         )
       }
@@ -610,7 +611,7 @@ async function handleTable(
 
       tables.push(filteredJoin)
     } else {
-      tables.push(`LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`)
+      tables.push(`  LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`)
     }
 
     // many-to-many using batching
