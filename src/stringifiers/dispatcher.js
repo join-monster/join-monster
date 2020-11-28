@@ -762,6 +762,13 @@ async function handleTable(
     await dialect.handlePaginationAtRoot(parent, node, context, tables)
   } else {
     if (node.filteredWhere) {
+      assert(
+        !parent,
+        `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`
+      )
+  
+      tables.push(`FROM ${node.name} ${q(node.as)}`)
+      
       handleFilteredWhere(
         selections,
         tables,
@@ -772,13 +779,6 @@ async function handleTable(
         context
       )
     }
-
-    assert(
-      !parent,
-      `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`
-    )
-
-    tables.push(`FROM ${node.name} ${q(node.as)}`)
   }
 }
 
