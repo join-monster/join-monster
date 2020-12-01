@@ -243,7 +243,7 @@ function _assembleFilterConditions(
   joinTableAlias,
   q,
   sql,
-  mode
+  joinMode
 ) {
   let and = []
   let or = []
@@ -256,7 +256,7 @@ function _assembleFilterConditions(
   filterArr.forEach(obj => {
     if (obj.compare) {
       direct.push(
-        buildComparison(obj.compare, joinAst, joinTableAlias, q, mode)
+        buildComparison(obj.compare, joinAst, joinTableAlias, q, joinMode)
       )
     } else if (obj.AND) {
       and.push(obj.AND)
@@ -275,7 +275,7 @@ function _assembleFilterConditions(
       joinTableAlias,
       q,
       '',
-      mode
+      joinMode
     )} ) `
   })
 
@@ -287,7 +287,7 @@ function _assembleFilterConditions(
       joinTableAlias,
       q,
       '',
-      mode
+      joinMode
     )} ) `
   })
 
@@ -305,9 +305,11 @@ function buildComparison(compareObj, joinAst, tableAlias, q, joinMode) {
     renameParts.push(currentNode.as)
   })
 
+  // Since we have access to all joined tables we can query
+  // for the respective field directly, so we remove all indexes that
+  // come before
   if (joinMode === 'where') {
-    if (renameParts.length > 1) renameParts.splice(-2, 1)
-
+    renameParts = renameParts.slice(-1)
     tableAlias = currentNode.parent.as
   }
 
@@ -762,13 +764,14 @@ async function handleTable(
     node.args.first = node.limit
     await dialect.handlePaginationAtRoot(parent, node, context, tables)
   } else {
+    assert(
+      !parent,
+      `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`
+    )
+
+    tables.push(`FROM ${node.name} ${q(node.as)}`)
+
     if (node.filteredWhere) {
-      assert(
-        !parent,
-        `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`
-      )
-  
-      tables.push(`FROM ${node.name} ${q(node.as)}`)
       
       handleFilteredWhere(
         selections,

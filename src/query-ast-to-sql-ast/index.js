@@ -559,6 +559,8 @@ function _createJoinmap(
           joinAst.fieldName
         )
 
+        gqlType = type
+
         const existingNode = currentJAstNode.children.find(
           child => child.fieldName === part
         )
@@ -634,7 +636,7 @@ function getFieldAndTypeForFilterKeyPart(
 
   if (!correspondingField)
     throw new Error(
-      `Wrong filter key part '${part}', the type '${gqlType.name}' does not contain this field.` +
+      `Wrong filter key part '${filterKeyPart}', the type '${gqlType.name}' does not contain this field.` +
         ` Check your filter at the '${rootFieldName}' field`
     )
 
