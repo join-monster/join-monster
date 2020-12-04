@@ -101,15 +101,15 @@ export interface InterfaceTypeExtension {
 }
 
 declare module 'graphql' {
-  interface GraphQLObjectTypeExtensions<TSource = any, TContext = any> {
-    joinMonster?: ObjectTypeExtension<TSource, TContext>
+  interface GraphQLObjectTypeExtensions<_TSource = any, _TContext = any> {
+    joinMonster?: ObjectTypeExtension<_TSource, _TContext>
   }
   interface GraphQLFieldExtensions<
-    TSource,
-    TContext,
-    TArgs = { [argName: string]: any }
+    _TSource,
+    _TContext,
+    _TArgs = { [argName: string]: any }
   > {
-    joinMonster?: FieldConfigExtension<TSource, TContext, TArgs>
+    joinMonster?: FieldConfigExtension<_TSource, _TContext, _TArgs>
   }
   interface GraphQLUnionTypeExtensions {
     joinMonster?: UnionTypeExtension
