@@ -311,7 +311,6 @@ function handleTable(
   } else if (fieldConfig.junction) {
     if (filter) {
       sqlASTNode.join = createJoinMap(sqlASTNode, gqlType, namespace, context)
-
       sqlASTNode.filteredManyToManyJoin = true
     }
 
@@ -379,13 +378,7 @@ function handleTable(
       )
     }
   } else if (filter) {
-    sqlASTNode.filteredTopLevelField = true
-    sqlASTNode.filteredWhereMap = createJoinMap(
-      sqlASTNode,
-      gqlType,
-      namespace,
-      context
-    )
+    sqlASTNode.filteredWhereMap = createJoinMap(sqlASTNode, gqlType, namespace, context, queryASTNode)
     sqlASTNode.filteredWhere = true
   }
 
@@ -480,7 +473,7 @@ function handleTable(
   }
 }
 
-function createJoinMap(node, gqlType, namespace, context) {
+function createJoinMap(node, gqlType, namespace, context, queryASTNode) {
   /**
    * First, iterate through the filter.
    * Keep track of all tables that need to be joined
@@ -503,11 +496,11 @@ function createJoinMap(node, gqlType, namespace, context) {
   })
 
   if (filter.compare) {
-    _createJoinmap(node, context, gqlType, namespace, filter, 0, joinAst)
+    _createJoinmap(node, context, gqlType, namespace, filter, 0, joinAst, queryASTNode)
   } else if (filter.OR) {
-    _createJoinmap(node, context, gqlType, namespace, filter.OR, 0, joinAst)
+    _createJoinmap(node, context, gqlType, namespace, filter.OR, 0, joinAst, queryASTNode)
   } else if (filter.AND) {
-    _createJoinmap(node, context, gqlType, namespace, filter.AND, 0, joinAst)
+    _createJoinmap(node, context, gqlType, namespace, filter.AND, 0, joinAst, queryASTNode)
   }
 
   return joinAst
@@ -520,7 +513,8 @@ function _createJoinmap(
   namespace,
   filterArr,
   depth,
-  joinAst
+  joinAst,
+  queryASTNode
 ) {
   filterArr = wrap(filterArr)
 
@@ -535,7 +529,8 @@ function _createJoinmap(
         namespace,
         filter.OR,
         depth + 1,
-        joinAst
+        joinAst,
+        queryASTNode
       )
     } else if (current.AND) {
       _createJoinmap(
@@ -545,21 +540,25 @@ function _createJoinmap(
         namespace,
         filter.AND,
         depth + 1,
-        joinAst
+        joinAst,
+        queryASTNode
       )
     } else if (current.compare) {
       const { key } = current.compare
       const parts = key.split('.')
+
+      let correspondingSqlAstNode = node;
       let currentJAstNode = { ...joinAst }
+      let partSpecificGqlType = { ...gqlType };
 
       parts.forEach(part => {
         const [field, type] = getFieldAndTypeForFilterKeyPart(
           part,
-          gqlType,
+          partSpecificGqlType,
           joinAst.fieldName
         )
 
-        gqlType = type
+        partSpecificGqlType = type
 
         const existingNode = currentJAstNode.children.find(
           child => child.fieldName === part
@@ -640,10 +639,17 @@ function getFieldAndTypeForFilterKeyPart(
         ` Check your filter at the '${rootFieldName}' field`
     )
 
-  const correspondingFieldType = correspondingField.type
+  let correspondingFieldType = correspondingField.type
+
+  // The direct field type could be a GraphQLList. Since we
+  // want the actual underlying type we need to get this
+  while (correspondingFieldType.ofType) {
+    correspondingFieldType = correspondingFieldType.ofType
+  }
+
   return [
     correspondingField,
-    correspondingFieldType.ofType || correspondingFieldType
+    correspondingFieldType
   ]
 }
 

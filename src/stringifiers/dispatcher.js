@@ -305,9 +305,10 @@ function buildComparison(compareObj, joinAst, tableAlias, q, joinMode) {
     renameParts.push(currentNode.as)
   })
 
-  // Since we have access to all joined tables we can query
-  // for the respective field directly, so we remove all indexes that
-  // come before
+  // Since we have access to the joined table and do not have to rely on
+  // the selections we can access the field directly. Thusly we change the
+  // table's alias and use only the actual column name, so we can remove all
+  // indexes that we needed before
   if (joinMode === 'where') {
     renameParts = renameParts.slice(-1)
     tableAlias = currentNode.parent.as
@@ -367,7 +368,7 @@ async function handleFilteredWhere(
 ) {
   const joinAst = node.filteredWhereMap
 
-  const { selections: additionalSelections, joinTables } = joinAstToLists(
+  const { selections: additionalSelections, joinTables } = getSelectionsAndJoinedTablesFromJoinAst(
     joinAst,
     q,
     args,
@@ -393,7 +394,7 @@ async function handleFilteredJoin(
   standardJoinCondition
 ) {
   const joinAst = node.join
-  const { selections, joinTables } = joinAstToLists(joinAst, q, args, context)
+  const { selections, joinTables } = getSelectionsAndJoinedTablesFromJoinAst(joinAst, q, args, context)
   const joins = []
   joinTables.forEach(joinTable => {
     joins.push(joinTable.sql)
@@ -415,10 +416,10 @@ async function handleFilteredJoin(
   return str
 }
 
-function joinAstToLists(ast, q, args, context) {
-  const { selections, joinTables } = _joinAstToLists(
-    ast,
-    [ast.as], // prefix (start with the prefix of the root table's alias)
+function getSelectionsAndJoinedTablesFromJoinAst(joinAst, q, args, context) {
+  const { selections, joinTables } = _getSelectionsAndJoinedTablesFromJoinAst(
+    joinAst,
+    [joinAst.as], // prefix (start with the prefix of the root table's alias)
     [], // selections
     [], // joins,
     q,
@@ -432,8 +433,8 @@ function joinAstToLists(ast, q, args, context) {
   }
 }
 
-function _joinAstToLists(
-  currentNode,
+function _getSelectionsAndJoinedTablesFromJoinAst(
+  joinAstNode,
   prefix,
   selections,
   joins,
@@ -441,18 +442,18 @@ function _joinAstToLists(
   args,
   context
 ) {
-  currentNode.children.forEach(child => {
+  joinAstNode.children.forEach(child => {
     // The child is a column and is NOT a child of the root node
-    if (child.type === 'column' && currentNode.parent) {
+    if (child.type === 'column' && joinAstNode.parent) {
       selections.push(
-        `${q(currentNode.as)}.${q(child.as)} AS ${q(
+        `${q(joinAstNode.as)}.${q(child.as)} AS ${q(
           joinPrefix(prefix) + child.as
         )}`
       )
     } else if (child.type === 'table' && child.children.length > 0) {
       if (child.sqlJoin) {
         const joinCondition = child.sqlJoin(
-          currentNode.as,
+          joinAstNode.as,
           child.as,
           args,
           context,
@@ -461,15 +462,15 @@ function _joinAstToLists(
 
         joins.push({
           as: child,
-          sql: `  LEFT JOIN ${child.name} ${q(child.as)} ON ${joinCondition}`
+          sql: `   LEFT JOIN ${child.name} ${q(child.as)} ON ${joinCondition}`
         })
       } else if (idx(child,_ => _.junction.sqlTable) && idx(child, _ => _.junction.sqlJoins)) {
         const joinCondition1 = child.junction.sqlJoins[0](
-          q(currentNode.as),
+          q(joinAstNode.as),
           q(child.junction.as),
-          {}, // TODO How to handle args and node?!
+          args || {},
           context,
-          null
+          child
         )
 
         const joinCondition2 = child.junction.sqlJoins[1](
@@ -477,7 +478,7 @@ function _joinAstToLists(
           q(child.as),
           {},
           context,
-          null
+          child
         )
 
         joins.push(
@@ -494,7 +495,7 @@ function _joinAstToLists(
         )
       }
 
-      _joinAstToLists(
+      _getSelectionsAndJoinedTablesFromJoinAst(
         child,
         [...prefix, child.as],
         selections,
@@ -601,7 +602,7 @@ async function handleTable(
         tables,
         joinCondition
       )
-      // otherwite, just a regular left join on the table
+      // otherwise, just a regular left join on the table
     } else if (node.filteredOneToManyJoin) {
       const filteredJoin = await handleFilteredJoin(
         node,
@@ -613,7 +614,7 @@ async function handleTable(
 
       tables.push(filteredJoin)
     } else {
-      tables.push(`  LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`)
+      tables.push(`    LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`)
     }
 
     // many-to-many using batching
