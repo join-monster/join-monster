@@ -183,21 +183,28 @@ async function _stringifySqlAST(
           joinPrefix(prefix) + node.as
         )}`
       )
-      break
-    case 'expression':
-      const expr = await node.sqlExpr(
-        `${q(parentTable)}`,
-        node.args || {},
-        context,
-        node
-      )
-      selections.push(`${expr} AS ${q(joinPrefix(prefix) + node.as)}`)
-      break
-    case 'noop':
-      // we hit this with fields that don't need anything from SQL, they resolve independently
-      return
-    default:
-      throw new Error('unexpected/unknown node type reached: ' + inspect(node))
+    }
+    break
+  case 'composite':
+    // If doing a batched junction, use the joining table name
+    if (parent.type === 'table' && parent.name === idx(parent, _ => _.junction.sqlTable)) {
+      parentTable = parent.as
+    }
+    selections.push(
+      `${dialect.compositeKey(parentTable, node.name)} AS ${q(joinPrefix(prefix) + node.as)}`
+    )
+    break
+  case 'expression':
+    const expr = await node.sqlExpr(`${q(parentTable)}`, node.args || {}, context, node)
+    selections.push(
+      `${expr} AS ${q(joinPrefix(prefix) + node.as)}`
+    )
+    break
+  case 'noop':
+    // we hit this with fields that don't need anything from SQL, they resolve independently
+    return
+  default:
+    throw new Error('unexpected/unknown node type reached: ' + inspect(node))
   }
 }
 

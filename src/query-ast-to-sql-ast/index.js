@@ -21,14 +21,11 @@ class SQLASTNode {
 }
 
 // an enumeration of all the types that can map to SQL tables
-const TABLE_TYPES = [
-  'GraphQLObjectType',
-  'GraphQLUnionType',
-  'GraphQLInterfaceType'
-]
+const TABLE_TYPES = [ 'GraphQLObjectType', 'GraphQLUnionType', 'GraphQLInterfaceType' ]
+
 
 export function mergeAll(fieldNodes) {
-  const newFieldNodes = [...fieldNodes]
+  const newFieldNodes = [ ...fieldNodes ]
   while (newFieldNodes.length > 1) {
     newFieldNodes.push(merge(newFieldNodes.pop(), newFieldNodes.pop()))
   }
@@ -147,9 +144,7 @@ export function populateASTNode(
   // the actual type might be wrapped in a GraphQLNonNull type
   let gqlType = stripNonNullType(field.type)
 
-  sqlASTNode.args = field.args
-    ? getArgumentValues(field, queryASTNode, this.variableValues)
-    : {}
+  sqlASTNode.args = field.args ? getArgumentValues(field, queryASTNode, this.variableValues) : {}
 
   // if list then mark flag true & get the type inside the GraphQLList container type
   if (gqlType.constructor.name === 'GraphQLList') {
