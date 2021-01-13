@@ -93,7 +93,7 @@ WHERE "comments".archived = FALSE AND "comments"."post_id" IN (2,8,11,12) -- the
 It works on top of Facebook's [graphql-js](https://github.com/graphql/graphql-js) reference implementation.
 All you have to do is add a few properties to the objects in your schema and call the `joinMonster` function.
 A SQL query is "compiled" for you to send to the DBMS.
-The data-fetching is efficently batched.
+The data-fetching is efficiently batched.
 The data is then hydrated into the right shape for your GraphQL schema.
 
 ## Why?
@@ -107,7 +107,7 @@ More details on the "round-trip" (a.k.a. N+1) problem are [here](http://join-mon
 - [X] **Unobtrusive** - Coexists with your custom resolve functions and existing schemas. Use it on the whole graph or only in parts. Retain the power and expressiveness in defining your schema.
 - [X] **Object-relational impedance mismatch** - Don't bother duplicating a bunch of object definitions in an ORM. Let GraphQL do your object mapping *for you*.
 
-Since it works with the reference implementation, the API is all very familiar. Join Monster is a tool built on top to add batch data fetching. You add some special properties along-side the schema definition that Join Monster knows to look for. The use of [graphql-js](https://github.com/graphql/graphql-js) does not change. You still define your types the same way. You can write resolve functions to mainpulate the data from Join Monster, or incorporate data from elsewhere without breaking out of your "join-monsterized" schema.
+Since it works with the reference implementation, the API is all very familiar. Join Monster is a tool built on top to add batch data fetching. You add some special properties along-side the schema definition that Join Monster knows to look for. The use of [graphql-js](https://github.com/graphql/graphql-js) does not change. You still define your types the same way. You can write resolve functions to manipulate the data from Join Monster, or incorporate data from elsewhere without breaking out of your "join-monsterized" schema.
 
 ## Get Pagination out of the Box
 
