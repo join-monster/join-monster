@@ -7,7 +7,9 @@
 # but is necessary because of a bug with ACT: https://github.com/nektos/act/issues/410
 #
 # Run: act --platform ubuntu-latest=ubuntu-latest=nektos/act-environments-ubuntu:18.04
-# This will use a runner that has all the commands we need.
+# This will use a runner that has all the commands we need. This should only be used to
+# modifying these actions, as the image is very large. If you are trying to run the
+# tests locally, simply run them in docker.
 #
 # Use the following for the node matrix locally, or any other value,
 # but you don't need all of them:
