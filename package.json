@@ -34,7 +34,8 @@
     "db-build": "TZ=UTC babel-node test-api/data/build.js",
     "db-shell": "sqlite3 --column --header test-api/data/db/demo-data.sl3",
     "db-up": "docker-compose -f ./docker/docker-compose.yml up -d",
-    "db-down": "docker-compose -f ./docker/docker-compose.yml down --remove-orphans -v"
+    "db-down": "docker-compose -f ./docker/docker-compose.yml down --remove-orphans -v",
+    "db-wait": "while ! echo exit | docker inspect --format \"{{json .State.Health.Status }}\" docker_mysql_1 | grep 'healthy'; do sleep 1; done"
   },
   "ava": {
     "verbose": true,
