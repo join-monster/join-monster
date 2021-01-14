@@ -53,7 +53,10 @@ jobs:
       run: npm ci
 
     - name: Startup Databases
-      run: npm run db-up
+      run: |
+        npm run db-up
+        echo 'Waiting for DBs to start'
+        npm run db-wait
 
     - name: Build Test Databases
       run: npm run db-build
