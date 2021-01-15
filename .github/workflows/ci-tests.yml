@@ -26,7 +26,8 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  run-tests:
+    name: Run Tests
 
     runs-on: ubuntu-latest
 
