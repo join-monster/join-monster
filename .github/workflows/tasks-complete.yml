@@ -1,9 +1,7 @@
 name: 'PR Tasks Completed Check'
 
 on:
-  pull_request: # Run on local PRs
-    types: [opened, edited]
-  pull_request_target: # Run on fork PRs
+  pull_request_target:
     types: [opened, edited]
 
 jobs:
