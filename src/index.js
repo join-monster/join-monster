@@ -168,7 +168,7 @@ async function getNode(
   // uses the same underlying function as the main `joinMonster`
   queryAST.populateASTNode.call(
     resolveInfo,
-    fieldNodes[0],
+    fieldNodes[0],  
     fakeParentNode,
     sqlAST,
     namespace,
