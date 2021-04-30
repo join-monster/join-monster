@@ -3,9 +3,7 @@ name: Lint
 on:
   push:
     branches: [ master ]
-  pull_request: # Run on local PRs
-    branches: [ master ]
-  pull_request_target: # Run on fork PRs
+  pull_request_target:
     branches: [ master ]
 
 jobs:
