@@ -235,8 +235,16 @@ export function populateASTNode(
       aliasFrom += '@' + parentTypeNode.name
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom)
-    // is it just a column? if they specified a sqlColumn or they didn't define a resolver, yeah
-  } else if (fieldConfig.sqlColumn || !field.resolve) {
+    // or maybe it just depends on some SQL columns
+  } else if (fieldConfig.sqlDeps) {
+    sqlASTNode.type = 'columnDeps'
+    sqlASTNode.names = fieldConfig.sqlDeps
+    // is it just a column? if they specified a sqlColumn or parentTypeNode is a GraphQLObjectType, yeah
+    // recent apollo-server-core always define a field resolver
+    // see enablePluginsForSchemaResolvers function: apollo-server issue #3988
+  } else if (fieldConfig.sqlColumn ||
+    ['GraphQLObjectType', 'GraphQLInterfaceType'].includes(parentTypeNode.constructor.name)
+  ) {
     sqlASTNode.type = 'column'
     sqlASTNode.name = fieldConfig.sqlColumn || field.name
     let aliasFrom = (sqlASTNode.fieldName = field.name)
@@ -244,11 +252,6 @@ export function populateASTNode(
       aliasFrom += '@' + parentTypeNode.name
     }
     sqlASTNode.as = namespace.generate('column', aliasFrom)
-    // or maybe it just depends on some SQL columns
-  } else if (fieldConfig.sqlDeps) {
-    sqlASTNode.type = 'columnDeps'
-    sqlASTNode.names = fieldConfig.sqlDeps
-    // maybe this node wants no business with your SQL, because it has its own resolver
   } else {
     sqlASTNode.type = 'noop'
   }

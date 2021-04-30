@@ -247,6 +247,11 @@ const User = new GraphQLObjectType({
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),
+      extensions: {
+        joinMonster: {
+          ignoreAll: true
+        }
+      },
       resolve: () => [1, 2, 3]
     },
     numLegs: {
