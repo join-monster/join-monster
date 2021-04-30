@@ -1,3 +1,9 @@
+### v3.0.2 (April 4, 2021)
+
+#### Fixed
+
+- Fix apollo-server null issue due to missing columns [#444](https://github.com/join-monster/join-monster/pull/444)
+
 ### v3.0.0
 
 **Breaking changes:**
