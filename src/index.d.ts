@@ -37,7 +37,7 @@ export type ThunkWithArgsCtx<T, TContext, TArgs> =
 
 export interface ObjectTypeExtension<TSource, TContext> {
   alwaysFetch?: string
-  sqlTable?: ThunkWithArgsCtx<string, any, TContext>
+  sqlTable?: ThunkWithArgsCtx<string, TContext, any>
   uniqueKey?: string | string[]
 }
 
