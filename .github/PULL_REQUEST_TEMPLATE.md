@@ -31,4 +31,3 @@ By submitting a PR to this repository, you agree to the terms within the [Code o
 ### Checklist
 
 - [ ] I have added documentation for new/changed functionality in this PR via comments and by updating the change log
-- [ ] All active GitHub checks for tests, formatting, and security are passing
