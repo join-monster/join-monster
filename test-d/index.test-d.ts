@@ -20,6 +20,21 @@ const User = new GraphQLObjectType({
   fields: {}
 })
 
+// test sqlTable thunk
+new GraphQLObjectType<any, ExampleContext>({
+  name: 'User',
+  extensions: {
+    joinMonster: {
+      sqlTable: (args, context) => {
+        expectType<any>(args)
+        expectType<ExampleContext>(context)
+        return 'expr'
+      }
+    }
+  },
+  fields: {}
+})
+
 // test field extensions
 new GraphQLObjectType<any, ExampleContext>({
   name: 'User',
