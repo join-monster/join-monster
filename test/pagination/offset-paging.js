@@ -777,3 +777,32 @@ test('should handle an interface type', async t => {
   }
   t.deepEqual(expect, data.user.writtenMaterial)
 })
+
+test('should not allow pagination with greater than pageSizeLimit at the root', async t => {
+  const query = makeUsersQuery({ first: 1000 })
+  const { data, errors } = await run(query)
+
+  t.deepEqual(data.users, null)
+  t.deepEqual(errors[0].message, 'Maximum page size of User type, is 100')
+})
+
+test('should not allow nestedpagination with greater than pageSizeLimit', async t => {
+  const query = `{
+    users(first: 2) {
+      edges {
+        node {
+          fullName,
+          comments(first: 1000) {
+            total
+            edges {
+              node { body }
+            }
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  t.deepEqual(data.users, null)
+  t.deepEqual(errors[0].message, 'Maximum page size of Comment type, is 100')
+})

@@ -85,6 +85,7 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
   ) => string
   sqlJoin?: SqlJoin<TContext, TArgs>
   sqlPaginate?: boolean
+  sqlPageLimit?: number
   where?: Where<TContext, TArgs>
 }
 

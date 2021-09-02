@@ -78,6 +78,7 @@ const User = new GraphQLObjectType({
       extensions: {
         joinMonster: {
           sqlPaginate: !!PAGINATE,
+          sqlPageLimit: 100,
           ...do {
             if (PAGINATE === 'offset') {
               ;({ orderBy: 'id' })
