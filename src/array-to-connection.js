@@ -63,6 +63,11 @@ function arrToConnection(data, sqlAST) {
           data.pop()
         }
         data.reverse()
+      } else if (idx(sqlAST, _ => _.defaultPageSize)) {
+        if (data.length > sqlAST.defaultPageSize) {
+          pageInfo.hasNextPage = true
+          data.pop()
+        }
       }
       // convert nodes to edges and compute the cursor for each
       // TODO: only compute all the cursor if asked for them

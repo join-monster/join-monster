@@ -196,6 +196,9 @@ export function populateASTNode(
           )
         }
       }
+      if (fieldConfig.sqlDefaultPageSize) {
+        sqlASTNode.defaultPageSize = fieldConfig.sqlDefaultPageSize
+      }
     }
   } else if (fieldConfig.sqlPaginate) {
     throw new Error(

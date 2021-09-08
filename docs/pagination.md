@@ -1,6 +1,6 @@
 ## Demo
 
-Check out the paginated [version of the demo](<https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20total%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A>).
+Check out the paginated [version of the demo](https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20total%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A).
 Source code can be found [here](https://github.com/stems/join-monster-demo/tree/master/schema-paginated).
 
 Join Monster supports three different implementations of pagination, each of which can be combined with either `sqlJoin` or `sqlBatch` strategies to fetch the paginated field.
@@ -11,7 +11,9 @@ You certainly do not have to use Relay on the client.
 Join Monster happens to use this interface because it's a convenient standard.
 It also allows us to leverage [graphql-relay-js](https://github.com/graphql/graphql-relay-js). Again, this package is **does not require** you to use Relay on the client. It's simply a module for helping to set up Relay-compliant GraphQL APIs—of which pagination is a part of.
 
+
 **Not all dialects support every type of pagination.** Check the [dialects](/dialects) page for current pagination support for each dialect.
+
 
 ### 1. Application-layer Paging
 
@@ -39,12 +41,8 @@ import Post from './Post'
 import Comment from './Comment'
 
 // wrap these types in a `Connection` type
-const { connectionType: PostConnection } = connectionDefinitions({
-  nodeType: Post
-})
-const { connectionType: CommentConnection } = connectionDefinitions({
-  nodeType: Comment
-})
+const { connectionType: PostConnection } = connectionDefinitions({ nodeType: Post })
+const { connectionType: CommentConnection } = connectionDefinitions({ nodeType: Comment })
 
 const User = new GraphQLObjectType({
   name: 'User',
@@ -95,11 +93,12 @@ const User = new GraphQLObjectType({
 
 The `type`, `args`, and `resolve` are made simple with these helpers, but can all be done manually. In a manner similar to prior examples, we need to tell Join Monster how to get the data with a `JOIN`. Both **one-to-many** and **many-to-many** are supported. Place either the `sqlJoin` or `sqlJoins` alongside the connection type and you're ready to handle requests for paginated data.
 
-| Pros                               | Cons                                  |
-| ---------------------------------- | ------------------------------------- |
-| simple setup                       | not scalable to large amounts of data |
-| write your own custom paging logic |                                       |
-| portable to all SQL dialects       |                                       |
+| Pros | Cons |
+| ---- | ---- |
+| simple setup | not scalable to large amounts of data |
+| write your own custom paging logic |  |
+| portable to all SQL dialects |  |
+
 
 ### 2. Integer Offset Paging
 
@@ -143,7 +142,7 @@ const User = new GraphQLObjectType({
 })
 ```
 
-This will order by the `'id'`, defaulting to ascending ordering. If you want _descending_, or you need multiple sort columns, expand the `orderBy` property to an object.
+This will order by the `'id'`, defaulting to ascending ordering. If you want *descending*, or you need multiple sort columns, expand the `orderBy` property to an object.
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -172,7 +171,7 @@ const User = new GraphQLObjectType({
 })
 ```
 
-If your sort columns are **dynamic**, you can make `orderBy` a _function_ that return the `orderBy` value. This function will receive the GraphQL arguments as the first parameter.
+If your sort columns are **dynamic**, you can make `orderBy` a *function* that return the `orderBy` value. This function will receive the GraphQL arguments as the first parameter.
 
 Join Monster will only pull the rows for the requested page out of the database. Because it uses the `LIMIT`, `OFFSET` clauses, the pages will get shifted if a new row is inserted at the beginning. We also cannot do backward pagination because the total number of rows is required for calculation of the offset.
 
@@ -205,7 +204,7 @@ let query = `{
 Another advantage is that the total number of items in the list is returned from batch request.
 Notice how the total was requested.
 Join Monster provides this to the connection's resolver on the `total` property on the Connection.
-This is useful for calculating the total number of pages. Watch out though, the `connectionDefinitions` helper from `graphql-relay` _does not_ provide this field.
+This is useful for calculating the total number of pages. Watch out though, the `connectionDefinitions` helper from `graphql-relay` *does not* provide this field.
 You have to add it manually to the schema if you want to expose it.
 Join Monster automatically fetches it either way.
 
@@ -226,18 +225,15 @@ Because the cursor is predictable, you get another interesting capability. You c
   users(first: 5) {
     edges {
       node {
-        id
-        fullName
+        id, fullName
         posts(first: 5, after: "YXJyYXljb25uZWN0aW9uOjk=") {
           edges {
             node {
-              id
-              body
+              id, body
               comments(first: 5, after: "YXJyYXljb25uZWN0aW9uOjk=") {
                 edges {
                   node {
-                    id
-                    body
+                    id, body
                   }
                 }
               }
@@ -250,20 +246,22 @@ Because the cursor is predictable, you get another interesting capability. You c
 }
 ```
 
-This is possible because the 10th post _always_ has the same cursor value, regardless of which user it belongs too. This is also true for comments or any other type. But because offsets work by skipping rows from the beginning, backward pagination is not possible.
+This is possible because the 10th post *always* has the same cursor value, regardless of which user it belongs too. This is also true for comments or any other type. But because offsets work by skipping rows from the beginning, backward pagination is not possible.
 
 This implementation is not supported on all dialects. See the [dialects](/dialects) page for details.
 
-| Pros                                                           | Cons                                                                        |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| only fetch the current page from the database                  | only supported in some dialects                                             |
-| total number of pages can be known                             | unstable - shifts the items if insertions are made at the beginning         |
-| jump to arbitrary pages in the middle                          | requires sorting the table, which can be expensive for very large data sets |
-| able to "recursively" page through multiple nested connections | unable to do backward paging                                                |
+| Pros | Cons |
+| ---- | ---- |
+| only fetch the current page from the database | only supported in some dialects |
+| total number of pages can be known | unstable - shifts the items if insertions are made at the beginning |
+| jump to arbitrary pages in the middle | requires sorting the table, which can be expensive for very large data sets |
+| able to "recursively" page through multiple nested connections | unable to do backward paging |
+
+
 
 ### 3. Keyset Paging
 
-This approach utilizes a **sort key**, either one column or multiple columns together that are sortable _and_ unique.
+This approach utilizes a **sort key**, either one column or multiple columns together that are sortable *and* unique.
 The uniqueness allows us to place the sort key into the cursor to uniquely identify each object.
 We can use a `WHERE` in lieu of an `OFFSET`, which can benefit performance.
 It is the most scalable approach, but also the most limiting.
@@ -350,18 +348,15 @@ You can still get the beginning or end of nested connections though.
   users(first: 5) {
     edges {
       node {
-        id
-        fullName
+        id, fullName
         posts(first: 5) {
           edges {
             node {
-              id
-              body
+              id, body
               comments(first: 5) {
                 edges {
                   node {
-                    id
-                    body
+                    id, body
                   }
                 }
               }
@@ -374,16 +369,18 @@ You can still get the beginning or end of nested connections though.
 }
 ```
 
-| Pros                                                  | Cons                            |
-| ----------------------------------------------------- | ------------------------------- |
-| only fetch the current page from the database         | only supported in some dialects |
-| most scalable with proper index scans on sort key     | no jumping to middle pages      |
-| stable - handles insertions in the middle of the list | total page number not known     |
-| both forward and backward paging                      | unable to do "recursive paging" |
+
+| Pros | Cons |
+| ---- | ---- |
+| only fetch the current page from the database | only supported in some dialects |
+| most scalable with proper index scans on sort key | no jumping to middle pages |
+| stable - handles insertions in the middle of the list | total page number not known |
+| both forward and backward paging | unable to do "recursive paging" |
 
 ## Pagination with Batching
 
 All implementations support batching instead of joins. Simply combine the applicable properties with either `sqlBatch` or `junction.sqlBatch`.
+
 
 ```javascript
 const Post = new GraphQLObjectType({
@@ -438,10 +435,11 @@ const Post = new GraphQLObjectType({
 
 The `limit` can be an integer or a function that returns an integer. This feature is only supported if pagination is supported for you SQL dialect.
 
-### 4. Max Page Size in Pagination
+### 4. Max and Default Page Size in Pagination
 
 If you want to limit the maximum number of results allowed in a list field,
-you can just use the `sqlPageSize`
+you can use the `sqlPageLimit`.
+To set a default page size use `sqlDefaultPageSize`. without a sqlDefaultPageSize, server defaults to a max limit as per the db in use.
 
 ```javascript
 const Post = new GraphQLObjectType({
@@ -453,7 +451,8 @@ const Post = new GraphQLObjectType({
       extensions: {
         joinMonster: {
           sqlPaginate: true,
-          sqlPageSize: 100,
+          sqlPageLimit: 100,
+          sqlDefaultPageSize: 5,
           ...
         }
       }
@@ -462,4 +461,4 @@ const Post = new GraphQLObjectType({
 })
 ```
 
-The `sqlPageSize` is an integer. This feature is only supported if pagination is supported for your SQL dialect and sqlPaginate is set.
+The `sqlPageLimit` and `sqlDefaultPageSize` fields are integers. This feature is only supported if pagination is supported for your SQL dialect and sqlPaginate is set.
