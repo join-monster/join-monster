@@ -907,3 +907,25 @@ test('should use default page limit if set', async t => {
   errCheck(t, errors)
   t.deepEqual(data.users.edges[0].node.comments.edges.length, 2)
 })
+
+test('should allow explicit page limit larger than default page size', async t => {
+  const query = `{
+    users {
+      edges{
+        node{
+          id
+          comments(first:3) {
+            edges{
+              node{
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  t.deepEqual(data.users.edges[0].node.comments.edges.length, 3)
+})
