@@ -885,3 +885,25 @@ test('should handle an interface type', async t => {
   }
   t.deepEqual(expect, data.user.writtenMaterial)
 })
+
+test('should use default page limit if set', async t => {
+  const query = `{
+    users {
+      edges{
+        node{
+          id
+          comments {
+            edges{
+              node{
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await run(query)
+  errCheck(t, errors)
+  t.deepEqual(data.users.edges[0].node.comments.edges.length, 2)
+})

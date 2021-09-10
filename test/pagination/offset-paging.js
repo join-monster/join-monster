@@ -783,7 +783,7 @@ test('should not allow pagination with greater than pageSizeLimit at the root', 
   const { data, errors } = await run(query)
 
   t.deepEqual(data.users, null)
-  t.deepEqual(errors[0].message, 'Maximum page size of User type, is 100')
+  t.deepEqual(errors[0].message, 'Maximum page size of User type is 100')
 })
 
 test('should not allow nestedpagination with greater than pageSizeLimit', async t => {
@@ -804,7 +804,7 @@ test('should not allow nestedpagination with greater than pageSizeLimit', async 
   }`
   const { data, errors } = await run(query)
   t.deepEqual(data.users, null)
-  t.deepEqual(errors[0].message, 'Maximum page size of Comment type, is 100')
+  t.deepEqual(errors[0].message, 'Maximum page size of Comment type is 100')
 })
 
 test('should use default page limit if set', async t => {
@@ -826,5 +826,5 @@ test('should use default page limit if set', async t => {
   }`
   const { data, errors } = await run(query)
   errCheck(t, errors)
-  t.deepEqual(data.users.edges[0].node.comments.edges.length, 3)
+  t.deepEqual(data.users.edges[0].node.comments.edges.length, 2)
 })

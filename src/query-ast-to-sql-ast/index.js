@@ -192,7 +192,7 @@ export function populateASTNode(
           fieldConfig.sqlPageLimit < sqlASTNode.args.last
         ) {
           throw new Error(
-            `Maximum page size of ${gqlType.name} type, is ${fieldConfig.sqlPageLimit}`
+            `Maximum page size of ${gqlType.name} type is ${fieldConfig.sqlPageLimit}`
           )
         }
       }
