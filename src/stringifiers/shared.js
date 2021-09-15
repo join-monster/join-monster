@@ -180,6 +180,9 @@ export function interpretForOffsetPaging(node, dialect) {
   let limit = ['mariadb', 'mysql', 'oracle'].includes(name)
     ? '18446744073709551615'
     : 'ALL'
+  if (idx(node, _ => _.defaultPageSize)) {
+    limit = node.defaultPageSize + 1
+  }
   let offset = 0
   if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first, 10)
@@ -217,6 +220,9 @@ export function interpretForKeysetPaging(node, dialect) {
     ? '18446744073709551615'
     : 'ALL'
   let whereCondition = ''
+  if (idx(node, _ => _.defaultPageSize)) {
+    limit = node.defaultPageSize + 1
+  }
 
   if (idx(node, _ => _.args.first)) {
     limit = parseInt(node.args.first, 10) + 1

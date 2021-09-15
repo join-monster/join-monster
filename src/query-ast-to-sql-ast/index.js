@@ -186,6 +186,19 @@ export function populateASTNode(
     // we'll set a flag for pagination.
     if (fieldConfig.sqlPaginate) {
       sqlASTNode.paginate = true
+      if (fieldConfig.sqlPageLimit) {
+        if (
+          fieldConfig.sqlPageLimit < sqlASTNode.args.first ||
+          fieldConfig.sqlPageLimit < sqlASTNode.args.last
+        ) {
+          throw new Error(
+            `Maximum page size of ${gqlType.name} type is ${fieldConfig.sqlPageLimit}`
+          )
+        }
+      }
+      if (fieldConfig.sqlDefaultPageSize) {
+        sqlASTNode.defaultPageSize = fieldConfig.sqlDefaultPageSize
+      }
     }
   } else if (fieldConfig.sqlPaginate) {
     throw new Error(
@@ -242,8 +255,11 @@ export function populateASTNode(
     // is it just a column? if they specified a sqlColumn or parentTypeNode is a GraphQLObjectType, yeah
     // recent apollo-server-core always define a field resolver
     // see enablePluginsForSchemaResolvers function: apollo-server issue #3988
-  } else if (fieldConfig.sqlColumn ||
-    ['GraphQLObjectType', 'GraphQLInterfaceType'].includes(parentTypeNode.constructor.name)
+  } else if (
+    fieldConfig.sqlColumn ||
+    ['GraphQLObjectType', 'GraphQLInterfaceType'].includes(
+      parentTypeNode.constructor.name
+    )
   ) {
     sqlASTNode.type = 'column'
     sqlASTNode.name = fieldConfig.sqlColumn || field.name

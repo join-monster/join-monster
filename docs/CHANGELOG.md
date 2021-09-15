@@ -1,3 +1,27 @@
+### v3.0.4 (September 10, 2021 )
+**New Feature**
+- Added sqlDefaultPageSizeLimit and sqlPageLimit field specs to allow user to configure a default page limit and maximum page size limit for paginated fields. 
+
+```javascript
+const Post = new GraphQLObjectType({
+  // ...
+  fields: () => ({
+    // ...
+    only3Comments: {
+      type: new GraphQLList(Comment),
+      extensions: {
+        joinMonster: {
+          sqlPaginate: true,
+          sqlPageLimit: 100,
+          sqlDefaultPageSize: 5,
+          ...
+        }
+      }
+    }
+  })
+})
+```
+
 ### v3.0.2 (April 4, 2021)
 
 #### Fixed

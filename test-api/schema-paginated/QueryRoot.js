@@ -62,6 +62,7 @@ export default new GraphQLObjectType({
       },
       extensions: {
         joinMonster: {
+          sqlPageLimit: 100,
           sqlPaginate: !!PAGINATE,
           ...do {
             if (PAGINATE === 'offset') {

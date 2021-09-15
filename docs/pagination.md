@@ -434,3 +434,31 @@ const Post = new GraphQLObjectType({
 ```
 
 The `limit` can be an integer or a function that returns an integer. This feature is only supported if pagination is supported for you SQL dialect.
+
+### 4. Max and Default Page Size in Pagination
+
+If you want to limit the maximum number of results allowed in a list field,
+you can use the `sqlPageLimit`.
+To set a default page size use `sqlDefaultPageSize`. without a sqlDefaultPageSize, server defaults to a max limit as per the db in use.
+
+```javascript
+const Post = new GraphQLObjectType({
+  // ...
+  fields: () => ({
+    // ...
+    only3Comments: {
+      type: new GraphQLList(Comment),
+      extensions: {
+        joinMonster: {
+          sqlPaginate: true,
+          sqlPageLimit: 100,
+          sqlDefaultPageSize: 5,
+          ...
+        }
+      }
+    }
+  })
+})
+```
+
+The `sqlPageLimit` and `sqlDefaultPageSize` fields are integers. This feature is only supported if pagination is supported for your SQL dialect and sqlPaginate is set.
