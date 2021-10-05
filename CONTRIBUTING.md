@@ -78,6 +78,10 @@ npm dist-tag add join-monster@2.1.2 latest
 
 New versions MUST be compliant with [semver](http://semver.org/).
 
+## Docs
+
+The [docs](https://join-monster.readthedocs.io/en/latest/) should be updated on pushes to `master` (via webhook to Read the Docs). [Build history](https://readthedocs.org/projects/join-monster/builds/).
+
 ## License
 
 By contributing to Join Monster, you agree that your contributions will be licensed under the LICENSE file in the project root directory.
