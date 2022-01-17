@@ -1,6 +1,12 @@
 ### vNEXT
 
-### v3.1.0 (January 17, 2022 )
+### v3.1.1 (January 17, 2022)
+
+#### Fixed
+
+- Revert `package-lock.json` update from [358c38a](https://github.com/join-monster/join-monster/commit/358c38a21041357a69281ecd31494c1341259814) (fixes [#466](https://github.com/join-monster/join-monster/issues/466))
+
+### v3.1.0 (January 17, 2022)
 
 #### Fixed
 
