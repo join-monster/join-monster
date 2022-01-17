@@ -65,7 +65,7 @@ npm run db-down
 
 Run `npm install` and `npm run db-build` to prepare the fixture data. Check the `scripts` in the `package.json` for easily running the example data and the demo server with GraphiQL. Now you can begin coding.
 
-Before commiting your changes, **run the lint, tests, and coverage to make sure everything is green.** After making your commits, push it up to your fork and make a pull request to our master branch. We will review it ASAP.
+Before committing your changes, **run the lint, tests, and coverage to make sure everything is green.** After making your commits, push it up to your fork and make a pull request to our master branch. We will review it ASAP.
 
 ## Release on NPM
 
