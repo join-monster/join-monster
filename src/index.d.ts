@@ -36,7 +36,7 @@ export type ThunkWithArgsCtx<T, TContext, TArgs> =
   | T
 
 export interface ObjectTypeExtension<TSource, TContext> {
-  alwaysFetch?: string
+  alwaysFetch?: string | string[]
   sqlTable?: ThunkWithArgsCtx<string, TContext, any>
   uniqueKey?: string | string[]
 }
@@ -93,13 +93,13 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
 export interface UnionTypeExtension {
   sqlTable?: string
   uniqueKey?: string | string[]
-  alwaysFetch?: string
+  alwaysFetch?: string | string[]
 }
 
 export interface InterfaceTypeExtension {
   sqlTable?: string
   uniqueKey?: string | string[]
-  alwaysFetch?: string
+  alwaysFetch?: string | string[]
 }
 
 declare module 'graphql' {
