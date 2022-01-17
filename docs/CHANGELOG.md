@@ -4,7 +4,7 @@
 
 #### Fixed
 
-- Fix `alwaysFetch`'s type #465
+- Fix `alwaysFetch`'s type [#465](https://github.com/join-monster/join-monster/pull/465)
 
 #### Updated
 
@@ -12,7 +12,7 @@
 
 #### Added
 
-- #425: Add support for resolving GraphQL scalars backed by `sqlTable`s. Usually, scalars point to table columns, but this allows them to use the same `extensions` property to declare that the scalar is a whole table. This is often paired with a `resolve` function that takes what `join-monster` returns and turns it into a valid value for the scalar. An example would be a tags field that outputs a list of strings, but where each tag is actually stored as it's own row in a different table in the database, or backing a `JSONScalar` by a table to get around GraphQL's type strictness.
+- [#425](https://github.com/join-monster/join-monster/pull/425): Add support for resolving GraphQL scalars backed by `sqlTable`s. Usually, scalars point to table columns, but this allows them to use the same `extensions` property to declare that the scalar is a whole table. This is often paired with a `resolve` function that takes what `join-monster` returns and turns it into a valid value for the scalar. An example would be a tags field that outputs a list of strings, but where each tag is actually stored as it's own row in a different table in the database, or backing a `JSONScalar` by a table to get around GraphQL's type strictness.
 
 ```javascript
 export const Tag = new GraphQLScalarType({
