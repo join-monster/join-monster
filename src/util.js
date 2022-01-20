@@ -72,7 +72,7 @@ export function maybeQuote(value, dialectName) {
     return 'NULL'
   }
 
-  if (typeof value === 'number') return value
+  if (typeof value === 'number' || typeof value === 'bigint') return value
   if (value && typeof value.toSQL === 'function') return value.toSQL()
   if (
     value instanceof Buffer &&

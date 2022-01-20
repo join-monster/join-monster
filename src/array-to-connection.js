@@ -50,7 +50,6 @@ function arrToConnection(data, sqlAST) {
   // time changes it everywhere. we'll set the `_paginated` property to true to prevent this
   if (sqlAST.paginate && !data._paginated) {
     if (sqlAST.sortKey || idx(sqlAST, _ => _.junction.sortKey)) {
-      
       if (idx(sqlAST, _ => _.args.first)) {
         // we fetched an extra one in order to determine if there is a next page, if there is one, pop off that extra
         if (data.length > sqlAST.args.first) {
@@ -70,8 +69,8 @@ function arrToConnection(data, sqlAST) {
           pageInfo.hasNextPage = true
           data.pop()
         }
-      }  
-  
+      }
+
       // convert nodes to edges and compute the cursor for each
       // TODO: only compute all the cursor if asked for them
       const sortKey = sqlAST.sortKey || sqlAST.junction.sortKey
@@ -96,7 +95,10 @@ function arrToConnection(data, sqlAST) {
       // $total was a special column for determining the total number of items
       const arrayLength = data[0] && parseInt(data[0].$total, 10)
       let defaultArgs = sqlAST.args
-      if (idx(sqlAST, _ => _.defaultPageSize) && !idx(defaultArgs, _=>_.first)) {
+      if (
+        idx(sqlAST, _ => _.defaultPageSize) &&
+        !idx(defaultArgs, _ => _.first)
+      ) {
         defaultArgs.first = sqlAST.defaultPageSize
       }
       const connection = connectionFromArraySlice(data, defaultArgs, {
@@ -107,7 +109,6 @@ function arrToConnection(data, sqlAST) {
       connection._paginated = true
       return connection
     }
-    
   }
   return data
 }
