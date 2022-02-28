@@ -33,7 +33,7 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
 }
 
 // processes a single child of the batch
-async function nextBatchChild(childAST, data, dbCall, context, options) {
+export async function nextBatchChild(childAST, data, dbCall, context, options) {
   if (childAST.type !== 'table' && childAST.type !== 'union') return
 
   const fieldName = childAST.fieldName

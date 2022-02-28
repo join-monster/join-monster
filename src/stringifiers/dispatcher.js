@@ -71,6 +71,7 @@ async function _stringifySqlAST(
   const { quote: q } = dialect
   const parentTable = node.fromOtherTable || (parent && parent.as)
   switch (node.type) {
+    case 'delegated':
     case 'table':
       await handleTable(
         parent,

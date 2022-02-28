@@ -30,6 +30,7 @@ function _defineObjectShape(parent, prefix, node) {
       case 'expression':
         fieldDefinition[child.fieldName] = prefixToPass + child.as
         break
+      case 'delegated':
       case 'union':
       case 'table':
         if (child.sqlBatch) {
@@ -81,6 +82,7 @@ function _defineObjectShape(parent, prefix, node) {
             fieldDefinition[child.fieldName + suffix] = definition
           }
           break
+        case 'delegated':
         case 'noop':
           void 0
           break

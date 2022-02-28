@@ -157,4 +157,12 @@ declare function joinMonster(
   options?: JoinMonsterOptions
 ): Promise<any>
 
+export function joinMonsterBatch(
+  data: any,
+  resolveInfo: any,
+  context: any,
+  dbCall: DbCallCallback | DbCallPromise,
+  options?: JoinMonsterOptions
+): Promise<any>
+
 export default joinMonster

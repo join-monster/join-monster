@@ -3,7 +3,7 @@ import assert from 'assert'
 import * as queryAST from './query-ast-to-sql-ast'
 import arrToConnection from './array-to-connection'
 import AliasNamespace from './alias-namespace'
-import nextBatch from './batch-planner'
+import nextBatch, { nextBatchChild } from './batch-planner'
 import {
   buildWhereFunction,
   handleUserDbCall,
@@ -114,6 +114,14 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
       return true
     })
   }
+
+  return data
+}
+
+export async function joinMonsterBatch(data, resolveInfo, context, dbCall, options = {}) {
+  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options, context)
+
+  await nextBatchChild(sqlAST, data, dbCall, context, options)
 
   return data
 }
