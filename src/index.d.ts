@@ -39,6 +39,7 @@ export interface ObjectTypeExtension<TSource, TContext> {
   alwaysFetch?: string | string[]
   sqlTable?: ThunkWithArgsCtx<string, TContext, any>
   uniqueKey?: string | string[]
+  delegated?: boolean
 }
 
 export interface FieldConfigExtension<TSource, TContext, TArgs> {
@@ -88,6 +89,7 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
   sqlPageLimit?: number
   sqlDefaultPageSize?: number
   where?: Where<TContext, TArgs>
+  delegated?: boolean
 }
 
 export interface UnionTypeExtension {
