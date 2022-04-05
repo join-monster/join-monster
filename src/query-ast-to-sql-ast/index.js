@@ -163,7 +163,9 @@ export function populateASTNode(
   let grabMany = false
   // the actual type might be wrapped in a GraphQLNonNull type
   let gqlType = stripNonNullType(field.type)
-
+  // patch for building node query - expectation in qraphql-js 16+ is that field.args is iterable (array)
+  // so convert field.args into Array if it's not an array aleady.
+  if (field && field.args && !Array.isArray(field.args)) field.args = [field.args]; 
   sqlASTNode.args = getArgumentValues(field, queryASTNode, this.variableValues)
 
   // if list then mark flag true & get the type inside the GraphQLList container type
