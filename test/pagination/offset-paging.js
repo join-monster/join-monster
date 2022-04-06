@@ -523,6 +523,32 @@ test('should handle emptiness', async t => {
   t.deepEqual(expect, data)
 })
 
+test('should handle emptiness for nested connections', async t => {
+  const query = `{
+    users {
+      edges {
+        node {
+          comments {
+            pageInfo {
+              startCursor
+              endCursor
+              hasNextPage
+              hasPreviousPage
+            }
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+  }`
+  const { errors } = await run(query)
+  errCheck(t, errors)
+})
+
 test('should handle a post without an author', async t => {
   const query = `{
     node(id: "${toGlobalId('Post', 19)}") {
