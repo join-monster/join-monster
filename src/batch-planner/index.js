@@ -81,7 +81,18 @@ async function nextBatchChild(childAST, data, dbCall, context, options) {
         for (let obj of data) {
           obj[fieldName] =
             newData[obj[parentKey]] ||
-            (childAST.paginate ? { total: 0, edges: [] } : [])
+            (childAST.paginate
+              ? {
+                  total: 0,
+                  edges: [],
+                  pageInfo: {
+                    startCursor: null,
+                    endCursor: null,
+                    hasNextPage: false,
+                    hasPreviousPage: false
+                  }
+                }
+              : [])
         }
       } else {
         let matchedData = []
