@@ -43,6 +43,10 @@ export function ensure(obj, prop, name) {
   return obj[prop]
 }
 
+export function asyncUnthunk(val, ...args) {
+  return Promise.resolve(unthunk(val, ...args))
+}
+
 export function unthunk(val, ...args) {
   return typeof val === 'function' ? val(...args) : val
 }

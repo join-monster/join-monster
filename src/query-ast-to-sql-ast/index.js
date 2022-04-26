@@ -6,6 +6,7 @@ import idx from 'idx'
 
 import AliasNamespace from '../alias-namespace'
 import {
+  asyncUnthunk,
   wrap,
   ensure,
   unthunk,
@@ -56,7 +57,7 @@ function merge(dest, src) {
   }
 }
 
-export function queryASTToSqlAST(resolveInfo, options, context) {
+export async function queryASTToSqlAST(resolveInfo, options, context) {
   // this is responsible for all the logic regarding creating SQL aliases
   // we need varying degrees of uniqueness and readability
   // force oracle to minify, because it has this 30-character limit on column identifiers
@@ -85,7 +86,7 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   // this allows us to get the field definition of the current field so we can grab that extra metadata
   // e.g. sqlColumn or sqlJoin, etc.
   const parentType = resolveInfo.parentType
-  populateASTNode.call(
+  await populateASTNode.call(
     resolveInfo,
     queryAST,
     parentType,
@@ -108,7 +109,7 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   return sqlAST
 }
 
-export function populateASTNode(
+export async function populateASTNode(
   queryASTNode,
   parentTypeNode,
   sqlASTNode,
@@ -228,7 +229,7 @@ export function populateASTNode(
         Check the extensions.joinMonster property of "${fieldName}" field on the "${parentTypeNode.name}" type.`
       )
     }
-    handleTable.call(
+    await handleTable.call(
       this,
       sqlASTNode,
       queryASTNode,
@@ -274,7 +275,7 @@ export function populateASTNode(
   }
 }
 
-function handleTable(
+async function handleTable(
   sqlASTNode,
   queryASTNode,
   field,
@@ -289,7 +290,11 @@ function handleTable(
   const fieldConfig = getConfigFromSchemaObject(field)
 
   sqlASTNode.type = 'table'
-  const sqlTable = unthunk(config.sqlTable, sqlASTNode.args || {}, context)
+  const sqlTable = await asyncUnthunk(
+    config.sqlTable,
+    sqlASTNode.args || {},
+    context
+  )
   sqlASTNode.name = sqlTable
 
   // the graphQL field name will be the default alias for the table
@@ -322,7 +327,7 @@ function handleTable(
     sqlASTNode.sqlJoin = fieldConfig.sqlJoin
     // or a many-to-many?
   } else if (fieldConfig.junction) {
-    const junctionTable = unthunk(
+    const junctionTable = await asyncUnthunk(
       ensure(fieldConfig.junction, 'sqlTable'),
       sqlASTNode.args || {},
       context
@@ -451,7 +456,7 @@ function handleTable(
       // union types have special rules for the child fields in join monster
       sqlASTNode.type = 'union'
       sqlASTNode.typedChildren = {}
-      handleUnionSelections.call(
+      await handleUnionSelections.call(
         this,
         sqlASTNode,
         children,
@@ -463,7 +468,7 @@ function handleTable(
         context
       )
     } else {
-      handleSelections.call(
+      await handleSelections.call(
         this,
         sqlASTNode,
         children,
@@ -479,7 +484,7 @@ function handleTable(
 }
 
 // we need to collect all fields from all the fragments requested in the union type and ask for them in SQL
-function handleUnionSelections(
+async function handleUnionSelections(
   sqlASTNode,
   children,
   selections,
@@ -508,7 +513,7 @@ function handleUnionSelections(
         if (internalOptions.defferedFrom) {
           newNode.defferedFrom = internalOptions.defferedFrom
         }
-        populateASTNode.call(
+        await populateASTNode.call(
           this,
           selection,
           gqlType,
@@ -530,8 +535,8 @@ function handleUnionSelections(
           const deferToObjectType =
             deferredType.constructor.name === 'GraphQLObjectType'
           const handler = deferToObjectType
-            ? handleSelections
-            : handleUnionSelections
+            ? await handleSelections
+            : await handleUnionSelections
           if (deferToObjectType) {
             const typedChildren = sqlASTNode.typedChildren
             children = typedChildren[deferredType.name] =
@@ -562,8 +567,8 @@ function handleUnionSelections(
           const deferToObjectType =
             deferredType.constructor.name === 'GraphQLObjectType'
           const handler = deferToObjectType
-            ? handleSelections
-            : handleUnionSelections
+            ? await handleSelections
+            : await handleUnionSelections
           if (deferToObjectType) {
             const typedChildren = sqlASTNode.typedChildren
             children = typedChildren[deferredType.name] =
@@ -592,7 +597,7 @@ function handleUnionSelections(
 }
 
 // the selections could be several types, recursively handle each type here
-function handleSelections(
+async function handleSelections(
   sqlASTNode,
   children,
   selections,
@@ -622,7 +627,7 @@ function handleSelections(
         if (internalOptions.defferedFrom) {
           newNode.defferedFrom = internalOptions.defferedFrom
         }
-        populateASTNode.call(
+        await populateASTNode.call(
           this,
           selection,
           gqlType,
@@ -643,7 +648,7 @@ function handleSelections(
             .map(iface => iface.name)
             .includes(selectionNameOfType)
           if (sameType || interfaceType) {
-            handleSelections.call(
+            await handleSelections.call(
               this,
               sqlASTNode,
               children,
@@ -671,7 +676,7 @@ function handleSelections(
               .map(iface => iface.name)
               .indexOf(fragmentNameOfType) >= 0
           if (sameType || interfaceType) {
-            handleSelections.call(
+            await handleSelections.call(
               this,
               sqlASTNode,
               children,

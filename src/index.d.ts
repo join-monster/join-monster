@@ -35,9 +35,15 @@ export type ThunkWithArgsCtx<T, TContext, TArgs> =
   | ((args: TArgs, context: TContext) => T)
   | T
 
+export type AsyncThunkWithArgsCtx<T, TContext, TArgs> =
+  | ((args: TArgs, context: TContext) => T)
+  | ((args: TArgs, context: TContext) => Promise<T>)
+  | Promise<T>
+  | T
+
 export interface ObjectTypeExtension<TSource, TContext> {
   alwaysFetch?: string | string[]
-  sqlTable?: ThunkWithArgsCtx<string, TContext, any>
+  sqlTable?: AsyncThunkWithArgsCtx<string, TContext, any>
   uniqueKey?: string | string[]
 }
 
@@ -64,7 +70,7 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
       sqlJoin: SqlJoin<TContext, TArgs>
     }
     sqlJoins?: [SqlJoin<TContext, TArgs>, SqlJoin<TContext, TArgs>]
-    sqlTable: ThunkWithArgsCtx<string, TContext, TArgs>
+    sqlTable: AsyncThunkWithArgsCtx<string, TContext, TArgs>
     uniqueKey?: string | string[]
     where?: Where<TContext, TArgs>
   }
@@ -91,19 +97,19 @@ export interface FieldConfigExtension<TSource, TContext, TArgs> {
 }
 
 export interface UnionTypeExtension {
-  sqlTable?: ThunkWithArgsCtx<string, any, any>
+  sqlTable?: AsyncThunkWithArgsCtx<string, any, any>
   uniqueKey?: string | string[]
   alwaysFetch?: string | string[]
 }
 
 export interface InterfaceTypeExtension {
-  sqlTable?: ThunkWithArgsCtx<string, any, any>
+  sqlTable?: AsyncThunkWithArgsCtx<string, any, any>
   uniqueKey?: string | string[]
   alwaysFetch?: string | string[]
 }
 
 export interface ScalarTypeExtension {
-  sqlTable?: ThunkWithArgsCtx<string, any, any>
+  sqlTable?: AsyncThunkWithArgsCtx<string, any, any>
   uniqueKey?: string | string[]
   alwaysFetch?: string | string[]
 }

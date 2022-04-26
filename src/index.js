@@ -87,7 +87,7 @@ import {
  */
 async function joinMonster(resolveInfo, context, dbCall, options = {}) {
   // we need to read the query AST and build a new "SQL AST" from which the SQL and
-  const sqlAST = queryAST.queryASTToSqlAST(resolveInfo, options, context)
+  const sqlAST = await queryAST.queryASTToSqlAST(resolveInfo, options, context)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   if (!sql) return {}
 
@@ -166,7 +166,7 @@ async function getNode(
   const sqlAST = {}
   const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
   // uses the same underlying function as the main `joinMonster`
-  queryAST.populateASTNode.call(
+  await queryAST.populateASTNode.call(
     resolveInfo,
     fieldNodes[0],
     fakeParentNode,
