@@ -53,3 +53,76 @@ However, some functions return RAW clauses into which may or may not accept untr
 If these are strings containing malicious code, a SQL injection attack can occur.
 Such functions, like the `where`, `sqlJoin`, or `sqlExpr` function, should escape the input. See [this page](where.md) for example.
 
+## Custom resolvers
+
+<div class="admonition danger">
+  <p class="first admonition-title">Warning</p>
+  <p class="last">
+    When writing custom resolvers on non-trivial fields, consider getting the value through the GraphQL default resolver.
+  </p>
+</div>
+
+GraphQL allows querying the same field through multiple aliases, which may use different arguments:
+
+```graphql
+{
+  users {
+    following { fullName }
+    andrews: following(name: "andrew") { fullName }
+  }
+}
+```
+
+Normally, `join-monster` would allow accessing the value as `source.following` in a custom resolver:
+
+```javascript
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    following: {
+      //...
+      resolve: (source, args, context, info) => {
+        return processUsers(source.following)
+      }
+    }
+  })
+})
+```
+
+However, if there are multiple conflicting aliases accessing the same relation, the `source` object will look something like this:
+
+```javascript
+{
+  following$: [
+    { fullName: 'andrew carlson' },
+    { fullName: 'matt elder' }
+  ],
+  following$matts: [
+    { fullName: 'matt elder' }
+  ],
+  following: (args, context, info) => { /* ... */ }
+}
+```
+
+The `source.following` property is now a function that will return the correct value. GraphQL's default resolver will detect the function and do the right thing.
+
+Therefore, we recommend getting the raw value through GraphQL's default resolver first when using a custom resolver on a non-trivial field:
+
+```javascript
+import { defaultFieldResolver } from 'graphql'
+
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    following: {
+      // ...
+      resolve: (source, args, context, info) => {
+        const rawValue = defaultFieldResolver(source, args, context, info)
+        return processUsers(rawValue)
+      }
+    }
+  })
+})
+```

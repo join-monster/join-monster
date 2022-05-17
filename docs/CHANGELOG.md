@@ -1,5 +1,28 @@
 ### vNEXT 
 
+**Breaking changes:**
+
+- Support querying the same fields and relations with different arguments through different aliases (fixes [#126](https://github.com/join-monster/join-monster/issues/126))
+  - It is no longer guaranteed that a field's value is available under `source[fieldName]` in a custom resolver. Instead, custom resolvers on non-trivial fields should use GraphQL's default resolver to get the raw value:
+
+```javascript
+import { defaultFieldResolver } from 'graphql'
+
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    following: {
+      // ...
+      resolve: (source, args, context, info) => {
+        const rawValue = defaultFieldResolver(source, args, context, info)
+        return processUsers(rawValue)
+      }
+    }
+  })
+})
+```
+
 ### v3.3.5 (May 28, 2024)
 #### Fixed
 - [#532](https://github.com/join-monster/join-monster/pull/530): Updates mkdocs to 1.5.3.
