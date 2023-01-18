@@ -77,7 +77,10 @@
   },
   "homepage": "https://github.com/join-monster/join-monster#readme",
   "peerDependencies": {
-    "graphql": "^15.4.0"
+    "graphql": "^15.8.0"
+  },
+  "overrides": {
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@ava/babel": "^1.0.1",
@@ -93,11 +96,11 @@
     "babel-watch": "^7.0.0",
     "dotenv": "8.2.0",
     "dotenv-expand": "^5.1.0",
-    "eslint": "^7.1.0",
+    "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-config-prettier": "^6.11.0",
     "faker": "^4.1.0",
-    "graphql": "^15.4.0",
+    "graphql": "^15.8.0",
     "graphsiql": "0.2.0",
     "idx": "^2.5.6",
     "jsdoc-to-markdown": "^5.0.0",
@@ -105,7 +108,7 @@
     "knex": "^0.21.1",
     "koa": "^2.0.1",
     "koa-custom-graphiql": "1.0.1",
-    "koa-graphql": "^0.8.0",
+    "koa-graphql": "^0.12.0",
     "koa-router": "^8.0.8",
     "koa-static": "^5.0.0",
     "mysql": "^2.14.1",
@@ -120,7 +123,7 @@
     "debug": "^4.1.0",
     "deprecate": "^1.0.0",
     "generatorics": "^1.0.8",
-    "graphql-relay": "^0.6.0",
-    "lodash": "^4.17.15"
+    "graphql-relay": "0.7.0",
+    "lodash": "^4.17.21"
   }
 }
