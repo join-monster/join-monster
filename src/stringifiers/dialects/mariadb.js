@@ -6,7 +6,7 @@ import {
   orderingsToString
 } from '../shared'
 
-import { filter } from 'lodash'
+import { filter } from '../../util'
 
 function quote(str) {
   return `\`${str}\``

@@ -1,7 +1,7 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import schemaRelay from '../../test-api/schema-paginated/index'
-import { isEmpty, partial } from 'lodash'
+import { isEmpty } from 'lodash'
 import { toGlobalId, fromGlobalId } from 'graphql-relay'
 import { objToCursor } from '../../src/util'
 import { errCheck } from '../_util'
@@ -14,7 +14,7 @@ Object.defineProperty(Array.prototype, 'last', {
   enumberable: false
 })
 
-const run = partial(graphql, schemaRelay)
+const run = (requestString, rootValue, contextValue) => graphql(schemaRelay, requestString, rootValue, contextValue)
 
 function stringifyArgs(args) {
   if (!args) {

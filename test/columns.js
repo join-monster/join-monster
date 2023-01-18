@@ -2,7 +2,6 @@ import test from 'ava'
 import { graphql } from 'graphql'
 import { toGlobalId } from 'graphql-relay'
 import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
 import { errCheck } from './_util'
 
 function wrap(query) {
@@ -11,7 +10,7 @@ function wrap(query) {
   }`
 }
 
-const run = partial(graphql, schemaBasic)
+const run = (requestString, rootValue, contextValue) => graphql(schemaBasic, requestString, rootValue, contextValue)
 
 test('get a field with the same name as the SQL column', async t => {
   const query = wrap('id')

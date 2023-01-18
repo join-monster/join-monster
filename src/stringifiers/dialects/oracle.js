@@ -3,7 +3,7 @@ import {
   interpretForKeysetPaging,
   orderingsToString
 } from '../shared'
-import { filter } from 'lodash'
+import { filter } from '../../util'
 
 function recursiveConcat(keys) {
   if (keys.length <= 1) {

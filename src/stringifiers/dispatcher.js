@@ -1,8 +1,7 @@
 import assert from 'assert'
-import { filter } from 'lodash'
 import idx from 'idx'
 
-import { validateSqlAST, inspect } from '../util'
+import { validateSqlAST, inspect, filter } from '../util'
 import {
   joinPrefix,
   thisIsNotTheEndOfThisBatch,

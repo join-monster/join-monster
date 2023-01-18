@@ -1,7 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
 import { errCheck } from './_util'
 
 function wrap(query, id) {
@@ -15,7 +14,7 @@ function wrap(query, id) {
   }`
 }
 
-const run = partial(graphql, schemaBasic)
+const run = (requestString, rootValue, contextValue) => graphql(schemaBasic, requestString, rootValue, contextValue)
 
 test('should join a one-to-many relation', async t => {
   const query = wrap('id, comments { id, body }')

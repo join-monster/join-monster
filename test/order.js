@@ -1,7 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
 import { errCheck } from './_util'
 
 function makeQuery(asc) {
@@ -20,7 +19,7 @@ function makeQuery(asc) {
   }`
 }
 
-const run = partial(graphql, schemaBasic)
+const run = (requestString, rootValue, contextValue) => graphql(schemaBasic, requestString, rootValue, contextValue)
 
 test('it should handle nested ordering with both ASC', async t => {
   const query = makeQuery(true)

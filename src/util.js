@@ -9,6 +9,10 @@ const debug = require('debug')('join-monster')
 
 import defineObjectShape from './define-object-shape'
 
+export function filter(arr, func) {
+  return arr.filter(func || (r => !!r))
+}
+
 export function emphasize(str, colorCode = 33) {
   return `\n\x1b[1;${colorCode}m${str}\x1b[0m\n`
 }

@@ -1,10 +1,9 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import schemaRelay from '../../test-api/schema-paginated/index'
-import { partial } from 'lodash'
 import { errCheck } from '../_util'
 
-const run = partial(graphql, schemaRelay)
+const run = (requestString, rootValue, contextValue) => graphql(schemaRelay, requestString, rootValue, contextValue)
 
 test('should handle limit at the root', async t => {
   const query = `{

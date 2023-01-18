@@ -1,10 +1,9 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
 import { errCheck } from './_util'
 
-const run = partial(graphql, schemaBasic)
+const run = (requestString, rootValue, contextValue) => graphql(schemaBasic, requestString, rootValue, contextValue)
 
 test('should handle data from the junction table', async t => {
   const query = `{
