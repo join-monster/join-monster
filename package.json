@@ -87,7 +87,7 @@
     "@babel/plugin-proposal-do-expressions": "^7.8.3",
     "@babel/preset-env": "^7.9.6",
     "@babel/register": "^7.9.0",
-    "ava": "^3.8.2",
+    "ava": "^5.2.0",
     "babel-eslint": "^10.1.0",
     "babel-plugin-idx": "^2.4.0",
     "babel-watch": "^7.0.0",
@@ -113,7 +113,7 @@
     "pg": "^8.2.1",
     "sinon": "^9.0.2",
     "sqlite3": "^4.2.0",
-    "tsd": "^0.13.1"
+    "tsd": "^0.25.0"
   },
   "dependencies": {
     "@stem/nesthydrationjs": "0.4.0",
