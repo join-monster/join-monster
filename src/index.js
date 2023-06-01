@@ -153,7 +153,7 @@ async function getNode(
       node: {
         type,
         name: type.name.toLowerCase(),
-        args: {},
+        args: [],
         extensions: {
           joinMonster: {
             where
@@ -184,7 +184,7 @@ async function getNode(
   )
   await nextBatch(sqlAST, data, dbCall, context, options)
   if (!data) return data
-  data.__type__ = type
+  data.__type__ = type.name
   return data
 }
 

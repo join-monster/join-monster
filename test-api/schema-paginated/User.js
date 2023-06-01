@@ -478,7 +478,7 @@ const User = new GraphQLObjectType({
   })
 })
 
-const connectionConfig = { nodeType: GraphQLNonNull(User) }
+const connectionConfig = { nodeType: new GraphQLNonNull(User) }
 if (PAGINATE === 'offset') {
   connectionConfig.connectionFields = {
     total: { type: GraphQLInt }
