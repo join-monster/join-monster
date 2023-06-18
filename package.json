@@ -77,7 +77,7 @@
   },
   "homepage": "https://github.com/join-monster/join-monster#readme",
   "peerDependencies": {
-    "graphql": "^16.6.0|^15.4.0"
+    "graphql": "^16.0.0|^15.4.0"
   },
   "devDependencies": {
     "@ava/babel": "^1.0.1",
@@ -97,7 +97,7 @@
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-config-prettier": "^6.11.0",
     "faker": "^4.1.0",
-    "graphql": "^15.4.0",
+    "graphql": "^16.6.0",
     "graphsiql": "0.2.0",
     "idx": "^2.5.6",
     "jsdoc-to-markdown": "^5.0.0",
