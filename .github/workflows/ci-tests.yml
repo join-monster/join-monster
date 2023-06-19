@@ -21,9 +21,9 @@ name: CI Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   run-tests:
@@ -37,30 +37,40 @@ jobs:
         node-version: [10.x, 12.x, 13.x, 14.x, 15.x]
 
     steps:
-    - name: Checkout Repo
-      uses: actions/checkout@v2
+      - name: Checkout Repo
+        uses: actions/checkout@v2
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Setup System
-      run: |
-        sudo apt-get update
-        sudo apt-get install sqlite3
+      - name: Setup System
+        run: |
+          sudo apt-get update
+          sudo apt-get install sqlite3
 
-    - name: Install Node Deps
-      run: npm ci
+      - name: Install Node Deps
+        run: npm ci
 
-    - name: Startup Databases
-      run: |
-        npm run db-up
-        echo 'Waiting for DBs to start'
-        npm run db-wait
+      - name: Startup Databases
+        run: |
+          npm run db-up
+          echo 'Waiting for DBs to start'
+          npm run db-wait
 
-    - name: Build Test Databases
-      run: npm run db-build
+      - name: Build Test Databases
+        run: npm run db-build
 
-    - name: Run Tests
-      run: npm test
+      - name: Run Tests
+        run: npm test
+
+  upload:
+    name: Upload npm logs
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - uses: actions/upload-artifact@v3
+        with:
+          name: npm-logs
+          path: /home/runner/.npm/_logs/
