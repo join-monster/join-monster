@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Install Node Deps
         run: npm ci
 
