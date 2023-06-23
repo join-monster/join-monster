@@ -1,3 +1,5 @@
+
+/*
 import path from 'path'
 import Koa from 'koa'
 import koaRouter from 'koa-router'
@@ -63,3 +65,4 @@ app.listen(3000, () =>
     'server listening at http://localhost:3000/graphql and http://localhost:3000/graphql-relay'
   )
 )
+*/

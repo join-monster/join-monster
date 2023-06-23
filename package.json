@@ -4,7 +4,7 @@
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=14.0.0"
   },
   "files": [
     "dist/"
@@ -88,14 +88,14 @@
     "@babel/preset-env": "^7.9.6",
     "@babel/register": "^7.9.0",
     "ava": "^3.8.2",
-    "babel-eslint": "^10.1.0",
+    "@babel/eslint-parser": "7.22.5",
     "babel-plugin-idx": "^2.4.0",
     "babel-watch": "^7.0.0",
     "dotenv": "8.2.0",
     "dotenv-expand": "^5.1.0",
-    "eslint": "^7.1.0",
-    "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-config-prettier": "^6.11.0",
+    "eslint": "^8.1.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.8.0",
     "faker": "^4.1.0",
     "graphql": "^16.6.0",
     "graphsiql": "0.2.0",
@@ -103,16 +103,11 @@
     "jsdoc-to-markdown": "^5.0.0",
     "kcors": "^2.2.1",
     "knex": "^0.21.1",
-    "koa": "^2.0.1",
-    "koa-custom-graphiql": "1.0.1",
-    "koa-graphql": "^0.8.0",
-    "koa-router": "^8.0.8",
-    "koa-static": "^5.0.0",
     "mysql": "^2.14.1",
     "nyc": "^15.0.1",
     "pg": "^8.2.1",
     "sinon": "^9.0.2",
-    "sqlite3": "^4.2.0",
+    "sqlite3": "^5.1.0",
     "tsd": "^0.28.1"
   },
   "dependencies": {
@@ -120,7 +115,6 @@
     "debug": "^4.1.0",
     "deprecate": "^1.0.0",
     "generatorics": "^1.0.8",
-    "graphql-relay": "^0.6.0",
-    "lodash": "^4.17.15"
+    "graphql-relay": "^0.10.0"
   }
 }

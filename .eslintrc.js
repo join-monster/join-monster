@@ -7,7 +7,7 @@ module.exports = {
     idx: true,
   },
   extends: ['airbnb-base/legacy', 'prettier'],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
   rules: {
     'no-extend-native': 0,
     'func-names': 0,
