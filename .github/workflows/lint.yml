@@ -12,8 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out Git repository
+      - name: Check out Git repository and the desired branch
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
 
       - name: Read .nvmrc
         run: echo "##[set-output name=NVMRC;]$(cat .nvmrc)"
