@@ -1,13 +1,11 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
-const run = partial(graphql, schemaBasic)
 
 test('should handle data from the junction table', async t => {
-  const query = `{
+  const source = `{
     user(id: 3) {
       fullName
       following {
@@ -16,7 +14,7 @@ test('should handle data from the junction table', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {

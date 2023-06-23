@@ -1,7 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaRelay from '../../test-api/schema-paginated/index'
-import { partial } from 'lodash'
+import schema from '../../test-api/schema-paginated/index'
 import { offsetToCursor, toGlobalId, fromGlobalId } from 'graphql-relay'
 import { errCheck } from '../_util'
 
@@ -13,7 +12,6 @@ Object.defineProperty(Array.prototype, 'last', {
   enumberable: false
 })
 
-const run = partial(graphql, schemaRelay)
 
 function stringifyArgs(args) {
   if (!args) {
@@ -43,8 +41,8 @@ function makeUsersQuery(args) {
 }
 
 test('should handle pagination at the root', async t => {
-  const query = makeUsersQuery()
-  const { data, errors } = await run(query)
+  const source = makeUsersQuery()
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data.users.pageInfo, {
     hasNextPage: false,
@@ -63,8 +61,8 @@ test('should handle pagination at the root', async t => {
 })
 
 test('should handle root pagination with "first" arg', async t => {
-  const query = makeUsersQuery({ first: 2 })
-  const { data, errors } = await run(query)
+  const source = makeUsersQuery({ first: 2 })
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(
     data.users.pageInfo,
@@ -95,8 +93,8 @@ test('should handle root pagination with "first" arg', async t => {
 })
 
 test('should handle root pagination with "first" and "after" args', async t => {
-  const query = makeUsersQuery({ first: 2, after: offsetToCursor(1) })
-  const { data, errors } = await run(query)
+  const source = makeUsersQuery({ first: 2, after: offsetToCursor(1) })
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(
     data.users.pageInfo,
@@ -127,8 +125,8 @@ test('should handle root pagination with "first" and "after" args', async t => {
 })
 
 test('should handle the last page of root pagination', async t => {
-  const query = makeUsersQuery({ first: 2, after: offsetToCursor(4) })
-  const { data, errors } = await run(query)
+  const source = makeUsersQuery({ first: 2, after: offsetToCursor(4) })
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(
     data.users.pageInfo,
@@ -160,8 +158,8 @@ test('should handle the last page of root pagination', async t => {
 })
 
 test('should return nothing after the end of root pagination', async t => {
-  const query = makeUsersQuery({ first: 3, after: offsetToCursor(5) })
-  const { data, errors } = await run(query)
+  const source = makeUsersQuery({ first: 3, after: offsetToCursor(5) })
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data.users, {
     total: 0,
@@ -191,8 +189,8 @@ function makePostsQuery(args) {
 }
 
 test('should handle pagination in a nested field', async t => {
-  const query = makePostsQuery()
-  const { data, errors } = await run(query)
+  const source = makePostsQuery()
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const posts = data.user.posts
   t.is(posts.total, 8)
@@ -221,8 +219,8 @@ test('should handle pagination in a nested field', async t => {
 })
 
 test('nested paging should handle "first" arg', async t => {
-  const query = makePostsQuery({ first: 3 })
-  const { data, errors } = await run(query)
+  const source = makePostsQuery({ first: 3 })
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const posts = data.user.posts
   t.is(posts.total, 8)
@@ -236,8 +234,8 @@ test('nested paging should handle "first" arg', async t => {
 })
 
 test('nested paging should handle "first" and "after" args that reaches the last page', async t => {
-  const query = makePostsQuery({ first: 5, after: offsetToCursor(3) })
-  const { data, errors } = await run(query)
+  const source = makePostsQuery({ first: 5, after: offsetToCursor(3) })
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const posts = data.user.posts
   t.is(posts.total, 8)
@@ -251,7 +249,7 @@ test('nested paging should handle "first" and "after" args that reaches the last
 })
 
 test('can handle nested pagination', async t => {
-  const query = `{
+  const source = `{
     users(first: 2) {
       edges {
         node {
@@ -266,7 +264,7 @@ test('can handle nested pagination', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   t.deepEqual(
     data.users.edges.map(edge => edge.node.posts.total),
     [8, 13]
@@ -286,7 +284,7 @@ test('can handle nested pagination', async t => {
 })
 
 test('can go to each second page in a nested connection', async t => {
-  const query = `{
+  const source = `{
     users(first: 2) {
       edges {
         node {
@@ -302,7 +300,7 @@ test('can go to each second page in a nested connection', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.is(data.users.edges[0].node.id, toGlobalId('User', 1))
   t.deepEqual(
@@ -317,7 +315,7 @@ test('can go to each second page in a nested connection', async t => {
 })
 
 test('can handle deeply nested pagination', async t => {
-  const query = `{
+  const source = `{
     users(first: 1) {
       edges {
         node {
@@ -347,7 +345,7 @@ test('can handle deeply nested pagination', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const comments = data.users.edges[0].node.posts.edges[0].node.comments
   t.deepEqual(comments.pageInfo, {
@@ -371,7 +369,7 @@ test('can handle deeply nested pagination', async t => {
 })
 
 test('handle a connection type with a many-to-many', async t => {
-  const query = `{
+  const source = `{
     user(id: 2) {
       following(first: 2, after:"${offsetToCursor(0)}") {
         pageInfo {
@@ -391,7 +389,7 @@ test('handle a connection type with a many-to-many', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data.user.following.pageInfo, {
     hasNextPage: true,
@@ -421,7 +419,7 @@ test('handle a connection type with a many-to-many', async t => {
 })
 
 test('filtered pagination at the root', async t => {
-  const query = `{
+  const source = `{
     users(search: "c%i") {
       edges {
         node {
@@ -430,7 +428,7 @@ test('filtered pagination at the root', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data, {
     users: {
@@ -447,7 +445,7 @@ test('filtered pagination at the root', async t => {
 })
 
 test('filtering on one-to-many-nested field', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       posts(search: "ad") {
         edges {
@@ -458,7 +456,7 @@ test('filtering on one-to-many-nested field', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data.user.posts.edges, [
     {
@@ -483,7 +481,7 @@ test('filtering on one-to-many-nested field', async t => {
 })
 
 test('should handle emptiness', async t => {
-  const query = `{
+  const source = `{
     user(id: 6) {
       following {
         edges {
@@ -508,7 +506,7 @@ test('should handle emptiness', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -524,7 +522,7 @@ test('should handle emptiness', async t => {
 })
 
 test('should handle emptiness for nested connections', async t => {
-  const query = `{
+  const source = `{
     users {
       edges {
         node {
@@ -545,12 +543,12 @@ test('should handle emptiness for nested connections', async t => {
       }
     }
   }`
-  const { errors } = await run(query)
+  const { errors } = await graphql({schema, source})
   errCheck(t, errors)
 })
 
 test('should handle a post without an author', async t => {
-  const query = `{
+  const source = `{
     node(id: "${toGlobalId('Post', 19)}") {
       id
       ... on Post {
@@ -561,7 +559,7 @@ test('should handle a post without an author', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     node: {
@@ -574,7 +572,7 @@ test('should handle a post without an author', async t => {
 })
 
 test('should handle a "where" condition on a one-to-many paginated field', async t => {
-  const query = `{
+  const source = `{
     users(first: 1) {
       edges {
         node {
@@ -597,7 +595,7 @@ test('should handle a "where" condition on a one-to-many paginated field', async
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.is(data.users.edges.length, 1)
   t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
@@ -628,7 +626,7 @@ test('should handle a "where" condition on a one-to-many paginated field', async
 })
 
 test('should handle "where" condition on main table of many-to-many relation', async t => {
-  const query = `{
+  const source = `{
     user(id: 3) {
       fullName
       following(intimacy: acquaintance) {
@@ -642,7 +640,7 @@ test('should handle "where" condition on main table of many-to-many relation', a
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -664,7 +662,7 @@ test('should handle "where" condition on main table of many-to-many relation', a
 })
 
 test('should handle order columns on the main table', async t => {
-  const query = `{
+  const source = `{
     user(id: 2) {
       fullName
       following(first: 2, sortOnMain: true, after: "${offsetToCursor(0)}") {
@@ -677,7 +675,7 @@ test('should handle order columns on the main table', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -704,7 +702,7 @@ test('should handle order columns on the main table', async t => {
 })
 
 test('should handle order columns on the junction table', async t => {
-  const query = `{
+  const source = `{
     user(id: 2) {
       fullName
       following(first: 2, sortOnMain: false, after: "${offsetToCursor(0)}") {
@@ -717,7 +715,7 @@ test('should handle order columns on the junction table', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -744,7 +742,7 @@ test('should handle order columns on the junction table', async t => {
 })
 
 test('should handle an interface type', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       writtenMaterial(first: 3) {
         pageInfo {
@@ -762,7 +760,7 @@ test('should handle an interface type', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     pageInfo: {
@@ -805,15 +803,15 @@ test('should handle an interface type', async t => {
 })
 
 test('should not allow pagination with greater than pageSizeLimit at the root', async t => {
-  const query = makeUsersQuery({ first: 1000 })
-  const { data, errors } = await run(query)
+  const source = makeUsersQuery({ first: 1000 })
+  const { data, errors } = await graphql({schema, source})
 
   t.deepEqual(data.users, null)
   t.deepEqual(errors[0].message, 'Maximum page size of User type is 100')
 })
 
 test('should not allow nestedpagination with greater than pageSizeLimit', async t => {
-  const query = `{
+  const source = `{
     users(first: 2) {
       edges {
         node {
@@ -828,13 +826,13 @@ test('should not allow nestedpagination with greater than pageSizeLimit', async 
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   t.deepEqual(data.users, null)
   t.deepEqual(errors[0].message, 'Maximum page size of Comment type is 100')
 })
 
 test('should use default page limit if set', async t => {
-  const query = `{
+  const source = `{
     users {
       edges{
         node{
@@ -850,13 +848,13 @@ test('should use default page limit if set', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data.users.edges[0].node.comments.edges.length, 2)
 })
 
 test('should allow explicit page limit larger than default page size', async t => {
-  const query = `{
+  const source = `{
     users {
       edges{
         node{
@@ -872,7 +870,7 @@ test('should allow explicit page limit larger than default page size', async t =
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data.users.edges[0].node.comments.edges.length, 3)
 })

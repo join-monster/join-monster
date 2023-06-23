@@ -1,13 +1,11 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
-const run = partial(graphql, schemaBasic)
 
 test('it should get user 1 with comments and particular posts', async t => {
-  const query = ` {
+  const source = ` {
     user(id: 1) {
       comments {
         id
@@ -19,7 +17,7 @@ test('it should get user 1 with comments and particular posts', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -56,7 +54,7 @@ test('it should get user 1 with comments and particular posts', async t => {
 })
 
 test('it should get user 1 with comments and particular posts with active comments', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       comments {
         id
@@ -68,7 +66,7 @@ test('it should get user 1 with comments and particular posts with active commen
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {

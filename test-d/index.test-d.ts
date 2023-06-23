@@ -1,14 +1,12 @@
 import { expectType } from 'tsd'
-import joinMonster from '..'
 import { GraphQLObjectType, GraphQLList } from 'graphql'
 
 type ExampleContext = {
   foo: 'bar'
 }
 type ExampleArgs = { [key: string]: any }
-
 // test table level extensions
-const User = new GraphQLObjectType({
+let User = new GraphQLObjectType({
   name: 'User',
   extensions: {
     joinMonster: {
@@ -21,12 +19,12 @@ const User = new GraphQLObjectType({
 })
 
 // test sqlTable thunk
-new GraphQLObjectType<any, ExampleContext>({
+User = new GraphQLObjectType<any, ExampleContext>({
   name: 'User',
   extensions: {
     joinMonster: {
-      sqlTable: (args, context) => {
-        expectType<any>(args)
+      sqlTable: (args: ExampleArgs, context: ExampleContext) => {
+        expectType<ExampleArgs>(args)
         expectType<ExampleContext>(context)
         return 'expr'
       }
@@ -36,7 +34,7 @@ new GraphQLObjectType<any, ExampleContext>({
 })
 
 // test field extensions
-new GraphQLObjectType<any, ExampleContext>({
+User = new GraphQLObjectType<any, ExampleContext>({
   name: 'User',
   fields: () => ({
     following: {
@@ -60,13 +58,13 @@ new GraphQLObjectType<any, ExampleContext>({
           },
           sqlColumn: 'foo',
           sqlDeps: ['bar', 'baz'],
-          sqlExpr: (table, args, context) => {
+          sqlExpr: (table: string, args: ExampleArgs, context: ExampleContext) => {
             expectType<string>(table)
             expectType<ExampleArgs>(args)
             expectType<ExampleContext>(context)
             return 'expr'
           },
-          sqlJoin: (table1, table2, args, context) => {
+          sqlJoin: (table1: string, table2: string, args: ExampleArgs, context: ExampleContext) => {
             expectType<string>(table1)
             expectType<string>(table2)
             expectType<ExampleArgs>(args)
@@ -74,7 +72,7 @@ new GraphQLObjectType<any, ExampleContext>({
             return 'foo'
           },
           sqlPaginate: true,
-          where: (table, args, context) => {
+          where: (table:string, args: ExampleArgs, context: ExampleContext) => {
             expectType<string>(table)
             expectType<ExampleArgs>(args)
             expectType<ExampleContext>(context)
@@ -87,19 +85,19 @@ new GraphQLObjectType<any, ExampleContext>({
 })
 
 // test thunked field extensions
-new GraphQLObjectType<any, ExampleContext>({
+User = new GraphQLObjectType<any, ExampleContext>({
   name: 'User',
   fields: () => ({
     following: {
       type: new GraphQLList(User),
       extensions: {
         joinMonster: {
-          limit: (args, context) => {
+          limit: (args: ExampleArgs, context: ExampleContext) => {
             expectType<ExampleArgs>(args)
             expectType<ExampleContext>(context)
             return 10
           },
-          orderBy: (args, context) => {
+          orderBy: (args: ExampleArgs, context: ExampleContext) => {
             expectType<ExampleArgs>(args)
             expectType<ExampleContext>(context)
             return [
@@ -107,7 +105,7 @@ new GraphQLObjectType<any, ExampleContext>({
               { column: 'bar', direction: 'DESC' }
             ]
           },
-          sortKey: (args, context) => {
+          sortKey: (args: ExampleArgs, context: ExampleContext) => {
             expectType<ExampleArgs>(args)
             expectType<ExampleContext>(context)
             return [
@@ -124,14 +122,14 @@ new GraphQLObjectType<any, ExampleContext>({
 })
 
 // test junction includes
-new GraphQLObjectType<any, ExampleContext>({
+User = new GraphQLObjectType<any, ExampleContext>({
   name: 'User',
   fields: () => ({
     following: {
       type: new GraphQLList(User),
       extensions: {
         joinMonster: {
-          where: accountTable => `${accountTable}.is_active = TRUE`,
+          where: (accountTable: string) => `${accountTable}.is_active = TRUE`,
           junction: {
             sqlTable: 'relationships',
             orderBy: {
@@ -145,7 +143,7 @@ new GraphQLObjectType<any, ExampleContext>({
             sqlBatch: {
               thisKey: 'foo',
               parentKey: 'bar',
-              sqlJoin: (table1, table2, args, context) => {
+              sqlJoin: (table1: string, table2: string) => {
                 expectType<string>(table1)
                 expectType<string>(table2)
 
@@ -158,14 +156,14 @@ new GraphQLObjectType<any, ExampleContext>({
               }
             },
             sqlJoins: [
-              (followerTable, junctionTable, args, context) => {
+              (followerTable: string, junctionTable: string, args: ExampleArgs, context: ExampleContext) => {
                 expectType<string>(followerTable)
                 expectType<string>(junctionTable)
                 expectType<ExampleArgs>(args)
                 expectType<ExampleContext>(context)
                 return `${followerTable}.id = ${junctionTable}.follower_id`
               },
-              (junctionTable, followeeTable, args, context) => {
+              (junctionTable: string, followeeTable: string, args: ExampleArgs, context: ExampleContext) => {
                 expectType<string>(followeeTable)
                 expectType<string>(junctionTable)
                 expectType<ExampleArgs>(args)
@@ -181,21 +179,21 @@ new GraphQLObjectType<any, ExampleContext>({
 })
 
 // test thunked junction includes
-new GraphQLObjectType<any, ExampleContext>({
+User = new GraphQLObjectType<any, ExampleContext>({
   name: 'User',
   fields: () => ({
     following: {
       type: new GraphQLList(User),
       extensions: {
         joinMonster: {
-          where: accountTable => `${accountTable}.is_active = TRUE`,
+          where: (accountTable: string) => `${accountTable}.is_active = TRUE`,
           junction: {
-            sqlTable: (args, context) => {
+            sqlTable: (args: ExampleArgs, context: ExampleContext) => {
               expectType<ExampleArgs>(args)
               expectType<ExampleContext>(context)
               return 'relationships'
             },
-            orderBy: (args, context) => {
+            orderBy: (args: ExampleArgs, context: ExampleContext) => {
               expectType<ExampleArgs>(args)
               expectType<ExampleContext>(context)
               return {
@@ -203,7 +201,7 @@ new GraphQLObjectType<any, ExampleContext>({
                 bar: 'DESC'
               }
             },
-            sortKey: (args, context) => {
+            sortKey: (args: ExampleArgs, context: ExampleContext) => {
               expectType<ExampleArgs>(args)
               expectType<ExampleContext>(context)
               return {
@@ -211,7 +209,7 @@ new GraphQLObjectType<any, ExampleContext>({
                 key: ['id']
               }
             },
-            include: (args, context) => {
+            include: (args: ExampleArgs, context: ExampleContext) => {
               expectType<ExampleArgs>(args)
               expectType<ExampleContext>(context)
 
@@ -221,7 +219,7 @@ new GraphQLObjectType<any, ExampleContext>({
                 }
               }
             },
-            where: (junctionTable, args, context) => {
+            where: (junctionTable: string, args: ExampleArgs, context: ExampleContext) => {
               expectType<string>(junctionTable)
               expectType<ExampleArgs>(args)
               expectType<ExampleContext>(context)
