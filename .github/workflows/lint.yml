@@ -12,8 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out Git repository
+      - name: Check out Git repository and the desired branch
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
 
       - name: Read .nvmrc
         run: echo "##[set-output name=NVMRC;]$(cat .nvmrc)"
@@ -23,9 +25,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
-
-      - name: Checkout code
-        uses: actions/checkout@v2
 
       - name: Install Node Deps
         run: npm ci
