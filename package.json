@@ -100,7 +100,7 @@
     "graphql": "^16.6.0",
     "graphsiql": "0.2.0",
     "idx": "^2.5.6",
-    "jsdoc-to-markdown": "^5.0.0",
+    "jsdoc-to-markdown": "^8.0.0",
     "kcors": "^2.2.1",
     "knex": "^2.4.2",
     "lodash": "^4.17.21",
