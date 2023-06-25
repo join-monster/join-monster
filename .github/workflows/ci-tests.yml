@@ -34,8 +34,7 @@ jobs:
     strategy:
       matrix:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-        # covering 14, 16, 17 then 18 and 19. assuming 15 will work otherwise
-        node-version: [14.x, 16.x, 17.x, 18.x, 19.x]
+        node-version: [14.x, 16.x, 17.x, 18.x, 19.x, 20.x]
 
     steps:
       - name: Checkout Repo
