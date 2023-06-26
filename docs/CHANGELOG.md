@@ -1,10 +1,12 @@
 ### vNEXT (June 23, 2023)
 
+### v3.1.2 (June 25, 2023)
 #### Updated
 - [#495](https://github.com/join-monster/join-monster/pull/495): Added support for GraphQL v16_6_0. There were a number of breaking changes introduced in GraphQL v16 and these impacted a large number of tests and bit of the code. This provides fixes for those breaking changes. It also drops support for Node versions 10 - 13 but adds support for Node v16.
-- [496](https://github.com/join-monster/join-monster/pull/496): Adding support for Node v17 - v19.
-- [498](https://github.com/join-monster/join-monster/pull/498): Upgrading packages to eliminate high and critical security vulnerabilities
-- [499](https://github.com/join-monster/join-monster/pull/499): Upgrade of AVA test framework and dependencies.
+- [#496](https://github.com/join-monster/join-monster/pull/496): Adding support for Node v17 - v19.
+- [#498](https://github.com/join-monster/join-monster/pull/498): Upgrading packages to eliminate high and critical security vulnerabilities
+- [#499](https://github.com/join-monster/join-monster/pull/499): Upgrade of AVA test framework and dependencies.
+- [#500](https://github.com/join-monster/join-monster/pull/499): bump version and add support for node v20. Nodes v 14 - 20 are tested in the pipeline with this change (but not v15 as it has issues)
 
 ### v3.1.1 (January 17, 2022)
 
