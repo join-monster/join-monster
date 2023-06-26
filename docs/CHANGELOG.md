@@ -1,7 +1,7 @@
 ### vNEXT (June 23, 2023)
 
 ### v3.3.1 (June 16, 2023)
-- [#502](https://github.com/join-monster/join-monster/pull/502): npm installer did not like the support specified as  "graphql@^16.0.0|^15.4.0" in the package.json. This PR backs this out and only specifies support for 16.X of graphql in the peer dependencies.
+- [#502](https://github.com/join-monster/join-monster/pull/502): npm installer did not like the support specified as  "graphql@^16.0.0|^15.4.0" in the package.json. This PR backs this out and only specifies support for 16.X of graphql in the peer dependencies
 ### v3.3.0 (June 26, 2023)
 #### Updated
 - [#495](https://github.com/join-monster/join-monster/pull/495): Added support for GraphQL v16_6_0. There were a number of breaking changes introduced in GraphQL v16 and these impacted a large number of tests and bit of the code. This provides fixes for those breaking changes. It also drops support for Node versions 10 - 13 but adds support for Node v16.
