@@ -76,7 +76,7 @@
   },
   "homepage": "https://github.com/join-monster/join-monster#readme",
   "peerDependencies": {
-    "graphql": "^16.0.0|^15.4.0"
+    "graphql": "^16.0.0"
   },
   "devDependencies": {
     "@ava/babel-preset-stage-4": "^1.1.0",
