@@ -6,7 +6,7 @@
 - [#496](https://github.com/join-monster/join-monster/pull/496): Adding support for Node v17 - v19.
 - [#498](https://github.com/join-monster/join-monster/pull/498): Upgrading packages to eliminate high and critical security vulnerabilities
 - [#499](https://github.com/join-monster/join-monster/pull/499): Upgrade of AVA test framework and dependencies.
-- [#500](https://github.com/join-monster/join-monster/pull/499): bump version and add support for node v20
+- [#500](https://github.com/join-monster/join-monster/pull/499): bump version and add support for node v20. Nodes v 14 - 20 are tested in the pipeline with this change.
 
 ### v3.1.1 (January 17, 2022)
 
