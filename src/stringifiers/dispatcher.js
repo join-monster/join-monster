@@ -16,7 +16,15 @@ export default async function stringifySqlAST(topNode, context, options) {
   let dialect = options.dialectModule
 
   if (!dialect && options.dialect) {
-    dialect = require('./dialects/' + options.dialect)
+    const dialectRequireOptions = {
+      sqlite3: require('./dialects/sqlite3'),
+      pg: require('./dialects/pg'),
+      oracle: require('./dialects/oracle'),
+      mysql8: require('./dialects/mysql8'),
+      mysql: require('./dialects/mysql'),
+      mariadb: require('./dialects/mariadb'),
+    }
+    dialect = dialectRequireOptions[options.dialect]
   }
 
   // recursively figure out all the selections, joins, and where conditions that we need
