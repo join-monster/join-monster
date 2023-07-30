@@ -1,4 +1,5 @@
 ### vNEXT (June 23, 2023)
+- [#506](https://github.com/join-monster/join-monster/pull/506): Removed use of dynamic require which was preventing use of join-monster with react native deployments.
 
 ### v3.3.1 (June 16, 2023)
 - [#502](https://github.com/join-monster/join-monster/pull/502): npm installer did not like the support specified as  "graphql@^16.0.0|^15.4.0" in the package.json. This PR backs this out and only specifies support for 16.X of graphql in the peer dependencies
