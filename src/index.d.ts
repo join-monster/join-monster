@@ -111,15 +111,11 @@ export interface ScalarTypeExtension {
 }
 
 declare module 'graphql' {
-  interface GraphQLObjectTypeExtensions<_TSource = any, _TContext = any> {
-    joinMonster?: ObjectTypeExtension<_TSource, _TContext>
+  interface GraphQLObjectTypeExtensions<TSource, TContext> {
+    joinMonster?: ObjectTypeExtension<TSource, TContext>
   }
-  interface GraphQLFieldExtensions<
-    _TSource,
-    _TContext,
-    _TArgs = { [argName: string]: any }
-  > {
-    joinMonster?: FieldConfigExtension<_TSource, _TContext, _TArgs>
+  interface GraphQLFieldExtensions<TSource, TContext, TArgs> {
+    joinMonster?: FieldConfigExtension<TSource, TContext, TArgs>
   }
   interface GraphQLUnionTypeExtensions {
     joinMonster?: UnionTypeExtension
