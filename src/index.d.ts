@@ -117,7 +117,7 @@ declare module 'graphql' {
   interface GraphQLFieldExtensions<
     _TSource,
     _TContext,
-    _TArgs = { [argName: string]: any }
+    _TArgs = any
   > {
     joinMonster?: FieldConfigExtension<_TSource, _TContext, _TArgs>
   }
