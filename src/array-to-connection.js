@@ -1,5 +1,6 @@
 import { connectionFromArraySlice, cursorToOffset } from 'graphql-relay'
-import { objToCursor, wrap, last } from './util'
+import { objToCursor, last, sortKeyColumns } from './util'
+import idx from 'idx'
 
 // a function for data manipulation AFTER its nested.
 // this is only necessary when using the SQL pagination
@@ -13,6 +14,21 @@ function arrToConnection(data, sqlAST) {
       }
     } else if (data) {
       recurseOnObjInData(data, astChild)
+    }
+  }
+  if (sqlAST.typedChildren) {
+    for (let astType in sqlAST.typedChildren) {
+      if (Object.prototype.hasOwnProperty.call(sqlAST.typedChildren, astType)) {
+        for (let astChild of sqlAST.typedChildren[astType] || []) {
+          if (Array.isArray(data)) {
+            for (let dataItem of data) {
+              recurseOnObjInData(dataItem, astChild)
+            }
+          } else if (data) {
+            recurseOnObjInData(data, astChild)
+          }
+        }
+      }
     }
   }
   const pageInfo = {
@@ -47,14 +63,20 @@ function arrToConnection(data, sqlAST) {
           data.pop()
         }
         data.reverse()
+      } else if (idx(sqlAST, _ => _.defaultPageSize)) {
+        // we fetched an extra one in order to determine if there is a next page, if there is one, pop off that extra
+        if (data.length > sqlAST.defaultPageSize) {
+          pageInfo.hasNextPage = true
+          data.pop()
+        }
       }
+
       // convert nodes to edges and compute the cursor for each
       // TODO: only compute all the cursor if asked for them
       const sortKey = sqlAST.sortKey || sqlAST.junction.sortKey
       const edges = data.map(obj => {
         const cursor = {}
-        const key = sortKey.key
-        for (let column of wrap(key)) {
+        for (let column of sortKeyColumns(sortKey)) {
           cursor[column] = obj[column]
         }
         return { cursor: objToCursor(cursor), node: obj }
@@ -64,14 +86,25 @@ function arrToConnection(data, sqlAST) {
         pageInfo.endCursor = last(edges).cursor
       }
       return { edges, pageInfo, _paginated: true }
-    } else if (sqlAST.orderBy || (sqlAST.junction && sqlAST.junction.orderBy)) {
+    }
+    if (sqlAST.orderBy || (sqlAST.junction && sqlAST.junction.orderBy)) {
       let offset = 0
       if (idx(sqlAST, _ => _.args.after)) {
         offset = cursorToOffset(sqlAST.args.after) + 1
       }
       // $total was a special column for determining the total number of items
       const arrayLength = data[0] && parseInt(data[0].$total, 10)
-      const connection = connectionFromArraySlice(data, sqlAST.args || {}, { sliceStart: offset, arrayLength })
+      let defaultArgs = sqlAST.args
+      if (
+        idx(sqlAST, _ => _.defaultPageSize) &&
+        !idx(defaultArgs, _ => _.first)
+      ) {
+        defaultArgs.first = sqlAST.defaultPageSize
+      }
+      const connection = connectionFromArraySlice(data, defaultArgs, {
+        sliceStart: offset,
+        arrayLength
+      })
       connection.total = arrayLength || 0
       connection._paginated = true
       return connection
@@ -85,7 +118,9 @@ export default arrToConnection
 function recurseOnObjInData(dataObj, astChild) {
   const dataChild = dataObj[astChild.fieldName]
   if (dataChild) {
-    dataObj[astChild.fieldName] = arrToConnection(dataObj[astChild.fieldName], astChild)
+    dataObj[astChild.fieldName] = arrToConnection(
+      dataObj[astChild.fieldName],
+      astChild
+    )
   }
 }
-

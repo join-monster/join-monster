@@ -46,7 +46,9 @@ module.exports = async db => {
     }
   ])
 
-  await knex('posts').update({ archived: false }).where({ archived: null })
+  await knex('posts')
+    .update({ archived: false })
+    .where({ archived: null })
 
   await knex.batchInsert('comments', [
     {
@@ -57,14 +59,14 @@ module.exports = async db => {
     },
     {
       id: 2,
-      body: 'That\'s super weird dude.',
+      body: "That's super weird dude.",
       post_id: 1,
       author_id: 3,
       archived: true
     },
     {
       id: 3,
-      body: 'That\'s ultra weird bro.',
+      body: "That's ultra weird bro.",
       post_id: 1,
       author_id: 3
     },
@@ -107,7 +109,9 @@ module.exports = async db => {
     }
   ])
 
-  await knex('comments').update({ archived: false }).where({ archived: null })
+  await knex('comments')
+    .update({ archived: false })
+    .where({ archived: null })
 
   await knex.batchInsert('relationships', [
     {
@@ -130,7 +134,7 @@ module.exports = async db => {
   await knex.batchInsert('likes', [
     {
       account_id: 2,
-      comment_id: 1,
+      comment_id: 1
     },
     {
       account_id: 1,
@@ -175,6 +179,29 @@ module.exports = async db => {
       generation: 1,
       first_name: 'matt',
       last_name: 'daemon'
+    }
+  ])
+
+  await knex.batchInsert('tags', [
+    {
+      post_id: 1,
+      tag: 'foo',
+      tag_order: 1
+    },
+    {
+      post_id: 1,
+      tag: 'bar',
+      tag_order: 2
+    },
+    {
+      post_id: 1,
+      tag: 'baz',
+      tag_order: 3
+    },
+    {
+      post_id: 2,
+      tag: 'foo',
+      tag_order: 1
     }
   ])
 

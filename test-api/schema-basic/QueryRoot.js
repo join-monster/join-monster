@@ -44,17 +44,30 @@ export default new GraphQLObjectType({
     },
     database: {
       type: GraphQLString,
-      resolve: () => knex.client.config.client + ' ' + JSON.stringify(knex.client.config.connection).replace(/"/g, '  ')
+      resolve: () =>
+        knex.client.config.client +
+        ' ' +
+        JSON.stringify(knex.client.config.connection).replace(/"/g, '  ')
     },
     users: {
       type: new GraphQLList(User),
       args: {
         ids: { type: new GraphQLList(GraphQLInt) }
       },
-      where: (table, args) => args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
-      orderBy: 'id',
+      extensions: {
+        joinMonster: {
+          where: (table, args) =>
+            args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
+          orderBy: 'id'
+        }
+      },
       resolve: async (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonster(
+          resolveInfo,
+          context,
+          sql => dbCall(sql, knex, context),
+          options
+        )
       }
     },
     user: {
@@ -73,13 +86,29 @@ export default new GraphQLObjectType({
           type: GraphQLInt
         }
       },
-      where: (usersTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
-        if (args.idEncoded) return `${usersTable}.${q('id', DB)} = ${fromBase64(args.idEncoded)}`
-        if (args.idAsync) return Promise.resolve(`${usersTable}.${q('id', DB)} = ${args.idAsync}`)
+      extensions: {
+        joinMonster: {
+          where: (usersTable, args, context) => {
+            // eslint-disable-line no-unused-vars
+            if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
+            if (args.idEncoded)
+              return `${usersTable}.${q('id', DB)} = ${fromBase64(
+                args.idEncoded
+              )}`
+            if (args.idAsync)
+              return Promise.resolve(
+                `${usersTable}.${q('id', DB)} = ${args.idAsync}`
+              )
+          }
+        }
       },
       resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(resolveInfo, context, sql => dbCall(sql, knex, context), options)
+        return joinMonster(
+          resolveInfo,
+          context,
+          sql => dbCall(sql, knex, context),
+          options
+        )
       }
     },
     sponsors: {
@@ -90,24 +119,35 @@ export default new GraphQLObjectType({
           type: GraphQLBoolean
         }
       },
-      where: (sponsorsTable, args, context) => { // eslint-disable-line no-unused-vars
-        if (args.filterLegless) return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
+      extensions: {
+        joinMonster: {
+          where: (sponsorsTable, args, context) => {
+            // eslint-disable-line no-unused-vars
+            if (args.filterLegless)
+              return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
+          }
+        }
       },
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time
-        return joinMonster(resolveInfo, context, (sql, done) => {
-          knex.raw(sql)
-          .then(result => {
-            if (options.dialectModule.name === 'mysql') {
-              done(null, result[0])
-            } else {
-              done(null, result)
-            }
-          })
-          .catch(done)
-        }, options)
+        return joinMonster(
+          resolveInfo,
+          context,
+          (sql, done) => {
+            knex
+              .raw(sql)
+              .then(result => {
+                if (options.dialectModule.name === 'mysql') {
+                  done(null, result[0])
+                } else {
+                  done(null, result)
+                }
+              })
+              .catch(done)
+          },
+          options
+        )
       }
     }
   })
 })
-

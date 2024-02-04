@@ -1,39 +1,41 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import { toGlobalId, offsetToCursor } from 'graphql-relay'
-import schemaRelay from '../test-api/schema-paginated/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-paginated/index'
 import { errCheck } from './_util'
 
-const run = partial(graphql, schemaRelay)
 
 const user1Id = toGlobalId('User', 1)
 const cursor0 = offsetToCursor(0)
 
 test('it should get a globalId', async t => {
-  const query = `{
+  const source = `{
     user(id:1) { id }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = { user: { id: user1Id } }
   t.deepEqual(expect, data)
 })
 
 test('it should fetch a Node type with inline fragments', async t => {
-  const query = `{
+  const source = `{
     node(id: "${toGlobalId('Post', 1)}") {
       ... on Post { body }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
-  const expect = { node: { body: 'If I could marry a programming language, it would be Haskell.' } }
+  const expect = {
+    node: {
+      body: 'If I could marry a programming language, it would be Haskell.'
+    }
+  }
   t.deepEqual(expect, data)
 })
 
 test('it should fetch a Node type with named fragments', async t => {
-  const query = `
+  const source = `
     {
       node(id: "${user1Id}") {
         ...F0
@@ -46,7 +48,7 @@ test('it should fetch a Node type with named fragments', async t => {
       }
     }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     node: {
@@ -60,7 +62,7 @@ test('it should fetch a Node type with named fragments', async t => {
 })
 
 test('it should fetch a Node type with a variable', async t => {
-  const query = `
+  const source = `
     query node($id: ID!){
       node(id: $id) {
         ...on User {
@@ -69,8 +71,12 @@ test('it should fetch a Node type with a variable', async t => {
       }
     }
   `
-  const variables = { id: user1Id }
-  const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
+  const variableValues = { id: user1Id }
+  const { data, errors } = await graphql({
+    schema,
+    source,
+    variableValues
+  })
   errCheck(t, errors)
   const expect = {
     node: {
@@ -81,7 +87,7 @@ test('it should fetch a Node type with a variable', async t => {
 })
 
 test('it should not error when no record is returned ', async t => {
-  const query = `
+  const source = `
     query node($id: ID!){
       node(id: $id) {
         ...on User {
@@ -90,8 +96,12 @@ test('it should not error when no record is returned ', async t => {
       }
     }
   `
-  const variables = { id: toGlobalId('User', 999) }
-  const { data, errors } = await graphql(schemaRelay, query, null, null, variables)
+  const variableValues = { id: toGlobalId('User', 999) }
+  const { data, errors } = await graphql({
+    schema,
+    source,
+    variableValues
+  })
   errCheck(t, errors)
   const expect = {
     node: null
@@ -100,7 +110,7 @@ test('it should not error when no record is returned ', async t => {
 })
 
 test('it should handle the relay connection type', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       fullName
       posts {
@@ -133,7 +143,7 @@ test('it should handle the relay connection type', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -182,7 +192,7 @@ test('it should handle the relay connection type', async t => {
 })
 
 test('it should handle nested connection types', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       fullName
       posts(first: 5) {
@@ -213,7 +223,7 @@ test('it should handle nested connection types', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -260,7 +270,7 @@ test('it should handle nested connection types', async t => {
 })
 
 test('should handle a post without an author', async t => {
-  const query = `{
+  const source = `{
     node(id: "${toGlobalId('Post', 4)}") {
       id
       ... on Post {
@@ -271,7 +281,7 @@ test('should handle a post without an author', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     node: {
@@ -283,8 +293,26 @@ test('should handle a post without an author', async t => {
   t.deepEqual(expect, data)
 })
 
+test('should pass context to getNode resolver', async t => {
+  const source = `{
+    node(id: "${toGlobalId('ContextPost', 1)}") {
+      ... on ContextPost { body }
+    }
+  }`
+
+  const contextValue  = { table: 'posts' }
+  const { data, errors } = await graphql({schema, source, contextValue })
+  errCheck(t, errors)
+  const expect = {
+    node: {
+      body: 'If I could marry a programming language, it would be Haskell.'
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
 test('should handle fragments recursively', async t => {
-  const query = `
+  const source = `
     {
       user(id: 1) {
         fullName
@@ -324,7 +352,7 @@ test('should handle fragments recursively', async t => {
       fullName
     }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -359,4 +387,3 @@ test('should handle fragments recursively', async t => {
   }
   t.deepEqual(expect, data)
 })
-

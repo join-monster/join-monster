@@ -1,24 +1,23 @@
 language: node_js
-dist: precise
+dist: xenial
 node_js:
-  - 6
-  - 7
-  - 8
+  - 10
+  - 12
+  - 13
+  - 14
 
 deploy:
-  - provider: npm
-    skip_cleanup: true
-    email: andrew@stem.is
-    # only tagged commits will trigger deploy. all other commits simply run the lint and tests
-    on:
-      tags: true
-      branch: master
-    # NPM API key, encrypted with public key crypto. only travis has the private key.
-    api_key:
-      secure: PcwMn5hXRyFOEV3RFp1MWMvZnj2T2nSJ2vV/8vdVNDL+QwVaQGICWLeUGbcMmtliowMVCpNswZ8+cVyg+HUlvdF8dlpNTzuHA4Cv1V/+RUfJbtTaZVPIezswtjbxcOxS69ZNCJbRJXoWojiYUSXzBjdGFHRWGFzFYbdhMgXYt8sgkN3FSdny7MdHMsOk5TISFdVu9XppFO4SCru1jf6iyXQe+6ZaH/XyI9BdPbQ3SPl7NpvLwJBSGeTdxaI779r74wRUBlBlIO52U7IsTb4zhES25E1+dMBc3mOGRScj4/wx6p4880jhJupDA/feQnkStdAjVDzMtqXNwmlRMcvQX5xD4cSHYTInMkO6Y3d3MsV9DX7LTVTX6x5oDrsHA6SkToL09w5OFB9FU2M6j7vqRLws1hv85seOsEwaqqYeYyBtlFSN0vKfvF4R3yZJ/3GPkKTvevNyZZQ1GN09ZQzKp2tkCHl/vKzXTb2HCD8ql8/lhaqX1qA8vC5X1SDNhAEIjqmjFJPa/IeT8lK219KWa4fURs9fQAhQO5f0r735TTEL0SY99BXrTXfiYLje5dGV4cM9ABp3ENLDJH1oMj9j+W0tZ0192/tJOdoKQ62vBlFxQ7MWe1A49PjqVNLBUGnuVyq7xAXHMF5Iwf5Pq2Pg7QUptin5QKxcutH057xDSn0=
-
+  provider: npm
+  skip_cleanup: 'true'
+  email: 2yinyang2@gmail.com
+  on:
+    tags: true
+    repo: join-monster/join-monster
+    branch: master
+  api_key:
+    secure: 2232zWh7/w/DljGBoeLOiR/49pYTSGHr82N+g4zHEyoEmh+VzSXqioqYPziKYLa5Xq8o6WFtlLO0DlfDU/KrR/wY5PlM2FDMPN3MqoESA+UWO1k1qiyAj/QbpgZd1BFiRmV59gXBz9NH2FVa5UmjFfq4objhgR8waWrIqf307zoTeruaEh18EuTiRH7HwT0pqdkyIQkFy8LWN9CMsCnTJIQziA7RbRX+XuMdO53FIBdMkaK8cRJsj9BKaImqdWwQV3ddvGOHMwevCdHDB8V0r1c1//REfcnd1vYHL8BNrkib8/bOKU6l/mlDbtXAd2sTdi47pQoaOkQ1ZcpO+2tToPIcZqCVeHPWMGjbeiP+xcs9GPibIpdnw5Qp+Y1DNIeoyVJ8FNkMlmygBaaoYfFt5jdqV49eepiQw7S0v4PMIXvh44JCn1yQBWXvp74E708paS93pxmzVqvcZrFlEX1SIdZH9+AA5Cmd3hE2fxMQcF2z+HVhHk1nJUIGVhIsuDsodeCkHViNS7LHs5guO1Fsi/Yyv8MpB9r9iQKvIefAOhWFGAH2n7WGV1zJ6SGx0VtLwNxYUytOH1RHtyCxl2NIml2atWFVZ3pQIWAApCvfTQV18DfgVzYK180GsuD+0v2Dxn6179OrO2xsYp+ZUMFkjGGqr7c5epkHAMDZP5WuRDw=
 addons:
-  postgresql: "9.4"
+  postgresql: '9.4'
   mariadb: '10.2'
   # need a C++ compiler for sqlite3
   apt:
@@ -26,20 +25,17 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-4.8
-
 before_script:
   # create the databases
   - psql -c "CREATE DATABASE test1 LC_COLLATE 'en_US.UTF-8';" -U postgres
   - psql -c "CREATE DATABASE test2 LC_COLLATE 'en_US.UTF-8';" -U postgres
-  - psql -c "CREATE DATABASE test3 LC_COLLATE 'en_US.UTF-8';" -U postgres
   - psql -c "CREATE DATABASE demo LC_COLLATE 'en_US.UTF-8';" -U postgres
-  - echo "CREATE DATABASE test1" | mysql -u travis
-  - echo "CREATE DATABASE test2" | mysql -u travis
+  - echo "CREATE DATABASE test1" | mysql -u root
+  - echo "CREATE DATABASE test2" | mysql -u root
   # populate them with data
   - npm run db-build
 env:
-  - MYSQL_URL=mysql://travis@localhost/ PG_URL=postgres://postgres@localhost/ CXX=g++-4.8
+  - MYSQL_URL=mysql://root@localhost/ PG_URL=postgres://postgres@localhost/ CXX=g++-4.8
 
 notifications:
   email: false
-

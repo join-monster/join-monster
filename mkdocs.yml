@@ -1,6 +1,6 @@
 site_name: Join Monster
 site_description: A GraphQL-to-SQL execution layer.
-repo_url: https://github.com/stems/join-monster
+repo_url: https://github.com/join-monster/join-monster
 site_favicon: img/join_monster.ico
 theme: readthedocs
 extra_javascript:

@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+ mysql:
+  image: mysql
+  command: --default-authentication-plugin=mysql_native_password
+  restart: always
+  volumes:
+    - ./docker-entrypoint-initdb.d/mysql:/docker-entrypoint-initdb.d
+  ports:
+   - ${MYSQL_PORT:-43306}:3306
+  environment:
+   - MYSQL_USER=${DB_USER:-user}
+   - MYSQL_PASSWORD=${DB_PASSWORD:-password}
+   - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-password}
+  env_file:
+   - ../.env
+  healthcheck:
+    test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+    timeout: 20s
+    retries: 10
+
+ postgres:
+  image: postgres
+  restart: always
+  volumes:
+    - ./docker-entrypoint-initdb.d/postgres:/docker-entrypoint-initdb.d
+  ports:
+   - ${POSTGRES_PORT:-45432}:5432
+  environment:
+    - POSTGRES_USER=${DB_USER:-user}
+    - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+  env_file:
+   - ../.env
+
+ adminer:
+  image: adminer
+  restart: always
+  ports:
+   - 48080:8080

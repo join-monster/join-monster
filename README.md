@@ -1,11 +1,10 @@
 <!-- Use fully qualified URL for the images so they'll also be visible from the NPM page too -->
-![join-monster](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/join_monster.png)
-[![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster) [![Build Status](https://travis-ci.org/stems/join-monster.svg?branch=master)](https://travis-ci.org/stems/join-monster) [![Documentation Status](https://readthedocs.org/projects/join-monster/badge/?version=latest)](http://join-monster.readthedocs.io/en/latest/?badge=latest)
-[![Greenkeeper badge](https://badges.greenkeeper.io/stems/join-monster.svg)](https://greenkeeper.io/)
+![join-monster](https://raw.githubusercontent.com/join-monster/join-monster/master/docs/img/join_monster.png)
+[![npm version](https://badge.fury.io/js/join-monster.svg)](https://badge.fury.io/js/join-monster) [![Build Status](https://travis-ci.org/join-monster/join-monster.svg?branch=master)](https://travis-ci.org/join-monster/join-monster) [![Documentation Status](https://readthedocs.org/projects/join-monster/badge/?version=latest)](http://join-monster.readthedocs.io/en/latest/?badge=latest)
 
 ### Query Planning and Batch Data Fetching between GraphQL and SQL.
 
-- Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/), [v1](http://join-monster.readthedocs.io/en/v1.2.7-beta.1) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
+- Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/), [v2](https://join-monster.readthedocs.io/en/v2.1.2/), [v1](http://join-monster.readthedocs.io/en/v1.2.7-beta.1) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
 - Try Demo: [basic version](http://join-monster.herokuapp.com/graphql?query=%7B%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20fullName%0A%20%20%20%20email%0A%20%20%20%20posts%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20body%0A%20%20%20%20%20%20createdAt%0A%20%20%20%20%20%20comments%20%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20author%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20fullName%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D) or [paginated version](https://join-monster.herokuapp.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20total%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 - [Example Repo](https://github.com/stems/join-monster-demo)
 - [Supported SQL Dialects (DB Vendors)](http://join-monster.readthedocs.io/en/latest/dialects/)
@@ -94,7 +93,7 @@ WHERE "comments".archived = FALSE AND "comments"."post_id" IN (2,8,11,12) -- the
 It works on top of Facebook's [graphql-js](https://github.com/graphql/graphql-js) reference implementation.
 All you have to do is add a few properties to the objects in your schema and call the `joinMonster` function.
 A SQL query is "compiled" for you to send to the DBMS.
-The data-fetching is efficently batched.
+The data-fetching is efficiently batched.
 The data is then hydrated into the right shape for your GraphQL schema.
 
 ## Why?
@@ -108,7 +107,7 @@ More details on the "round-trip" (a.k.a. N+1) problem are [here](http://join-mon
 - [X] **Unobtrusive** - Coexists with your custom resolve functions and existing schemas. Use it on the whole graph or only in parts. Retain the power and expressiveness in defining your schema.
 - [X] **Object-relational impedance mismatch** - Don't bother duplicating a bunch of object definitions in an ORM. Let GraphQL do your object mapping *for you*.
 
-Since it works with the reference implementation, the API is all very familiar. Join Monster is a tool built on top to add batch data fetching. You add some special properties along-side the schema definition that Join Monster knows to look for. The use of [graphql-js](https://github.com/graphql/graphql-js) does not change. You still define your types the same way. You can write resolve functions to mainpulate the data from Join Monster, or incorporate data from elsewhere without breaking out of your "join-monsterized" schema.
+Since it works with the reference implementation, the API is all very familiar. Join Monster is a tool built on top to add batch data fetching. You add some special properties along-side the schema definition that Join Monster knows to look for. The use of [graphql-js](https://github.com/graphql/graphql-js) does not change. You still define your types the same way. You can write resolve functions to manipulate the data from Join Monster, or incorporate data from elsewhere without breaking out of your "join-monsterized" schema.
 
 ## Get Pagination out of the Box
 
@@ -300,16 +299,16 @@ DATABASE_URL=postgres://$USER:$PASS@$HOST/$YOUR_DATABASE npm start
 
 Explore the schema, try out some queries, and see what the resulting SQL queries and responses look like in [our custom version of GraphiQL](https://github.com/acarl005/graphsiql)!
 
-![graphsiql](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/graphsiql.png)
+![graphsiql](https://raw.githubusercontent.com/join-monster/join-monster/master/docs/img/graphsiql.png)
 
 **There's still a lot of work to do. Please feel free to fork and submit a Pull Request!**
 
 ## Future Work
 
-- [ ] Address this known bug [#126](https://github.com/stems/join-monster/issues/126).
-- [ ] Support custom `ORDER BY` expressions [#138](https://github.com/stems/join-monster/issues/138).
-- [ ] Support binding parameters [#169](https://github.com/stems/join-monster/issues/169).
-- [ ] Write static [Flow](https://flow.org/) types or TypeScript.
+- [ ] Address this known bug [#126](https://github.com/join-monster/join-monster/issues/126).
+- [ ] Support custom `ORDER BY` expressions [#138](https://github.com/join-monster/join-monster/issues/138).
+- [ ] Support binding parameters [#169](https://github.com/join-monster/join-monster/issues/169).
+- [ ] Write static [Flow](https://flow.org/) types.
 - [ ] Support "lookup tables" where a column might be an enum code to look up in another table.
 - [ ] Support "hyperjunctions" where many-to-many relations can join through multiple junction tables.
 - [ ] Cover more SQL dialects, like MSSQL and DB2.

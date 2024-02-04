@@ -1,7 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
 function wrap(query) {
@@ -10,15 +9,14 @@ function wrap(query) {
   }`
 }
 
-const run = partial(graphql, schemaBasic)
 
 test('it should handle a where condition', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       fullName
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: { fullName: 'andrew carlson' }
@@ -27,12 +25,12 @@ test('it should handle a where condition', async t => {
 })
 
 test('it should handle an async where condition', async t => {
-  const query = `{
+  const source = `{
     user(idAsync: 1) {
       fullName
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: { fullName: 'andrew carlson' }
@@ -41,8 +39,8 @@ test('it should handle an async where condition', async t => {
 })
 
 test('a query with a sqlDeps as the first requested field should not mess it up', async t => {
-  const query = wrap('numFeet, fullName, id')
-  const { data, errors } = await run(query)
+  const source = wrap('numFeet, fullName, id')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -67,12 +65,12 @@ test('a query with a sqlDeps as the first requested field should not mess it up'
 })
 
 test('it should handle a single object in which the first requested field is a list', async t => {
-  const query = `{
+  const source = `{
     user(id: 2) {
       posts { id, body }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -92,12 +90,12 @@ test('it should handle a single object in which the first requested field is a l
 })
 
 test('it should handle composite keys', async t => {
-  const query = `{
+  const source = `{
     sponsors {
       numLegs, lastName
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     sponsors: [
@@ -110,4 +108,3 @@ test('it should handle composite keys', async t => {
   }
   t.deepEqual(expect, data)
 })
-

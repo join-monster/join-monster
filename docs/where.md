@@ -20,8 +20,12 @@ const QueryRoot = new GraphQLObjectType({
       args: {
         id: { type: new GraphQLNonNull(GraphQLInt) }
       },
-      where: (usersTable, args, context) => {
-        return `${usersTable}.id = ${args.id}`
+      extensions: {
+        joinMonster: {
+          where: (usersTable, args, context) => {
+            return `${usersTable}.id = ${args.id}`
+          }
+        }
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(resolveInfo, {}, sql => {
@@ -37,7 +41,7 @@ Now you can handle queries like this, which return a single user.
 
 ```graphql
 {
-  user(id: 1) { 
+  user(id: 1) {
     id
     email
     fullName
@@ -61,9 +65,13 @@ const QueryRoot = new GraphQLObjectType({
       args: {
         lastName: GraphQLString
       },
-      where: (usersTable, args, context) => {
-        return escape(`${usersTable}.last_name = %L`, args.lastName)
-      },
+      extensions: {
+        joinMonster: {
+          where: (usersTable, args, context) => {
+            return escape(`${usersTable}.last_name = %L`, args.lastName)
+          }
+        }
+      }
       // ...
     }
   })
@@ -73,7 +81,7 @@ const QueryRoot = new GraphQLObjectType({
 ## Adding Context
 
 Most often, we'll be asking for the *logged-in* user.
-The `joinMonster` function has a second parameter which is basically an arbitrary object with useful contextual information that your `where` functions might depend on.
+The `joinMonster` function has a third parameter which is basically an arbitrary object with useful contextual information that your `where` functions might depend on.
 For example, you can pass in the ID of the logged in user to incorporate it into the `WHERE` condition.
 
 ```javascript
@@ -87,8 +95,12 @@ For example, you can pass in the ID of the logged in user to incorporate it into
       return knex.raw(sql)
     })
   },
-  where: (usersTable, args, context) => {
-    return `${usersTable}.id = ${context.id}`
+  extensions: {
+    joinMonster: {
+      where: (usersTable, args, context) => {
+        return `${usersTable}.id = ${context.id}`
+      }
+    }
   }
 }
 ```

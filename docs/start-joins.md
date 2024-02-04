@@ -33,9 +33,14 @@ const User = new GraphQLObjectType({
     //...
     comments: {
       type: new GraphQLList(Comment),
-      // a function to generate the join condition from the table aliases
-      // NOTE: you must double-quote any case-sensitive column names the table aliases are already quoted
-      sqlJoin: (userTable, commentTable, args) => `${userTable}.id = ${commentTable}.author_id`
+      extensions: {
+        joinMonster: {
+          // a function to generate the join condition from the table aliases
+          // NOTE: you must double-quote any case-sensitive column names the table aliases are already quoted
+          sqlJoin: (userTable, commentTable, args) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      }
     }
   })
 })

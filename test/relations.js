@@ -1,7 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
 function wrap(query, id) {
@@ -15,11 +14,10 @@ function wrap(query, id) {
   }`
 }
 
-const run = partial(graphql, schemaBasic)
 
 test('should join a one-to-many relation', async t => {
-  const query = wrap('id, comments { id, body }')
-  const { data, errors } = await run(query)
+  const source = wrap('id, comments { id, body }')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -40,7 +38,8 @@ test('should join a one-to-many relation', async t => {
           },
           {
             id: 8,
-            body: 'Somebody please help me with this library. It is so much work.'
+            body:
+              'Somebody please help me with this library. It is so much work.'
           }
         ]
       },
@@ -58,11 +57,11 @@ test('should join a one-to-many relation', async t => {
         comments: [
           {
             id: 2,
-            body: 'That\'s super weird dude.'
+            body: "That's super weird dude."
           },
           {
             id: 3,
-            body: 'That\'s ultra weird bro.'
+            body: "That's ultra weird bro."
           },
           {
             id: 5,
@@ -80,14 +79,14 @@ test('should join a one-to-many relation', async t => {
 })
 
 test('should join on a nested relation', async t => {
-  const query = wrap(`
+  const source = wrap(`
     comments {
       id
       body
       author { fullName }
     }
   `)
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -110,7 +109,8 @@ test('should join on a nested relation', async t => {
           },
           {
             id: 8,
-            body: 'Somebody please help me with this library. It is so much work.',
+            body:
+              'Somebody please help me with this library. It is so much work.',
             author: { fullName: 'andrew carlson' }
           }
         ]
@@ -128,12 +128,12 @@ test('should join on a nested relation', async t => {
         comments: [
           {
             id: 2,
-            body: 'That\'s super weird dude.',
+            body: "That's super weird dude.",
             author: { fullName: 'foo bar' }
           },
           {
             id: 3,
-            body: 'That\'s ultra weird bro.',
+            body: "That's ultra weird bro.",
             author: { fullName: 'foo bar' }
           },
           {
@@ -154,7 +154,8 @@ test('should join on a nested relation', async t => {
 })
 
 test('should handle where conditions on the relations', async t => {
-  const query = wrap(`
+  const source = wrap(
+    `
     posts(active: true) {
       id
       body
@@ -171,8 +172,10 @@ test('should handle where conditions on the relations', async t => {
       archived
       body
     }
-  `, 2)
-  const { data, errors } = await run(query)
+  `,
+    2
+  )
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -185,7 +188,7 @@ test('should handle where conditions on the relations', async t => {
           comments: [
             {
               id: 3,
-              body: 'That\'s ultra weird bro.',
+              body: "That's ultra weird bro.",
               archived: false
             },
             {
@@ -203,29 +206,31 @@ test('should handle where conditions on the relations', async t => {
 })
 
 test('should handle where condition on many-to-many relation', async t => {
-  const query = wrap(`
+  const source = wrap(
+    `
     id
     fullName
     following(name: "matt") {
       fullName
     }
-  `, 3)
-  const { data, errors } = await run(query)
+  `,
+    3
+  )
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
       id: 3,
       fullName: 'foo bar',
-      following: [
-        { fullName: 'matt elder' }
-      ]
+      following: [{ fullName: 'matt elder' }]
     }
   }
   t.deepEqual(expect, data)
 })
 
 test('should include data from the junction table', async t => {
-  const query = wrap(`
+  const source = wrap(
+    `
     id
     fullName
     following {
@@ -235,8 +240,10 @@ test('should include data from the junction table', async t => {
       intimacy # this one tests sqlExpr
       closeness # and this one tests sqlDeps
     }
-  `, 3)
-  const { data, errors } = await run(query)
+  `,
+    3
+  )
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -264,15 +271,18 @@ test('should include data from the junction table', async t => {
 })
 
 test('should handle where condition on junction in many-to-many', async t => {
-  const query = wrap(`
+  const source = wrap(
+    `
     id
     fullName
     following(intimacy: best) {
       fullName
       intimacy
     }
-  `, 3)
-  const { data, errors } = await run(query)
+  `,
+    3
+  )
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -290,7 +300,7 @@ test('should handle where condition on junction in many-to-many', async t => {
 })
 
 test('should handle joins with the same table name', async t => {
-  const query = wrap(`
+  const source = wrap(`
     idEncoded
     globalId
     email
@@ -306,7 +316,7 @@ test('should handle joins with the same table name', async t => {
       }
     }
   `)
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -324,7 +334,8 @@ test('should handle joins with the same table name', async t => {
             },
             post: {
               id: 1,
-              body: 'If I could marry a programming language, it would be Haskell.',
+              body:
+                'If I could marry a programming language, it would be Haskell.',
               author: {
                 fullName: 'matt elder'
               }
@@ -360,7 +371,8 @@ test('should handle joins with the same table name', async t => {
           },
           {
             id: 8,
-            body: 'Somebody please help me with this library. It is so much work.',
+            body:
+              'Somebody please help me with this library. It is so much work.',
             author: {
               fullName: 'andrew carlson'
             },
@@ -404,13 +416,14 @@ test('should handle joins with the same table name', async t => {
         comments: [
           {
             id: 2,
-            body: 'That\'s super weird dude.',
+            body: "That's super weird dude.",
             author: {
               fullName: 'foo bar'
             },
             post: {
               id: 1,
-              body: 'If I could marry a programming language, it would be Haskell.',
+              body:
+                'If I could marry a programming language, it would be Haskell.',
               author: {
                 fullName: 'matt elder'
               }
@@ -418,13 +431,14 @@ test('should handle joins with the same table name', async t => {
           },
           {
             id: 3,
-            body: 'That\'s ultra weird bro.',
+            body: "That's ultra weird bro.",
             author: {
               fullName: 'foo bar'
             },
             post: {
               id: 1,
-              body: 'If I could marry a programming language, it would be Haskell.',
+              body:
+                'If I could marry a programming language, it would be Haskell.',
               author: {
                 fullName: 'matt elder'
               }
@@ -452,7 +466,8 @@ test('should handle joins with the same table name', async t => {
             },
             post: {
               id: 3,
-              body: 'Here is who to contact if your brain has been ruined by Java.',
+              body:
+                'Here is who to contact if your brain has been ruined by Java.',
               author: {
                 fullName: 'matt elder'
               }
@@ -466,12 +481,12 @@ test('should handle joins with the same table name', async t => {
 })
 
 test('it should handle many to many relationship', async t => {
-  const query = wrap(`
+  const source = wrap(`
     id
     fullName
     following { fullName }
   `)
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -507,7 +522,7 @@ test('it should handle many to many relationship', async t => {
 })
 
 test('it should handle fragments nested lower', async t => {
-  const query = `
+  const source = `
     {
       users {
         ...F0
@@ -523,7 +538,7 @@ test('it should handle fragments nested lower', async t => {
     fragment F2 on Comment { id }
     fragment F3 on Comment { body }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -534,7 +549,8 @@ test('it should handle fragments nested lower', async t => {
             id: 1,
             body: 'Wow this is a great post, Matt.',
             post: {
-              body: 'If I could marry a programming language, it would be Haskell.'
+              body:
+                'If I could marry a programming language, it would be Haskell.'
             }
           },
           {
@@ -553,7 +569,8 @@ test('it should handle fragments nested lower', async t => {
           },
           {
             id: 8,
-            body: 'Somebody please help me with this library. It is so much work.',
+            body:
+              'Somebody please help me with this library. It is so much work.',
             post: {
               body: 'Check out this cool new GraphQL library, Join Monster.'
             }
@@ -577,16 +594,18 @@ test('it should handle fragments nested lower', async t => {
         comments: [
           {
             id: 2,
-            body: 'That\'s super weird dude.',
+            body: "That's super weird dude.",
             post: {
-              body: 'If I could marry a programming language, it would be Haskell.'
+              body:
+                'If I could marry a programming language, it would be Haskell.'
             }
           },
           {
             id: 3,
-            body: 'That\'s ultra weird bro.',
+            body: "That's ultra weird bro.",
             post: {
-              body: 'If I could marry a programming language, it would be Haskell.'
+              body:
+                'If I could marry a programming language, it would be Haskell.'
             }
           },
           {
@@ -600,7 +619,8 @@ test('it should handle fragments nested lower', async t => {
             id: 9,
             body: 'Yeah well Java 8 added lambdas.',
             post: {
-              body: 'Here is who to contact if your brain has been ruined by Java.'
+              body:
+                'Here is who to contact if your brain has been ruined by Java.'
             }
           }
         ]
@@ -611,15 +631,18 @@ test('it should handle fragments nested lower', async t => {
 })
 
 test('should handle a correlated subquery', async t => {
-  const query = wrap(`
+  const source = wrap(
+    `
     posts(active: false) {
       id
       body
       archived
       numComments
     }
-  `, 2)
-  const { data, errors } = await run(query)
+  `,
+    2
+  )
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -641,4 +664,3 @@ test('should handle a correlated subquery', async t => {
   }
   t.deepEqual(expect, data)
 })
-

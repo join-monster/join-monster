@@ -1,7 +1,6 @@
 ## Adding Sorting
 
-To add any of the tables to the `ORDER BY` clause, you can add the ([thunked](/API/#thunk)) `orderBy` property. This is an object of with the sorted column(s) as  the key(s) and either `'ASC'` or `'DESC'` as the value(s).
-
+To add any of the tables to the `ORDER BY` clause, you can add the ([thunked](/API/#thunk)) `orderBy` property. This is an object of with the sorted column(s) as the key(s) and either `'ASC'` or `'DESC'` as the value(s), or an array of `{column, order}`s that lets you explicitly list order clause precendence..
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -10,12 +9,16 @@ const User = new GraphQLObjectType({
     //...
     comments: {
       type: new GraphQLList(Comment),
-      // order these alphabetically, then by "id" if the comment body is the same
-      orderBy: {
-        body: 'asc',
-        id: 'desc'
-      },
-      sqlJoin: (userTable, commentTable, args) => `${userTable}.id = ${commentTable}.author_id`
+      extensions: {
+        joinMonster: {
+          // order these alphabetically
+          orderBy: {
+            body: 'asc'
+          },
+          sqlJoin: (userTable, commentTable, args) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      }
     }
   })
 })
@@ -25,11 +28,15 @@ const QueryRoot = new GraphQLObjectType({
   fields: () => ({
     users: {
       type: new GraphQLList(User),
-      orderBy: {
-        id: 'asc'
-      },
-      resolve: (parent, args, context, resolveInfo) => {
-        // joinMonster
+      extensions: {
+        joinMonster: {
+          orderBy: {
+            id: 'asc'
+          },
+          resolve: (parent, args, context, resolveInfo) => {
+            // joinMonster
+          }
+        }
       }
     }
   })
@@ -59,9 +66,38 @@ SELECT
   "comments"."id" AS "comments__id",
   "comments"."body" AS "comments__body"
 FROM accounts "users"
-LEFT JOIN comments "comments" ON "comments".author_id = "users".id 
+LEFT JOIN comments "comments" ON "comments".author_id = "users".id
 ORDER BY "users"."id" ASC, "comments"."body" ASC, "comments"."id" DESC
 ```
+
+## Explicit ordering order
+
+`orderBy` specified as an object provides a handy shorthand, but is not very clear when used to express multiple sort orders. Join Monster also supports an explicitly ordered array of `{ column, direction }` objects that gives an exact ordering of the columns for ordering. This is clearer and less implementation dependent than relying on object key iteration order, and recommended for anything that has more than one possible `ORDER BY` clause.
+
+```javascript
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    comments: {
+      type: new GraphQLList(Comment),
+      extensions: {
+        joinMonster: {
+          // order these alphabetically, then by "id" if the comment body is the same
+          orderBy: [
+            { column: 'body', direction: 'asc' },
+            { column: 'id', direction: 'desc' }
+          ],
+          sqlJoin: (userTable, commentTable, args) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      }
+    }
+  })
+})
+```
+
+This is handy when dynamically generating sort orders from connection arguments or the like, see the next section!
 
 ## Sort Dynamically
 
@@ -74,17 +110,20 @@ const User = new GraphQLObjectType({
     //...
     comments: {
       type: new GraphQLList(Comment),
-      // the user can use this argument to determine sort column
+      // the user can use this argument to determine sort columns
       args: {
-        by: { type: ColumnEnum }
+        by: { type: new GraphQLList(ColumnEnum) }
       },
-      orderBy: args => {
-        const sortBy = args.by || 'id'
-        return {
-          [sortBy]: 'desc'
+      extensions: {
+        joinMonster: {
+          orderBy: args => {
+            const sortBy = args.by || ['id']
+            return sortBy.map(column => ({ column, direction: 'desc' }))
+          },
+          sqlJoin: (userTable, commentTable, args) =>
+            `${userTable}.id = ${commentTable}.author_id`
         }
-      },
-      sqlJoin: (userTable, commentTable, args) => `${userTable}.id = ${commentTable}.author_id`
+      }
     }
   })
 })
@@ -99,19 +138,24 @@ const User = new GraphQLObjectType({
     //...
     following: {
       type: new GraphQLList(User),
-      // order by the user id
-      orderBy: { id: 'DESC' },
-      junction: {
-        sqlTable: 'relationships',
-        // this would have been equivalent
-        //orderBy: { followee_id: 'DESC' },
-        sqlJoins: [
-          (followerTable, junctionTable, args) => `${followerTable}.id = ${junctionTable}.follower_id`,
-          (junctionTable, followeeTable, args) => `${junctionTable}.followee_id = ${followeeTable}.id`
-        ]
+      extensions: {
+        joinMonster: {
+          // order by the user id
+          orderBy: { id: 'DESC' },
+          junction: {
+            sqlTable: 'relationships',
+            // this would have been equivalent
+            //orderBy: { followee_id: 'DESC' },
+            sqlJoins: [
+              (followerTable, junctionTable, args) =>
+                `${followerTable}.id = ${junctionTable}.follower_id`,
+              (junctionTable, followeeTable, args) =>
+                `${junctionTable}.followee_id = ${followeeTable}.id`
+            ]
+          }
+        }
       }
     }
   })
 })
 ```
-

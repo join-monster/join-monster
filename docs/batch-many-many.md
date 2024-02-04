@@ -12,18 +12,23 @@ const User = new GraphQLObjectType({
     following: {
       description: 'Users that this user is following',
       type: new GraphQLList(User),
-      // batching many-to-many is supported too
-      junction: {
-        sqlTable: 'relationships',
-        // this table has no primary key, but the combination of these two columns is unique
-        uniqueKey: [ 'follower_id', 'followee_id' ],
-        sqlBatch: {
-          // the matching column in the junction table
-          thisKey: 'follower_id',
-          // the column to match in the user table
-          parentKey: 'id',
-          // how to join the related table to the junction table
-          sqlJoin: (junctionTable, followeeTable) => `${junctionTable}.followee_id = ${followeeTable}.id`
+      extensions: {
+        joinMonster: {
+          // batching many-to-many is supported too
+          junction: {
+            sqlTable: 'relationships',
+            // this table has no primary key, but the combination of these two columns is unique
+            uniqueKey: ['follower_id', 'followee_id'],
+            sqlBatch: {
+              // the matching column in the junction table
+              thisKey: 'follower_id',
+              // the column to match in the user table
+              parentKey: 'id',
+              // how to join the related table to the junction table
+              sqlJoin: (junctionTable, followeeTable) =>
+                `${junctionTable}.followee_id = ${followeeTable}.id`
+            }
+          }
         }
       }
     }
@@ -37,4 +42,3 @@ In addition to the changes made on the previous page, the plan now has 3 databas
 ![query-plan-3](img/query-plan-3.png)
 
 Requests for the followees and for the comments are independent, and are sent concurrently.
-

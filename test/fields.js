@@ -1,19 +1,17 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
-const run = partial(graphql, schemaBasic)
 
 test('it should handle duplicate scalar field', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       fullName
       fullName
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -24,7 +22,7 @@ test('it should handle duplicate scalar field', async t => {
 })
 
 test('it should handle duplicate object type field', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       posts {
         body
@@ -35,7 +33,7 @@ test('it should handle duplicate object type field', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -51,7 +49,7 @@ test('it should handle duplicate object type field', async t => {
 })
 
 test.skip('it should handle duplicate object type fields with different arguments', async t => {
-  const query = `{
+  const source = `{
     user(id: 3) {
       comments: comments(active: true) {
         id
@@ -61,28 +59,19 @@ test.skip('it should handle duplicate object type fields with different argument
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
-      comments: [
-        { id: 3 },
-        { id: 5 },
-        { id: 9 }
-      ],
-      archivedComments: [
-        { id: 2 },
-        { id: 3 },
-        { id: 5 },
-        { id: 9 }
-      ]
+      comments: [{ id: 3 }, { id: 5 }, { id: 9 }],
+      archivedComments: [{ id: 2 }, { id: 3 }, { id: 5 }, { id: 9 }]
     }
   }
   t.deepEqual(expect, data)
 })
 
 test('it should handle duplicate of a field off the query root', async t => {
-  const query = `{
+  const source = `{
     user(id: 1) {
       fullName
     }
@@ -90,7 +79,7 @@ test('it should handle duplicate of a field off the query root', async t => {
       email
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     fullName: 'andrew carlson',
@@ -100,7 +89,7 @@ test('it should handle duplicate of a field off the query root', async t => {
 })
 
 test('it should handle duplicate of a field off the query root with aliases', async t => {
-  const query = `{
+  const source = `{
     thing1: user(id: 1) {
       fullName
     }
@@ -108,7 +97,7 @@ test('it should handle duplicate of a field off the query root with aliases', as
       email
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     thing1: {
@@ -122,7 +111,7 @@ test('it should handle duplicate of a field off the query root with aliases', as
 })
 
 test('it should handle duplicate of a field recursively', async t => {
-  const query = `{
+  const source = `{
     user(id: 2) {
       fullName
       posts {
@@ -140,7 +129,7 @@ test('it should handle duplicate of a field recursively', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     fullName: 'matt elder',
@@ -150,13 +139,13 @@ test('it should handle duplicate of a field recursively', async t => {
         comments: [
           {
             authorId: 3,
-            bdy: 'That\'s ultra weird bro.',
-            body: 'That\'s ultra weird bro.'
+            bdy: "That's ultra weird bro.",
+            body: "That's ultra weird bro."
           },
           {
             authorId: 3,
-            bdy: 'That\'s super weird dude.',
-            body: 'That\'s super weird dude.'
+            bdy: "That's super weird dude.",
+            body: "That's super weird dude."
           },
           {
             authorId: 1,
@@ -181,4 +170,3 @@ test('it should handle duplicate of a field recursively', async t => {
   }
   t.deepEqual(expect, data.user)
 })
-

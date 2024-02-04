@@ -1,8 +1,7 @@
 import test from 'ava'
 import { graphql } from 'graphql'
 import { toGlobalId } from 'graphql-relay'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
 function wrap(query) {
@@ -11,24 +10,19 @@ function wrap(query) {
   }`
 }
 
-const run = partial(graphql, schemaBasic)
 
 test('get a field with the same name as the SQL column', async t => {
-  const query = wrap('id')
-  const { data, errors } = await run(query)
+  const source = wrap('id')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data, {
-    users: [
-      { id: 1 },
-      { id: 2 },
-      { id: 3 }
-    ]
+    users: [{ id: 1 }, { id: 2 }, { id: 3 }]
   })
 })
 
 test('get a field with a different SQL column name and field name', async t => {
-  const query = wrap('email')
-  const { data, errors } = await run(query)
+  const source = wrap('email')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data, {
     users: [
@@ -40,21 +34,17 @@ test('get a field with a different SQL column name and field name', async t => {
 })
 
 test('get a field that has a resolver on top of the SQL column', async t => {
-  const query = wrap('idEncoded')
-  const { data, errors } = await run(query)
+  const source = wrap('idEncoded')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data, {
-    users: [
-      { idEncoded: 'MQ==' },
-      { idEncoded: 'Mg==' },
-      { idEncoded: 'Mw==' }
-    ]
+    users: [{ idEncoded: 'MQ==' }, { idEncoded: 'Mg==' }, { idEncoded: 'Mw==' }]
   })
 })
 
 test('get a globalID field', async t => {
-  const query = wrap('globalId')
-  const { data, errors } = await run(query)
+  const source = wrap('globalId')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data, {
     users: [
@@ -66,8 +56,8 @@ test('get a globalID field', async t => {
 })
 
 test('get a field that depends on multiple sql columns', async t => {
-  const query = wrap('fullName')
-  const { data, errors } = await run(query)
+  const source = wrap('fullName')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   t.deepEqual(data, {
     users: [
@@ -79,8 +69,8 @@ test('get a field that depends on multiple sql columns', async t => {
 })
 
 test('it should disambiguate two entities with identical fields', async t => {
-  const query = wrap('numLegs')
-  const { data, errors } = await run(query)
+  const source = wrap('numLegs')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -93,7 +83,7 @@ test('it should disambiguate two entities with identical fields', async t => {
 })
 
 test('it should handle fragments at the top level', async t => {
-  const query = `
+  const source = `
     {
       users {
         ...F0
@@ -101,28 +91,23 @@ test('it should handle fragments at the top level', async t => {
     }
     fragment F0 on User { id }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
-    users: [
-      { id: 1 },
-      { id: 2 },
-      { id: 3 }
-    ]
+    users: [{ id: 1 }, { id: 2 }, { id: 3 }]
   }
   t.deepEqual(expect, data)
 })
 
-
 test('it should handle an inline fragment', async t => {
-  const query = `
+  const source = `
     {
       users {
         ... on User { fullName }
       }
     }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -135,7 +120,7 @@ test('it should handle an inline fragment', async t => {
 })
 
 test('it should handle nested fragments', async t => {
-  const query = `
+  const source = `
     {
       users {
         ... on User {
@@ -147,7 +132,7 @@ test('it should handle nested fragments', async t => {
       id, fullName, email
     }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -160,7 +145,7 @@ test('it should handle nested fragments', async t => {
 })
 
 test('it should handle named fragments on an interface', async t => {
-  const query = `
+  const source = `
     {
       sponsors {
         ...info
@@ -180,7 +165,7 @@ test('it should handle named fragments on an interface', async t => {
       }
     }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     sponsors: [
@@ -196,7 +181,7 @@ test('it should handle named fragments on an interface', async t => {
 })
 
 test('it should handle inline fragments on an interface', async t => {
-  const query = `
+  const source = `
     {
       sponsors {
         ...on Person {
@@ -222,7 +207,7 @@ test('it should handle inline fragments on an interface', async t => {
       }
     }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     sponsors: [
@@ -238,36 +223,36 @@ test('it should handle inline fragments on an interface', async t => {
 })
 
 test('it should handle a column that resolves independantly of SQL', async t => {
-  const query = wrap('id, favNums')
-  const { data, errors } = await run(query)
+  const source = wrap('id, favNums')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
-      { id: 1, favNums: [ 1, 2, 3 ] },
-      { id: 2, favNums: [ 1, 2, 3 ] },
-      { id: 3, favNums: [ 1, 2, 3 ] }
+      { id: 1, favNums: [1, 2, 3] },
+      { id: 2, favNums: [1, 2, 3] },
+      { id: 3, favNums: [1, 2, 3] }
     ]
   }
   t.deepEqual(expect, data)
 })
 
 test('it should handle a query that gets nothing from the database', async t => {
-  const query = `{
+  const source = `{
     user(id:2) {
       favNums
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
-    user: { favNums: [ 1, 2, 3 ] }
+    user: { favNums: [1, 2, 3] }
   }
   t.deepEqual(expect, data)
 })
 
 test('it should handle duplicate fields', async t => {
-  const query = wrap('id id id id idEncoded fullName fullName')
-  const { data, errors } = await run(query)
+  const source = wrap('id id id id idEncoded fullName fullName')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -280,8 +265,8 @@ test('it should handle duplicate fields', async t => {
 })
 
 test('it should not be tripped up by the introspection queries', async t => {
-  const query = wrap('__typename')
-  const { data, errors } = await run(query)
+  const source = wrap('__typename')
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     users: [
@@ -294,7 +279,7 @@ test('it should not be tripped up by the introspection queries', async t => {
 })
 
 test('it should handle numeric variables', async t => {
-  const query = `
+  const source = `
     query user($userId: Int) {
       user(id: $userId) {
         id
@@ -302,8 +287,13 @@ test('it should handle numeric variables', async t => {
       }
     }
   `
-  const variables = { userId: 1 }
-  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  
+  const variableValues = { userId: 1 }
+  const { data, errors } = await graphql({
+    schema,
+    source,
+    variableValues
+  })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -315,7 +305,7 @@ test('it should handle numeric variables', async t => {
 })
 
 test('it should handle string variables', async t => {
-  const query = `
+  const source = `
     query user($encodedUserId: String) {
       user(idEncoded: $encodedUserId) {
         idEncoded
@@ -323,8 +313,12 @@ test('it should handle string variables', async t => {
       }
     }
   `
-  const variables = { encodedUserId: 'MQ==' }
-  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  const variableValues = { encodedUserId: 'MQ==' }
+  const { data, errors } = await graphql({
+    schema,
+    source,
+    variableValues
+  })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -336,15 +330,19 @@ test('it should handle string variables', async t => {
 })
 
 test('it should handle boolean variables', async t => {
-  const query = `
+  const source = `
     query sponsors($filter: Boolean) {
       sponsors(filterLegless: $filter) {
         numLegs
       }
     }
   `
-  const variables = { filter: true }
-  const { data, errors } = await graphql(schemaBasic, query, null, null, variables)
+  const variableValues = { filter: true }
+  const { data, errors } = await graphql({
+    schema,
+    source,
+    variableValues
+  })
   errCheck(t, errors)
   const expect = {
     sponsors: []
@@ -353,14 +351,16 @@ test('it should handle boolean variables', async t => {
 })
 
 test('it should handle raw SQL expressions', async t => {
-  const query = `{
+  const source = `{
     user(id: 2) {
       fullName
       capitalizedLastName
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
-  t.is(data.user.fullName.split(' ')[1].toUpperCase(), data.user.capitalizedLastName)
+  t.is(
+    data.user.fullName.split(' ')[1].toUpperCase(),
+    data.user.capitalizedLastName
+  )
 })
-

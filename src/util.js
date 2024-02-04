@@ -1,5 +1,6 @@
 import util from 'util'
 import assert from 'assert'
+import idx from 'idx'
 import { nest } from '@stem/nesthydrationjs'
 import stringifySQL from './stringifiers/dispatcher'
 import resolveUnions from './resolve-unions'
@@ -25,7 +26,7 @@ export function wrap(maybeArr) {
   if (maybeArr.constructor === Array) {
     return maybeArr
   }
-  return [ maybeArr ]
+  return [maybeArr]
 }
 
 export function isEmptyArray(val) {
@@ -34,7 +35,10 @@ export function isEmptyArray(val) {
 
 export function ensure(obj, prop, name) {
   if (!obj[prop]) {
-    throw new Error(`property "${prop}" must be defined on object: ${name || util.inspect(obj)}`)
+    throw new Error(
+      `property "${prop}" must be defined on object: ${name ||
+        util.inspect(obj)}`
+    )
   }
   return obj[prop]
 }
@@ -46,6 +50,10 @@ export function unthunk(val, ...args) {
 export function validateSqlAST(topNode) {
   // TODO: this could be a bit more comprehensive
   assert(topNode.sqlJoin == null, 'root level field can not have "sqlJoin"')
+}
+
+export function getConfigFromSchemaObject(fieldOrType) {
+  return idx(fieldOrType, _ => _.extensions.joinMonster) || {}
 }
 
 export function objToCursor(obj) {
@@ -64,28 +72,33 @@ export function maybeQuote(value, dialectName) {
     return 'NULL'
   }
 
-  if (typeof value === 'number') return value
+  if (typeof value === 'number' || typeof value === 'bigint') return value
   if (value && typeof value.toSQL === 'function') return value.toSQL()
-  if (value instanceof Buffer
-    && typeof value === 'object'
-    && typeof value.toString === 'function') {
+  if (
+    value instanceof Buffer &&
+    typeof value === 'object' &&
+    typeof value.toString === 'function'
+  ) {
     return `X'${value.toString('hex')}'`
   }
-  if (dialectName === 'oracle' && value.match(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(.\d+)?Z?/)) {
+  if (
+    dialectName === 'oracle' &&
+    value.match(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(.\d+)?Z?/)
+  ) {
     return value.replace(
       /(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)(.\d+)?Z?/,
-      'TIMESTAMP \'$1 $2$3 UTC\''
+      "TIMESTAMP '$1 $2$3 UTC'"
     )
   }
 
   // Picked from https://github.com/brianc/node-postgres/blob/876018/lib/client.js#L235..L260
   // Ported from PostgreSQL 9.2.4 source code in src/interfaces/libpq/fe-exec.c
   let hasBackslash = false
-  let escaped = '\''
+  let escaped = "'"
 
   for (let i = 0; i < value.length; i++) {
     let c = value[i]
-    if (c === '\'') {
+    if (c === "'") {
       escaped += c + c
     } else if (c === '\\') {
       escaped += c + c
@@ -95,7 +108,7 @@ export function maybeQuote(value, dialectName) {
     }
   }
 
-  escaped += '\''
+  escaped += "'"
 
   if (hasBackslash === true) {
     escaped = ' E' + escaped
@@ -144,13 +157,13 @@ export function buildWhereFunction(type, condition, options) {
   const name = getDialectName(options)
   if (typeof condition === 'function') {
     return condition
-  // otherwise, we'll assume they gave us the value(s) of the unique key.
+    // otherwise, we'll assume they gave us the value(s) of the unique key.
   }
   // determine the type of quotes necessary to escape the uniqueKey column
-  const quote = [ 'mysql', 'mariadb' ].includes(name) ? '`' : '"'
+  const quote = ['mysql', 'mysql8', 'mariadb'].includes(name) ? '`' : '"'
 
   // determine the unique key so we know what to search by
-  const uniqueKey = type._typeConfig.uniqueKey
+  const uniqueKey = getConfigFromSchemaObject(type).uniqueKey
 
   // handle composite keys
   if (Array.isArray(uniqueKey)) {
@@ -160,10 +173,17 @@ export function buildWhereFunction(type, condition, options) {
       uniqueKey.length,
       `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`
     )
-    return table => uniqueKey.map((key, i) => `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`).join(' AND ')
+    return table =>
+      uniqueKey
+        .map(
+          (key, i) =>
+            `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`
+        )
+        .join(' AND ')
     // single keys are simple
   }
-  return table => `${table}.${quote}${uniqueKey}${quote} = ${maybeQuote(condition)}`
+  return table =>
+    `${table}.${quote}${uniqueKey}${quote} = ${maybeQuote(condition)}`
 }
 
 // handles the different callback signatures and return values.
@@ -220,7 +240,7 @@ function validate(rows) {
   // its supposed to be an array of objects
   if (Array.isArray(rows)) return rows
   // a check for the most common error. a lot of ORMs return an object with the desired data on the `rows` property
-  else if (rows && rows.rows) return rows.rows
+  if (rows && rows.rows) return rows.rows
 
   throw new Error(
     `"dbCall" function must return/resolve an array of objects where each object is a row from the result set.
@@ -256,3 +276,17 @@ export async function compileSqlAST(sqlAST, context, options) {
   return { sql, shapeDefinition }
 }
 
+// Normalize the two different sortKey styles into one list of strings representing all the columns that will be sorted on
+export function sortKeyColumns(sortKey) {
+  return Array.isArray(sortKey)
+    ? sortKey.map(sort => {
+        assert(
+          sort.column,
+          `Each sortKey entry in an array must have a 'column' property, got ${JSON.stringify(
+            sortKey
+          )} instead`
+        )
+        return sort.column
+      })
+    : wrap(sortKey.key)
+}

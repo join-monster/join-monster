@@ -1,7 +1,6 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
 function makeQuery(asc) {
@@ -21,26 +20,30 @@ function makeQuery(asc) {
 }
 
 
-const run = partial(graphql, schemaBasic)
-
 test('it should handle nested ordering with both ASC', async t => {
-  const query = makeQuery(true)
-  const { data, errors } = await run(query)
+  const source = makeQuery(true)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
-  t.deepEqual([ { id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }, { id: 8 } ], data.user.posts[0].comments)
-  t.deepEqual([ { id: 1 }, { id: 4 }, { id: 6 }, { id: 8 } ], data.user.comments)
+  t.deepEqual(
+    [{ id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }, { id: 8 }],
+    data.user.posts[0].comments
+  )
+  t.deepEqual([{ id: 1 }, { id: 4 }, { id: 6 }, { id: 8 }], data.user.comments)
 })
 
 test('it should handle nested ordering with one ASC and one DESC', async t => {
-  const query = makeQuery(false)
-  const { data, errors } = await run(query)
+  const source = makeQuery(false)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
-  t.deepEqual([ { id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 } ], data.user.posts[0].comments)
-  t.deepEqual([ { id: 1 }, { id: 4 }, { id: 6 }, { id: 8 } ], data.user.comments)
+  t.deepEqual(
+    [{ id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 }],
+    data.user.posts[0].comments
+  )
+  t.deepEqual([{ id: 1 }, { id: 4 }, { id: 6 }, { id: 8 }], data.user.comments)
 })
 
 test('it should handle order on many-to-many', async t => {
-  const query = `{
+  const source = `{
     user(id: 3) {
       fullName
       following {
@@ -49,7 +52,7 @@ test('it should handle order on many-to-many', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -70,7 +73,7 @@ test('it should handle order on many-to-many', async t => {
 })
 
 test('it sould handle order on many-to-many', async t => {
-  const query = `{
+  const source = `{
     user(id: 3) {
       fullName
       following(oldestFirst: true) {
@@ -79,7 +82,7 @@ test('it sould handle order on many-to-many', async t => {
       }
     }
   }`
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -98,4 +101,3 @@ test('it sould handle order on many-to-many', async t => {
   }
   t.deepEqual(expect, data)
 })
-

@@ -52,27 +52,41 @@ const User = new GraphQLObjectType({
     // ...
     id: {
       type: GraphQLInt,
-      sqlColumn: 'id'
+      extensions: {
+        joinMonster: {
+          sqlColumn: 'id'
+        }
+      }
     },
     comments: {
       type: CommentConnection,
       // accept the standard args for connections, e.g. `first`, `after`...
       args: connectionArgs,
-      // write the JOIN as you normally would. you can do a `sqlBatch` instead
-      sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`,
+      extensions: {
+        joinMonster: {
+          // write the JOIN as you normally would. you can do a `sqlBatch` instead
+          sqlJoin: (userTable, commentTable) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      },
       // joinMonster give us an array, use the helper to slice the array based on the args
       resolve: (user, args) => {
         return connectionFromArray(user.comments, args)
       }
     },
     posts: {
-      type: PostConnection, 
+      type: PostConnection,
       args: connectionArgs,
-      sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`,
+      extensions: {
+        joinMonster: {
+          sqlJoin: (userTable, postTable) =>
+            `${userTable}.id = ${postTable}.author_id`
+        }
+      },
       resolve: (user, args) => {
         return connectionFromArray(user.posts, args)
       }
-    },
+    }
   })
 })
 ```
@@ -107,17 +121,22 @@ const User = new GraphQLObjectType({
       type: CommentConnection,
       // this implementation only supports forward pagination
       args: forwardConnectionArgs,
-      // tell join monster to paginate the queries in SQL
-      sqlPaginate: true,
-      // specify what to order on
-      orderBy: 'id',
-      // join is the same as before
-      sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
-      // or you could have used batching
-      //sqlBatch: {
-      //  thisKey: 'author_id',
-      //  parentKey: 'id'
-      //}
+      extensions: {
+        joinMonster: {
+          // tell join monster to paginate the queries in SQL
+          sqlPaginate: true,
+          // specify what to order on
+          orderBy: 'id',
+          // join is the same as before
+          sqlJoin: (userTable, commentTable) =>
+            `${userTable}.id = ${commentTable}.author_id`
+          // or you could have used batching
+          //sqlBatch: {
+          //  thisKey: 'author_id',
+          //  parentKey: 'id'
+          //}
+        }
+      }
     }
   })
 })
@@ -134,14 +153,19 @@ const User = new GraphQLObjectType({
       type: CommentConnection,
       // this time only forward pagination works
       args: forwardConnectionArgs,
-      sqlPaginate: true,
-      // orders on both `created_at` and `id`. the first property is the primary sort column.
-      // it only sorts on `id` if `created_at` is equivalent
-      orderBy: {
-        created_at: 'desc',
-        id: 'asc'
-      },
-      sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
+      extensions: {
+        joinMonster: {
+          sqlPaginate: true,
+          // orders on both `created_at` and `id`. the first property is the primary sort column.
+          // it only sorts on `id` if `created_at` is equivalent
+          orderBy: [
+            { column: 'created_at', direction: 'desc' },
+            { column: 'id', direction: 'asc' }
+          ],
+          sqlJoin: (userTable, commentTable) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      }
     }
   })
 })
@@ -252,33 +276,40 @@ const User = new GraphQLObjectType({
     posts: {
       description: 'A list of Posts the user has written',
       // this is now a connection type
-      type: PostConnection, 
+      type: PostConnection,
       args: connectionArgs,
-      sqlPaginate: true,
-      // use "keyset" pagination, an implementation based on a unique sorting key
-      // they will be sorted on `id` descending.
-      sortKey: {
-        order: 'DESC',
-        key: 'id'
-      },
-      sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
-    },
+      extensions: {
+        joinMonster: {
+          sqlPaginate: true,
+          // use "keyset" pagination, an implementation based on a unique sorting key
+          // they will be sorted on `id` descending.
+          sortKey: {
+            order: 'DESC',
+            key: 'id'
+          },
+          sqlJoin: (userTable, postTable) =>
+            `${userTable}.id = ${postTable}.author_id`
+        }
+      }
+    }
   })
 })
 ```
 
-You can make the `sortKey` dynamic by making it a function that returns the sort key object instead. This function will take the GraphQL args as the first parameter.
+You can make the `sortKey` dynamic by making it a function that returns the sort key array instead. This function will take the GraphQL args as the first parameter.
 
-The cursors will be formed from the sort key, which is the `'id'`. This cursor is not predictable, so we lose the ability to jump to pages in the middle. We also don't know the total number. However, we *can* page backwards.
+The cursors will be formed from the sort key, which in the example above is the `'id'`. This cursor is not predictable, so we lose the ability to jump to pages in the middle. We also don't know the total number. However, we _can_ page backwards, and, the database is able to use an index (if available) to jump right to the records it needs for whatever page is being requested.
 
 <div class="admonition danger">
   <p class="first admonition-title">Warning</p>
   <p class="last">
-    One must make sure the sort key is <strong>unique</strong>. If it is not, rows will be <em>silently skipped</em>. 
+    One must make sure the sort key is <strong>unique</strong>. If it is not, rows will be <em>silently skipped</em>.
   </p>
 </div>
 
- It is not recommended to use timestamps as the sort key. Even if they appear to be unique in the database, they may become non-unique if coerced to JavaScript `Date` objects. PostgreSQL's `timestamp`, for example, has microsecond precision. JavaScript's date object has only millisecond precision, meaning you can lose up to 3 decimal points by converting. Some libraries will try be helpful by doing this conversion automatically. In doing so, two timestamps which differ by only microseconds can become the same after being truncated as a JavaScript `Date`. Use an integer `id` as the sort key if you can. If your `id` does not produce the desired sort order (like a `uuid`), you can use a composite of a `timestamp` and an `id` to make it unique.
+It is not recommended to use timestamps as the sort key. Even if they appear to be unique in the database, they may become non-unique if coerced to JavaScript `Date` objects. PostgreSQL's `timestamp`, for example, has microsecond precision. JavaScript's date object has only millisecond precision, meaning you can lose up to 3 decimal points by converting. Some libraries will try be helpful by doing this conversion automatically. In doing so, two timestamps which differ by only microseconds can become the same after being truncated as a JavaScript `Date`. Use an integer `id` as the sort key if you can. If your `id` does not produce the desired sort order (like a `uuid`), you can use a composite of a `timestamp` and an `id` to make it unique.
+
+You can also use compound sort keys. To do so, pass more than one `{column, direction}` pair as `sortKey` property (or the result of the sortKey function):
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -289,21 +320,27 @@ const User = new GraphQLObjectType({
       // this is now a connection type
       type: CommentConnection,
       args: connectionArgs,
-      sqlPaginate: true,
-      // orders on both `created_at` and `id`. the first property is the primary sort column.
-      // it only sorts on `id` if `created_at` is equivalent
-      sortKey: {
-        order: 'desc',
-        key: [ 'created_at', 'id' ]
-      },
-      sqlJoin: (userTable, commentTable) => `${userTable}.id = ${commentTable}.author_id`
+      extensions: {
+        joinMonster: {
+          sqlPaginate: true,
+          // orders on both `created_at` and `id`. the first property is the primary sort column.
+          // the database will only sort on `id` if `created_at` is equivalent
+          sortKey: [
+            { column: 'created_at', direction: 'desc' },
+            { column: 'id', direction: 'asc' }
+          ],
+          sqlJoin: (userTable, commentTable) =>
+            `${userTable}.id = ${commentTable}.author_id`
+        }
+      }
     }
   })
 })
 ```
 
-Because the cursor identifies it's object by a key, it will not be tripped up by insertions at the beginning.
-However, this uniqueness removes the possibility of "recursive paging" with nested connections, since each list of posts has a different sequence of cursors.
+When used with other arguments to the field, this is useful for paginating dynamically sorted connections.
+
+Because the cursor identifies its object by a key, it will not be tripped up by insertions at the beginning. However, this uniqueness removes the possibility of "recursive paging" with nested connections, since each list of posts has a different sequence of cursors.
 You can still get the beginning or end of nested connections though.
 
 ```gql
@@ -352,20 +389,21 @@ const Post = new GraphQLObjectType({
     // ...
     comments: {
       type: CommentConnection,
-      sqlPaginate: true,
       args: connectionArgs,
-      sortKey: {
-        order: 'desc',
-        key: [ 'created_at', 'id' ]
-      },
-      sqlBatch: {
-        // which column to match up to the users
-        thisKey: 'post_id',
-        // the other column to compare to
-        parentKey: 'id'
-      },
-      where: table => `${table}.archived = FALSE`
-    },
+      extensions: {
+        joinMonster: {
+          sqlPaginate: true,
+          sortKey: [{ column: 'created_at', direction: 'desc' }],
+          sqlBatch: {
+            // which column to match up to the users
+            thisKey: 'post_id',
+            // the other column to compare to
+            parentKey: 'id'
+          },
+          where: table => `${table}.archived = FALSE`
+        }
+      }
+    }
   })
 })
 ```
@@ -382,9 +420,14 @@ const Post = new GraphQLObjectType({
     // ...
     only3Comments: {
       type: new GraphQLList(Comment),
-      orderBy: { id: 'desc' },
-      limit: 3,
-      sqlJoin: (userTable, commentTable) => `${commentTable}.author_id = ${userTable}.id` 
+      extensions: {
+        joinMonster: {
+          orderBy: { id: 'desc' },
+          limit: 3,
+          sqlJoin: (userTable, commentTable) =>
+            `${commentTable}.author_id = ${userTable}.id`
+        }
+      }
     }
   })
 })
@@ -392,3 +435,30 @@ const Post = new GraphQLObjectType({
 
 The `limit` can be an integer or a function that returns an integer. This feature is only supported if pagination is supported for you SQL dialect.
 
+### 4. Max and Default Page Size in Pagination
+
+If you want to limit the maximum number of results allowed in a list field,
+you can use the `sqlPageLimit`.
+To set a default page size use `sqlDefaultPageSize`. without a sqlDefaultPageSize, server defaults to a max limit as per the db in use.
+
+```javascript
+const Post = new GraphQLObjectType({
+  // ...
+  fields: () => ({
+    // ...
+    only3Comments: {
+      type: new GraphQLList(Comment),
+      extensions: {
+        joinMonster: {
+          sqlPaginate: true,
+          sqlPageLimit: 100,
+          sqlDefaultPageSize: 5,
+          ...
+        }
+      }
+    }
+  })
+})
+```
+
+The `sqlPageLimit` and `sqlDefaultPageSize` fields are integers. This feature is only supported if pagination is supported for your SQL dialect and sqlPaginate is set.

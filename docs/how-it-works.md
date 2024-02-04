@@ -1,5 +1,5 @@
 ## Overview
-[Join Monster](https://github.com/stems/join-monster) fetches only the data you need - *nothing more, nothing less*, just like the original philosophy of GraphQL.
+[Join Monster](https://github.com/join-monster/join-monster) fetches only the data you need - *nothing more, nothing less*, just like the original philosophy of GraphQL.
 It reads the parsed GraphQL query, looks at your schema definition, and automatically generates the SQL that will fetch no more than what is required to fulfill the request.
 All data fetching for all resources can be done in one or a few queries using the power of `JOIN`s.
 
@@ -23,9 +23,9 @@ If one table's object type is nested as a field within another table's object ty
 
 ## Adding Metadata
 
-So [Join Monster](https://github.com/stems/join-monster) needs some additional metadata in order to write the right SQL. How does one declare these mappings, and unique keys, and joins, etc.?
+So [Join Monster](https://github.com/join-monster/join-monster) needs some additional metadata in order to write the right SQL. How does one declare these mappings, and unique keys, and joins, etc.?
 
-These are declared by decorating the schema definition with some additional properties that [Join Monster](https://github.com/stems/join-monster) will look for. Below is an example of  mapping the `User` object to an `accounts` table that joins on `posts` for a `Post` object. For details see the following **Usage** section.
+These are declared by decorating the schema definition with some additional properties that [Join Monster](https://github.com/join-monster/join-monster) will look for. Below is an example of  mapping the `User` object to an `accounts` table that joins on `posts` for a `Post` object. For details see the following **Usage** section.
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -35,11 +35,19 @@ const User = new GraphQLObjectType({
   fields: () => ({
     id: {
       type: GraphQLInt,
-      sqlColumn: 'id'
+      extensions: {
+        joinMonster: {
+          sqlColumn: 'id'
+        }
+      }
     },
     email: {
       type: GraphQLString,
-      sqlColumn: 'email_address'
+      extensions: {
+        joinMonster: {
+          sqlColumn: 'email_address'
+        }
+      }
     },
     immortal: {
       type: graphQLBoolean,
@@ -47,7 +55,12 @@ const User = new GraphQLObjectType({
     },
     posts: {
       type: new GraphQLList(Post),
-      sqlJoin: (userTable, postTable) => `${userTable}.id = ${postTable}.author_id`
+      extensions: {
+        joinMonster: {
+          sqlJoin: (userTable, postTable) =>
+            `${userTable}.id = ${postTable}.author_id`
+        }
+      }
     }
   })
 })
@@ -55,9 +68,9 @@ const User = new GraphQLObjectType({
 
 Join Monster provides a declarative API that lets you define **data requirements** on your object types and fields. By placing these properties directly on the schema definition, GraphQL effectively *becomes* your ORM because it is the mapping between the application and the data.
 
-Notice that most of these fields do not have resolvers. Most of the time, adding the SQL decorations will be enough. [Join Monster](https://github.com/stems/join-monster) fetches the data and converts it to the correct object tree structure with the expected property names so the child resolvers know where to find the data.
+Notice that most of these fields do not have resolvers. Most of the time, adding the SQL decorations will be enough. [Join Monster](https://github.com/join-monster/join-monster) fetches the data and converts it to the correct object tree structure with the expected property names so the child resolvers know where to find the data.
 
-Also notice the `immortal` field, which does have a resolver. This field demonstrates how not all the fields must come from the batch request. You can write custom resolvers like you normally would that gets data from anywhere else. [Join Monster](https://github.com/stems/join-monster) is just a way of fetching data, it will not hinder your ability to write your resolvers. You can also have your fields get data fron a column *and* apply a resolver to modify, format, or extend the data.
+Also notice the `immortal` field, which does have a resolver. This field demonstrates how not all the fields must come from the batch request. You can write custom resolvers like you normally would that gets data from anywhere else. [Join Monster](https://github.com/join-monster/join-monster) is just a way of fetching data, it will not hinder your ability to write your resolvers. You can also have your fields get data fron a column *and* apply a resolver to modify, format, or extend the data.
 
 ## Calling the Function
 
@@ -76,4 +89,3 @@ users: {
   }
 }
 ```
-

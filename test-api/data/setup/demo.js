@@ -1,6 +1,5 @@
 import faker from 'faker'
 
-
 function* count(limit) {
   for (let i = 0; i < limit; i++) {
     yield i
@@ -12,6 +11,7 @@ const numPosts = 50
 const numComments = 300
 const numRelationships = 15
 const numLikes = 300
+const numTags = 200
 
 module.exports = async db => {
   const knex = await require('../schema/setup')(db, 'demo')
@@ -55,7 +55,7 @@ module.exports = async db => {
 
   console.log('creating relationships...')
   const relationships = []
-  const used = new Set
+  const used = new Set()
   for (let __ of count(numRelationships)) {
     const follower_id = faker.random.number({ min: 1, max: numUsers })
     const followee_id = faker.random.number({ min: 1, max: numUsers })
@@ -74,7 +74,7 @@ module.exports = async db => {
 
   console.log('creating likes...')
   const likes = []
-  const usedLikes = new Set
+  const usedLikes = new Set()
   for (let __ of count(numLikes)) {
     const account_id = faker.random.number({ min: 1, max: numUsers })
     const comment_id = faker.random.number({ min: 1, max: numComments })
@@ -118,6 +118,17 @@ module.exports = async db => {
     }
   ])
 
+  console.log('creating tags...')
+  const tags = new Array(numTags)
+  for (let i of count(numTags)) {
+    tags[i] = {
+      tag: faker.random.word(),
+      post_id: faker.random.number({ min: 1, max: numPosts }),
+      tag_order: i,
+      created_at: faker.date.past()
+    }
+  }
+  await knex.batchInsert('tags', tags, 50)
+
   await knex.destroy()
 }
-

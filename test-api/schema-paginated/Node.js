@@ -1,7 +1,4 @@
-import {
-  nodeDefinitions,
-  fromGlobalId
-} from 'graphql-relay'
+import { nodeDefinitions, fromGlobalId } from 'graphql-relay'
 
 import joinMonster from '../../src/index'
 const options = {
@@ -9,7 +6,7 @@ const options = {
 }
 const { PAGINATE } = process.env
 if (knex.client.config.client === 'mysql') {
-  options.dialect = PAGINATE ? 'mariadb' : 'mysql'
+  options.dialect = PAGINATE ? 'mysql8' : 'mysql'
 } else if (knex.client.config.client === 'pg') {
   options.dialect = 'pg'
 } else if (knex.client.config.client === 'oracledb') {
@@ -22,7 +19,11 @@ import knex from './database'
 const { nodeInterface, nodeField } = nodeDefinitions(
   (globalId, context, resolveInfo) => {
     const { type, id } = fromGlobalId(globalId)
-    return joinMonster.getNode(type, resolveInfo, context, parseInt(id),
+    return joinMonster.getNode(
+      type,
+      resolveInfo,
+      context,
+      parseInt(id),
       sql => dbCall(sql, knex, context),
       options
     )
@@ -31,4 +32,3 @@ const { nodeInterface, nodeField } = nodeDefinitions(
 )
 
 export { nodeInterface, nodeField }
-

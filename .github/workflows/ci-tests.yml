@@ -1,0 +1,72 @@
+#### LOCAL DEV COMMAND
+# To run this locally use the act command
+# Install from: https://github.com/nektos/act
+#
+# You will also need to temporarily update the volume mount paths in the
+# docker compose file to be absolute paths on your machine. This should be temporary,
+# but is necessary because of a bug with ACT: https://github.com/nektos/act/issues/410
+#
+# Run: act --platform ubuntu-latest=ubuntu-latest=nektos/act-environments-ubuntu:18.04
+# This will use a runner that has all the commands we need. This should only be used to
+# modifying these actions, as the image is very large. If you are trying to run the
+# tests locally, simply run them in docker.
+#
+# Use the following for the node matrix locally, or any other value,
+# but you don't need all of them:
+# node-version: [10.x]
+#
+####
+
+name: CI Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  run-tests:
+    name: Run Tests
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        node-version: [14.x, 16.x, 17.x, 18.x, 19.x, 20.x]
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Setup System
+        run: |
+          sudo apt-get update
+          sudo apt-get install sqlite3
+
+      - name: Install Node Deps
+        run: npm ci
+
+      - name: Startup Databases
+        run: |
+          npm run db-up
+          echo 'Waiting for DBs to start'
+          npm run db-wait
+
+      - name: Build Test Databases
+        run: npm run db-build
+
+      - name: Run Tests
+        run: npm test
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: npm-logs
+          path: /home/runner/.npm/_logs/

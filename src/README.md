@@ -11,7 +11,7 @@ Each call to `joinMonster` has the following phases:
 1. Hydrate the data.
 1. Check SQL AST to see if they have any more batches to compile. If yes, repeat steps 4-8.
 
-![internals](https://raw.githubusercontent.com/stems/join-monster/master/docs/img/internals.png)
+![internals](https://raw.githubusercontent.com/join-monster/join-monster/master/docs/img/internals.png)
 
 This whole process begins when you call `joinMonster` and pass it the `resolveInfo`.
 Join Monster looks at the parsed query AST, fragments, variables, your schema definition, and everything needed to query and hydrate the data. After traversing the whole query AST, an intermediate representation is generated: a hybrid of the GraphQL query and the SQL metadata. We call it the **SQL AST**.

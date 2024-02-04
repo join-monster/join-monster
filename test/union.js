@@ -1,13 +1,11 @@
 import test from 'ava'
 import { graphql } from 'graphql'
-import schemaBasic from '../test-api/schema-basic/index'
-import { partial } from 'lodash'
+import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
-const run = partial(graphql, schemaBasic)
 
 test('it should a union type', async t => {
-  const query = `
+  const source = `
     {
       user(id: 1) {
         writtenMaterial1 {
@@ -32,7 +30,7 @@ test('it should a union type', async t => {
       authorId
     }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -43,7 +41,7 @@ test('it should a union type', async t => {
           body: 'Wow this is a great post, Matt.',
           postId: 1,
           authorId: 1,
-          likers: [ { fullName: 'matt elder' } ]
+          likers: [{ fullName: 'matt elder' }]
         },
         {
           id: 2,
@@ -70,7 +68,8 @@ test('it should a union type', async t => {
         {
           __typename: 'Comment',
           id: 8,
-          body: 'Somebody please help me with this library. It is so much work.',
+          body:
+            'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
           likers: []
@@ -82,7 +81,7 @@ test('it should a union type', async t => {
 })
 
 test('it should an interface type', async t => {
-  const query = `
+  const source = `
     {
       user(id: 1) {
         writtenMaterial2 {
@@ -100,7 +99,7 @@ test('it should an interface type', async t => {
       }
     }
   `
-  const { data, errors } = await run(query)
+  const { data, errors } = await graphql({schema, source})
   errCheck(t, errors)
   const expect = {
     user: {
@@ -111,7 +110,7 @@ test('it should an interface type', async t => {
           body: 'Wow this is a great post, Matt.',
           postId: 1,
           authorId: 1,
-          likers: [ { fullName: 'matt elder' } ]
+          likers: [{ fullName: 'matt elder' }]
         },
         {
           id: 2,
@@ -138,7 +137,8 @@ test('it should an interface type', async t => {
         {
           __typename: 'Comment',
           id: 8,
-          body: 'Somebody please help me with this library. It is so much work.',
+          body:
+            'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
           likers: []
@@ -148,4 +148,3 @@ test('it should an interface type', async t => {
   }
   t.deepEqual(expect, data)
 })
-
