@@ -11,7 +11,8 @@ import {
   unthunk,
   inspect,
   getConfigFromSchemaObject,
-  sortKeyColumns
+  sortKeyColumns,
+  validateDirectionWithDialect,
 } from '../util'
 
 class SQLASTNode {
@@ -298,7 +299,8 @@ function handleTable(
 
   if (fieldConfig.orderBy && !sqlASTNode.orderBy) {
     sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
+      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context), 
+      options
     )
   }
 
@@ -341,8 +343,9 @@ function handleTable(
 
     if (fieldConfig.junction.orderBy) {
       junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
-      )
+        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context), 
+        options
+      );
     }
 
     if (fieldConfig.junction.where) {
@@ -397,7 +400,7 @@ function handleTable(
   }
 
   if (sqlASTNode.paginate) {
-    getSortColumns(field, sqlASTNode, context)
+    getSortColumns(field, sqlASTNode, context, options)
   }
 
   /*
@@ -836,19 +839,20 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   }
 }
 
-function getSortColumns(field, sqlASTNode, context) {
+function getSortColumns(field, sqlASTNode, context, options) {
   const fieldConfig = getConfigFromSchemaObject(field)
-
+  
   if (fieldConfig.sortKey) {
     sqlASTNode.sortKey = unthunk(
-      fieldConfig.sortKey,
-      sqlASTNode.args || {},
+      fieldConfig.sortKey, 
+      sqlASTNode.args || {}, 
       context
     )
   }
   if (fieldConfig.orderBy) {
     sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
+      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context), 
+      options
     )
   }
   if (fieldConfig.junction) {
@@ -861,7 +865,8 @@ function getSortColumns(field, sqlASTNode, context) {
     }
     if (fieldConfig.junction.orderBy) {
       sqlASTNode.junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
+        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context),
+        options
       )
     }
   }
@@ -916,35 +921,46 @@ function spreadFragments(selections, fragments, typeName) {
   })
 }
 
-const validateAndNormalizeDirection = direction => {
-  direction = direction.toUpperCase()
-  if (direction !== 'ASC' && direction !== 'DESC') {
-    throw new Error(direction + ' is not a valid sorting direction')
+const normalizeDirection = direction => {
+  return direction.toUpperCase().trim()
+}
+
+const getTester = options => {
+  const tester = validateDirectionWithDialect(options)
+  return direction => {
+    if (!tester(direction)) {
+      throw new Error(direction + ' is not a valid sorting direction')
+    }
+    return true;
   }
-  return direction
 }
 
 // Normalize the three styles of orderBy to an array of {column, direction} objects.
 // orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
-export function handleOrderBy(orderBy) {
+// 
+export function handleOrderBy(orderBy, options) {
   if (!orderBy) return undefined
   const orderings = []
+  let directionTester = getTester(options)
   if (Array.isArray(orderBy)) {
     for (const ordering of orderBy) {
       assert(
         ordering.column,
         "'column' property must be defined on an ordering in an array"
       )
+      const direction = validateAndNormalizeDirection(ordering.direction);
       orderings.push({
         column: ordering.column,
-        direction: validateAndNormalizeDirection(ordering.direction)
+        direction: directionTester(direction) && direction
       })
     }
   } else if (typeof orderBy === 'object') {
     for (let column in orderBy) {
+      const direction = validateAndNormalizeDirection(orderBy[column])
+      
       orderings.push({
         column,
-        direction: validateAndNormalizeDirection(orderBy[column])
+        direction: directionTester(direction) && direction
       })
     }
   } else if (typeof orderBy === 'string') {
