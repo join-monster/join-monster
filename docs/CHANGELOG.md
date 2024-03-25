@@ -1,5 +1,9 @@
 ### vNEXT 
 
+### v3.3.3 (March 25, 2024)
+#### Fixed
+- [#514](https://github.com/join-monster/join-monster/pull/514): Fix of minify issues that cause production builds of react native to fail.
+
 ### v3.3.2 (August 27, 2023)
 #### Fixed
 - [#506](https://github.com/join-monster/join-monster/pull/506): Removed use of dynamic require which was preventing join-monster deployments with react native. Tested with expo-sqlite on Android (outside of this environment). 
