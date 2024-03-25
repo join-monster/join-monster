@@ -14,6 +14,15 @@ import {
   sortKeyColumns
 } from '../util'
 
+import {
+  isObjectType,
+  isUnionType,
+  isInterfaceType,
+  isListType,
+  isNonNullType,
+  isScalarType,
+} from "graphql"
+
 class SQLASTNode {
   constructor(parentNode, props) {
     Object.defineProperty(this, 'parent', {
@@ -27,6 +36,30 @@ class SQLASTNode {
   }
 }
 
+// any value here needs to be paired with an instance type checking function from graphql in isOneOfGraphQLTypes()
+const ALL_TYPES_TO_CHECK = new Set(['GraphQLObjectType', 
+                                    'GraphQLUnionType', 
+                                    'GraphQLInterfaceType', 
+                                    'GraphQLList', 
+                                    'GraphQLNonNull',
+                                    'GraphQLScalarType'])
+
+
+function isOneOfGraphQLTypes(instance, typeStringArray) {
+  let returnVal = false
+  typeStringArray.forEach(typeString => {
+    if (typeString === 'GraphQLObjectType' && isObjectType(instance)) returnVal = true
+    if (typeString === 'GraphQLUnionType' && isUnionType(instance)) returnVal = true
+    if (typeString === 'GraphQLInterfaceType' &&  isInterfaceType(instance)) returnVal = true
+    if (typeString === 'GraphQLList' &&  isListType(instance)) returnVal = true
+    if (typeString === 'GraphQLNonNull' &&  isNonNullType(instance)) returnVal = true
+    if (typeString === 'GraphQLScalarType' &&  isScalarType(instance)) returnVal = true
+    if (!ALL_TYPES_TO_CHECK.has(typeString)) {
+      throw new Error('unexpected input to isOneOfGraphQLTypes()')
+    }
+  })
+  return returnVal
+}
 // an enumeration of all the types that can map to SQL tables
 const TABLE_TYPES = [
   'GraphQLObjectType',
@@ -167,14 +200,14 @@ export function populateASTNode(
   sqlASTNode.args = getArgumentValues(field, queryASTNode, this.variableValues)
 
   // if list then mark flag true & get the type inside the GraphQLList container type
-  if (gqlType.constructor.name === 'GraphQLList') {
+  if (isOneOfGraphQLTypes(gqlType, ['GraphQLList'])) {
     gqlType = stripNonNullType(gqlType.ofType)
     grabMany = true
   }
 
   // if its a relay connection, there are several things we need to do
   if (
-    gqlType.constructor.name === 'GraphQLObjectType' &&
+    isOneOfGraphQLTypes(gqlType, ['GraphQLObjectType']) &&
     gqlType._fields.edges &&
     gqlType._fields.pageInfo
   ) {
@@ -212,7 +245,7 @@ export function populateASTNode(
   // is this a table in SQL?
   if (
     !fieldConfig.ignoreTable &&
-    TABLE_TYPES.includes(gqlType.constructor.name) &&
+    isOneOfGraphQLTypes(gqlType, TABLE_TYPES) &&
     config.sqlTable
   ) {
     if (depth >= 1) {
@@ -258,9 +291,7 @@ export function populateASTNode(
     // see enablePluginsForSchemaResolvers function: apollo-server issue #3988
   } else if (
     fieldConfig.sqlColumn ||
-    ['GraphQLObjectType', 'GraphQLInterfaceType'].includes(
-      parentTypeNode.constructor.name
-    )
+      isOneOfGraphQLTypes(parentTypeNode, ['GraphQLObjectType', 'GraphQLInterfaceType'])
   ) {
     sqlASTNode.type = 'column'
     sqlASTNode.name = fieldConfig.sqlColumn || field.name
@@ -430,9 +461,7 @@ function handleTable(
   // its been generalized to `alwaysFetch`, as its a useful feature for more than just unions
   if (
     config.typeHint &&
-    ['GraphQLUnionType', 'GraphQLInterfaceType'].includes(
-      gqlType.constructor.name
-    )
+    isOneOfGraphQLTypes(gqlType, ['GraphQLUnionType', 'GraphQLInterfaceType'])
   ) {
     deprecate('`typeHint` is deprecated. Use `alwaysFetch` instead.')
     children.push(columnToASTChild(config.typeHint, namespace))
@@ -445,8 +474,7 @@ function handleTable(
 
   if (queryASTNode.selectionSet) {
     if (
-      gqlType.constructor.name === 'GraphQLUnionType' ||
-      gqlType.constructor.name === 'GraphQLInterfaceType'
+      isOneOfGraphQLTypes(gqlType, ['GraphQLUnionType', 'GraphQLInterfaceType'])
     ) {
       // union types have special rules for the child fields in join monster
       sqlASTNode.type = 'union'
@@ -527,8 +555,7 @@ function handleUnionSelections(
           // but the gqlType is the Union. The data isn't there, its on each of the types that make up the union
           // lets find that type and handle the selections based on THAT type instead
           const deferredType = this.schema._typeMap[selectionNameOfType]
-          const deferToObjectType =
-            deferredType.constructor.name === 'GraphQLObjectType'
+          const deferToObjectType = isOneOfGraphQLTypes(deferredType, ['GraphQLObjectType'])
           const handler = deferToObjectType
             ? handleSelections
             : handleUnionSelections
@@ -559,8 +586,7 @@ function handleUnionSelections(
           const fragment = this.fragments[fragmentName]
           const fragmentNameOfType = fragment.typeCondition.name.value
           const deferredType = this.schema._typeMap[fragmentNameOfType]
-          const deferToObjectType =
-            deferredType.constructor.name === 'GraphQLObjectType'
+          const deferToObjectType = isOneOfGraphQLTypes(deferredType, ['GraphQLObjectType'])
           const handler = deferToObjectType
             ? handleSelections
             : handleUnionSelections
@@ -782,7 +808,7 @@ function stripRelayConnection(gqlType, queryASTNode, fragments) {
 }
 
 function stripNonNullType(type) {
-  return type.constructor.name === 'GraphQLNonNull' ? type.ofType : type
+  return isOneOfGraphQLTypes(type, ['GraphQLNonNull']) ? type.ofType : type
 }
 
 // go through and make sure se only ask for each sqlDep once per table
