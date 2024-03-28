@@ -1,7 +1,8 @@
 ### vNEXT 
 
-### v3.3.3 (March 25, 2024)
+### v3.3.4 (March 28, 2024)
 #### Fixed
+- [#516](https://github.com/join-monster/join-monster/pull/516): Version bumps to accept security fixes for some dependencies.
 - [#514](https://github.com/join-monster/join-monster/pull/514): Fix of minify issues that cause production builds of react native to fail.
 
 ### v3.3.2 (August 27, 2023)
