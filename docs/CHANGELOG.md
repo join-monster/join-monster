@@ -1,5 +1,9 @@
 ### vNEXT 
 
+### Current
+#### Fixed
+- [#518](https://github.com/join-monster/join-monster/pull/518): Version bumps for critical dependencies.
+
 ### v3.3.4 (March 28, 2024)
 #### Fixed
 - [#516](https://github.com/join-monster/join-monster/pull/516): Version bumps to accept security fixes for some dependencies.
