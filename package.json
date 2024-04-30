@@ -79,7 +79,7 @@
     "graphql": "^16.0.0"
   },
   "devDependencies": {
-    "@ava/babel-preset-stage-4": "^1.1.0",
+    "@ava/babel-preset-stage-4": "^4.0.0",
     "@babel/cli": "^7.9.0",
     "@babel/core": "^7.9.6",
     "@babel/eslint-parser": "^7.22.5",
