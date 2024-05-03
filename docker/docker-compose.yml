@@ -7,7 +7,7 @@ services:
   volumes:
     - ./docker-entrypoint-initdb.d/mysql:/docker-entrypoint-initdb.d
   ports:
-   - ${MYSQL_PORT:-43306}:3306
+   - ${MYSQL_PORT:-3306}:3306
   environment:
    - MYSQL_USER=${DB_USER:-user}
    - MYSQL_PASSWORD=${DB_PASSWORD:-password}
@@ -25,7 +25,7 @@ services:
   volumes:
     - ./docker-entrypoint-initdb.d/postgres:/docker-entrypoint-initdb.d
   ports:
-   - ${POSTGRES_PORT:-45432}:5432
+   - ${POSTGRES_PORT:-5432}:5432
   environment:
     - POSTGRES_USER=${DB_USER:-user}
     - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
