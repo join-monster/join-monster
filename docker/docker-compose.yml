@@ -1,7 +1,7 @@
 version: '3.3'
 services:
  mysql:
-  image: mysql@sha256:4552fcc5d3cdb8cdee76ee25cce28bf60b0eb3ce93d25ba3bfff7a66bfdcdee8
+  image: mysql:8.3
   command: --default-authentication-plugin=mysql_native_password
   restart: always
   volumes:
@@ -20,7 +20,7 @@ services:
     retries: 10
 
  postgres:
-  image: postgres@sha256:6b841c8f6a819884207402f1209a8116844365df15fca8cf556fc54a24c70800
+  image: postgres:16-bookworm
   restart: always
   volumes:
     - ./docker-entrypoint-initdb.d/postgres:/docker-entrypoint-initdb.d
@@ -33,7 +33,7 @@ services:
    - ../.env
 
  adminer:
-  image: adminer@sha256:b75eae89431e8469613b844e76382a26efc8601c17f446bcd81665bc87ca9a1f
+  image: adminer:4.8.1
   restart: always
   ports:
    - 48080:8080
