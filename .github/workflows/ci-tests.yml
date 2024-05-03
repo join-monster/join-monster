@@ -34,7 +34,8 @@ jobs:
     strategy:
       matrix:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-        node-version: [14.x, 16.x, 17.x, 18.x, 19.x, 20.x]
+        # Production applications should only use Active LTS or Maintenance LTS releases (even-numbered releases).
+        node-version: [16.x, 18.x, 20.x, 22.x]
 
     steps:
       - name: Checkout Repo
