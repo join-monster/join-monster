@@ -35,7 +35,7 @@
     "postversion": "git push && git push --tags",
     "db-build": "TZ=UTC babel-node test-api/data/build.js",
     "db-shell": "sqlite3 --column --header test-api/data/db/demo-data.sl3",
-    "db-up": "docker compose -f ./docker/docker-compose.yml up -d",
+    "db-up": "npm run db-down && docker compose -f ./docker/docker-compose.yml up -d",
     "db-down": "docker compose -f ./docker/docker-compose.yml down --remove-orphans -v",
     "db-wait": "while ! echo exit | docker inspect --format \"{{ .State.Health.Status }}\" docker-mysql-1 | grep 'healthy'; do sleep 1; done"
   },
