@@ -1,4 +1,6 @@
 ### vNEXT 
+#### Fixed
+- [#519](https://github.com/join-monster/join-monster/pull/519): Handle disjoint fields requested across union types
 
 ### v3.3.4 (March 28, 2024)
 #### Fixed
