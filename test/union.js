@@ -149,6 +149,65 @@ test('it should an interface type', async t => {
   t.deepEqual(expect, data)
 })
 
+test('it should return single disjoint field request for union type', async t => {
+  const source = `
+    {
+      user(id: 1) {
+        writtenMaterial1 {
+          __typename
+          
+          ... on Comment {
+            id
+            author {
+              capitalizedLastName # <-- "disjoint" field selection from author type
+            }
+          }
+        }
+      }
+    }
+  `
+  const { data, errors } = await graphql({schema, source})
+  errCheck(t, errors)
+  const expect = {
+    user: {
+      writtenMaterial1: [
+        {
+          __typename: 'Comment',
+          id: 1,
+          author : {
+            capitalizedLastName: 'CARLSON',
+          }
+        },
+        {
+          __typename: 'Post'
+        },
+        {
+          __typename: 'Comment',
+          id: 4,
+          author : {
+            capitalizedLastName: 'CARLSON'
+          }
+        },
+        {
+          __typename: 'Comment',
+          id: 6,
+          author : {
+            capitalizedLastName: 'CARLSON'
+          }
+        },
+        {
+          __typename: 'Comment',
+          id: 8,
+          author : {
+            capitalizedLastName: 'CARLSON'
+          }
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
 test('it should return disjoint fields requests for union type', async t => {
   const source = `
     {
