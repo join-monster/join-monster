@@ -208,7 +208,7 @@ test('it should return single disjoint field request for union type', async t =>
   t.deepEqual(expect, data)
 })
 
-test.skip('it should return multiple disjoint fields requests for union type', async t => {
+test('it should return multiple disjoint fields requests for union type', async t => {
   const source = `
     {
       user(id: 1) {
