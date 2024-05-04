@@ -4,13 +4,13 @@ import { isEmptyArray } from './util'
 const moveProp = (obj, qualifiedName, fieldName) => {
   const qualifiedValue = obj[qualifiedName]
   delete obj[qualifiedName]
-  if (!qualifiedValue) return;
+  if (!qualifiedValue) return
   if (obj[fieldName] == null) {
-    obj[fieldName] = qualifiedValue;
-    return;
+    obj[fieldName] = qualifiedValue
+    return
   }
   if (isObject(obj[fieldName])) {
-    Object.assign(obj[fieldName], qualifiedValue);
+    Object.assign(obj[fieldName], qualifiedValue)
   } else if (
     isEmptyArray(obj[fieldName]) &&
     !isEmptyArray(qualifiedValue)
@@ -35,7 +35,7 @@ export default function resolveUnions(data, sqlAST) {
         const qualifiedName = child.fieldName + suffix
         if (Array.isArray(data)) {
           for (let obj of data) {
-            moveProp(obj, qualifiedName, fieldName);
+            moveProp(obj, qualifiedName, fieldName)
           }
           if (child.type === 'table' || child.type === 'union') {
             const nextLevelData = chain(data)
@@ -46,7 +46,7 @@ export default function resolveUnions(data, sqlAST) {
             resolveUnions(nextLevelData, child)
           }
         } else {
-          moveProp(data, qualifiedName, fieldName);
+          moveProp(data, qualifiedName, fieldName)
           if (child.type === 'table' || child.type === 'union') {
             resolveUnions(data[fieldName], child)
           }
