@@ -59,13 +59,13 @@ jobs:
           npm run db-up
           echo 'Waiting for DBs to start'
           npm run db-wait
-
+      
       - name: Build Test Databases
         run: npm run db-build
 
       - name: Run Tests
         run: npm test
-
+        
       - uses: actions/upload-artifact@v3
         if: failure()
         with:
