@@ -99,9 +99,12 @@ async function nextBatchChild(childAST, data, dbCall, context, options) {
         for (let obj of data) {
           const ob = newData[obj[parentKey]]
           if (ob) {
-            obj[fieldName] = arrToConnection(
-              newData[obj[parentKey]][0],
-              childAST
+            obj[fieldName] = Object.assign(
+              obj[fieldName] ?? {}, 
+              arrToConnection(
+                newData[obj[parentKey]][0],
+                childAST
+             ) 
             )
             matchedData.push(obj)
           } else {

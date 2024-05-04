@@ -1,5 +1,23 @@
-import { chain } from 'lodash'
+import { chain, isObject } from 'lodash'
 import { isEmptyArray } from './util'
+
+const moveProp = (obj, qualifiedName, fieldName) => {
+  const qualifiedValue = obj[qualifiedName]
+  delete obj[qualifiedName]
+  if (!qualifiedValue) return
+  if (obj[fieldName] == null) {
+    obj[fieldName] = qualifiedValue
+    return
+  }
+  if (isObject(obj[fieldName])) {
+    Object.assign(obj[fieldName], qualifiedValue)
+  } else if (
+    isEmptyArray(obj[fieldName]) &&
+    !isEmptyArray(qualifiedValue)
+  ) {
+    obj[fieldName] = qualifiedValue
+  }
+}
 
 // union types have additional processing. the field names have a @ and the typename appended to them.
 // need to strip those off and take whichever of those values are non-null
@@ -17,16 +35,7 @@ export default function resolveUnions(data, sqlAST) {
         const qualifiedName = child.fieldName + suffix
         if (Array.isArray(data)) {
           for (let obj of data) {
-            const qualifiedValue = obj[qualifiedName]
-            delete obj[qualifiedName]
-            if (obj[fieldName] == null && qualifiedValue != null) {
-              obj[fieldName] = qualifiedValue
-            } else if (
-              isEmptyArray(obj[fieldName]) &&
-              !isEmptyArray(qualifiedValue)
-            ) {
-              obj[fieldName] = qualifiedValue
-            }
+            moveProp(obj, qualifiedName, fieldName)
           }
           if (child.type === 'table' || child.type === 'union') {
             const nextLevelData = chain(data)
@@ -37,16 +46,7 @@ export default function resolveUnions(data, sqlAST) {
             resolveUnions(nextLevelData, child)
           }
         } else {
-          const qualifiedValue = data[qualifiedName]
-          delete data[qualifiedName]
-          if (data[fieldName] == null && qualifiedValue != null) {
-            data[fieldName] = qualifiedValue
-          } else if (
-            isEmptyArray(data[fieldName]) &&
-            !isEmptyArray(qualifiedValue)
-          ) {
-            data[fieldName] = qualifiedValue
-          }
+          moveProp(data, qualifiedName, fieldName)
           if (child.type === 'table' || child.type === 'union') {
             resolveUnions(data[fieldName], child)
           }
