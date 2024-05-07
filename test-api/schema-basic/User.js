@@ -276,6 +276,7 @@ const User = new GraphQLObjectType({
     writtenMaterial1: {
       type: new GraphQLList(AuthoredUnion),
       args: {
+        // Used to test multiple aliases with different args on unions
         search: { type: GraphQLString },
       },
       extensions: {
@@ -308,6 +309,7 @@ const User = new GraphQLObjectType({
     writtenMaterial2: {
       type: new GraphQLList(AuthoredInterface),
       args: {
+        // Used to test multiple aliases with different args on interfaces
         search: { type: GraphQLString },
       },
       extensions: {

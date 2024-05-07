@@ -142,15 +142,15 @@ async function nextBatchChild(childAST, data, dbCall, context, options, siblings
     if (childAST.paginate) {
       const targets = newData[data[parentKey]]
       data[valueKey] = arrToConnection(targets, childAST)
-      if (isConflicting) data[fieldName] = resolveAliasValue
     } else if (childAST.grabMany) {
       data[valueKey] = newData[data[parentKey]] || []
-      if (isConflicting) data[fieldName] = resolveAliasValue
     } else {
       const targets = newData[data[parentKey]] || []
       data[valueKey] = targets[0]
-      if (isConflicting) data[fieldName] = resolveAliasValue
     }
+    
+    if (isConflicting) data[fieldName] = resolveAliasValue
+    
     if (data) {
       return nextBatch(childAST, data[valueKey], dbCall, context, options)
     }

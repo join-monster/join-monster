@@ -58,7 +58,7 @@ Such functions, like the `where`, `sqlJoin`, or `sqlExpr` function, should escap
 <div class="admonition danger">
   <p class="first admonition-title">Warning</p>
   <p class="last">
-    When writing custom resolvers on non-trivial fields, consider getting the value through the GraphQL default resolver.
+    When writing custom resolvers on non-trivial fields, the field value needs to be obtained through GraphQL's default resolver.
   </p>
 </div>
 
@@ -105,9 +105,9 @@ However, if there are multiple conflicting aliases accessing the same relation, 
 }
 ```
 
-The `source.following` property is now a function that will return the correct value. GraphQL's default resolver will detect the function and do the right thing.
+The `source.following` property is now a function that will return the correct value. GraphQL's default resolver will detect the function and do the right thing. However, passing a custom resolver will completely override GraphQL's default resolver instead of wrapping it.
 
-Therefore, we recommend getting the raw value through GraphQL's default resolver first when using a custom resolver on a non-trivial field:
+Therefore, it is required to get the actual value through GraphQL's default resolver first when using a custom resolver on a non-trivial field:
 
 ```javascript
 import { defaultFieldResolver } from 'graphql'
@@ -119,10 +119,18 @@ const User = new GraphQLObjectType({
     following: {
       // ...
       resolve: (source, args, context, info) => {
-        const rawValue = defaultFieldResolver(source, args, context, info)
-        return processUsers(rawValue)
+        const value = defaultFieldResolver(source, args, context, info)
+        return processUsers(value)
       }
     }
   })
 })
 ```
+
+We currently treat fields as being "non-trivial" in the following cases:
+
+* Fields that point to another table, e.g. using `sqlJoin`
+* Fields using SQL expressions via `sqlExpr`
+* Fields with a union type
+
+When in doubt, `defaultFieldResolver` can safely be used in any custom resolver, even in cases where it is not necessary.
