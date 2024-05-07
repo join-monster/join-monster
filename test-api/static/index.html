@@ -83,7 +83,7 @@
     const root = ReactDOM.createRoot(document.getElementById('graphiql'));
     const fetcher = GraphiQL.createFetcher({
       // we reuse same index for grapqhl and graphql-relay
-      url: `http://localhost:3000${window.location.pathname}`,
+      url: new URL(window.location.pathname, window.location.origin),
       fetch: fetchDecorator(window.fetch),
     });
     const explorerPlugin = GraphiQLPluginExplorer.explorerPlugin();
