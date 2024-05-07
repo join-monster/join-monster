@@ -1,10 +1,10 @@
 
 import path from 'path'
-import express from 'express';
-import bodyParser from 'body-parser';
+import express from 'express'
+import bodyParser from 'body-parser'
 import cors from 'cors'
 
-import { createHandler } from 'graphql-http/lib/use/express';
+import { createHandler } from 'graphql-http/lib/use/express'
 
 // module we created that lets you serve a custom build of GraphiQL
 import graphiql from 'express-custom-graphiql'
