@@ -1,23 +1,23 @@
 
-/*
 import path from 'path'
-import Koa from 'koa'
-import koaRouter from 'koa-router'
-import graphqlHTTP from 'koa-graphql'
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors'
+
+import { createHandler } from 'graphql-http/lib/use/express';
+
 // module we created that lets you serve a custom build of GraphiQL
-import graphiql from 'koa-custom-graphiql'
-import koaStatic from 'koa-static'
-import cors from 'kcors'
+import graphiql from 'express-custom-graphiql'
 
 import schemaBasic from './schema-basic/index'
 import schemaRelay from './schema-paginated/index'
 
-const app = new Koa()
-const router = koaRouter()
+const app = express();
 
+app.use(bodyParser.json())
 app.use(cors())
 
-router.get(
+app.get(
   '/graphql',
   graphiql({
     css: '/graphiql.css',
@@ -25,7 +25,7 @@ router.get(
   })
 )
 
-router.get(
+app.get(
   '/graphql-relay',
   graphiql({
     url: '/graphql-relay',
@@ -34,20 +34,19 @@ router.get(
   })
 )
 
-router.post(
+app.post(
   '/graphql',
-  graphqlHTTP({
+  createHandler({
     schema: schemaBasic,
     formatError: e => {
       console.error(e)
       return e
     }
-  })
-)
+  }))
 
-router.post(
+app.post(
   '/graphql-relay',
-  graphqlHTTP({
+  createHandler({
     schema: schemaRelay,
     formatError: e => {
       console.error(e)
@@ -56,13 +55,11 @@ router.post(
   })
 )
 
-app.use(router.routes())
 // serve the custom build of GraphiQL
-app.use(koaStatic(path.join(__dirname, '../node_modules/graphsiql')))
+app.use(express.static(path.join(__dirname, '../node_modules/graphsiql')))
 
 app.listen(3000, () =>
   console.log(
     'server listening at http://localhost:3000/graphql and http://localhost:3000/graphql-relay'
   )
 )
-*/
