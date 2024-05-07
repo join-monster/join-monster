@@ -38,6 +38,7 @@ app.post(
   '/graphql',
   createHandler({
     schema: schemaBasic,
+    context: req => req.raw,
     formatError: e => {
       console.error(e)
       return e
@@ -48,6 +49,7 @@ app.post(
   '/graphql-relay',
   createHandler({
     schema: schemaRelay,
+    context: req => req.raw,
     formatError: e => {
       console.error(e)
       return e
