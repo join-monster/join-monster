@@ -65,7 +65,7 @@
 <body>
   <div id="graphiql">Loading...</div>
   <script>
-    // We decorate fetch to show the SQL preview in the footer
+    // We decorate fetch to show the SQL preview in the footer and update the URL with the query
     const fetchDecorator = (fetchFunction) => {
       return function (url, options) {
         return fetchFunction(url, options)
@@ -74,6 +74,10 @@
             if (sqlPreview) {
               const elem = document.querySelector('.graphiql-footer pre code');
               elem.innerHTML = hljs.highlightAuto(atob(sqlPreview)).value;
+
+              const params = new URLSearchParams();
+              params.set('query', encodeURIComponent(JSON.parse(options.body).query));
+              window.history.replaceState({}, '', `${location.pathname}?${params}`);
             }
             return response;
           });
@@ -92,7 +96,7 @@
           fetcher,
           defaultEditorToolsVisibility: true,
           plugins: [explorerPlugin],
-          query: new URLSearchParams(window.location.search).get('query'),
+          query: decodeURIComponent(new URLSearchParams(window.location.search).get('query') ?? ''),
         },
         // create a footer to show the SQL preview
         React.createElement(GraphiQL.Footer, null, React.createElement('pre', null, React.createElement('code', null, ''))),
