@@ -1,4 +1,4 @@
-We'll set up the example API in [the demo](https://join-monster.herokuapp.com/graphql?query=%7B%20users%20%7B%20%0A%20%20id%2C%20fullName%2C%20email%0A%20%20posts%20%7B%20id%2C%20body%20%7D%0A%7D%7D). You can view the source code [here](https://github.com/stems/join-monster-demo/tree/master/schema-basic). If you would like to set this up from scratch, feel free the use the sample data provided for **SQLite3** at `/data/demo-data.sl3`.
+We'll set up the example API in [the demo](https://join-monster-demo.onrender.com/graphql?query=%7B%20users%20%7B%20%0A%20%20id%2C%20fullName%2C%20email%0A%20%20posts%20%7B%20id%2C%20body%20%7D%0A%7D%7D). You can view the source code [here](https://github.com/stems/join-monster-demo/tree/master/schema-basic). If you would like to set this up from scratch, feel free the use the sample data provided for **SQLite3** at `/data/demo-data.sl3`.
 
 ## Defining SQL Schema
 
