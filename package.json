@@ -98,7 +98,6 @@
     "eslint-config-prettier": "^8.8.0",
     "express": "^4.19.2",
     "faker": "^4.1.0",
-    "graphiql": "^3.2.0",
     "graphql": "^16.6.0",
     "graphql-http": "^1.22.1",
     "idx": "^2.5.6",
