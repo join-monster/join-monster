@@ -1,10 +1,8 @@
 module.exports = function dbCall(sql, knex, context) {
-  if (context && context.response) {
-    context.set(
+  if (context?.res) {
+    context.res.set(
       'X-SQL-Preview',
-      context.response.get('X-SQL-Preview') +
-        '%0A%0A' +
-        sql.replace(/%/g, '%25').replace(/\n/g, '%0A')
+      btoa(sql)
     )
   }
   return knex.raw(sql).then(result => {

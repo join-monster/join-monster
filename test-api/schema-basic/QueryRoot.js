@@ -6,7 +6,7 @@ import {
   GraphQLBoolean
 } from 'graphql'
 
-import knex from './database'
+import knex from '../data/database'
 import dbCall from '../data/fetch'
 
 import User from './User'

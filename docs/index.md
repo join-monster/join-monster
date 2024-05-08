@@ -146,9 +146,9 @@ and responds with...
 
 ## Live Demo
 
-See it in action with [this demo API](http://join-monster.herokuapp.com/graphql?query=%7B%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20fullName%0A%20%20%20%20email%0A%20%20%20%20posts%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20body%0A%20%20%20%20%20%20createdAt%0A%20%20%20%20%20%20comments%20%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20author%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20fullName%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D).
+See it in action with [this demo API](https://join-monster-demo.onrender.com/graphql?query=%257B%250A%2520%2520user%28id%253A%25202%29%2520%257B%250A%2520%2520%2520%2520fullName%250A%2520%2520%2520%2520email%250A%2520%2520%2520%2520posts%2520%257B%250A%2520%2520%2520%2520%2520%2520id%250A%2520%2520%2520%2520%2520%2520body%250A%2520%2520%2520%2520%2520%2520comments%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520id%250A%2520%2520%2520%2520%2520%2520%2520%2520body%250A%2520%2520%2520%2520%2520%2520%2520%2520author%2520%257B%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520id%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520fullName%250A%2520%2520%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%2520%2520%257D%250A%2520%2520%2520%2520%257D%250A%2520%2520%257D%250A%257D).
 
 ## Example Code
 
-An API set up with Join Monster, both [with](https://github.com/stems/join-monster-demo/tree/master/schema-paginated) and [without](https://github.com/stems/join-monster-demo/tree/master/schema-basic) Relay compliance.
+An API set up with Join Monster, both [with](https://github.com/join-monster/join-monster/tree/master/test-api/schema-paginated) and [without](https://github.com/join-monster/join-monster/tree/master/test-api/schema-basic) Relay compliance.
 

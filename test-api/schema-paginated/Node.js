@@ -14,7 +14,7 @@ if (knex.client.config.client === 'mysql') {
 }
 
 import dbCall from '../data/fetch'
-import knex from './database'
+import knex from '../data/database'
 
 const { nodeInterface, nodeField } = nodeDefinitions(
   (globalId, context, resolveInfo) => {

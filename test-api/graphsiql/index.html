@@ -1,0 +1,108 @@
+<!--
+ *  Copyright (c) 2021 GraphQL Contributors
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the license found in the
+ *  LICENSE file in the root directory of this source tree.
+ *  https://github.com/graphql/graphiql/tree/main/examples/graphiql-cdn
+-->
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>GraphiQL</title>
+  <style>
+    body {
+      height: 100%;
+      margin: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #graphiql {
+      height: 100vh;
+    }
+  </style>
+  <!--
+      This GraphiQL example depends on Promise and fetch, which are available in
+      modern browsers, but can be "polyfilled" for older browsers.
+      GraphiQL itself depends on React DOM.
+      If you do not want to rely on a CDN, you can host these files locally or
+      include them directly in your favored resource bundler.
+    -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!--
+      These two files can be found in the npm module, however you may wish to
+      copy them directly into your environment, or perhaps include them in your
+      favored resource bundler.
+     -->
+  <script src="https://unpkg.com/graphiql/graphiql.min.js" type="application/javascript"></script>
+  <link rel="stylesheet" href="https://unpkg.com/graphiql/graphiql.min.css" />
+  <!-- 
+      These are imports for the GraphIQL Explorer plugin.
+     -->
+  <script src="https://unpkg.com/@graphiql/plugin-explorer/dist/index.umd.js" crossorigin></script>
+
+  <link rel="stylesheet" href="https://unpkg.com/@graphiql/plugin-explorer/dist/style.css" />
+
+  <!-- begin highlightjs section -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <style>
+    .hljs-string {
+      color: hsl(var(--color-info));
+    }
+
+    .hljs-number {
+      color: hsl(var(--color-success));
+    }
+  </style>
+  <!-- end highlightjs section -->
+</head>
+
+<body>
+  <div id="graphiql">Loading...</div>
+  <script>
+    // We decorate fetch to show the SQL preview in the footer and update the URL with the query
+    const fetchDecorator = (fetchFunction) => {
+      return function (url, options) {
+        return fetchFunction(url, options)
+          .then(response => {
+            const sqlPreview = response.headers.get('X-SQL-Preview');
+            if (sqlPreview) {
+              const elem = document.querySelector('.graphiql-footer pre code');
+              elem.innerHTML = hljs.highlightAuto(atob(sqlPreview)).value;
+
+              const params = new URLSearchParams();
+              params.set('query', encodeURIComponent(JSON.parse(options.body).query));
+              window.history.replaceState({}, '', `${location.pathname}?${params}`);
+            }
+            return response;
+          });
+      };
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('graphiql'));
+    const fetcher = GraphiQL.createFetcher({
+      // we reuse same index for grapqhl and graphql-relay
+      url: new URL(window.location.pathname, window.location.origin),
+      fetch: fetchDecorator(window.fetch),
+    });
+    const explorerPlugin = GraphiQLPluginExplorer.explorerPlugin();
+    root.render(
+        React.createElement(GraphiQL, {
+          fetcher,
+          defaultEditorToolsVisibility: true,
+          plugins: [explorerPlugin],
+          query: decodeURIComponent(new URLSearchParams(window.location.search).get('query') ?? ''),
+        },
+        // create a footer to show the SQL preview
+        React.createElement(GraphiQL.Footer, null, React.createElement('pre', null, React.createElement('code', null, ''))),
+      )
+    );
+  </script>
+</body>
+
+</html>
