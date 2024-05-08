@@ -13,11 +13,11 @@ const app = express()
 app.use(cors())
 
 app.get('/graphql', (req, res) => {
-  res.sendFile(path.join(__dirname, 'static', 'index.html'))
+  res.sendFile(path.join(__dirname, 'graphsiql', 'index.html'))
 })
 
 app.get('/graphql-relay', (req, res) => {
-  res.sendFile(path.join(__dirname, 'static', 'index.html'))
+  res.sendFile(path.join(__dirname, 'graphsiql', 'index.html'))
 })
 
 app.post(

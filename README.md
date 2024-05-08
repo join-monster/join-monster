@@ -297,7 +297,7 @@ DATABASE_URL=postgres://$USER:$PASS@$HOST/$YOUR_DATABASE npm start
 # go to http://localhost:3000/graphql-relay
 ```
 
-Explore the schema, try out some queries, and see what the resulting SQL queries and responses look like in [our custom version of GraphiQL](https://github.com/join-monster/join-monster/tree/master/test-api/static/index.html)!
+Explore the schema, try out some queries, and see what the resulting SQL queries and responses look like in [our custom version of GraphiQL](https://github.com/join-monster/join-monster/tree/master/test-api/graphsiql/README.md)!
 
 ![graphsiql](https://raw.githubusercontent.com/join-monster/join-monster/master/docs/img/graphsiql.png)
 
