@@ -92,6 +92,7 @@
           fetcher,
           defaultEditorToolsVisibility: true,
           plugins: [explorerPlugin],
+          query: new URLSearchParams(window.location.search).get('query'),
         },
         // create a footer to show the SQL preview
         React.createElement(GraphiQL.Footer, null, React.createElement('pre', null, React.createElement('code', null, ''))),
