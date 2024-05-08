@@ -6,7 +6,7 @@
 
 - Read the Documentation: [latest](http://join-monster.readthedocs.io/en/latest/), [v2](https://join-monster.readthedocs.io/en/v2.1.2/), [v1](http://join-monster.readthedocs.io/en/v1.2.7-beta.1) or [v0](http://join-monster.readthedocs.io/en/v0.9.9)
 - Try Demo: [basic version](https://join-monster-demo.onrender.com/graphql?query=%7B%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20fullName%0A%20%20%20%20email%0A%20%20%20%20posts%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20body%0A%20%20%20%20%20%20createdAt%0A%20%20%20%20%20%20comments%20%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20author%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20fullName%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D) or [paginated version](https://join-monster-demo.onrender.com/graphql-relay?query=%7B%0A%20%20node(id%3A%20%22VXNlcjoy%22)%20%7B%0A%20%20%20%20...%20on%20User%20%7B%20id%2C%20fullName%20%7D%0A%20%20%7D%0A%20%20user(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20fullName%0A%20%20%20%20posts(first%3A%202%2C%20after%3A%20%22eyJpZCI6NDh9%22)%20%7B%0A%20%20%20%20%20%20pageInfo%20%7B%0A%20%20%20%20%20%20%20%20hasNextPage%0A%20%20%20%20%20%20%20%20startCursor%0A%20%20%20%20%20%20%20%20endCursor%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20cursor%0A%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20%20%20body%0A%20%20%20%20%20%20%20%20%20%20comments%20(first%3A%203)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20total%0A%20%20%20%20%20%20%20%20%20%20%20%20pageInfo%20%7B%20hasNextPage%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%20id%2C%20body%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
-- [Example Repo](https://github.com/stems/join-monster-demo)
+- [demo code](https://github.com/join-monster/join-monster/tree/master/test-api)
 - [Supported SQL Dialects (DB Vendors)](http://join-monster.readthedocs.io/en/latest/dialects/)
 
 ## What is Join Monster?
@@ -285,8 +285,8 @@ The GraphQL schema language doesn't let you add arbitrary properties to the type
 ## Running the Demo
 
 ```shell
-$ git clone https://github.com/stems/join-monster-demo.git
-$ cd join-monster-demo
+$ git clone https://github.com/join-monster/join-monster.git
+$ cd join-monster
 $ npm install
 $ npm start
 # go to http://localhost:3000/graphql

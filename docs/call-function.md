@@ -46,7 +46,7 @@ The data *MUST* be an array of objects where each object represents a row in the
 
 ## Accessing Your Database
 
-You'll need to set up the connection to the database. For the provided [example](https://github.com/stems/join-monster-demo), there is a small SQLite3 file provided at `/data/demo-data.sl3`. You can import `knex` and load the data like this.
+You'll need to set up the connection to the database. For the provided [example](https://github.com/join-monster/join-monster/tree/master/test-api), there is a small SQLite3 file provided at `/data/demo-data.sl3`. You can import `knex` and load the data like this.
 ```javascript
 const dataFilePath = 'path/to/the/data.sl3' // make this the path to the database file
 const knex = require('knex')({

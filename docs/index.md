@@ -150,5 +150,5 @@ See it in action with [this demo API](https://join-monster-demo.onrender.com/gra
 
 ## Example Code
 
-An API set up with Join Monster, both [with](https://github.com/stems/join-monster-demo/tree/master/schema-paginated) and [without](https://github.com/stems/join-monster-demo/tree/master/schema-basic) Relay compliance.
+An API set up with Join Monster, both [with](https://github.com/join-monster/join-monster/tree/master/test-api/schema-paginated) and [without](https://github.com/join-monster/join-monster/tree/master/test-api/schema-basic) Relay compliance.
 
