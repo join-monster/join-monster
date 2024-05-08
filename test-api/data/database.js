@@ -4,24 +4,18 @@ import assert from 'assert'
 
 const dbType = process.env.DB
 
-const connection =
-  process.env.NODE_ENV !== 'test'
-    ? { filename: path.join(__dirname, '../data/db/test1-data.sl3') }
-    : dbType === 'PG'
-    ? pgUrl('test1')
-    : dbType === 'MYSQL'
-    ? mysqlUrl('test1')
-    : dbType === 'ORACLE'
-    ? oracleUrl('test1')
-    : { filename: path.join(__dirname, '../data/db/test1-data.sl3') }
-
 let client = 'sqlite3'
+let connection = { filename: path.join(__dirname, process.env.PAGINATE ? '../data/db/test2-data.sl3' : '../data/db/test1-data.sl3') };
+
 if (dbType === 'PG') {
   client = 'pg'
+  connection = pgUrl(process.env.PAGINATE ? 'test2' : 'test1')
 } else if (dbType === 'MYSQL') {
   client = 'mysql'
+  connection = mysqlUrl(process.env.PAGINATE ? 'test2' : 'test1')
 } else if (dbType === 'ORACLE') {
   client = 'oracledb'
+  connection = oracleUrl(process.env.PAGINATE ? 'test2' : 'test1')
 }
 
 export default require('knex')({ client, connection, useNullAsDefault: true })

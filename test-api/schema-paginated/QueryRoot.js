@@ -11,7 +11,9 @@ import {
   connectionFromArray
 } from 'graphql-relay'
 
-import knex from './database'
+import knex from '../data/database'
+import dbCall from '../data/fetch'
+
 import { User, UserConnection } from './User'
 import { Post } from './Post'
 import Sponsor from './Sponsor'
@@ -19,7 +21,6 @@ import { nodeField } from './Node'
 import ContextPost from './ContextPost'
 
 import joinMonster from '../../src/index'
-import dbCall from '../data/fetch'
 import { q } from '../shared'
 
 const { PAGINATE, DB } = process.env
