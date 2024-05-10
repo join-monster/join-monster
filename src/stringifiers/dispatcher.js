@@ -45,7 +45,7 @@ export default async function stringifySqlAST(topNode, context, options) {
   if (!selections.length) return ''
 
   if (dialect.maxAliasLength) {
-    const exceedingAliases = selections.filter(([_, alias]) => alias.length > dialect.maxAliasLength)
+    const exceedingAliases = selections.filter(([, alias]) => alias.length > dialect.maxAliasLength)
     if (exceedingAliases.length) {
       console.warn(`Alias length exceeds the max allowed length of ${dialect.maxAliasLength} characters for ${dialect.name}: ${exceedingAliases.map(([column, alias]) => `${column} AS ${alias}`).join(', ')}`)
     }
