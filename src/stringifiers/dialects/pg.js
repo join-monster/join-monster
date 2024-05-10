@@ -9,6 +9,8 @@ import {
 const dialect = (module.exports = {
   name: 'pg',
 
+  maxAliasLength: 63,
+
   quote(str) {
     return `"${str}"`
   },

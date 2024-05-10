@@ -41,13 +41,20 @@ export default async function stringifySqlAST(topNode, context, options) {
     dialect
   )
 
+  // bail out if they made no selections
+  if (!selections.length) return ''
+
+  if (dialect.maxAliasLength) {
+    const exceedingAliases = selections.filter(([_, alias]) => alias.length > dialect.maxAliasLength)
+    if (exceedingAliases.length) {
+      console.warn(`Alias length exceeds the max allowed length of ${dialect.maxAliasLength} characters for ${dialect.name}: ${exceedingAliases.map(([column, alias]) => `${column} AS ${alias}`).join(', ')}`)
+    }
+  }
+
   // make sure these are unique by converting to a set and then back to an array
   // e.g. we want to get rid of things like `SELECT user.id as id, user.id as id, ...`
   // GraphQL does not prevent queries with duplicate fields
-  selections = [...new Set(selections)]
-
-  // bail out if they made no selections
-  if (!selections.length) return ''
+  selections = [...new Set(selections.map(([column, alias]) => `${column} AS ${alias}`))]
 
   // put together the SQL query
   let sql = 'SELECT\n  ' + selections.join(',\n  ') + '\n' + tables.join('\n')
@@ -162,28 +169,16 @@ async function _stringifySqlAST(
 
       break
     case 'column':
-      selections.push(
-        `${q(parentTable)}.${q(node.name)} AS ${q(
-          joinPrefix(prefix) + node.as
-        )}`
-      )
+      selections.push([`${q(parentTable)}.${q(node.name)}`, `${q(joinPrefix(prefix) + node.as)}`])
       break
     case 'columnDeps':
       // grab the dependant columns
       for (let name in node.names) {
-        selections.push(
-          `${q(parentTable)}.${q(name)} AS ${q(
-            joinPrefix(prefix) + node.names[name]
-          )}`
-        )
+        selections.push([`${q(parentTable)}.${q(name)}`, `${q(joinPrefix(prefix) + node.names[name])}`])
       }
       break
     case 'composite':
-      selections.push(
-        `${dialect.compositeKey(parentTable, node.name)} AS ${q(
-          joinPrefix(prefix) + node.as
-        )}`
-      )
+      selections.push([`${dialect.compositeKey(parentTable, node.name)}`, `${q(joinPrefix(prefix) + node.as)}`])
       break
     case 'expression':
       const expr = await node.sqlExpr(
@@ -192,7 +187,7 @@ async function _stringifySqlAST(
         context,
         node
       )
-      selections.push(`${expr} AS ${q(joinPrefix(prefix) + node.as)}`)
+      selections.push([`${expr}`, `${q(joinPrefix(prefix) + node.as)}`])
       break
     case 'noop':
       // we hit this with fields that don't need anything from SQL, they resolve independently
@@ -300,11 +295,7 @@ async function handleTable(
     // many-to-many using batching
   } else if (idx(node, _ => _.junction.sqlBatch)) {
     if (parent) {
-      selections.push(
-        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)} AS ${q(
-          joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as
-        )}`
-      )
+      selections.push([`${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)}`, `${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`])
     } else {
       const joinCondition = await node.junction.sqlBatch.sqlJoin(
         `${q(node.junction.as)}`,
@@ -394,11 +385,7 @@ async function handleTable(
     // one-to-many with batching
   } else if (node.sqlBatch) {
     if (parent) {
-      selections.push(
-        `${q(parent.as)}.${q(node.sqlBatch.parentKey.name)} AS ${q(
-          joinPrefix(prefix) + node.sqlBatch.parentKey.as
-        )}`
-      )
+      selections.push([`${q(parent.as)}.${q(node.sqlBatch.parentKey.name)}`, `${q(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`])
     } else if (node.paginate) {
       await dialect.handleBatchedOneToManyPaginated(
         parent,
