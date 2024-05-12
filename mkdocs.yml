@@ -9,7 +9,7 @@ extra_javascript:
   - custom.js
 extra_css: 
   - custom.css
-nav:
+pages:
   - Introduction: index.md
   - "The Problem We Solve": problem.md
   - "How It Works": how-it-works.md

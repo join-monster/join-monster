@@ -1,1 +1,8 @@
-mkdocs==1.5.3
+mkdocs==1.0.4
+click==3.3
+Jinja2==2.7.1
+livereload==2.5.1
+Markdown==3.0.0
+PyYAML==5.1
+tornado==5.0
+mdx_gh_links>=0.2
