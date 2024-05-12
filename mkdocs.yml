@@ -13,6 +13,7 @@ pages:
   - Introduction: index.md
   - "The Problem We Solve": problem.md
   - "How It Works": how-it-works.md
+  - "Pros & Cons": pros-cons.md
   - "Basic Usage":
     - "1. Declare Data Model": data-model.md
     - "2. Map Objects to Tables": map-to-table.md
