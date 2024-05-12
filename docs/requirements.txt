@@ -4,6 +4,6 @@ Jinja2==2.7.1
 livereload==2.5.1
 Markdown==3.0.0
 PyYAML==5.1
-tornado==5.0
+tornado==6.3.3
 mdx_gh_links>=0.2
 markupsafe==2.0.1
