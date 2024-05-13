@@ -31,6 +31,12 @@ test(`it should generate an unminified column alias`, t => {
   t.is(ns.generate('column', 'firstname'), 'firstname')
 })
 
+test(`it should generate an unminified table alias (diffenent names won't collapse to alias)`, t => {
+  const ns = new AliasNamespace(false)
+  t.is(ns.generate('table', 'InformationItem'), 'Informatio')
+  t.is(ns.generate('table', 'InformationItemHasGroup'), 'Informatio$')
+})
+
 if (process.env.DB === 'PG' && !process.env.STRATEGY && !process.env.MINIFY) {
   test('it should warn when alias in longer than dialect can accept', async t => {
     const spy = sinon.spy(console, 'warn')
