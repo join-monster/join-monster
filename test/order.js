@@ -22,7 +22,7 @@ function makeQuery(asc) {
 
 test('it should handle nested ordering with both ASC', async t => {
   const source = makeQuery(true)
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   t.deepEqual(
     [{ id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }, { id: 8 }],
@@ -33,7 +33,7 @@ test('it should handle nested ordering with both ASC', async t => {
 
 test('it should handle nested ordering with one ASC and one DESC', async t => {
   const source = makeQuery(false)
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   t.deepEqual(
     [{ id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 }],
@@ -52,7 +52,7 @@ test('it should handle order on many-to-many', async t => {
       }
     }
   }`
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -82,7 +82,7 @@ test('it sould handle order on many-to-many', async t => {
       }
     }
   }`
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -98,6 +98,30 @@ test('it sould handle order on many-to-many', async t => {
         }
       ]
     }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('it should allow ordering by a non requested raw computed column', async t => {
+  const source = `{
+    users(by: "numPosts") {
+      fullName
+    }
+  }`
+  const { data, errors } = await graphql({ schema, source })
+  errCheck(t, errors)
+  const expect = {
+    users: [
+      {
+        fullName: 'foo bar',
+      },
+      {
+        fullName: 'andrew carlson',
+      },
+      {
+        fullName: 'matt elder',
+      },
+    ],
   }
   t.deepEqual(expect, data)
 })
