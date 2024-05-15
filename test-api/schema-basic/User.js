@@ -168,7 +168,7 @@ const User = new GraphQLObjectType({
       type: new GraphQLList(User),
       args: {
         name: { type: GraphQLString },
-        oldestFirst: { type: GraphQLBoolean },
+        by: { type: GraphQLString },
         intimacy: { type: IntimacyLevel }
       },
       extensions: {
@@ -180,8 +180,14 @@ const User = new GraphQLObjectType({
               : false,
           junction: {
             sqlTable: q('relationships', DB),
-            orderBy: args =>
-              args.oldestFirst ? { followee_id: 'desc' } : null,
+            orderBy: args => {
+              if (args.by === 'oldestFirst') {
+                return { followee_id: 'desc' }
+              } else if (args.by === 'intimacy') {
+                return { intimacy: 'desc' }
+              }
+              return null
+            },
             where: (table, args) =>
               args.intimacy
                 ? `${table}.${q('closeness', DB)} = '${args.intimacy}'`

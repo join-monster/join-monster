@@ -76,7 +76,37 @@ test('it should handle order on many-to-many with arg', async t => {
   const source = `{
     user(id: 3) {
       fullName
-      following(oldestFirst: true) {
+      following(by: "oldestFirst") {
+        id
+        fullName
+      }
+    }
+  }`
+  const { data, errors } = await graphql({ schema, source })
+  errCheck(t, errors)
+  const expect = {
+    user: {
+      fullName: 'foo bar',
+      following: [
+        {
+          id: 2,
+          fullName: 'matt elder'
+        },
+        {
+          id: 1,
+          fullName: 'andrew carlson'
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('it should handle order on many-to-many in junction raw computed column', async t => {
+  const source = `{
+    user(id: 3) {
+      fullName
+      following(by: "intimacy") {
         id
         fullName
       }
