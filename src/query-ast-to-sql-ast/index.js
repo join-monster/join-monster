@@ -966,25 +966,11 @@ const validateAndNormalizeDirection = direction => {
 // orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
 export function handleOrderBy(orderBy) {
   if (!orderBy) return undefined
-  const orderings = []
+  let orderings = []
   if (Array.isArray(orderBy)) {
-    for (const ordering of orderBy) {
-      assert(
-        ordering.column,
-        "'column' property must be defined on an ordering in an array"
-      )
-      orderings.push({
-        column: ordering.column,
-        direction: validateAndNormalizeDirection(ordering.direction)
-      })
-    }
+    orderings = orderBy.map(({column, direction}) => ({column, direction: validateAndNormalizeDirection(direction)}))
   } else if (typeof orderBy === 'object') {
-    for (let column in orderBy) {
-      orderings.push({
-        column,
-        direction: validateAndNormalizeDirection(orderBy[column])
-      })
-    }
+    orderings = Object.entries(orderBy).map(([column, direction]) => ({column, direction: validateAndNormalizeDirection(direction)}))
   } else if (typeof orderBy === 'string') {
     orderings.push({
       column: orderBy,
@@ -992,6 +978,12 @@ export function handleOrderBy(orderBy) {
     })
   } else {
     throw new Error('"orderBy" is invalid type: ' + inspect(orderBy))
+  }
+  for (const ordering of orderings) {
+    assert(
+      ordering.column,
+      "'column' property must be defined on an ordering in an array"
+    )
   }
   return orderings
 }
