@@ -62,7 +62,7 @@ export default new GraphQLObjectType({
           where: (table, args) =>
             args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
           orderBy: args => {
-            const sortBy = args.by ?? ['id']
+            const sortBy = args.by ? [args.by] : ['id']
             return sortBy.map(column => ({ column, direction: 'asc' }))
           }
         }

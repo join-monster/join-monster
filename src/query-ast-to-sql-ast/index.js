@@ -330,7 +330,8 @@ function handleTable(
 
   if (fieldConfig.orderBy && !sqlASTNode.orderBy) {
     sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
+      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context),
+      this.returnType.getFields?.() ?? this.returnType.ofType.getFields()
     )
   }
 
@@ -964,7 +965,7 @@ const validateAndNormalizeDirection = direction => {
 
 // Normalize the three styles of orderBy to an array of {column, direction} objects.
 // orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
-export function handleOrderBy(orderBy) {
+export function handleOrderBy(orderBy, schemaFields) {
   if (!orderBy) return undefined
   let orderings = []
   if (Array.isArray(orderBy)) {
@@ -984,6 +985,10 @@ export function handleOrderBy(orderBy) {
       ordering.column,
       "'column' property must be defined on an ordering in an array"
     )
+    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr
+    if (sqlExpr) {
+      ordering.column = sqlExpr
+    }
   }
   return orderings
 }

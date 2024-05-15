@@ -434,7 +434,7 @@ function stringifyOuterOrder(orders, q) {
   for (const condition of orders) {
     for (const ordering of condition.columns) {
       conditions.push(
-        `${q(condition.table)}.${q(ordering.column)} ${ordering.direction}`
+        `${typeof ordering.column === 'function' ? ordering.column(q(condition.table)) : `${q(condition.table)}.${q(ordering.column)}`} ${ordering.direction}`
       )
     }
   }
