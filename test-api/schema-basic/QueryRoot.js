@@ -61,10 +61,7 @@ export default new GraphQLObjectType({
         joinMonster: {
           where: (table, args) =>
             args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
-          orderBy: args => {
-            const sortBy = args.by ? [args.by] : ['id']
-            return sortBy.map(column => ({ column, direction: 'asc' }))
-          }
+          orderBy: args => ({ [args.by ?? 'id'] : 'asc' })
         }
       },
       resolve: async (parent, args, context, resolveInfo) => {

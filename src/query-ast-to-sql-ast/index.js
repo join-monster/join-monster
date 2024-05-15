@@ -374,7 +374,8 @@ function handleTable(
 
     if (fieldConfig.junction.orderBy) {
       junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
+        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context),
+        junction.include
       )
     }
 
@@ -985,7 +986,7 @@ export function handleOrderBy(orderBy, schemaFields) {
       ordering.column,
       "'column' property must be defined on an ordering in an array"
     )
-    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr
+    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr ?? schemaFields?.[ordering.column]?.sqlExpr
     if (sqlExpr) {
       ordering.column = sqlExpr
     }
