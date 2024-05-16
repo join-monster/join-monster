@@ -81,6 +81,7 @@ export const Post = new GraphQLObjectType({
       type: CommentConnection,
       args: {
         active: { type: GraphQLBoolean },
+        asc: { type: GraphQLBoolean },
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
       resolve: PAGINATE
@@ -93,16 +94,10 @@ export const Post = new GraphQLObjectType({
         joinMonster: {
           sqlPaginate: !!PAGINATE,
           ...(PAGINATE === 'offset' ?
-            { orderBy: 'id' } :
+            { orderBy: args => ({ id: args.asc ? 'asc' : 'desc' }) } :
             PAGINATE === 'keyset' ?
-              {
-                sortKey: {
-                  order: 'DESC',
-                  key: 'id'
-                }
-              } :
-              {
-              }
+              { sortKey: args => ({ column: 'id', direction: args.asc ? 'asc' : 'desc' }) } :
+              {}
           ),
           ...(STRATEGY === 'batch' || STRATEGY === 'mix' ?
             {

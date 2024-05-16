@@ -259,5 +259,5 @@ export function sortKeyColumns(sortKey) {
         )
         return sort.column
       })
-    : wrap(sortKey.key)
+    : wrap(sortKey.column ?? sortKey.key)
 }
