@@ -61,18 +61,18 @@ export const Post = new GraphQLObjectType({
         joinMonster: {
           ...(STRATEGY === 'batch'
             ? {
-                sqlBatch: {
-                  thisKey: 'id',
-                  parentKey: 'author_id'
-                }
+              sqlBatch: {
+                thisKey: 'id',
+                parentKey: 'author_id'
               }
+            }
             : {
-                sqlJoin: (postTable, userTable) =>
-                  `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
-                    'id',
-                    DB
-                  )}`
-              })
+              sqlJoin: (postTable, userTable) =>
+                `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
+                  'id',
+                  DB
+                )}`
+            })
         }
       }
     },
@@ -86,56 +86,48 @@ export const Post = new GraphQLObjectType({
       resolve: PAGINATE
         ? undefined
         : (post, args) => {
-            post.comments.sort((a, b) => a.id - b.id)
-            return connectionFromArray(post.comments, args)
-          },
+          post.comments.sort((a, b) => a.id - b.id)
+          return connectionFromArray(post.comments, args)
+        },
       extensions: {
         joinMonster: {
           sqlPaginate: !!PAGINATE,
-          ...do {
-            if (PAGINATE === 'offset') {
-              ;({ orderBy: 'id' })
-            } else if (PAGINATE === 'keyset') {
-              ;({
+          ...(PAGINATE === 'offset' ?
+            { orderBy: 'id' } :
+            PAGINATE === 'keyset' ?
+              {
                 sortKey: {
                   order: 'DESC',
                   key: 'id'
                 }
-              })
-            } else {
+              } :
               {
               }
-            }
-          },
-          ...do {
-            if (STRATEGY === 'batch' || STRATEGY === 'mix') {
-              ;({
-                sqlBatch: {
-                  thisKey: 'post_id',
-                  parentKey: 'id'
-                },
-                where: (table, args) =>
-                  args.active
-                    ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
-                    : null
-              })
-            } else {
-              ;({
-                sqlJoin: (postTable, commentTable, args) =>
-                  `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
-                    'id',
+          ),
+          ...(STRATEGY === 'batch' || STRATEGY === 'mix' ?
+            {
+              sqlBatch: {
+                thisKey: 'post_id',
+                parentKey: 'id'
+              },
+              where: (table, args) =>
+                args.active
+                  ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
+                  : null
+            } : {
+
+              sqlJoin: (postTable, commentTable, args) =>
+                `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
+                  'id',
+                  DB
+                )} ${args.active
+                  ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
+                    false,
                     DB
-                  )} ${
-                    args.active
-                      ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
-                          false,
-                          DB
-                        )}`
-                      : ''
-                  }`
-              })
-            }
-          }
+                  )}`
+                  : ''
+                }`
+            })
         }
       }
     },
@@ -174,18 +166,18 @@ export const Post = new GraphQLObjectType({
           orderBy: 'tag_order',
           ...(STRATEGY === 'batch'
             ? {
-                sqlBatch: {
-                  thisKey: 'post_id',
-                  parentKey: 'id'
-                }
+              sqlBatch: {
+                thisKey: 'post_id',
+                parentKey: 'id'
               }
+            }
             : {
-                sqlJoin: (postTable, tagTable) =>
-                  `${postTable}.${q('id', DB)} = ${tagTable}.${q(
-                    'post_id',
-                    DB
-                  )}`
-              })
+              sqlJoin: (postTable, tagTable) =>
+                `${postTable}.${q('id', DB)} = ${tagTable}.${q(
+                  'post_id',
+                  DB
+                )}`
+            })
         }
       }
     }
