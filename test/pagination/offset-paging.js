@@ -322,7 +322,7 @@ test('can handle deeply nested pagination', async t => {
           posts(first: 2) {
             edges {
               node {
-                comments(first: 3) {
+                comments(first: 3 asc: true) {
                   total
                   pageInfo {
                     hasNextPage

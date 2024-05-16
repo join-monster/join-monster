@@ -61,11 +61,11 @@ export function sortKeyToOrderings(sortKey, args) {
       orderColumns.push({ column, direction: descending ? 'DESC' : 'ASC' })
     }
   } else {
-    assert(sortKey.order, 'A "sortKey" object must have an "order"')
-    let descending = sortKey.order.toUpperCase() === 'DESC'
+    assert(sortKey.direction || sortKey.order, 'A "sortKey" object must have an "order"')
+    let descending = (sortKey.direction ?? sortKey.order).toUpperCase() === 'DESC'
     if (flip) descending = !descending
 
-    for (const column of wrap(sortKey.key)) {
+    for (const column of wrap(sortKey.column ?? sortKey.key)) {
       orderColumns.push({ column, direction: descending ? 'DESC' : 'ASC' })
     }
   }
