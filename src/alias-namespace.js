@@ -43,7 +43,7 @@ export default class AliasNamespace {
       return name
     }
 
-    name = name
+    name = this.aliasPrefix + name
       .replace(/\s+/g, '')
       .replace(/[^a-zA-Z0-9]/g, '_')
       .slice(0, 10)
