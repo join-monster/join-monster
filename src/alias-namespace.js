@@ -5,7 +5,7 @@ import G from 'generatorics'
 export default class AliasNamespace {
   constructor(minify, prefixAliases) {
     this.minify = !!minify
-    this.aliasPrefix = prefixAliases ? '$' : ''
+    this.prefixAliases = prefixAliases ?? ''
 
     // a generator for infinite alias names, starting with the shortest possible
     // this is helpful for generating the names when minifying
