@@ -57,6 +57,8 @@ if [ $PG = 1 ]; then
   npm run testpg-paging
   MINIFY=1 npm run testpg
   MINIFY=1 npm run testpg-paging
+  MINIFY=1 ALIAS_PREFIX="$" npm run testpg
+  MINIFY=1 ALIAS_PREFIX="$" npm run testpg-paging
 fi
 
 echo -e "${BLUE} running with all batches ${NC}"
@@ -80,6 +82,8 @@ if [ $PG = 1 ]; then
   STRATEGY=batch npm run testpg-paging
   STRATEGY=batch MINIFY=1 npm run testpg
   STRATEGY=batch MINIFY=1 npm run testpg-paging
+  STRATEGY=batch MINIFY=1 ALIAS_PREFIX="$" npm run testpg
+  STRATEGY=batch MINIFY=1 ALIAS_PREFIX="$" npm run testpg-paging
 fi
 
 echo -e "${BLUE} running with mixture ${NC}"
@@ -102,6 +106,8 @@ if [ $PG = 1 ]; then
   STRATEGY=mix npm run testpg-paging
   STRATEGY=mix MINIFY=1 npm run testpg
   STRATEGY=mix MINIFY=1 npm run testpg-paging
+  STRATEGY=mix MINIFY=1 ALIAS_PREFIX="$" npm run testpg
+  STRATEGY=mix MINIFY=1 ALIAS_PREFIX="$" npm run testpg-paging
 fi
 
 echo -e "${YELLOW} testing typescript definitions${NC}"
