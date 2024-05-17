@@ -43,6 +43,7 @@ Takes the GraphQL resolveInfo and returns a hydrated Object with the data.
 | dbCall | [<code>dbCall</code>](#dbCall) | A function that is passed the compiled SQL that calls the database and returns a promise of the data. |
 | [options] | <code>Object</code> |  |
 | options.minify | <code>Boolean</code> | Generate minimum-length column names in the results table. |
+| options.prefixAliases | <code>Boolean</code> | Prefix column and table names with "$" to avoid conflicts in subquery expressions. |
 | options.dialect | <code>String</code> | The dialect of SQL your Database uses. Currently `'pg'`, `'oracle'`, `'mariadb'`, `'mysql'`, and `'sqlite3'` are supported. |
 | options.dialectModule | <code>Object</code> | An alternative to options.dialect. You can provide a custom implementation of one of the supported dialects. |
 
