@@ -81,7 +81,7 @@ import {
  * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns a promise of the data.
  * @param {Object} [options]
  * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
- * @param {Boolean} options.prefixAliases - Prefix column and table names with "$" to avoid conflicts in subquery expressions.
+ * @param {String} options.aliasPrefix - String to prefix to column and table names, useful to avoid conflicts in subquery expressions.
  * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'oracle'`, `'mariadb'`, `'mysql'`, and `'sqlite3'` are supported.
  * @param {Object} options.dialectModule - An alternative to options.dialect. You can provide a custom implementation of one of the supported dialects.
  * @returns {Promise.<Object>} The correctly nested data from the database.
@@ -163,7 +163,7 @@ async function getNode(
       },
     },
   }
-  const namespace = new AliasNamespace(options.minify, options.prefixAliases)
+  const namespace = new AliasNamespace(options.minify, options.aliasPrefix)
   const sqlAST = {}
   const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
   // uses the same underlying function as the main `joinMonster`

@@ -95,7 +95,7 @@ export function queryASTToSqlAST(resolveInfo, options, context) {
   // force oracle to minify, because it has this 30-character limit on column identifiers
   const namespace = new AliasNamespace(
     options.dialect === 'oracle' ? true : options.minify,
-    options.prefixAliases
+    options.aliasPrefix
   )
 
   // we'll build up the AST representing the SQL recursively
