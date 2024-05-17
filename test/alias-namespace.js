@@ -23,11 +23,11 @@ test(`it should generate a minified column alias`, t => {
   t.is(ns.generate('column', 'firstname'), 'a')
 })
 
-test(`it should generate a minified, prefixed column alias`, t => {
+test(`it should generate a minified, non-prefixed column alias`, t => {
   // columns are cached by name and reused
   const ns = new AliasNamespace(true, '$')
-  t.is(ns.generate('column', 'firstname'), '$a')
-  t.is(ns.generate('column', 'firstname'), '$a')
+  t.is(ns.generate('column', 'firstname'), 'a')
+  t.is(ns.generate('column', 'firstname'), 'a')
 })
 
 test(`it should generate an unminified table alias`, t => {
@@ -51,11 +51,11 @@ test(`it should generate an unminified column alias`, t => {
   t.is(ns.generate('column', 'firstname'), 'firstname')
 })
 
-test(`it should generate an unminified, prefixed column alias`, t => {
+test(`it should generate an unminified, non-prefixed column alias`, t => {
   // columns are cached by name and reused
   const ns = new AliasNamespace(false, '$')
-  t.is(ns.generate('column', 'firstname'), '$firstname')
-  t.is(ns.generate('column', 'firstname'), '$firstname')
+  t.is(ns.generate('column', 'firstname'), 'firstname')
+  t.is(ns.generate('column', 'firstname'), 'firstname')
 })
 
 test(`it should generate an unminified table alias (diffenent names won't collapse to alias)`, t => {
@@ -65,9 +65,9 @@ test(`it should generate an unminified table alias (diffenent names won't collap
 })
 
 test(`it should generate an unminified, prefixed table alias (diffenent names won't collapse to alias)`, t => {
-  const ns = new AliasNamespace(false)
-  t.is(ns.generate('table', 'InformationItem'), '$Informati')
-  t.is(ns.generate('table', 'InformationItemHasGroup'), '$Informati$')
+  const ns = new AliasNamespace(false, '$')
+  t.is(ns.generate('table', 'InformationItem'), '$Informatio')
+  t.is(ns.generate('table', 'InformationItemHasGroup'), '$Informatio$')
 })
 
 if (process.env.DB === 'PG' && !process.env.STRATEGY && !process.env.MINIFY) {
