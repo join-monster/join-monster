@@ -26,7 +26,7 @@ export default class AliasNamespace {
     if (this.minify) {
       // tables definitely all need unique names
       if (type === 'table') {
-        return `${this.aliasPrefix}${this.mininym.next().value.join('')}`
+        return `${this.prefixAliases}${this.mininym.next().value.join('')}`
       }
 
       // but if its a column, we dont need to worry about the uniqueness from other columns
