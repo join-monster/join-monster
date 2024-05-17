@@ -10,9 +10,22 @@ test(`it should generate a minified table alias`, t => {
   t.is(ns.generate('table', 'users'), 'b')
 })
 
+test(`it should generate a minified, prefixed table alias`, t => {
+  const ns = new AliasNamespace(true, '$')
+  t.is(ns.generate('table', 'users'), '$a')
+  t.is(ns.generate('table', 'users'), '$b')
+})
+
 test(`it should generate a minified column alias`, t => {
   // columns are cached by name and reused
   const ns = new AliasNamespace(true)
+  t.is(ns.generate('column', 'firstname'), 'a')
+  t.is(ns.generate('column', 'firstname'), 'a')
+})
+
+test(`it should generate a minified, non-prefixed column alias`, t => {
+  // columns are cached by name and reused
+  const ns = new AliasNamespace(true, '$')
   t.is(ns.generate('column', 'firstname'), 'a')
   t.is(ns.generate('column', 'firstname'), 'a')
 })
@@ -24,9 +37,23 @@ test(`it should generate an unminified table alias`, t => {
   t.is(ns.generate('table', 'users'), 'users$$')
 })
 
+test(`it should generate an unminified, prefixed table alias`, t => {
+  const ns = new AliasNamespace(false, '$')
+  t.is(ns.generate('table', 'users'), '$users')
+  t.is(ns.generate('table', 'users'), '$users$')
+  t.is(ns.generate('table', 'users'), '$users$$')
+})
+
 test(`it should generate an unminified column alias`, t => {
   // columns are cached by name and reused
   const ns = new AliasNamespace(false)
+  t.is(ns.generate('column', 'firstname'), 'firstname')
+  t.is(ns.generate('column', 'firstname'), 'firstname')
+})
+
+test(`it should generate an unminified, non-prefixed column alias`, t => {
+  // columns are cached by name and reused
+  const ns = new AliasNamespace(false, '$')
   t.is(ns.generate('column', 'firstname'), 'firstname')
   t.is(ns.generate('column', 'firstname'), 'firstname')
 })
@@ -35,6 +62,12 @@ test(`it should generate an unminified table alias (diffenent names won't collap
   const ns = new AliasNamespace(false)
   t.is(ns.generate('table', 'InformationItem'), 'Informatio')
   t.is(ns.generate('table', 'InformationItemHasGroup'), 'Informatio$')
+})
+
+test(`it should generate an unminified, prefixed table alias (diffenent names won't collapse to alias)`, t => {
+  const ns = new AliasNamespace(false, '$')
+  t.is(ns.generate('table', 'InformationItem'), '$Informatio')
+  t.is(ns.generate('table', 'InformationItemHasGroup'), '$Informatio$')
 })
 
 if (process.env.DB === 'PG' && !process.env.STRATEGY && !process.env.MINIFY) {

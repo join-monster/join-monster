@@ -20,9 +20,10 @@ import sqlite3Module from '../../src/stringifiers/dialects/sqlite3'
 
 import joinMonster from '../../src/index'
 
-const { MINIFY, DB } = process.env
+const { MINIFY, ALIAS_PREFIX, DB } = process.env
 const options = {
-  minify: MINIFY == 1
+  minify: MINIFY == 1,
+  aliasPrefix: ALIAS_PREFIX
 }
 if (knex.client.config.client === 'mysql') {
   options.dialectModule = mysqlModule

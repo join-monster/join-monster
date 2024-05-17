@@ -6,6 +6,7 @@
 - [#523](https://github.com/join-monster/join-monster/pull/523): Make demo runnable again.
 - [#522](https://github.com/join-monster/join-monster/pull/522): Version bumps for critical dependencies.
 - [#519](https://github.com/join-monster/join-monster/pull/519): Handle disjoint fields requested across union types
+- [#532](https://github.com/join-monster/join-monster/pull/533): Add `aliasPrefix` option.
 
 ### v3.3.4 (March 28, 2024)
 #### Fixed

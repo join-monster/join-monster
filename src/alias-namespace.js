@@ -3,8 +3,9 @@ import G from 'generatorics'
 // this class is responsible for generating the aliases that appear in each SQL query
 // this has different rules depending on whether we are aliasing a column or table and on whether we are minifying
 export default class AliasNamespace {
-  constructor(minify) {
+  constructor(minify, aliasPrefix) {
     this.minify = !!minify
+    this.aliasPrefix = aliasPrefix ?? ''
 
     // a generator for infinite alias names, starting with the shortest possible
     // this is helpful for generating the names when minifying
@@ -25,7 +26,7 @@ export default class AliasNamespace {
     if (this.minify) {
       // tables definitely all need unique names
       if (type === 'table') {
-        return this.mininym.next().value.join('')
+        return `${this.aliasPrefix}${this.mininym.next().value.join('')}`
       }
 
       // but if its a column, we dont need to worry about the uniqueness from other columns
@@ -42,7 +43,7 @@ export default class AliasNamespace {
       return name
     }
 
-    name = name
+    name = this.aliasPrefix + name
       .replace(/\s+/g, '')
       .replace(/[^a-zA-Z0-9]/g, '_')
       .slice(0, 10)

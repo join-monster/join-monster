@@ -8,7 +8,7 @@ import {
   buildWhereFunction,
   handleUserDbCall,
   compileSqlAST,
-  getConfigFromSchemaObject
+  getConfigFromSchemaObject,
 } from './util'
 
 /*         _ _ _                _
@@ -81,6 +81,7 @@ import {
  * @param {dbCall} dbCall - A function that is passed the compiled SQL that calls the database and returns a promise of the data.
  * @param {Object} [options]
  * @param {Boolean} options.minify - Generate minimum-length column names in the results table.
+ * @param {String} options.aliasPrefix - String to prefix to column and table names, useful to avoid conflicts in subquery expressions.
  * @param {String} options.dialect - The dialect of SQL your Database uses. Currently `'pg'`, `'oracle'`, `'mariadb'`, `'mysql'`, and `'sqlite3'` are supported.
  * @param {Object} options.dialectModule - An alternative to options.dialect. You can provide a custom implementation of one of the supported dialects.
  * @returns {Promise.<Object>} The correctly nested data from the database.
@@ -104,8 +105,8 @@ async function joinMonster(resolveInfo, context, dbCall, options = {}) {
 
   // check for batch data
   if (Array.isArray(data)) {
-    const childrenToCheck = sqlAST.children.filter(child => child.sqlBatch)
-    return data.filter(d => {
+    const childrenToCheck = sqlAST.children.filter((child) => child.sqlBatch)
+    return data.filter((d) => {
       for (const child of childrenToCheck) {
         if (d[child.fieldName] == null) {
           return false
@@ -134,14 +135,14 @@ async function getNode(
   context,
   condition,
   dbCall,
-  options = {}
+  options = {},
 ) {
   // get the GraphQL type from the schema using the name
   const type = resolveInfo.schema._typeMap[typeName]
   assert(type, `Type "${typeName}" not found in your schema.`)
   assert(
     getConfigFromSchemaObject(type).sqlTable,
-    `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`
+    `joinMonster can't fetch a ${typeName} as a Node unless it has "sqlTable" tagged.`,
   )
 
   // we need to determine what the WHERE function should be
@@ -156,13 +157,13 @@ async function getNode(
         args: [],
         extensions: {
           joinMonster: {
-            where
-          }
-        }
-      }
-    }
+            where,
+          },
+        },
+      },
+    },
   }
-  const namespace = new AliasNamespace(options.minify)
+  const namespace = new AliasNamespace(options.minify, options.aliasPrefix)
   const sqlAST = {}
   const fieldNodes = resolveInfo.fieldNodes || resolveInfo.fieldASTs
   // uses the same underlying function as the main `joinMonster`
@@ -174,13 +175,13 @@ async function getNode(
     namespace,
     0,
     options,
-    context
+    context,
   )
   queryAST.pruneDuplicateSqlDeps(sqlAST, namespace)
   const { sql, shapeDefinition } = await compileSqlAST(sqlAST, context, options)
   const data = arrToConnection(
     await handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition),
-    sqlAST
+    sqlAST,
   )
   await nextBatch(sqlAST, data, dbCall, context, options)
   if (!data) return data

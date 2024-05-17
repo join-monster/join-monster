@@ -26,7 +26,8 @@ import { q } from '../shared'
 const { PAGINATE, DB } = process.env
 
 const options = {
-  minify: process.env.MINIFY == 1
+  minify: process.env.MINIFY == 1,
+  aliasPrefix: process.env.ALIAS_PREFIX
 }
 if (knex.client.config.client === 'mysql') {
   options.dialect = PAGINATE ? 'mysql8' : 'mysql'
