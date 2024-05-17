@@ -141,6 +141,7 @@ interface DialectModule {
 type Dialect = 'pg' | 'oracle' | 'mariadb' | 'mysql' | 'mysql8' | 'sqlite3'
 type JoinMonsterOptions = {
   minify?: boolean
+  prefixAliases?: boolean;
   dialect?: Dialect
   dialectModule?: DialectModule
 }
