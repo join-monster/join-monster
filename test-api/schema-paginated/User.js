@@ -80,20 +80,9 @@ const User = new GraphQLObjectType({
           sqlPaginate: !!PAGINATE,
           sqlDefaultPageSize: 2,
           sqlPageLimit: 100,
-
-          ...(PAGINATE === 'offset' ?
-            { orderBy: 'id' } :
-            PAGINATE === 'keyset' ?
-              {
-                sortKey: {
-                  order: 'desc',
-                  key: 'id'
-                }
-              } :
-
-              {
-              }
-          ),
+          [PAGINATE === 'keyset' ? 'sortKey' : 'orderBy']: () => [
+            { column: 'id', direction: 'asc' }
+          ],
           ...(STRATEGY === 'batch' || STRATEGY === 'mix' ?
             {
               sqlBatch: {
@@ -161,23 +150,10 @@ const User = new GraphQLObjectType({
       extensions: {
         joinMonster: {
           sqlPaginate: !!PAGINATE,
-          ...(PAGINATE === 'offset' ?
-            {
-              orderBy: args => [
-                // eslint-disable-line no-unused-vars
-                { column: 'created_at', direction: 'desc' },
-                { column: 'id', direction: 'asc' }
-              ]
-            } :
-            PAGINATE === 'keyset' ?
-              {
-                sortKey: args => [
-                  // eslint-disable-line no-unused-vars
-                  { direction: 'desc', column: 'created_at' },
-                  { direction: 'desc', column: 'id' }
-                ]
-              } : {}
-          ),
+          [PAGINATE === 'keyset' ? 'sortKey' : 'orderBy']: () => [
+            { column: 'created_at', direction: 'desc' },
+            { column: 'id', direction: 'asc' }
+          ],
           where: (table, args) => {
             if (args.search)
               return `lower(${table}.${q('body', DB)}) LIKE lower('%${args.search
@@ -205,7 +181,8 @@ const User = new GraphQLObjectType({
       args: {
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs),
         intimacy: { type: IntimacyLevel },
-        sortOnMain: { type: GraphQLBoolean }
+        sortOnMain: { type: GraphQLBoolean },
+        by: { type: GraphQLString }
       },
       resolve: PAGINATE
         ? undefined
@@ -216,31 +193,28 @@ const User = new GraphQLObjectType({
         joinMonster: {
           where: table => `${table}.${q('email_address', DB)} IS NOT NULL`,
           sqlPaginate: !!PAGINATE,
-          ...(PAGINATE === 'offset' ?
-            {
-              orderBy: args =>
-                args.sortOnMain
-                  ? [
-                    { column: 'created_at', direction: 'ASC' },
-                    { column: 'id', direction: 'ASC' }
-                  ]
-                  : null
-            } :
-            PAGINATE === 'keyset' ?
-              {
-                sortKey: args =>
-                  args.sortOnMain
-                    ? {
-                      order: 'ASC',
-                      key: ['created_at', 'id']
-                    }
-                    : null
-              } :
-              {
-              }
-          ),
+          [PAGINATE === 'keyset' ? 'sortKey' : 'orderBy']: args =>
+            args.sortOnMain
+              ? (args.by === 'numPosts' ? [
+                { column: 'numPosts', direction: 'DESC' },
+                { column: 'id', direction: 'ASC' }
+              ] : [
+                { column: 'created_at', direction: 'ASC' },
+                { column: 'id', direction: 'ASC' }
+              ])
+              : null,
           junction: {
             sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
+            [PAGINATE === 'keyset' ? 'sortKey' : 'orderBy']: args =>
+              args.sortOnMain
+                ? null
+                : args.by === 'intimacy' ? [
+                  { column: 'intimacy', direction: 'DESC' },
+                  { column: 'followee_id', direction: 'ASC' }
+                ] : [
+                  { column: 'created_at', direction: 'ASC' },
+                  { column: 'followee_id', direction: 'ASC' }
+                ],
             where: (table, args) =>
               args.intimacy
                 ? `${table}.${q('closeness', DB)} = '${args.intimacy}'`
@@ -259,26 +233,6 @@ const User = new GraphQLObjectType({
                 ignoreAll: false
               }
             },
-            ...(PAGINATE === 'offset' ?
-              {
-                orderBy: args =>
-                  args.sortOnMain
-                    ? null
-                    : {
-                      created_at: 'DESC',
-                      followee_id: 'ASC'
-                    }
-              } :
-              PAGINATE === 'keyset' ?
-                {
-                  sortKey: args =>
-                    args.sortOnMain
-                      ? null
-                      : [
-                        { direction: 'ASC', column: 'created_at' },
-                        { direction: 'ASC', column: 'followee_id' }
-                      ]
-                } : {}),
             ...(STRATEGY === 'batch' || STRATEGY === 'mix' ?
               {
                 uniqueKey: ['follower_id', 'followee_id'],

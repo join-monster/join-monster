@@ -19,7 +19,6 @@ function makeQuery(asc) {
   }`
 }
 
-
 test('it should handle nested ordering with both ASC', async t => {
   const source = makeQuery(true)
   const { data, errors } = await graphql({ schema, source })
@@ -42,11 +41,11 @@ test('it should handle nested ordering with one ASC and one DESC', async t => {
   t.deepEqual([{ id: 1 }, { id: 4 }, { id: 6 }, { id: 8 }], data.user.comments)
 })
 
-test('it should handle order on many-to-many', async t => {
+test('it should handle many-to-many order columns on the main table', async t => {
   const source = `{
     user(id: 3) {
       fullName
-      following {
+      following(sortOnMain: true) {
         id
         fullName
       }
@@ -72,11 +71,11 @@ test('it should handle order on many-to-many', async t => {
   t.deepEqual(expect, data)
 })
 
-test('it should handle order on many-to-many with arg', async t => {
+test('it should handle many-to-many order raw computed column on the main table', async t => {
   const source = `{
     user(id: 3) {
       fullName
-      following(by: "oldestFirst") {
+      following(sortOnMain: true, by: "numPosts") {
         id
         fullName
       }
@@ -102,11 +101,41 @@ test('it should handle order on many-to-many with arg', async t => {
   t.deepEqual(expect, data)
 })
 
-test('it should handle order on many-to-many in junction raw computed column', async t => {
+test('it should handle many-to-many order columns on the junction table', async t => {
   const source = `{
     user(id: 3) {
       fullName
-      following(by: "intimacy") {
+      following(sortOnMain: false) {
+        id
+        fullName
+      }
+    }
+  }`
+  const { data, errors } = await graphql({ schema, source })
+  errCheck(t, errors)
+  const expect = {
+    user: {
+      fullName: 'foo bar',
+      following: [
+        {
+          id: 1,
+          fullName: 'andrew carlson'
+        },
+        {
+          id: 2,
+          fullName: 'matt elder'
+        }
+      ]
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('it should handle many-to-many order raw computed column on the junction table', async t => {
+  const source = `{
+    user(id: 3) {
+      fullName
+      following(sortOnMain: false by: "intimacy") {
         id
         fullName
       }
@@ -132,6 +161,7 @@ test('it should handle order on many-to-many in junction raw computed column', a
   t.deepEqual(expect, data)
 })
 
+// these missing in the order-paging.js version
 test('it should allow ordering by a non requested raw computed column', async t => {
   const source = `{
     users(by: "numPosts") {
