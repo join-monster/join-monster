@@ -96,7 +96,7 @@ export const Post = new GraphQLObjectType({
           ...(PAGINATE === 'offset' ?
             { orderBy: args => ({ id: args.asc ? 'asc' : 'desc' }) } :
             PAGINATE === 'keyset' ?
-              { sortKey: args => ({ column: 'id', direction: args.asc ? 'asc' : 'desc' }) } :
+              { sortKey: args => ({ key: 'id', order: args.asc ? 'asc' : 'desc' }) } :
               {}
           ),
           ...(STRATEGY === 'batch' || STRATEGY === 'mix' ?
