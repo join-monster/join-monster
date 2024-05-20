@@ -134,6 +134,16 @@ const User = new GraphQLObjectType({
         }
       }
     },
+    numPosts: {
+      description: 'Count of Posts the user has written',
+      type: GraphQLInt,
+      extensions: {
+        joinMonster: {
+          // do a computed column in SQL with raw expression
+          sqlExpr: (table, args) => `(SELECT COUNT(*) FROM posts WHERE author_id = ${table}.id)`
+        }
+      }
+    },
     posts: {
       description: 'A list of Posts the user has written',
       type: PostConnection,
