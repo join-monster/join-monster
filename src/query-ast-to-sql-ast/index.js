@@ -327,11 +327,6 @@ function handleTable(
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
 
-  if (fieldConfig.orderBy && !sqlASTNode.orderBy) {
-    const schemaFields = this.returnType.getFields?.() ?? this.returnType.ofType.getFields()
-    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, '', schemaFields)
-  }
-
   // tables have child fields, lets push them to an array
   const children = (sqlASTNode.children = sqlASTNode.children || [])
 
@@ -367,11 +362,6 @@ function handleTable(
         sqlASTNode.args || {},
         context
       )
-    }
-
-    if (fieldConfig.junction.orderBy) {
-      const schemaFields = junction.include
-      junction.orderBy = handleOrderBy(fieldConfig.junction.orderBy, sqlASTNode, context, 'junction', schemaFields)
     }
 
     if (fieldConfig.junction.where) {
@@ -430,8 +420,22 @@ function handleTable(
     sqlASTNode.offset = unthunk(fieldConfig.offset, sqlASTNode.args || {}, context)
   }
 
+  handleOrdering(field, sqlASTNode, context, this)
+  
   if (sqlASTNode.paginate) {
-    getSortColumns(field, sqlASTNode, context, this)
+    if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
+      if (sqlASTNode.junction) {
+        if (!sqlASTNode.junction.sortKey && !sqlASTNode.junction.orderBy) {
+          throw new Error(
+            '"sortKey" or "orderBy" required if "sqlPaginate" is true'
+          )
+        }
+      } else {
+        throw new Error(
+          '"sortKey" or "orderBy" required if "sqlPaginate" is true'
+        )
+      }
+    }
   }
 
   /*
@@ -878,7 +882,7 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   }
 }
 
-function getSortColumns(field, sqlASTNode, context, resolveInfo) {
+function handleOrdering(field, sqlASTNode, context, resolveInfo) {
   const fieldConfig = getConfigFromSchemaObject(field)
 
   if (fieldConfig.sortKey) {
@@ -896,19 +900,6 @@ function getSortColumns(field, sqlASTNode, context, resolveInfo) {
     }
     if (fieldConfig.junction.orderBy) {
       sqlASTNode.junction.orderBy = handleOrderBy(fieldConfig.junction.orderBy, sqlASTNode, context, 'junction', schemaFields)
-    }
-  }
-  if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
-    if (sqlASTNode.junction) {
-      if (!sqlASTNode.junction.sortKey && !sqlASTNode.junction.orderBy) {
-        throw new Error(
-          '"sortKey" or "orderBy" required if "sqlPaginate" is true'
-        )
-      }
-    } else {
-      throw new Error(
-        '"sortKey" or "orderBy" required if "sqlPaginate" is true'
-      )
     }
   }
   if (sqlASTNode.sortKey && idx(sqlASTNode, _ => _.junction.sortKey)) {
