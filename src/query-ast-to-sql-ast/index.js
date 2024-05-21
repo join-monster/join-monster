@@ -959,6 +959,21 @@ const validateAndNormalizeDirection = direction => {
   return direction
 }
 
+const handleDynamicOrderings = (orderings, sqlASTNode, path, schemaFields) => {
+  for (const ordering of orderings) {
+    // TODO this is nasty and needs to be refactored
+    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr ?? schemaFields?.[ordering.column]?.sqlExpr
+    if (sqlExpr) {
+      const as = path ? sqlASTNode[path].as : sqlASTNode.as
+      // TODO we still need to also call the sqlExpr with corresponding args, of current table or parent accodingly :O
+      // TODO maybe instead of setting an array, add another prop called expr.
+      ordering.column = [sqlExpr(as), ordering.column]
+    }
+  }
+
+  return orderings
+}
+
 export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, schemaFields) {
   const sortKey = unthunk(thunkedSortKey, sqlASTNode.args || {}, context)
   if (!sortKey) return undefined
@@ -979,18 +994,7 @@ export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, schemaF
     }
   }
 
-  for (const ordering of orderings) {
-    // TODO this is nasty and needs to be refactored
-    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr ?? schemaFields?.[ordering.column]?.sqlExpr
-    if (sqlExpr) {
-      const as = path ? sqlASTNode[path].as : sqlASTNode.as
-      // TODO we still need to also call the sqlExpr with corresponding args, of current table or parent accodingly :O
-      // TODO maybe instead of setting an array, add another prop called expr.
-      ordering.column = [sqlExpr(as), ordering.column]
-    }
-  }
-
-  return orderings
+  return handleDynamicOrderings(orderings, sqlASTNode, path, schemaFields)
 }
 
 // Normalize the three styles of orderBy to an array of {column, direction} objects.
@@ -998,11 +1002,25 @@ export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, schemaF
 export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, path, schemaFields) {
   const orderBy = unthunk(thunkedOrderBy, sqlASTNode.args || {}, context)
   if (!orderBy) return undefined
-  let orderings = []
+  const orderings = []
   if (Array.isArray(orderBy)) {
-    orderings = orderBy.map(({column, direction}) => ({column, direction: validateAndNormalizeDirection(direction)}))
+    for (const ordering of orderBy) {
+      assert(
+        ordering.column,
+        "'column' property must be defined on an ordering in an array"
+      )
+      orderings.push({
+        column: ordering.column,
+        direction: validateAndNormalizeDirection(ordering.direction)
+      })
+    }
   } else if (typeof orderBy === 'object') {
-    orderings = Object.entries(orderBy).map(([column, direction]) => ({column, direction: validateAndNormalizeDirection(direction)}))
+    for (let column in orderBy) {
+      orderings.push({
+        column,
+        direction: validateAndNormalizeDirection(orderBy[column])
+      })
+    }
   } else if (typeof orderBy === 'string') {
     orderings.push({
       column: orderBy,
@@ -1011,16 +1029,6 @@ export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, path, schemaF
   } else {
     throw new Error('"orderBy" is invalid type: ' + inspect(orderBy))
   }
-  for (const ordering of orderings) {
-    assert(
-      ordering.column,
-      "'column' property must be defined on an ordering in an array"
-    )
-    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr ?? schemaFields?.[ordering.column]?.sqlExpr
-    if (sqlExpr) {
-      const as = path ? sqlASTNode[path].as : sqlASTNode.as
-      ordering.column = [sqlExpr(as), ordering.column]
-    }
-  }
-  return orderings
+
+  return handleDynamicOrderings(orderings, sqlASTNode, path, schemaFields)
 }
