@@ -1,5 +1,5 @@
 import { connectionFromArraySlice, cursorToOffset } from 'graphql-relay'
-import { objToCursor, last, sortKeyColumns } from './util'
+import { objToCursor, last } from './util'
 import idx from 'idx'
 
 // a function for data manipulation AFTER its nested.
@@ -76,8 +76,8 @@ function arrToConnection(data, sqlAST) {
       const sortKey = sqlAST.sortKey || sqlAST.junction.sortKey
       const edges = data.map(obj => {
         const cursor = {}
-        for (let column of sortKeyColumns(sortKey)) {
-          cursor[column] = obj[column]
+        for (let key of sortKey) {
+          cursor[key.column] = obj[key.column]
         }
         return { cursor: objToCursor(cursor), node: obj }
       })
