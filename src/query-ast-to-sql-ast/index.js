@@ -772,11 +772,10 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
 
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
     for (let key of sortKey) {
-
       const newChild = key.sqlExpr ? {
         // this is a special case when we are sorting by a computed column
-        type: 'computed',
-        expr: key.sqlExpr,
+        type: 'expression',
+        sqlExpr: key.sqlExpr,
         fieldName: key.column,
         as: namespace.generate('column', key.column)
       } : columnToASTChild(key.column, namespace)
@@ -899,11 +898,11 @@ function handleOrdering(field, sqlASTNode, context, resolveInfo) {
 
   if (fieldConfig.sortKey) {
     const typeFields = tryGetTypeFields(resolveInfo)
-    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context, '', typeFields)
+    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context, typeFields)
   }
   if (fieldConfig.orderBy) {
     const typeFields = tryGetTypeFields(resolveInfo)
-    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, '', typeFields)
+    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, typeFields)
   }
   if (fieldConfig.junction) {
     const typeFields = fieldConfig.junction.include
@@ -912,7 +911,6 @@ function handleOrdering(field, sqlASTNode, context, resolveInfo) {
         fieldConfig.junction.sortKey,
         sqlASTNode,
         context,
-        'junction',
         typeFields
       )
     }
@@ -921,7 +919,6 @@ function handleOrdering(field, sqlASTNode, context, resolveInfo) {
         fieldConfig.junction.orderBy,
         sqlASTNode,
         context,
-        'junction',
         typeFields
       )
     }
@@ -972,24 +969,16 @@ const validateAndNormalizeDirection = direction => {
   return direction
 }
 
-const handleDynamicOrderings = (orderings, sqlASTNode, path, typeFields) => {
+const handleDynamicOrderings = (orderings, typeFields) => {
   for (const ordering of orderings) {
-    // TODO this is nasty and needs to be refactored
-    const sqlExpr = typeFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr 
-      ?? typeFields?.[ordering.column]?.sqlExpr
-    if (sqlExpr) {
-      const as = path ? sqlASTNode[path].as : sqlASTNode.as
-      // TODO we still need to also call the sqlExpr with corresponding args, of current table or parent accodingly :O
-      // TODO maybe instead of setting an array, add another prop called expr.
-      ordering.sqlExpr = sqlExpr
-      ordering.as = as
-    }
+    ordering.sqlExpr = typeFields[ordering.column]?.sqlExpr ??
+      typeFields[ordering.column]?.extensions?.joinMonster?.sqlExpr  
   }
 
   return orderings
 }
 
-export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, typeFields) {
+export function handleSortKey(thunkedSortKey, sqlASTNode, context, typeFields) {
   const sortKey = unthunk(thunkedSortKey, sqlASTNode.args || {}, context)
   if (!sortKey) return undefined
   const orderings = []
@@ -1009,12 +998,12 @@ export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, typeFie
     }
   }
 
-  return handleDynamicOrderings(orderings, sqlASTNode, path, typeFields)
+  return handleDynamicOrderings(orderings, typeFields)
 }
 
 // Normalize the three styles of orderBy to an array of {column, direction} objects.
 // orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
-export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, path, typeFields) {
+export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, typeFields) {
   const orderBy = unthunk(thunkedOrderBy, sqlASTNode.args || {}, context)
   if (!orderBy) return undefined
   const orderings = []
@@ -1045,5 +1034,5 @@ export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, path, typeFie
     throw new Error('"orderBy" is invalid type: ' + inspect(orderBy))
   }
 
-  return handleDynamicOrderings(orderings, sqlASTNode, path, typeFields)
+  return handleDynamicOrderings(orderings, typeFields)
 }
