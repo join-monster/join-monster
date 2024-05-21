@@ -329,10 +329,8 @@ function handleTable(
   sqlASTNode.as = namespace.generate('table', field.name)
 
   if (fieldConfig.orderBy && !sqlASTNode.orderBy) {
-    sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context),
-      this.returnType.getFields?.() ?? this.returnType.ofType.getFields()
-    )
+    const schemaFields = this.returnType.getFields?.() ?? this.returnType.ofType.getFields()
+    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, '', schemaFields)
   }
 
   // tables have child fields, lets push them to an array
@@ -373,10 +371,8 @@ function handleTable(
     }
 
     if (fieldConfig.junction.orderBy) {
-      junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context),
-        junction.include
-      )
+      const schemaFields = junction.include
+      junction.orderBy = handleOrderBy(fieldConfig.junction.orderBy, sqlASTNode, context, 'junction', schemaFields)
     }
 
     if (fieldConfig.junction.where) {
@@ -436,7 +432,7 @@ function handleTable(
   }
 
   if (sqlASTNode.paginate) {
-    getSortColumns(field, sqlASTNode, context)
+    getSortColumns(field, sqlASTNode, context, this)
   }
 
   /*
@@ -735,12 +731,20 @@ function handleSelections(
 
 // tell the AST we need a column that perhaps the user didnt ask for, but may be necessary for join monster to ID
 // objects or associate ones across batches
-function columnToASTChild(columnName, namespace) {
+function columnToASTChild(column, namespace) {
+  if (Array.isArray(column)) {
+    return {
+      type: 'computed',
+      expr: column[0],
+      fieldName: column[1],
+      as: namespace.generate('column', column[1])
+    }
+  }
   return {
     type: 'column',
-    name: columnName,
-    fieldName: columnName,
-    as: namespace.generate('column', columnName)
+    name: column,
+    fieldName: column,
+    as: namespace.generate('column', column)
   }
 }
 
@@ -876,20 +880,16 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   }
 }
 
-function getSortColumns(field, sqlASTNode, context) {
+function getSortColumns(field, sqlASTNode, context, resolveInfo) {
   const fieldConfig = getConfigFromSchemaObject(field)
 
   if (fieldConfig.sortKey) {
-    sqlASTNode.sortKey = unthunk(
-      fieldConfig.sortKey,
-      sqlASTNode.args || {},
-      context
-    )
+    const schemaFields = resolveInfo.returnType.getFields?.() ?? resolveInfo.returnType.ofType.getFields()
+    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context, schemaFields)
   }
   if (fieldConfig.orderBy) {
-    sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
-    )
+    const schemaFields = resolveInfo.returnType.getFields?.() ?? resolveInfo.returnType.ofType.getFields()
+    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, '', schemaFields)
   }
   if (fieldConfig.junction) {
     if (fieldConfig.junction.sortKey) {
@@ -900,9 +900,8 @@ function getSortColumns(field, sqlASTNode, context) {
       )
     }
     if (fieldConfig.junction.orderBy) {
-      sqlASTNode.junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
-      )
+      const schemaFields = fieldConfig.junction.include
+      sqlASTNode.junction.orderBy = handleOrderBy(fieldConfig.junction.orderBy, sqlASTNode, context, 'junction', schemaFields)
     }
   }
   if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
@@ -964,9 +963,43 @@ const validateAndNormalizeDirection = direction => {
   return direction
 }
 
+export function handleSortKey(thunkedSortKey, sqlASTNode, context, schemaFields) {
+  const sortKey = unthunk(thunkedSortKey, sqlASTNode.args || {}, context)
+  if (!sortKey) return undefined
+  const orderings = []
+  if (Array.isArray(sortKey)) {
+    for (const { column, direction } of sortKey) {
+      assert(
+        column,
+        `Each "sortKey" array entry must have a 'column' and a 'direction' property`
+      )
+      orderings.push({ column, direction: validateAndNormalizeDirection(direction) })
+    }
+  } else {
+    assert(sortKey.order, 'A "sortKey" object must have an "order"')
+
+    for (const column of wrap(sortKey.key)) {
+      orderings.push({ column, direction: validateAndNormalizeDirection(sortKey.order) })
+    }
+  }
+
+  for (const ordering of orderings) {
+    // TODO this is nasty and needs to be refactored
+    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr ?? schemaFields?.[ordering.column]?.sqlExpr
+    if (sqlExpr) {
+      // TODO we still need to also call the sqlExpr with corresponding args, of current table or parent accodingly :O
+      // TODO maybe instead of setting an array, add another prop called expr.
+      ordering.column = [sqlExpr(sqlASTNode.as), ordering.column]
+    }
+  }
+
+  return orderings
+}
+
 // Normalize the three styles of orderBy to an array of {column, direction} objects.
 // orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
-export function handleOrderBy(orderBy, schemaFields) {
+export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, path, schemaFields) {
+  const orderBy = unthunk(thunkedOrderBy, sqlASTNode.args || {}, context)
   if (!orderBy) return undefined
   let orderings = []
   if (Array.isArray(orderBy)) {
@@ -988,7 +1021,8 @@ export function handleOrderBy(orderBy, schemaFields) {
     )
     const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr ?? schemaFields?.[ordering.column]?.sqlExpr
     if (sqlExpr) {
-      ordering.column = sqlExpr
+      const as = path ? sqlASTNode[path].as : sqlASTNode.as
+      ordering.column = [sqlExpr(as), ordering.column]
     }
   }
   return orderings

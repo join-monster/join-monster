@@ -42,6 +42,9 @@ export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(
 }
 
 export function sortKeyToOrderings(sortKey, args) {
+  // this is normalizing as we do in handleOrderBy
+  // we could normalze everything in handleOrderBy, possibly changint the name to normalizeOrderings
+  // and reformat this function to only do the flip
   const orderColumns = []
   let flip = false
   // flip the sort order if doing backwards paging
@@ -49,6 +52,7 @@ export function sortKeyToOrderings(sortKey, args) {
     flip = true
   }
 
+  // this is handled now in handleSortKey, only do flipping here if needed
   if (Array.isArray(sortKey)) {
     for (const { column, direction } of sortKey) {
       assert(
@@ -150,9 +154,15 @@ FROM (
 }
 
 export function orderingsToString(orderings, q, as) {
+  // another way to stingify ordering like stringifyOuterOrder
   const orderByClauses = []
   for (const ordering of orderings) {
     orderByClauses.push(
+      Array.isArray(ordering.column) ?
+      // this needs to be done before because "as" here is optional and we need the table and args!!!
+      // just testing if this can work
+      `${ordering.column[0]} ${ordering.direction}`
+      :
       `${as ? q(as) + '.' : ''}${q(ordering.column)} ${ordering.direction}`
     )
   }
@@ -262,7 +272,9 @@ export function interpretForKeysetPaging(node, dialect) {
 // the cursor contains the sort keys. it needs to match the keys specified in the `sortKey` on this field in the schema
 export function validateCursor(cursorObj, expectedKeys) {
   const actualKeys = Object.keys(cursorObj)
-  const expectedKeySet = new Set(expectedKeys)
+  // dynamic columns are a tuple of function and alias. we only care about the alias
+  const expectedKeyNames = expectedKeys.map(key => (Array.isArray(key) ? key[1] : key))
+  const expectedKeySet = new Set(expectedKeyNames)
   const actualKeySet = new Set(actualKeys)
   for (let key of actualKeys) {
     if (!expectedKeySet.has(key)) {
@@ -271,7 +283,7 @@ export function validateCursor(cursorObj, expectedKeys) {
       )
     }
   }
-  for (let key of expectedKeys) {
+  for (let key of expectedKeyNames) {
     if (!actualKeySet.has(key)) {
       throw new Error(
         `Invalid cursor. The column "${key}" is not in the cursor.`
@@ -286,9 +298,11 @@ export function validateCursor(cursorObj, expectedKeys) {
 function sortKeyToWhereCondition(keyObj, orderings, sortTable, dialect) {
   const condition = (ordering, operator) => {
     operator = operator || (ordering.direction === 'DESC' ? '<' : '>')
-    return `${dialect.quote(sortTable)}.${dialect.quote(
-      ordering.column
-    )} ${operator} ${maybeQuote(keyObj[ordering.column], dialect.name)}`
+    const columnName = Array.isArray(ordering.column) ? ordering.column[1] : ordering.column
+    return `${
+      Array.isArray(ordering.column) ? ordering.column[0]
+      : `${dialect.quote(sortTable)}.${dialect.quote(ordering.column)}`
+    } ${operator} ${maybeQuote(keyObj[columnName], dialect.name)}`
   }
 
   orderings = [...orderings] // don't mutate caller's data
