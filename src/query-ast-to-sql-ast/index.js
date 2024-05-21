@@ -883,11 +883,13 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
 
 const tryGetTypeFields = (resolveInfo) => {
   try {
-    return resolveInfo.returnType.ofType ?
-    resolveInfo.returnType.ofType.getFields() :
-    resolveInfo.returnType.getFields().edges ?
-    resolveInfo.returnType.getFields().edges.type.ofType.getFields().node.type.ofType.getFields() :
-    resolveInfo.returnType.getFields()
+    if (resolveInfo.returnType.ofType) {
+      return resolveInfo.returnType.ofType.getFields()
+    }
+    if (resolveInfo.returnType.getFields().edges) {
+      return resolveInfo.returnType.getFields().edges.type.ofType.getFields().node.type.ofType.getFields()
+    } 
+    return resolveInfo.returnType.getFields()
   } catch {
     return {}
   }
