@@ -885,22 +885,18 @@ function getSortColumns(field, sqlASTNode, context, resolveInfo) {
 
   if (fieldConfig.sortKey) {
     const schemaFields = resolveInfo.returnType.getFields?.() ?? resolveInfo.returnType.ofType.getFields()
-    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context, schemaFields)
+    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context, '', schemaFields)
   }
   if (fieldConfig.orderBy) {
     const schemaFields = resolveInfo.returnType.getFields?.() ?? resolveInfo.returnType.ofType.getFields()
     sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, '', schemaFields)
   }
   if (fieldConfig.junction) {
+    const schemaFields = fieldConfig.junction.include
     if (fieldConfig.junction.sortKey) {
-      sqlASTNode.junction.sortKey = unthunk(
-        fieldConfig.junction.sortKey,
-        sqlASTNode.args || {},
-        context
-      )
+      sqlASTNode.junction.sortKey = handleSortKey(fieldConfig.junction.sortKey, sqlASTNode, context, 'junction', schemaFields)
     }
     if (fieldConfig.junction.orderBy) {
-      const schemaFields = fieldConfig.junction.include
       sqlASTNode.junction.orderBy = handleOrderBy(fieldConfig.junction.orderBy, sqlASTNode, context, 'junction', schemaFields)
     }
   }
@@ -963,7 +959,7 @@ const validateAndNormalizeDirection = direction => {
   return direction
 }
 
-export function handleSortKey(thunkedSortKey, sqlASTNode, context, schemaFields) {
+export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, schemaFields) {
   const sortKey = unthunk(thunkedSortKey, sqlASTNode.args || {}, context)
   if (!sortKey) return undefined
   const orderings = []
@@ -987,9 +983,10 @@ export function handleSortKey(thunkedSortKey, sqlASTNode, context, schemaFields)
     // TODO this is nasty and needs to be refactored
     const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr ?? schemaFields?.[ordering.column]?.sqlExpr
     if (sqlExpr) {
+      const as = path ? sqlASTNode[path].as : sqlASTNode.as
       // TODO we still need to also call the sqlExpr with corresponding args, of current table or parent accodingly :O
       // TODO maybe instead of setting an array, add another prop called expr.
-      ordering.column = [sqlExpr(sqlASTNode.as), ordering.column]
+      ordering.column = [sqlExpr(as), ordering.column]
     }
   }
 
