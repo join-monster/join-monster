@@ -734,12 +734,12 @@ function handleSelections(
 
 // tell the AST we need a column that perhaps the user didnt ask for, but may be necessary for join monster to ID
 // objects or associate ones across batches
-function columnToASTChild(column, namespace) {
+function columnToASTChild(columnName, namespace) {
   return {
     type: 'column',
-    name: column,
-    fieldName: column,
-    as: namespace.generate('column', column)
+    name: columnName,
+    fieldName: columnName,
+    as: namespace.generate('column', columnName)
   }
 }
 
