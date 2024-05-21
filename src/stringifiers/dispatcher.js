@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { filter } from 'lodash'
+import _, { filter } from 'lodash'
 import idx from 'idx'
 
 import { validateSqlAST, inspect } from '../util'
@@ -167,6 +167,9 @@ async function _stringifySqlAST(
         }
       }
 
+      break
+    case 'computed':
+      selections.push([node.expr, `${q(joinPrefix(prefix) + node.as)}`])
       break
     case 'column':
       selections.push([`${q(parentTable)}.${q(node.name)}`, `${q(joinPrefix(prefix) + node.as)}`])
@@ -434,7 +437,7 @@ function stringifyOuterOrder(orders, q) {
   for (const condition of orders) {
     for (const ordering of condition.columns) {
       conditions.push(
-        `${typeof ordering.column === 'function' ? ordering.column(q(condition.table)) : `${q(condition.table)}.${q(ordering.column)}`} ${ordering.direction}`
+        `${Array.isArray(ordering.column) ? ordering.column[0] : `${q(condition.table)}.${q(ordering.column)}`} ${ordering.direction}`
       )
     }
   }

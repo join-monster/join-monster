@@ -103,6 +103,45 @@ test('should handle many-to-many order columns on the main table', async t => {
   t.deepEqual(expect, data)
 })
 
+test('it should handle many-to-many order raw computed column on the main table', async t => {
+  const cursor = process.env.PAGINATE === 'keyset' ? objToCursor({
+    numPosts: 8,
+    id: 3
+  }) : offsetToCursor(2)
+
+  const source  = `{
+    user(id: 2) {
+      fullName
+      following(first: 2, sortOnMain: true, by: "numPosts" after: "${cursor}") {
+        edges {
+          node {
+            id
+            fullName
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await graphql({schema, source})
+  errCheck(t, errors)
+  const expect = {
+    user: {
+      fullName: 'Hudson Hyatt',
+      following: {
+        edges: [
+          {
+            node: {
+              id: toGlobalId('User', 3),
+              fullName: 'Coleman Abernathy'
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
 test('should handle many-to-many order columns on the junction table', async t => {
   const cursor = process.env.PAGINATE === 'keyset' ? objToCursor({
     created_at: '2016-01-01T16:28:00.051Z',
