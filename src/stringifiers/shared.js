@@ -128,7 +128,6 @@ FROM (
 }
 
 export function orderingsToString(orderings, q, as) {
-  // another way to stingify ordering like stringifyOuterOrder
   const orderByClauses = []
   for (const ordering of orderings) {
     orderByClauses.push(
