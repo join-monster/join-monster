@@ -170,10 +170,6 @@ async function _stringifySqlAST(
       }
 
       break
-    case 'computed':
-      // TODO missing args, check if always parentTable is correct
-      selections.push([node.expr(q(parentTable)), `${q(joinPrefix(prefix) + node.as)}`])
-      break
     case 'column':
       selections.push([`${q(parentTable)}.${q(node.name)}`, `${q(joinPrefix(prefix) + node.as)}`])
       break
