@@ -42,7 +42,7 @@ test('it should handle nested ordering with both ASC', async t => {
   errCheck(t, errors)
   t.deepEqual(
     [
-      { id: toGlobalId('Comment', 18) }, 
+      { id: toGlobalId('Comment', 18) },
       { id: toGlobalId('Comment', 116) },
       { id: toGlobalId('Comment', 227) },
       { id: toGlobalId('Comment', 233) }
@@ -80,7 +80,7 @@ test('should handle many-to-many order columns on the main table', async t => {
     id: 3
   }) : offsetToCursor(0)
 
-  const source  = `{
+  const source = `{
     user(id: 2) {
       fullName
       following(first: 2, sortOnMain: true, after: "${cursor}") {
@@ -93,7 +93,7 @@ test('should handle many-to-many order columns on the main table', async t => {
       }
     }
   }`
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -125,7 +125,7 @@ test('it should handle many-to-many order raw computed column on the main table'
     id: 3
   }) : offsetToCursor(2)
 
-  const source  = `{
+  const source = `{
     user(id: 2) {
       fullName
       following(first: 2, sortOnMain: true, by: "numPosts" after: "${cursor}") {
@@ -138,7 +138,7 @@ test('it should handle many-to-many order raw computed column on the main table'
       }
     }
   }`
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -164,7 +164,7 @@ test('should handle many-to-many order columns on the junction table', async t =
     followee_id: 1
   }) : offsetToCursor(0)
 
-  const source  = `{
+  const source = `{
     user(id: 2) {
       fullName
       following(first: 2, sortOnMain: false, after: "${cursor}") {
@@ -177,7 +177,7 @@ test('should handle many-to-many order columns on the junction table', async t =
       }
     }
   }`
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -209,7 +209,7 @@ test('it should handle many-to-many order raw computed column on the junction ta
     followee_id: 1
   }) : offsetToCursor(0)
 
-  const source  = `{
+  const source = `{
     user(id: 2) {
       fullName
       following(first: 2, sortOnMain: false, by: "intimacy" after: "${cursor}") {
@@ -222,7 +222,7 @@ test('it should handle many-to-many order raw computed column on the junction ta
       }
     }
   }`
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -247,3 +247,113 @@ test('it should handle many-to-many order raw computed column on the junction ta
   }
   t.deepEqual(expect, data)
 })
+
+test('it should allow ordering by a non requested raw computed column', async t => {
+  const source = `{
+    users(by: "numPosts") {
+      edges {
+        node {
+          fullName
+        }
+      }
+    }
+  }`
+  const { data, errors } = await graphql({ schema, source })
+  errCheck(t, errors)
+  const expect = {
+    users: {
+      edges: [
+        {
+          node: {
+            fullName: 'Andrew Carlson',
+          }
+        },
+        {
+          node: {
+            fullName: 'Coleman Abernathy',
+          }
+        },
+        {
+          node: {
+            fullName: 'Alivia Waelchi',
+          }
+        },
+        {
+          node: {
+            fullName: 'Ocie Ruecker',
+          }
+        },
+        {
+          node: {
+            fullName: 'Hudson Hyatt',
+          }
+        },
+        {
+          node: {
+            fullName: 'Lulu Bogisich',
+          }
+        },
+      ],
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
+test('it should allow ordering by a requested raw computed column', async t => {
+  const source = `{
+    users(by: "numPosts") {
+      edges {
+        node {
+          fullName
+          numPosts
+        }
+      }
+    }
+  }`
+  const { data, errors } = await graphql({ schema, source })
+  errCheck(t, errors)
+  const expect = {
+    users: {
+      edges: [
+        {
+          node: {
+            fullName: 'Andrew Carlson',
+            numPosts: 0,
+          }
+        },
+        {
+          node: {
+            fullName: 'Coleman Abernathy',
+            numPosts: 4,
+          }
+        },
+        {
+          node: {
+            fullName: 'Alivia Waelchi',
+            numPosts: 8,
+          }
+        },
+        {
+          node: {
+            fullName: 'Ocie Ruecker',
+            numPosts: 9,
+          }
+        },
+        {
+          node: {
+            fullName: 'Hudson Hyatt',
+            numPosts: 13,
+          }
+        },
+        {
+          node: {
+            fullName: 'Lulu Bogisich',
+            numPosts: 15,
+          }
+        },
+      ],
+    }
+  }
+  t.deepEqual(expect, data)
+})
+
