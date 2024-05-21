@@ -1,3 +1,5 @@
+// this file should have the same test cases as test/pagination/common/order-paging.js but without pagination
+
 import test from 'ava'
 import { graphql } from 'graphql'
 import schema from '../test-api/schema-basic/index'
@@ -161,7 +163,6 @@ test('it should handle many-to-many order raw computed column on the junction ta
   t.deepEqual(expect, data)
 })
 
-// these missing in the order-paging.js version
 test('it should allow ordering by a non requested raw computed column', async t => {
   const source = `{
     users(by: "numPosts") {
@@ -182,6 +183,34 @@ test('it should allow ordering by a non requested raw computed column', async t 
         fullName: 'matt elder',
       },
     ],
+  }
+  t.deepEqual(expect, data)
+})
+
+test('it should allow ordering by a requested raw computed column', async t => {
+  const source = `{
+    users(by: "numPosts") {
+      fullName
+      numPosts
+    }
+  }`
+  const { data, errors } = await graphql({ schema, source })
+  errCheck(t, errors)
+  const expect = {
+    users: [
+      {
+        fullName: 'foo bar',
+        numPosts: 0,
+      },
+      {
+        fullName: 'andrew carlson',
+        numPosts: 1,
+      },
+      {
+        fullName: 'matt elder',
+        numPosts: 2,
+      },
+    ]
   }
   t.deepEqual(expect, data)
 })

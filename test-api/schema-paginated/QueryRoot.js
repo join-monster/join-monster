@@ -61,6 +61,7 @@ export default new GraphQLObjectType({
       type: UserConnection,
       args: {
         search: { type: GraphQLString },
+        by: { type: GraphQLString }, // ideally an enum for ordering
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
       extensions: {
@@ -68,13 +69,13 @@ export default new GraphQLObjectType({
           sqlPageLimit: 100,
           sqlPaginate: !!PAGINATE,
           ...(PAGINATE === 'offset' ?
-              { orderBy: 'id' }
+              { orderBy: args => ({ [args.by ?? 'id'] : 'asc' }) }
             : PAGINATE === 'keyset' ?
               {
-                sortKey: {
+                sortKey: args => ({
                   order: 'asc',
-                  key: 'id'
-                }
+                  key: args.by ?? 'id'
+                })
               }
               : {}),
           where: (table, args) => {

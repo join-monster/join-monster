@@ -882,26 +882,38 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   }
 }
 
+const tryGetTypeFields = (resolveInfo) => {
+  try {
+    return resolveInfo.returnType.ofType ?
+    resolveInfo.returnType.ofType.getFields() :
+    resolveInfo.returnType.getFields().edges ?
+    resolveInfo.returnType.getFields().edges.type.ofType.getFields().node.type.ofType.getFields() :
+    resolveInfo.returnType.getFields()
+  } catch {
+    return {}
+  }
+}
+
 function handleOrdering(field, sqlASTNode, context, resolveInfo) {
   const fieldConfig = getConfigFromSchemaObject(field)
 
   if (fieldConfig.sortKey) {
-    const schemaFields = resolveInfo.returnType.getFields?.() ?? resolveInfo.returnType.ofType.getFields()
-    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context, '', schemaFields)
+    const typeFields = tryGetTypeFields(resolveInfo)
+    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context, '', typeFields)
   }
   if (fieldConfig.orderBy) {
-    const schemaFields = resolveInfo.returnType.getFields?.() ?? resolveInfo.returnType.ofType.getFields()
-    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, '', schemaFields)
+    const typeFields = tryGetTypeFields(resolveInfo)
+    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, '', typeFields)
   }
   if (fieldConfig.junction) {
-    const schemaFields = fieldConfig.junction.include
+    const typeFields = fieldConfig.junction.include
     if (fieldConfig.junction.sortKey) {
       sqlASTNode.junction.sortKey = handleSortKey(
         fieldConfig.junction.sortKey,
         sqlASTNode,
         context,
         'junction',
-        schemaFields
+        typeFields
       )
     }
     if (fieldConfig.junction.orderBy) {
@@ -910,7 +922,7 @@ function handleOrdering(field, sqlASTNode, context, resolveInfo) {
         sqlASTNode,
         context,
         'junction',
-        schemaFields
+        typeFields
       )
     }
   }
@@ -960,11 +972,11 @@ const validateAndNormalizeDirection = direction => {
   return direction
 }
 
-const handleDynamicOrderings = (orderings, sqlASTNode, path, schemaFields) => {
+const handleDynamicOrderings = (orderings, sqlASTNode, path, typeFields) => {
   for (const ordering of orderings) {
     // TODO this is nasty and needs to be refactored
-    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr 
-      ?? schemaFields?.[ordering.column]?.sqlExpr
+    const sqlExpr = typeFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr 
+      ?? typeFields?.[ordering.column]?.sqlExpr
     if (sqlExpr) {
       const as = path ? sqlASTNode[path].as : sqlASTNode.as
       // TODO we still need to also call the sqlExpr with corresponding args, of current table or parent accodingly :O
@@ -977,7 +989,7 @@ const handleDynamicOrderings = (orderings, sqlASTNode, path, schemaFields) => {
   return orderings
 }
 
-export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, schemaFields) {
+export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, typeFields) {
   const sortKey = unthunk(thunkedSortKey, sqlASTNode.args || {}, context)
   if (!sortKey) return undefined
   const orderings = []
@@ -997,12 +1009,12 @@ export function handleSortKey(thunkedSortKey, sqlASTNode, context, path, schemaF
     }
   }
 
-  return handleDynamicOrderings(orderings, sqlASTNode, path, schemaFields)
+  return handleDynamicOrderings(orderings, sqlASTNode, path, typeFields)
 }
 
 // Normalize the three styles of orderBy to an array of {column, direction} objects.
 // orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
-export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, path, schemaFields) {
+export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, path, typeFields) {
   const orderBy = unthunk(thunkedOrderBy, sqlASTNode.args || {}, context)
   if (!orderBy) return undefined
   const orderings = []
@@ -1033,5 +1045,5 @@ export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, path, schemaF
     throw new Error('"orderBy" is invalid type: ' + inspect(orderBy))
   }
 
-  return handleDynamicOrderings(orderings, sqlASTNode, path, schemaFields)
+  return handleDynamicOrderings(orderings, sqlASTNode, path, typeFields)
 }

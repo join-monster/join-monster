@@ -410,12 +410,12 @@ const User = new GraphQLObjectType({
   })
 })
 
-const connectionConfig = { nodeType: new GraphQLNonNull(User) }
-if (PAGINATE === 'offset') {
-  connectionConfig.connectionFields = {
-    total: { type: GraphQLInt }
-  }
+const connectionConfig = {   
+  name: 'User', 
+  nodeType: new GraphQLNonNull(User),
+  ...(PAGINATE === 'offset' && { connectionFields: { total: { type: GraphQLInt } } })
 }
+
 const { connectionType: UserConnection } = connectionDefinitions(
   connectionConfig
 )
