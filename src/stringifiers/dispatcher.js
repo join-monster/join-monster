@@ -1,5 +1,5 @@
 import assert from 'assert'
-import _, { filter } from 'lodash'
+import { filter } from 'lodash'
 import idx from 'idx'
 
 import { validateSqlAST, inspect } from '../util'
