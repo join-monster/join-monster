@@ -6,7 +6,7 @@ import { validateSqlAST, inspect } from '../util'
 import {
   joinPrefix,
   thisIsNotTheEndOfThisBatch,
-  sortKeyToOrderings,
+  flipOrderings,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
 } from './shared'
 
@@ -169,7 +169,8 @@ async function _stringifySqlAST(
 
       break
     case 'computed':
-      selections.push([node.expr, `${q(joinPrefix(prefix) + node.as)}`])
+      // TODO missing args, check if always parentTable is correct
+      selections.push([node.expr(q(parentTable)), `${q(joinPrefix(prefix) + node.as)}`])
       break
     case 'column':
       selections.push([`${q(parentTable)}.${q(node.name)}`, `${q(joinPrefix(prefix) + node.as)}`])
@@ -249,13 +250,13 @@ async function handleTable(
     if (idx(node, _ => _.junction.sortKey)) {
       orders.push({
         table: node.junction.as,
-        columns: sortKeyToOrderings(node.junction.sortKey, node.args)
+        columns: flipOrderings(node.junction.sortKey, node.args)
       })
     }
     if (node.sortKey) {
       orders.push({
         table: node.as,
-        columns: sortKeyToOrderings(node.sortKey, node.args)
+        columns: flipOrderings(node.sortKey, node.args)
       })
     }
   }
@@ -437,7 +438,7 @@ function stringifyOuterOrder(orders, q) {
   for (const condition of orders) {
     for (const ordering of condition.columns) {
       conditions.push(
-        `${Array.isArray(ordering.column) ? ordering.column[0] : `${q(condition.table)}.${q(ordering.column)}`} ${ordering.direction}`
+        `${ordering.sqlExpr ? ordering.sqlExpr(q(condition.table)) : `${q(condition.table)}.${q(ordering.column)}`} ${ordering.direction}`
       )
     }
   }

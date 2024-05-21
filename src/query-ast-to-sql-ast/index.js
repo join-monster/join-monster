@@ -731,14 +731,6 @@ function handleSelections(
 // tell the AST we need a column that perhaps the user didnt ask for, but may be necessary for join monster to ID
 // objects or associate ones across batches
 function columnToASTChild(column, namespace) {
-  if (Array.isArray(column)) {
-    return {
-      type: 'computed',
-      expr: column[0],
-      fieldName: column[1],
-      as: namespace.generate('column', column[1])
-    }
-  }
   return {
     type: 'column',
     name: column,
@@ -776,7 +768,14 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
 
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
     for (let key of sortKey) {
-      const newChild = columnToASTChild(key.column, namespace)
+
+      const newChild = key.sqlExpr ? {  
+        // this is a special case when we are sorting by a computed column
+        type: 'computed',
+        expr: key.sqlExpr,
+        fieldName: key.column,
+        as: namespace.generate('column', key.column)
+      } : columnToASTChild(key.column, namespace)
       // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
       if (!sqlASTNode.sortKey) {
         newChild.fromOtherTable = sqlASTNode.junction.as
@@ -966,7 +965,8 @@ const handleDynamicOrderings = (orderings, sqlASTNode, path, schemaFields) => {
       const as = path ? sqlASTNode[path].as : sqlASTNode.as
       // TODO we still need to also call the sqlExpr with corresponding args, of current table or parent accodingly :O
       // TODO maybe instead of setting an array, add another prop called expr.
-      ordering.column = [sqlExpr(as), ordering.column]
+      ordering.sqlExpr = sqlExpr
+      ordering.as = as
     }
   }
 
