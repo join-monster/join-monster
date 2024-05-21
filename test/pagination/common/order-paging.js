@@ -187,7 +187,7 @@ test('should handle many-to-many order columns on the junction table', async t =
   t.deepEqual(expect, data)
 })
 
-test.skip('it should handle many-to-many order raw computed column on the junction table', async t => {
+test('it should handle many-to-many order raw computed column on the junction table', async t => {
   const cursor = process.env.PAGINATE === 'keyset' ? objToCursor({
     intimacy: 'acquaintance',
     followee_id: 1
@@ -215,14 +215,14 @@ test.skip('it should handle many-to-many order raw computed column on the juncti
         edges: [
           {
             node: {
-              id: toGlobalId('User', 3),
-              fullName: 'Coleman Abernathy'
+              id: toGlobalId('User', 2),
+              fullName: 'Hudson Hyatt'
             }
           },
           {
             node: {
-              id: toGlobalId('User', 2),
-              fullName: 'Hudson Hyatt'
+              id: toGlobalId('User', 3),
+              fullName: 'Coleman Abernathy'
             }
           }
         ]
