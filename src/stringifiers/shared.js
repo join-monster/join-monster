@@ -41,40 +41,15 @@ export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(
   )
 }
 
-export function sortKeyToOrderings(sortKey, args) {
-  // this is normalizing as we do in handleOrderBy
-  // we could normalze everything in handleOrderBy, possibly changint the name to normalizeOrderings
-  // and reformat this function to only do the flip
-  const orderColumns = []
-  let flip = false
+export function flipOrderings(orderings, args) {
   // flip the sort order if doing backwards paging
-  if (args && args.last) {
-    flip = true
-  }
+  const flip = args?.last
 
-  // this is handled now in handleSortKey, only do flipping here if needed
-  if (Array.isArray(sortKey)) {
-    for (const { column, direction } of sortKey) {
-      assert(
-        column,
-        `Each "sortKey" array entry must have a 'column' and a 'direction' property`
-      )
-      let descending = direction.toUpperCase() === 'DESC'
-      if (flip) descending = !descending
-
-      orderColumns.push({ column, direction: descending ? 'DESC' : 'ASC' })
-    }
-  } else {
-    assert(sortKey.order, 'A "sortKey" object must have an "order"')
-    let descending = sortKey.order.toUpperCase() === 'DESC'
+  return orderings.map(({direction, ...rest}) => {
+    let descending = direction.toUpperCase() === 'DESC'
     if (flip) descending = !descending
-
-    for (const column of wrap(sortKey.key)) {
-      orderColumns.push({ column, direction: descending ? 'DESC' : 'ASC' })
-    }
-  }
-
-  return orderColumns
+    return {direction: descending ? 'DESC' : 'ASC', ...rest}
+  })
 }
 
 export function keysetPagingSelect(
@@ -158,12 +133,8 @@ export function orderingsToString(orderings, q, as) {
   const orderByClauses = []
   for (const ordering of orderings) {
     orderByClauses.push(
-      Array.isArray(ordering.column) ?
-      // this needs to be done before because "as" here is optional and we need the table and args!!!
-      // just testing if this can work
-      `${ordering.column[0]} ${ordering.direction}`
-      :
-      `${as ? q(as) + '.' : ''}${q(ordering.column)} ${ordering.direction}`
+      // TODO we are still not storing args in ordering
+      `${ordering.sqlExpr ? ordering.sqlExpr(q(as)) : `${as ? q(as) + '.' : ''}${q(ordering.column)}`} ${ordering.direction}`
     )
   }
   return orderByClauses.join(', ')
@@ -222,7 +193,7 @@ export function interpretForKeysetPaging(node, dialect) {
 
   const order = {
     table: sortTable,
-    columns: sortKeyToOrderings(sortKey, node.args)
+    columns: flipOrderings(sortKey, node.args)
   }
   const cursorKeys = order.columns.map(ordering => ordering.column)
 
@@ -272,9 +243,7 @@ export function interpretForKeysetPaging(node, dialect) {
 // the cursor contains the sort keys. it needs to match the keys specified in the `sortKey` on this field in the schema
 export function validateCursor(cursorObj, expectedKeys) {
   const actualKeys = Object.keys(cursorObj)
-  // dynamic columns are a tuple of function and alias. we only care about the alias
-  const expectedKeyNames = expectedKeys.map(key => (Array.isArray(key) ? key[1] : key))
-  const expectedKeySet = new Set(expectedKeyNames)
+  const expectedKeySet = new Set(expectedKeys)
   const actualKeySet = new Set(actualKeys)
   for (let key of actualKeys) {
     if (!expectedKeySet.has(key)) {
@@ -283,7 +252,7 @@ export function validateCursor(cursorObj, expectedKeys) {
       )
     }
   }
-  for (let key of expectedKeyNames) {
+  for (let key of expectedKeys) {
     if (!actualKeySet.has(key)) {
       throw new Error(
         `Invalid cursor. The column "${key}" is not in the cursor.`
@@ -298,11 +267,9 @@ export function validateCursor(cursorObj, expectedKeys) {
 function sortKeyToWhereCondition(keyObj, orderings, sortTable, dialect) {
   const condition = (ordering, operator) => {
     operator = operator || (ordering.direction === 'DESC' ? '<' : '>')
-    const columnName = Array.isArray(ordering.column) ? ordering.column[1] : ordering.column
     return `${
-      Array.isArray(ordering.column) ? ordering.column[0]
-      : `${dialect.quote(sortTable)}.${dialect.quote(ordering.column)}`
-    } ${operator} ${maybeQuote(keyObj[columnName], dialect.name)}`
+      ordering.sqlExpr ? ordering.sqlExpr(dialect.quote(sortTable)) : `${dialect.quote(sortTable)}.${dialect.quote(ordering.column)}`
+    } ${operator} ${maybeQuote(keyObj[ordering.column], dialect.name)}`
   }
 
   orderings = [...orderings] // don't mutate caller's data
