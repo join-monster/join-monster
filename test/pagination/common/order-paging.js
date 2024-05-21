@@ -186,3 +186,48 @@ test('should handle many-to-many order columns on the junction table', async t =
   }
   t.deepEqual(expect, data)
 })
+
+test('it should handle many-to-many order raw computed column on the junction table', async t => {
+  const cursor = process.env.PAGINATE === 'keyset' ? objToCursor({
+    intimacy: 'acquaintance',
+    followee_id: 1
+  }) : offsetToCursor(0)
+
+  const source  = `{
+    user(id: 2) {
+      fullName
+      following(first: 2, sortOnMain: false, by: "intimacy" after: "${cursor}") {
+        edges {
+          node {
+            id
+            fullName
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await graphql({schema, source})
+  errCheck(t, errors)
+  const expect = {
+    user: {
+      fullName: 'Hudson Hyatt',
+      following: {
+        edges: [
+          {
+            node: {
+              id: toGlobalId('User', 3),
+              fullName: 'Coleman Abernathy'
+            }
+          },
+          {
+            node: {
+              id: toGlobalId('User', 2),
+              fullName: 'Hudson Hyatt'
+            }
+          }
+        ]
+      }
+    }
+  }
+  t.deepEqual(expect, data)
+})
