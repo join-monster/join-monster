@@ -10,8 +10,7 @@ import {
   ensure,
   unthunk,
   inspect,
-  getConfigFromSchemaObject,
-  sortKeyColumns
+  getConfigFromSchemaObject
 } from '../util'
 
 import {
@@ -770,8 +769,8 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
     const sortKey = sqlASTNode.sortKey || sqlASTNode.junction.sortKey
 
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
-    for (let column of sortKeyColumns(sortKey)) {
-      const newChild = columnToASTChild(column, namespace)
+    for (let key of sortKey) {
+      const newChild = columnToASTChild(key.column, namespace)
       // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
       if (!sqlASTNode.sortKey) {
         newChild.fromOtherTable = sqlASTNode.junction.as
