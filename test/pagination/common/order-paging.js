@@ -41,10 +41,18 @@ test('it should handle nested ordering with both ASC', async t => {
   const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   t.deepEqual(
-    [{ id: toGlobalId('Comment', 18) }, { id: toGlobalId('Comment', 116) }, { id: toGlobalId('Comment', 227) }, { id: toGlobalId('Comment', 233) }],
+    [
+      { id: toGlobalId('Comment', 18) }, 
+      { id: toGlobalId('Comment', 116) },
+      { id: toGlobalId('Comment', 227) },
+      { id: toGlobalId('Comment', 233) }
+    ],
     data.user.posts.edges[0].node.comments.edges.map(({ node }) => node)
   )
-  t.deepEqual([{ id: toGlobalId('Comment', 1) }, { id: toGlobalId('Comment', 3) }], data.user.comments.edges.map(({ node }) => node))
+  t.deepEqual([
+    { id: toGlobalId('Comment', 1) },
+    { id: toGlobalId('Comment', 3) }
+  ], data.user.comments.edges.map(({ node }) => node))
 })
 
 test('it should handle nested ordering with one ASC and one DESC', async t => {
@@ -52,10 +60,18 @@ test('it should handle nested ordering with one ASC and one DESC', async t => {
   const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   t.deepEqual(
-    [{ id: toGlobalId('Comment', 233) }, { id: toGlobalId('Comment', 227) }, { id: toGlobalId('Comment', 116) }, { id: toGlobalId('Comment', 18) }],
+    [
+      { id: toGlobalId('Comment', 233) },
+      { id: toGlobalId('Comment', 227) },
+      { id: toGlobalId('Comment', 116) },
+      { id: toGlobalId('Comment', 18) }
+    ],
     data.user.posts.edges[0].node.comments.edges.map(({ node }) => node)
   )
-  t.deepEqual([{ id: toGlobalId('Comment', 1) }, { id: toGlobalId('Comment', 3) }], data.user.comments.edges.map(({ node }) => node))
+  t.deepEqual([
+    { id: toGlobalId('Comment', 1) },
+    { id: toGlobalId('Comment', 3) }
+  ], data.user.comments.edges.map(({ node }) => node))
 })
 
 test('should handle many-to-many order columns on the main table', async t => {
