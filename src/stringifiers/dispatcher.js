@@ -47,6 +47,7 @@ export default async function stringifySqlAST(topNode, context, options) {
   if (dialect.maxAliasLength) {
     const exceedingAliases = selections.filter(([, alias]) => alias.length > dialect.maxAliasLength)
     if (exceedingAliases.length) {
+      // eslint-disable-next-line max-len
       console.warn(`Alias length exceeds the max allowed length of ${dialect.maxAliasLength} characters for ${dialect.name}: ${exceedingAliases.map(([column, alias]) => `${column} AS ${alias}`).join(', ')}`)
     }
   }
@@ -299,7 +300,10 @@ async function handleTable(
     // many-to-many using batching
   } else if (idx(node, _ => _.junction.sqlBatch)) {
     if (parent) {
-      selections.push([`${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)}`, `${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`])
+      selections.push([
+        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)}`, 
+        `${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
+      ])
     } else {
       const joinCondition = await node.junction.sqlBatch.sqlJoin(
         `${q(node.junction.as)}`,
@@ -389,7 +393,10 @@ async function handleTable(
     // one-to-many with batching
   } else if (node.sqlBatch) {
     if (parent) {
-      selections.push([`${q(parent.as)}.${q(node.sqlBatch.parentKey.name)}`, `${q(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`])
+      selections.push([
+        `${q(parent.as)}.${q(node.sqlBatch.parentKey.name)}`,
+        `${q(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`
+      ])
     } else if (node.paginate) {
       await dialect.handleBatchedOneToManyPaginated(
         parent,
@@ -438,7 +445,8 @@ function stringifyOuterOrder(orders, q) {
   for (const condition of orders) {
     for (const ordering of condition.columns) {
       conditions.push(
-        `${ordering.sqlExpr ? ordering.sqlExpr(q(condition.table)) : `${q(condition.table)}.${q(ordering.column)}`} ${ordering.direction}`
+        `${ordering.sqlExpr ? ordering.sqlExpr(q(condition.table)) : 
+        `${q(condition.table)}.${q(ordering.column)}`} ${ordering.direction}`
       )
     }
   }

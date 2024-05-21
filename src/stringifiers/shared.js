@@ -267,7 +267,8 @@ function sortKeyToWhereCondition(keyObj, orderings, sortTable, dialect) {
   const condition = (ordering, operator) => {
     operator = operator || (ordering.direction === 'DESC' ? '<' : '>')
     return `${
-      ordering.sqlExpr ? ordering.sqlExpr(dialect.quote(sortTable)) : `${dialect.quote(sortTable)}.${dialect.quote(ordering.column)}`
+      ordering.sqlExpr ? ordering.sqlExpr(dialect.quote(sortTable)) : 
+      `${dialect.quote(sortTable)}.${dialect.quote(ordering.column)}`
     } ${operator} ${maybeQuote(keyObj[ordering.column], dialect.name)}`
   }
 

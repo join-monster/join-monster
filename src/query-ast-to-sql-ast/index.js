@@ -36,12 +36,12 @@ class SQLASTNode {
 }
 
 // any value here needs to be paired with an instance type checking function from graphql in isOneOfGraphQLTypes()
-const ALL_TYPES_TO_CHECK = new Set(['GraphQLObjectType', 
-                                    'GraphQLUnionType', 
-                                    'GraphQLInterfaceType', 
-                                    'GraphQLList', 
-                                    'GraphQLNonNull',
-                                    'GraphQLScalarType'])
+const ALL_TYPES_TO_CHECK = new Set(['GraphQLObjectType',
+  'GraphQLUnionType',
+  'GraphQLInterfaceType',
+  'GraphQLList',
+  'GraphQLNonNull',
+  'GraphQLScalarType'])
 
 
 function isOneOfGraphQLTypes(instance, typeStringArray) {
@@ -49,10 +49,10 @@ function isOneOfGraphQLTypes(instance, typeStringArray) {
   typeStringArray.forEach(typeString => {
     if (typeString === 'GraphQLObjectType' && isObjectType(instance)) returnVal = true
     if (typeString === 'GraphQLUnionType' && isUnionType(instance)) returnVal = true
-    if (typeString === 'GraphQLInterfaceType' &&  isInterfaceType(instance)) returnVal = true
-    if (typeString === 'GraphQLList' &&  isListType(instance)) returnVal = true
-    if (typeString === 'GraphQLNonNull' &&  isNonNullType(instance)) returnVal = true
-    if (typeString === 'GraphQLScalarType' &&  isScalarType(instance)) returnVal = true
+    if (typeString === 'GraphQLInterfaceType' && isInterfaceType(instance)) returnVal = true
+    if (typeString === 'GraphQLList' && isListType(instance)) returnVal = true
+    if (typeString === 'GraphQLNonNull' && isNonNullType(instance)) returnVal = true
+    if (typeString === 'GraphQLScalarType' && isScalarType(instance)) returnVal = true
     if (!ALL_TYPES_TO_CHECK.has(typeString)) {
       throw new Error('unexpected input to isOneOfGraphQLTypes()')
     }
@@ -291,7 +291,7 @@ export function populateASTNode(
     // see enablePluginsForSchemaResolvers function: apollo-server issue #3988
   } else if (
     fieldConfig.sqlColumn ||
-      isOneOfGraphQLTypes(parentTypeNode, ['GraphQLObjectType', 'GraphQLInterfaceType'])
+    isOneOfGraphQLTypes(parentTypeNode, ['GraphQLObjectType', 'GraphQLInterfaceType'])
   ) {
     sqlASTNode.type = 'column'
     sqlASTNode.name = fieldConfig.sqlColumn || field.name
@@ -773,7 +773,7 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
     for (let key of sortKey) {
 
-      const newChild = key.sqlExpr ? {  
+      const newChild = key.sqlExpr ? {
         // this is a special case when we are sorting by a computed column
         type: 'computed',
         expr: key.sqlExpr,
@@ -896,10 +896,22 @@ function handleOrdering(field, sqlASTNode, context, resolveInfo) {
   if (fieldConfig.junction) {
     const schemaFields = fieldConfig.junction.include
     if (fieldConfig.junction.sortKey) {
-      sqlASTNode.junction.sortKey = handleSortKey(fieldConfig.junction.sortKey, sqlASTNode, context, 'junction', schemaFields)
+      sqlASTNode.junction.sortKey = handleSortKey(
+        fieldConfig.junction.sortKey,
+        sqlASTNode,
+        context,
+        'junction',
+        schemaFields
+      )
     }
     if (fieldConfig.junction.orderBy) {
-      sqlASTNode.junction.orderBy = handleOrderBy(fieldConfig.junction.orderBy, sqlASTNode, context, 'junction', schemaFields)
+      sqlASTNode.junction.orderBy = handleOrderBy(
+        fieldConfig.junction.orderBy,
+        sqlASTNode,
+        context,
+        'junction',
+        schemaFields
+      )
     }
   }
   if (sqlASTNode.sortKey && idx(sqlASTNode, _ => _.junction.sortKey)) {
@@ -951,7 +963,8 @@ const validateAndNormalizeDirection = direction => {
 const handleDynamicOrderings = (orderings, sqlASTNode, path, schemaFields) => {
   for (const ordering of orderings) {
     // TODO this is nasty and needs to be refactored
-    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr ?? schemaFields?.[ordering.column]?.sqlExpr
+    const sqlExpr = schemaFields?.[ordering.column]?.extensions?.joinMonster?.sqlExpr 
+      ?? schemaFields?.[ordering.column]?.sqlExpr
     if (sqlExpr) {
       const as = path ? sqlASTNode[path].as : sqlASTNode.as
       // TODO we still need to also call the sqlExpr with corresponding args, of current table or parent accodingly :O
