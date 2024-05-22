@@ -1,3 +1,5 @@
+#
+
 ## Benefits
 
 Using [Join Monster](https://github.com/join-monster/join-monster) provides the following benefits.

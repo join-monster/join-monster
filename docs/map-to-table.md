@@ -1,3 +1,5 @@
+#
+
 ## Specify the SQL Table and Its Unique Key
 
 We'll add a couple of properties to the `GraphQLObjectType` definition on `User`. Our users data lives in the `accounts` table, so we'll set the ([thunked](API.md#thunk)) `sqlTable` property to `'accounts'`.

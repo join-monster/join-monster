@@ -1,3 +1,5 @@
+#
+
 ## Through a Junction Table
 
 Let us allow `Users` to follow one another. We'll need to go through a junction table for the many-to-many and hence two joins to fetch this field. For this we can specify a `junction` object, which has ([thunked](API.md#thunk)) `sqlTable` which is the name of the intermediate join table, and also `sqlJoins`, an array of two functions that generate the `JOIN` conditions. The first joins the parent table to the junction, and the second joins the junction to the child table.

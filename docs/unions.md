@@ -1,3 +1,5 @@
+#
+
 ## Mapping Union Types
 
 GraphQL has the `GraphQLUnionType`, which allows for polymorphic fields.

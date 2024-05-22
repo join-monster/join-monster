@@ -1,3 +1,5 @@
+#
+
 ## Mapping Another Table
 
 Let's add a field to our `User` which is a `GraphQLObjectType`: their `Comments` which also map to a SQL table as a one-to-many relationship. Let's define the `Comment` type and map to its SQL table `comments`.

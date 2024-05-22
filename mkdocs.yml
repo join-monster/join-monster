@@ -5,6 +5,9 @@ site_favicon: img/join_monster.ico
 theme: 
   name: readthedocs
   highlightjs: true
+  navigation_depth: 2
+  # All md files in the docs directory contain an empty # at the top of the file so the sub navigation is displayed
+  # This is a workaround for the readthedocs theme not displaying sub navigation when having all ## headers
 extra_javascript:
   - custom.js
 extra_css: 

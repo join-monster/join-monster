@@ -1,3 +1,5 @@
+#
+
 ## Fewer Requests not Always Better
 
 So far Join Monster has fetched all data in a single query to minimize network latency by leveraging the `JOIN`.
