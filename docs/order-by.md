@@ -1,6 +1,6 @@
 ## Adding Sorting
 
-To add any of the tables to the `ORDER BY` clause, you can add the ([thunked](/API/#thunk)) `orderBy` property. This is an object of with the sorted column(s) as the key(s) and either `'ASC'` or `'DESC'` as the value(s), or an array of `{column, order}`s that lets you explicitly list order clause precendence..
+To add any of the tables to the `ORDER BY` clause, you can add the ([thunked](API.md#thunk)) `orderBy` property. This is an object of with the sorted column(s) as the key(s) and either `'ASC'` or `'DESC'` as the value(s), or an array of `{column, order}`s that lets you explicitly list order clause precendence..
 
 ```javascript
 const User = new GraphQLObjectType({

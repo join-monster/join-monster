@@ -71,11 +71,11 @@ const Query = new GraphQLObjectType({
 })
 ```
 
-The `getNode` method needs the type name, resolve info, a context object, the value of the `primaryKey`, and a function the receives the SQL and queries the database. If the `primaryKey` is composite, an array is needed for the fourth argument. See [API](/API/#getNode) for details
+The `getNode` method needs the type name, resolve info, a context object, the value of the `primaryKey`, and a function the receives the SQL and queries the database. If the `primaryKey` is composite, an array is needed for the fourth argument. See [API](API.md#getNode) for details
 
 The Node interface also needs to resolve its type, which join monster figures out for you. It places the type on the `"__type__"` property of the resolved data. When you write the `resolveType` function, the second argument for `nodeDefinitions`, you can simply return the object on the `"__type__"` property.
 
-Your global ID may not be the same as the `uniqueKey`. Or you might have more complex logic for retrieving the node from the global ID. For these cases you can pass a [where](/API/#where) function as your fourth argument instead of a value directly. This function generates the `WHERE` condition dynamically. Be sure to escape untrusted user input.
+Your global ID may not be the same as the `uniqueKey`. Or you might have more complex logic for retrieving the node from the global ID. For these cases you can pass a [where](API.md#where) function as your fourth argument instead of a value directly. This function generates the `WHERE` condition dynamically. Be sure to escape untrusted user input.
 
 ```javascript
 const { nodeInterface, nodeField } = nodeDefinitions(

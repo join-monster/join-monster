@@ -75,7 +75,7 @@ const User = new GraphQLObjectType({
 })
 ```
 
-You can also do computed columns in the SQL itself with a *raw expression* using `sqlExpr`. This is a function that generated the expression. Its parameters are the table alias (generated automatically by joinMonster), the GraphQL arguments on that field,  and a [context](/where/#adding-context) object.
+You can also do computed columns in the SQL itself with a *raw expression* using `sqlExpr`. This is a function that generated the expression. Its parameters are the table alias (generated automatically by joinMonster), the GraphQL arguments on that field,  and a [context](where.md#adding-context) object.
 
 ```javascript
 const User = new GraphQLObjectType({

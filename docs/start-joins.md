@@ -80,5 +80,5 @@ Now you can query for the comments for each user!
 
 All the data will be fetched in a single round-trip to the database.
 
-See [API](/API/#sqlJoin) for more details on the `sqlJoin` function.
+See [API](API.md#sqlJoin) for more details on the `sqlJoin` function.
 

@@ -12,7 +12,7 @@ Join Monster happens to use this interface because it's a convenient standard.
 It also allows us to leverage [graphql-relay-js](https://github.com/graphql/graphql-relay-js). Again, this package is **does not require** you to use Relay on the client. It's simply a module for helping to set up Relay-compliant GraphQL APIs—of which pagination is a part of.
 
 
-**Not all dialects support every type of pagination.** Check the [dialects](/dialects) page for current pagination support for each dialect.
+**Not all dialects support every type of pagination.** Check the [dialects](dialects.md) page for current pagination support for each dialect.
 
 
 ### 1. Application-layer Paging
@@ -107,7 +107,7 @@ It uses a predictable, position-based integer that determines how many rows to s
 
 To use it, you must provide a connection type and choose a stable sort based on one or multiple columns.
 Tell Join Monster you want to use this method by adding two properties to the field.
-Set `sqlPaginate` to `true`. Set ([thunked](/API/#thunk)) `orderBy` to tell it how to sort.
+Set `sqlPaginate` to `true`. Set ([thunked](API.md#thunk)) `orderBy` to tell it how to sort.
 
 ```javascript
 import { forwardConnectionArgs } from 'graphql-relay'
@@ -248,7 +248,7 @@ Because the cursor is predictable, you get another interesting capability. You c
 
 This is possible because the 10th post *always* has the same cursor value, regardless of which user it belongs too. This is also true for comments or any other type. But because offsets work by skipping rows from the beginning, backward pagination is not possible.
 
-This implementation is not supported on all dialects. See the [dialects](/dialects) page for details.
+This implementation is not supported on all dialects. See the [dialects](dialects.md) page for details.
 
 | Pros | Cons |
 | ---- | ---- |
@@ -266,7 +266,7 @@ The uniqueness allows us to place the sort key into the cursor to uniquely ident
 We can use a `WHERE` in lieu of an `OFFSET`, which can benefit performance.
 It is the most scalable approach, but also the most limiting.
 Tell Join Monster to use this by providing a connection type and setting two properties.
-Again, set `sqlPaginate` to `true`. Set ([thunked](/API/#thunk)) `sortKey` to an object with an order direction and the key (which is either the name of the column or an array of column names).
+Again, set `sqlPaginate` to `true`. Set ([thunked](API.md#thunk)) `sortKey` to an object with an order direction and the key (which is either the name of the column or an array of column names).
 
 ```javascript
 const User = new GraphQLObjectType({
@@ -411,7 +411,7 @@ const Post = new GraphQLObjectType({
 ## LIMIT without pagination
 
 If you just want to limit the number of results in a list field, but don't want the Connection type and arguments,
-you can just use the ([thunked](/API/#thunk)) `limit` and `orderBy` properties on that field.
+you can just use the ([thunked](API.md#thunk)) `limit` and `orderBy` properties on that field.
 
 ```javascript
 const Post = new GraphQLObjectType({
