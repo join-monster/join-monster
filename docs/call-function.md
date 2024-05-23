@@ -1,10 +1,12 @@
+#
+
 ## Using the Function
 
 We haven't actually seen the module get used yet...
 
 Import `joinMonster`. Have the top-most field that maps to a SQL table implement a resolver function that calls `joinMonster`.
 Simply pass it the **resolve info** (this is the 4th parameter of the resolver, which includes the parsed query and your schema definition),
-a [context](/where/#adding-context) object (which can be empty for now),
+a [context](where.md#adding-context) object (which can be empty for now),
 and a callback that takes the SQL as a parameter, calls the database, and returns a `Promise` of the data.
 
 ```javascript
@@ -26,7 +28,7 @@ const QueryRoot = new GraphQLObjectType({
 })
 ```
 
-There are a few options to pass as the fourth parameter, like which SQL dialect to use. See [API](/API/#joinMonster) for details on this function.
+There are a few options to pass as the fourth parameter, like which SQL dialect to use. See [API](API.md#joinMonster) for details on this function.
 
 The data *MUST* be an array of objects where each object represents a row in the result set. For example:
 ```javascript

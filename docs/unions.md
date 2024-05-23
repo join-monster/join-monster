@@ -1,3 +1,5 @@
+#
+
 ## Mapping Union Types
 
 GraphQL has the `GraphQLUnionType`, which allows for polymorphic fields.
@@ -215,4 +217,4 @@ So now we can handle queries like this!
 
 ## Relay's Node Interface
 
-Join Monster provides a vastly more convenient helper function for Relay's Node Interface. See [this page](/relay/#node-interface) in the docs.
+Join Monster provides a vastly more convenient helper function for Relay's Node Interface. See [this page](relay.md#node-interface) in the docs.

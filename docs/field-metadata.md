@@ -1,3 +1,5 @@
+#
+
 ## Correlating Fields to Columns
 
 You'll need to provide a bit of information about each column and its relationship to the table, if any. For fields with a one-to-one correspondence, use the `sqlColumn` property.
@@ -75,7 +77,7 @@ const User = new GraphQLObjectType({
 })
 ```
 
-You can also do computed columns in the SQL itself with a *raw expression* using `sqlExpr`. This is a function that generated the expression. Its parameters are the table alias (generated automatically by joinMonster), the GraphQL arguments on that field,  and a [context](/where/#adding-context) object.
+You can also do computed columns in the SQL itself with a *raw expression* using `sqlExpr`. This is a function that generated the expression. Its parameters are the table alias (generated automatically by joinMonster), the GraphQL arguments on that field,  and a [context](where.md#adding-context) object.
 
 ```javascript
 const User = new GraphQLObjectType({

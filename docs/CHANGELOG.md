@@ -1,5 +1,6 @@
 ### vNEXT 
 #### Fixed
+- [#532](https://github.com/join-monster/join-monster/pull/530): Updates mkdocs to 1.5.3.
 - [#530](https://github.com/join-monster/join-monster/pull/530): Add test to make sure different names won't collapse to same alias.
 - [#525](https://github.com/join-monster/join-monster/pull/525): Fix readthedocs deploys.
 - [#526](https://github.com/join-monster/join-monster/pull/526): Warns when alias length is exceeded for what postgres allows.

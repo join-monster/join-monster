@@ -1,3 +1,5 @@
+#
+
 ## The Where Function
 
 We of course don't want every single user in the database.
@@ -107,5 +109,5 @@ For example, you can pass in the ID of the logged in user to incorporate it into
 
 Again, don't forget to double-quote case sensitive column names.
 
-See [API](/API/#where) for more details on this callback.
+See [API](API.md#where) for more details on this callback.
 

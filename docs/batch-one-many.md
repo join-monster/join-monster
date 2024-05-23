@@ -1,3 +1,5 @@
+#
+
 ## Introducing an Additional Batch to the Query Plan
 
 Let's go back to the `Post` and use this new strategy.

@@ -1,3 +1,5 @@
+#
+
 ## Mapping Another Table
 
 Let's add a field to our `User` which is a `GraphQLObjectType`: their `Comments` which also map to a SQL table as a one-to-many relationship. Let's define the `Comment` type and map to its SQL table `comments`.
@@ -80,5 +82,5 @@ Now you can query for the comments for each user!
 
 All the data will be fetched in a single round-trip to the database.
 
-See [API](/API/#sqlJoin) for more details on the `sqlJoin` function.
+See [API](API.md#sqlJoin) for more details on the `sqlJoin` function.
 

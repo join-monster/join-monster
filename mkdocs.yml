@@ -2,14 +2,17 @@ site_name: Join Monster
 site_description: A GraphQL-to-SQL execution layer.
 repo_url: https://github.com/join-monster/join-monster
 site_favicon: img/join_monster.ico
-theme: readthedocs
+theme: 
+  name: readthedocs
+  highlightjs: true
+  navigation_depth: 2
+  # All md files in the docs directory contain an empty # at the top of the file so the sub navigation is displayed
+  # This is a workaround for the readthedocs theme not displaying sub navigation when having all ## headers
 extra_javascript:
-  # MkDocs includes an old version of highlight.js, but it doesn't recognize all modern JS syntax, import a newer version
-  - //cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js
   - custom.js
 extra_css: 
   - custom.css
-pages:
+nav:
   - Introduction: index.md
   - "The Problem We Solve": problem.md
   - "How It Works": how-it-works.md

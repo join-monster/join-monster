@@ -8,7 +8,7 @@
 
 a { color: #1cb086; }
 a:visited { color: #1cb086; }
-a.icon-home { color: white; }
+.wy-side-nav-search a.icon-home { color: white; }
 .wy-menu-vertical a { color: #37E0AF; }
 
 .wy-menu-vertical a:active {
