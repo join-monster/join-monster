@@ -428,9 +428,9 @@ function handleTable(
     )
   }
 
-  if (field.offset) {
-    assert(field.limit, '`limit` is required with `offset`')
-    sqlASTNode.offset = unthunk(field.offset, sqlASTNode.args || {}, context)
+  if (fieldConfig.offset) {
+    assert(fieldConfig.orderBy, '`limit` is required with `offset`')
+    sqlASTNode.offset = unthunk(fieldConfig.offset, sqlASTNode.args || {}, context)
   }
 
   if (sqlASTNode.paginate) {
