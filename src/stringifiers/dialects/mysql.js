@@ -36,7 +36,8 @@ module.exports = {
           order,
           limit,
           offset,
-          node.as
+          node.as,
+          { q: quote }
         )
       )
     }
