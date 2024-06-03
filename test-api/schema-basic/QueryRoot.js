@@ -118,12 +118,6 @@ export default new GraphQLObjectType({
         filterLegless: {
           description: 'Exclude sponsors with no leg info',
           type: GraphQLBoolean
-        },
-        limit: {
-          type: GraphQLInt,
-        },
-        offset: {
-          type: GraphQLInt,
         }
       },
       extensions: {
@@ -132,10 +126,7 @@ export default new GraphQLObjectType({
             // eslint-disable-line no-unused-vars
             if (args.filterLegless)
               return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
-          },
-          limit: (args) => args.limit,
-          offset: (args) => args.offset ?? 0,
-          orderBy: (args) => args.limit ? 'generation' : undefined
+          } 
         }
       },
       resolve: (parent, args, context, resolveInfo) => {
