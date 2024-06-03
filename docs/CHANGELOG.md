@@ -1,4 +1,6 @@
 ### vNEXT 
+#### Fixed
+- [#535](https://github.com/join-monster/join-monster/pull/535): Allow manual offset and limit control.
 
 ### v3.3.5 (May 28, 2024)
 #### Fixed

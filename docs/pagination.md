@@ -410,10 +410,10 @@ const Post = new GraphQLObjectType({
 })
 ```
 
-## LIMIT without pagination
+## LIMIT and OFFSET without pagination
 
 If you just want to limit the number of results in a list field, but don't want the Connection type and arguments,
-you can just use the ([thunked](API.md#thunk)) `limit` and `orderBy` properties on that field.
+you can just use the ([thunked](API.md#thunk)) `limit`, `offset` and `orderBy` properties on that field.
 
 ```javascript
 const Post = new GraphQLObjectType({
@@ -435,7 +435,7 @@ const Post = new GraphQLObjectType({
 })
 ```
 
-The `limit` can be an integer or a function that returns an integer. This feature is only supported if pagination is supported for you SQL dialect.
+The `limit` and `offset` can be an integer or a function that returns an integer.
 
 ### 4. Max and Default Page Size in Pagination
 
