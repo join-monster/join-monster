@@ -29,7 +29,6 @@ if (knex.client.config.client === 'mysql') {
   options.dialectModule = sqlite3Module
 }
 
-
 const schema = new GraphQLSchema({
   description: 'a test schema',
   query: new GraphQLObjectType({
