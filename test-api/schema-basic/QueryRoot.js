@@ -135,7 +135,6 @@ export default new GraphQLObjectType({
           resolveInfo,
           context,
           (sql, done) => {
-            console.log(sql)
             knex
               .raw(sql)
               .then(result => {
