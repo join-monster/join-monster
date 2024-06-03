@@ -1,33 +1,15 @@
 import test from 'ava'
 import { graphql, GraphQLSchema, GraphQLObjectType, GraphQLList, GraphQLInt } from 'graphql'
-import { errCheck } from './_util'
+import { errCheck, getDatabaseOptions } from './_util'
 
 import knex from '../test-api/data/database'
 import dbCall from '../test-api/data/fetch'
 
 import User from '../test-api/schema-basic/User'
 
-import mysqlModule from '../src/stringifiers/dialects/mysql'
-import oracleModule from '../src/stringifiers/dialects/oracle'
-import pgModule from '../src/stringifiers/dialects/pg'
-import sqlite3Module from '../src/stringifiers/dialects/sqlite3'
-
 import joinMonster from '../src/index'
 
-const { MINIFY, ALIAS_PREFIX, DB } = process.env
-const options = {
-  minify: MINIFY == 1,
-  aliasPrefix: ALIAS_PREFIX
-}
-if (knex.client.config.client === 'mysql') {
-  options.dialectModule = mysqlModule
-} else if (knex.client.config.client === 'pg') {
-  options.dialectModule = pgModule
-} else if (knex.client.config.client === 'oracledb') {
-  options.dialectModule = oracleModule
-} else if (knex.client.config.client === 'sqlite3') {
-  options.dialectModule = sqlite3Module
-}
+const options = getDatabaseOptions(knex)
 
 const schema = new GraphQLSchema({
   description: 'a test schema',
