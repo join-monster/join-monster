@@ -61,6 +61,40 @@ test('it should allow specifying a limit', async t => {
   t.deepEqual(expect, data)
 })
 
+test('it should allow specifying a limit with join', async t => {
+  const source = `{
+    users(limit: 1) {
+      fullName
+      comments {
+        body
+      }
+    }
+  }`
+  const { data, errors } = await graphql({ schema, source })
+  errCheck(t, errors)
+  const expect = {
+    users: [
+      {
+        comments: [
+          {
+            body: 'Wow this is a great post, Matt.',
+          },
+          {
+            body: 'Do not forget to check out the demo.',
+          },
+          {
+            body: 'Also, submit a PR if you have a feature you want to add.',
+          },
+          {
+            body: 'Somebody please help me with this library. It is so much work.',
+          },
+        ],
+        fullName: 'andrew carlson',
+      }
+    ]
+  }
+  t.deepEqual(expect, data)
+})
 
 test('it should allow specifying a limit and an offset', async t => {
   const source = `{
@@ -73,6 +107,32 @@ test('it should allow specifying a limit and an offset', async t => {
   const expect = {
     users: [
       {
+        fullName: 'matt elder',
+      }
+    ]
+  }
+  t.deepEqual(expect, data)
+})
+
+test('it should allow specifying a limit and an offset with join', async t => {
+  const source = `{
+    users(limit: 1, offset: 1) {
+      fullName
+      comments {
+        body
+      }
+    }
+  }`
+  const { data, errors } = await graphql({ schema, source })
+  errCheck(t, errors)
+  const expect = {
+    users: [
+      {
+        comments: [
+          {
+            body: 'FIRST COMMENT!'
+          }
+        ],
         fullName: 'matt elder',
       }
     ]
