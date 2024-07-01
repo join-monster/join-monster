@@ -107,7 +107,7 @@ However, if there are multiple conflicting aliases accessing the same relation, 
 
 The `source.following` property is now a function that will return the correct value. GraphQL's default resolver will detect the function and do the right thing. However, passing a custom resolver will completely override GraphQL's default resolver instead of wrapping it.
 
-Therefore, it is required to get the actual value through GraphQL's default resolver first when using a custom resolver on a non-trivial field:
+Therefore, it is required to get the actual value through GraphQL's default resolver first when using a custom resolver on a [non-trivial field](#non-trivial-fields):
 
 ```javascript
 import { defaultFieldResolver } from 'graphql'
@@ -126,6 +126,8 @@ const User = new GraphQLObjectType({
   })
 })
 ```
+
+### Non-trivial Fields
 
 We currently treat fields as being "non-trivial" in the following cases:
 
