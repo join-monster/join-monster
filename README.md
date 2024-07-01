@@ -305,7 +305,6 @@ Explore the schema, try out some queries, and see what the resulting SQL queries
 
 ## Future Work
 
-- [ ] Address this known bug [#126](https://github.com/join-monster/join-monster/issues/126).
 - [ ] Support custom `ORDER BY` expressions [#138](https://github.com/join-monster/join-monster/issues/138).
 - [ ] Support binding parameters [#169](https://github.com/join-monster/join-monster/issues/169).
 - [ ] Write static [Flow](https://flow.org/) types.

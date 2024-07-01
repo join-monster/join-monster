@@ -874,3 +874,52 @@ test('should allow explicit page limit larger than default page size', async t =
   errCheck(t, errors)
   t.deepEqual(data.users.edges[0].node.comments.edges.length, 3)
 })
+
+test('can handle multiple aliases', async t => {
+  const source = `{
+    users(first: 2) {
+      edges {
+        node {
+          fullName,
+          twoPosts: posts(first: 2) {
+            total
+            edges {
+              node { body }
+            }
+          }
+
+          onePost: posts(first: 1) {
+            total
+            edges {
+              node { body }
+            }
+          }
+        }
+      }
+    }
+  }`
+  const { data, errors } = await graphql({schema, source})
+  t.deepEqual(
+    data.users.edges.map(edge => edge.node.twoPosts.total),
+    [8, 13]
+  )
+  t.deepEqual(
+    data.users.edges.map(edge => edge.node.onePost.total),
+    [8, 13]
+  )
+  errCheck(t, errors)
+  t.is(data.users.edges.length, 2)
+  t.is(data.users.edges[0].node.fullName, 'Alivia Waelchi')
+  t.is(data.users.edges[0].node.twoPosts.edges.length, 2)
+
+  const firstPostBody = [
+    'Adipisci voluptate laborum minima sunt facilis sint quibusdam ut.',
+    'Deserunt nemo pariatur sed facere accusantium quis.',
+    'Nobis aut voluptate inventore quidem explicabo.'
+  ].join(' ')
+
+  t.is(data.users.edges[0].node.twoPosts.edges[0].node.body, firstPostBody)
+
+  t.is(data.users.edges[0].node.onePost.edges.length, 1)
+  t.is(data.users.edges[0].node.onePost.edges[0].node.body, firstPostBody)
+})

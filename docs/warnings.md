@@ -53,3 +53,86 @@ However, some functions return RAW clauses into which may or may not accept untr
 If these are strings containing malicious code, a SQL injection attack can occur.
 Such functions, like the `where`, `sqlJoin`, or `sqlExpr` function, should escape the input. See [this page](where.md) for example.
 
+## Custom resolvers
+
+<div class="admonition danger">
+  <p class="first admonition-title">Warning</p>
+  <p class="last">
+    When writing custom resolvers on non-trivial fields, the field value needs to be obtained through GraphQL's default resolver.
+  </p>
+</div>
+
+GraphQL allows querying the same field through multiple aliases, which may use different arguments:
+
+```graphql
+{
+  users {
+    following { fullName }
+    andrews: following(name: "andrew") { fullName }
+  }
+}
+```
+
+Normally, `join-monster` would allow accessing the value as `source.following` in a custom resolver:
+
+```javascript
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    following: {
+      //...
+      resolve: (source, args, context, info) => {
+        return processUsers(source.following)
+      }
+    }
+  })
+})
+```
+
+However, if there are multiple conflicting aliases accessing the same relation, the `source` object will look something like this:
+
+```javascript
+{
+  following$: [
+    { fullName: 'andrew carlson' },
+    { fullName: 'matt elder' }
+  ],
+  following$matts: [
+    { fullName: 'matt elder' }
+  ],
+  following: (args, context, info) => { /* ... */ }
+}
+```
+
+The `source.following` property is now a function that will return the correct value. GraphQL's default resolver will detect the function and do the right thing. However, passing a custom resolver will completely override GraphQL's default resolver instead of wrapping it.
+
+Therefore, it is required to get the actual value through GraphQL's default resolver first when using a custom resolver on a [non-trivial field](#non-trivial-fields):
+
+```javascript
+import { defaultFieldResolver } from 'graphql'
+
+const User = new GraphQLObjectType({
+  //...
+  fields: () => ({
+    //...
+    following: {
+      // ...
+      resolve: (source, args, context, info) => {
+        const value = defaultFieldResolver(source, args, context, info)
+        return processUsers(value)
+      }
+    }
+  })
+})
+```
+
+### Non-trivial Fields
+
+We currently treat fields as being "non-trivial" in the following cases:
+
+* Fields that point to another table, e.g. using `sqlJoin`
+* Fields using SQL expressions via `sqlExpr`
+* Fields with a union type
+
+When in doubt, `defaultFieldResolver` can safely be used in any custom resolver, even in cases where it is not necessary.

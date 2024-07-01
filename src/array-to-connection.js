@@ -1,6 +1,7 @@
 import { connectionFromArraySlice, cursorToOffset } from 'graphql-relay'
 import { objToCursor, last, sortKeyColumns } from './util'
 import idx from 'idx'
+import { getAliasKey } from './aliases'
 
 // a function for data manipulation AFTER its nested.
 // this is only necessary when using the SQL pagination
@@ -116,8 +117,16 @@ function arrToConnection(data, sqlAST) {
 export default arrToConnection
 
 function recurseOnObjInData(dataObj, astChild) {
+  const aliasKey = getAliasKey(astChild.fieldName, astChild.alias)
+  if (dataObj[aliasKey]) {
+    dataObj[aliasKey] = arrToConnection(
+      dataObj[aliasKey],
+      astChild
+    )
+  }
+
   const dataChild = dataObj[astChild.fieldName]
-  if (dataChild) {
+  if (dataChild && typeof dataChild !== 'function') {
     dataObj[astChild.fieldName] = arrToConnection(
       dataObj[astChild.fieldName],
       astChild

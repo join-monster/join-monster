@@ -275,6 +275,10 @@ const User = new GraphQLObjectType({
     },
     writtenMaterial1: {
       type: new GraphQLList(AuthoredUnion),
+      args: {
+        // Used to test multiple aliases with different args on unions
+        search: { type: GraphQLString },
+      },
       extensions: {
         joinMonster: {
           orderBy: 'id',
@@ -283,20 +287,31 @@ const User = new GraphQLObjectType({
                 sqlBatch: {
                   thisKey: 'author_id',
                   parentKey: 'id'
-                }
+                },
+                where: (table, args) => {
+                  if (args.search) {
+                    return `lower(${table}.${q('body', DB)}) LIKE lower('%${args.search}%')`
+                  }
+                },
               }
             : {
-                sqlJoin: (userTable, unionTable) =>
-                  `${userTable}.${q('id', DB)} = ${unionTable}.${q(
-                    'author_id',
-                    DB
-                  )}`
+                sqlJoin: (userTable, unionTable, args) => {
+                  const joinCondition = `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
+                  const filterCondition = args.search
+                    ? ` AND lower(${unionTable}.${q('body', DB)}) LIKE lower('%${args.search}%')`
+                    : ''
+                  return joinCondition + filterCondition
+                }
               })
         }
       }
     },
     writtenMaterial2: {
       type: new GraphQLList(AuthoredInterface),
+      args: {
+        // Used to test multiple aliases with different args on interfaces
+        search: { type: GraphQLString },
+      },
       extensions: {
         joinMonster: {
           orderBy: 'id',
@@ -305,15 +320,22 @@ const User = new GraphQLObjectType({
                 sqlBatch: {
                   thisKey: 'author_id',
                   parentKey: 'id'
-                }
+                },
+                where: (table, args) => {
+                  if (args.search) {
+                    return `lower(${table}.${q('body', DB)}) LIKE lower('%${args.search}%')`
+                  }
+                },
               }
             : {
-                sqlJoin: (userTable, unionTable) =>
-                  `${userTable}.${q('id', DB)} = ${unionTable}.${q(
-                    'author_id',
-                    DB
-                  )}`
-              })
+              sqlJoin: (userTable, unionTable, args) => {
+                const joinCondition = `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
+                const filterCondition = args.search
+                  ? ` AND lower(${unionTable}.${q('body', DB)}) LIKE lower('%${args.search}%')`
+                  : ''
+                return joinCondition + filterCondition
+              }
+            })
         }
       }
     }

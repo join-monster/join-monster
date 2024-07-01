@@ -1,4 +1,5 @@
 import { chain, isObject } from 'lodash'
+import { getAliasKey, hasConflictingSiblings } from './aliases'
 import { isEmptyArray } from './util'
 
 const moveProp = (obj, qualifiedName, fieldName) => {
@@ -31,8 +32,9 @@ export default function resolveUnions(data, sqlAST) {
       const suffix = '@' + typeName
       const children = sqlAST.typedChildren[typeName]
       for (let child of children) {
-        const fieldName = child.fieldName
-        const qualifiedName = child.fieldName + suffix
+        const isConflicting = hasConflictingSiblings(child, sqlAST.typedChildren[typeName]) && !child.sqlBatch
+        const fieldName = isConflicting ? getAliasKey(child.fieldName, child.alias) : child.fieldName
+        const qualifiedName = isConflicting ? getAliasKey(child.fieldName + suffix, child.alias) : child.fieldName + suffix
         if (Array.isArray(data)) {
           for (let obj of data) {
             moveProp(obj, qualifiedName, fieldName)
@@ -60,7 +62,8 @@ export default function resolveUnions(data, sqlAST) {
         (child.type === 'table' || child.type === 'union') &&
         !child.sqlBatch
       ) {
-        const fieldName = child.fieldName
+        const isConflicting = hasConflictingSiblings(child, sqlAST.children)
+        const fieldName = isConflicting ? getAliasKey(child.fieldName, child.alias) : child.fieldName
         if (Array.isArray(data)) {
           const nextLevelData = chain(data)
             .filter(obj => obj != null)
