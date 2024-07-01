@@ -1,5 +1,6 @@
 ### vNEXT 
 
+### v4.0.0 (July 1, 2024)
 **Breaking changes:**
 
 It is no longer guaranteed that a field's value is available under `source[fieldName]` in a custom resolver. Instead, custom resolvers on [non-trivial fields](./warnings.md#non-trivial-fields)  need to use GraphQL's default resolver to get the field value:
