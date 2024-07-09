@@ -428,6 +428,11 @@ function handleTable(
     )
   }
 
+  if (fieldConfig.offset) {
+    assert(fieldConfig.orderBy, '`limit` is required with `offset`')
+    sqlASTNode.offset = unthunk(fieldConfig.offset, sqlASTNode.args || {}, context)
+  }
+
   if (sqlASTNode.paginate) {
     getSortColumns(field, sqlASTNode, context)
   }

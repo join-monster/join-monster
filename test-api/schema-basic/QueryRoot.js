@@ -126,7 +126,7 @@ export default new GraphQLObjectType({
             // eslint-disable-line no-unused-vars
             if (args.filterLegless)
               return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
-          }
+          } 
         }
       },
       resolve: (parent, args, context, resolveInfo) => {
