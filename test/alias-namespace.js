@@ -94,6 +94,7 @@ if (process.env.DB === 'PG' && !process.env.STRATEGY && !process.env.MINIFY) {
       }
     `
     await graphql({schema, source})
-    t.assert(spy.calledWith('Alias length exceeds the max allowed length of 63 characters for pg: upper("author$"."last_name") AS "comments__post__author__following__posts__author$__capitalizedLastName"'))
+    // eslint-disable-next-line max-len
+    t.assert(spy.calledWith(`Alias length exceeds the max allowed length of 63 characters for pg: upper("author$"."last_name") AS "comments__post__author__following__posts__author$__capitalizedLastName"`))
   })
 }

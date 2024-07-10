@@ -1,6 +1,7 @@
 ### vNEXT 
 #### Fixed
 - [#535](https://github.com/join-monster/join-monster/pull/535): Allow manual offset and limit control.
+- [#531](https://github.com/join-monster/join-monster/pull/531): Support computed columns for sorting.
 
 ### v4.0.0 (July 1, 2024)
 **Breaking changes:**

@@ -61,24 +61,23 @@ export default new GraphQLObjectType({
       type: UserConnection,
       args: {
         search: { type: GraphQLString },
+        by: { type: GraphQLString }, // ideally an enum for ordering
         ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
       },
       extensions: {
         joinMonster: {
           sqlPageLimit: 100,
           sqlPaginate: !!PAGINATE,
-          ...do {
-            if (PAGINATE === 'offset') {
-              ;({ orderBy: 'id' })
-            } else if (PAGINATE === 'keyset') {
-              ;({
-                sortKey: {
+          ...(PAGINATE === 'offset' ?
+              { orderBy: args => ({ [args.by ?? 'id'] : 'asc' }) }
+            : PAGINATE === 'keyset' ?
+              {
+                sortKey: args => ({
                   order: 'asc',
-                  key: 'id'
-                }
-              })
-            }
-          },
+                  key: args.by ?? 'id'
+                })
+              }
+              : {}),
           where: (table, args) => {
             // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
             if (args.search)

@@ -10,8 +10,7 @@ import {
   ensure,
   unthunk,
   inspect,
-  getConfigFromSchemaObject,
-  sortKeyColumns
+  getConfigFromSchemaObject
 } from '../util'
 
 import {
@@ -37,12 +36,12 @@ class SQLASTNode {
 }
 
 // any value here needs to be paired with an instance type checking function from graphql in isOneOfGraphQLTypes()
-const ALL_TYPES_TO_CHECK = new Set(['GraphQLObjectType', 
-                                    'GraphQLUnionType', 
-                                    'GraphQLInterfaceType', 
-                                    'GraphQLList', 
-                                    'GraphQLNonNull',
-                                    'GraphQLScalarType'])
+const ALL_TYPES_TO_CHECK = new Set(['GraphQLObjectType',
+  'GraphQLUnionType',
+  'GraphQLInterfaceType',
+  'GraphQLList',
+  'GraphQLNonNull',
+  'GraphQLScalarType'])
 
 
 function isOneOfGraphQLTypes(instance, typeStringArray) {
@@ -50,10 +49,10 @@ function isOneOfGraphQLTypes(instance, typeStringArray) {
   typeStringArray.forEach(typeString => {
     if (typeString === 'GraphQLObjectType' && isObjectType(instance)) returnVal = true
     if (typeString === 'GraphQLUnionType' && isUnionType(instance)) returnVal = true
-    if (typeString === 'GraphQLInterfaceType' &&  isInterfaceType(instance)) returnVal = true
-    if (typeString === 'GraphQLList' &&  isListType(instance)) returnVal = true
-    if (typeString === 'GraphQLNonNull' &&  isNonNullType(instance)) returnVal = true
-    if (typeString === 'GraphQLScalarType' &&  isScalarType(instance)) returnVal = true
+    if (typeString === 'GraphQLInterfaceType' && isInterfaceType(instance)) returnVal = true
+    if (typeString === 'GraphQLList' && isListType(instance)) returnVal = true
+    if (typeString === 'GraphQLNonNull' && isNonNullType(instance)) returnVal = true
+    if (typeString === 'GraphQLScalarType' && isScalarType(instance)) returnVal = true
     if (!ALL_TYPES_TO_CHECK.has(typeString)) {
       throw new Error('unexpected input to isOneOfGraphQLTypes()')
     }
@@ -292,7 +291,7 @@ export function populateASTNode(
     // see enablePluginsForSchemaResolvers function: apollo-server issue #3988
   } else if (
     fieldConfig.sqlColumn ||
-      isOneOfGraphQLTypes(parentTypeNode, ['GraphQLObjectType', 'GraphQLInterfaceType'])
+    isOneOfGraphQLTypes(parentTypeNode, ['GraphQLObjectType', 'GraphQLInterfaceType'])
   ) {
     sqlASTNode.type = 'column'
     sqlASTNode.name = fieldConfig.sqlColumn || field.name
@@ -328,12 +327,6 @@ function handleTable(
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
 
-  if (fieldConfig.orderBy && !sqlASTNode.orderBy) {
-    sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
-    )
-  }
-
   // tables have child fields, lets push them to an array
   const children = (sqlASTNode.children = sqlASTNode.children || [])
 
@@ -368,12 +361,6 @@ function handleTable(
         fieldConfig.junction.include,
         sqlASTNode.args || {},
         context
-      )
-    }
-
-    if (fieldConfig.junction.orderBy) {
-      junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
       )
     }
 
@@ -433,8 +420,22 @@ function handleTable(
     sqlASTNode.offset = unthunk(fieldConfig.offset, sqlASTNode.args || {}, context)
   }
 
+  handleOrdering(field, sqlASTNode, context, this)
+  
   if (sqlASTNode.paginate) {
-    getSortColumns(field, sqlASTNode, context)
+    if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
+      if (sqlASTNode.junction) {
+        if (!sqlASTNode.junction.sortKey && !sqlASTNode.junction.orderBy) {
+          throw new Error(
+            '"sortKey" or "orderBy" required if "sqlPaginate" is true'
+          )
+        }
+      } else {
+        throw new Error(
+          '"sortKey" or "orderBy" required if "sqlPaginate" is true'
+        )
+      }
+    }
   }
 
   /*
@@ -770,8 +771,14 @@ function handleColumnsRequiredForPagination(sqlASTNode, namespace) {
     const sortKey = sqlASTNode.sortKey || sqlASTNode.junction.sortKey
 
     // this type of paging uses the "sort key(s)". we need to get this in order to generate the cursor
-    for (let column of sortKeyColumns(sortKey)) {
-      const newChild = columnToASTChild(column, namespace)
+    for (let key of sortKey) {
+      const newChild = key.sqlExpr ? {
+        // this is a special case when we are sorting by a computed column
+        type: 'expression',
+        sqlExpr: key.sqlExpr,
+        fieldName: key.column,
+        as: namespace.generate('column', key.column)
+      } : columnToASTChild(key.column, namespace)
       // if this joining on a "through-table", the sort key is on the threw table instead of this node's parent table
       if (!sqlASTNode.sortKey) {
         newChild.fromOtherTable = sqlASTNode.junction.as
@@ -874,45 +881,47 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   }
 }
 
-function getSortColumns(field, sqlASTNode, context) {
+const tryGetTypeFields = (resolveInfo) => {
+  try {
+    if (resolveInfo.returnType.ofType) {
+      return resolveInfo.returnType.ofType.getFields()
+    }
+    if (resolveInfo.returnType.getFields().edges) {
+      return resolveInfo.returnType.getFields().edges.type.ofType.getFields().node.type.ofType.getFields()
+    } 
+    return resolveInfo.returnType.getFields()
+  } catch {
+    return {}
+  }
+}
+
+function handleOrdering(field, sqlASTNode, context, resolveInfo) {
   const fieldConfig = getConfigFromSchemaObject(field)
 
   if (fieldConfig.sortKey) {
-    sqlASTNode.sortKey = unthunk(
-      fieldConfig.sortKey,
-      sqlASTNode.args || {},
-      context
-    )
+    const typeFields = tryGetTypeFields(resolveInfo)
+    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context, typeFields)
   }
   if (fieldConfig.orderBy) {
-    sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
-    )
+    const typeFields = tryGetTypeFields(resolveInfo)
+    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context, typeFields)
   }
   if (fieldConfig.junction) {
+    const typeFields = fieldConfig.junction.include
     if (fieldConfig.junction.sortKey) {
-      sqlASTNode.junction.sortKey = unthunk(
+      sqlASTNode.junction.sortKey = handleSortKey(
         fieldConfig.junction.sortKey,
-        sqlASTNode.args || {},
-        context
+        sqlASTNode,
+        context,
+        typeFields
       )
     }
     if (fieldConfig.junction.orderBy) {
       sqlASTNode.junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
-      )
-    }
-  }
-  if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
-    if (sqlASTNode.junction) {
-      if (!sqlASTNode.junction.sortKey && !sqlASTNode.junction.orderBy) {
-        throw new Error(
-          '"sortKey" or "orderBy" required if "sqlPaginate" is true'
-        )
-      }
-    } else {
-      throw new Error(
-        '"sortKey" or "orderBy" required if "sqlPaginate" is true'
+        fieldConfig.junction.orderBy,
+        sqlASTNode,
+        context,
+        typeFields
       )
     }
   }
@@ -962,9 +971,42 @@ const validateAndNormalizeDirection = direction => {
   return direction
 }
 
+const handleDynamicOrderings = (orderings, typeFields) => {
+  for (const ordering of orderings) {
+    ordering.sqlExpr = typeFields[ordering.column]?.sqlExpr ??
+      typeFields[ordering.column]?.extensions?.joinMonster?.sqlExpr  
+  }
+
+  return orderings
+}
+
+export function handleSortKey(thunkedSortKey, sqlASTNode, context, typeFields) {
+  const sortKey = unthunk(thunkedSortKey, sqlASTNode.args || {}, context)
+  if (!sortKey) return undefined
+  const orderings = []
+  if (Array.isArray(sortKey)) {
+    for (const { column, direction } of sortKey) {
+      assert(
+        column,
+        `Each "sortKey" array entry must have a 'column' and a 'direction' property`
+      )
+      orderings.push({ column, direction: validateAndNormalizeDirection(direction) })
+    }
+  } else {
+    assert(sortKey.order, 'A "sortKey" object must have an "order"')
+
+    for (const column of wrap(sortKey.key)) {
+      orderings.push({ column, direction: validateAndNormalizeDirection(sortKey.order) })
+    }
+  }
+
+  return handleDynamicOrderings(orderings, typeFields)
+}
+
 // Normalize the three styles of orderBy to an array of {column, direction} objects.
 // orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
-export function handleOrderBy(orderBy) {
+export function handleOrderBy(thunkedOrderBy, sqlASTNode, context, typeFields) {
+  const orderBy = unthunk(thunkedOrderBy, sqlASTNode.args || {}, context)
   if (!orderBy) return undefined
   const orderings = []
   if (Array.isArray(orderBy)) {
@@ -993,5 +1035,6 @@ export function handleOrderBy(orderBy) {
   } else {
     throw new Error('"orderBy" is invalid type: ' + inspect(orderBy))
   }
-  return orderings
+
+  return handleDynamicOrderings(orderings, typeFields)
 }
