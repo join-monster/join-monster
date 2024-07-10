@@ -37,9 +37,6 @@ function _defineObjectShape(parent, prefix, node) {
       case 'column':
         setField(prefixToPass + child.as)
         break
-      case 'computed':
-        fieldDefinition[child.fieldName] = prefixToPass + child.as
-        break
       case 'composite':
         setField(prefixToPass + child.as)
         break
