@@ -6,7 +6,7 @@ import { validateSqlAST, inspect } from '../util'
 import {
   joinPrefix,
   thisIsNotTheEndOfThisBatch,
-  sortKeyToOrderings,
+  flipOrderings,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch,
   orderingsToString
 } from './shared'
@@ -248,13 +248,13 @@ async function handleTable(
     if (idx(node, _ => _.junction.sortKey)) {
       orders.push({
         table: node.junction.as,
-        columns: sortKeyToOrderings(node.junction.sortKey, node.args)
+        columns: flipOrderings(node.junction.sortKey, node.args)
       })
     }
     if (node.sortKey) {
       orders.push({
         table: node.as,
-        columns: sortKeyToOrderings(node.sortKey, node.args)
+        columns: flipOrderings(node.sortKey, node.args)
       })
     }
   }

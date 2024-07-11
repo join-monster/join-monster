@@ -1,7 +1,6 @@
-import assert from 'assert'
 import { filter } from 'lodash'
 import { cursorToOffset } from 'graphql-relay'
-import { wrap, cursorToObj, maybeQuote } from '../util'
+import { cursorToObj, maybeQuote } from '../util'
 import idx from 'idx'
 
 export function joinPrefix(prefix) {
@@ -41,36 +40,14 @@ export function whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(
   )
 }
 
-export function sortKeyToOrderings(sortKey, args) {
-  const orderColumns = []
-  let flip = false
-  // flip the sort order if doing backwards paging
-  if (args && args.last) {
-    flip = true
-  }
+export function flipOrderings(orderings, args) {
+  const flip = args?.last
 
-  if (Array.isArray(sortKey)) {
-    for (const { column, direction } of sortKey) {
-      assert(
-        column,
-        `Each "sortKey" array entry must have a 'column' and a 'direction' property`
-      )
-      let descending = direction.toUpperCase() === 'DESC'
-      if (flip) descending = !descending
-
-      orderColumns.push({ column, direction: descending ? 'DESC' : 'ASC' })
-    }
-  } else {
-    assert(sortKey.order, 'A "sortKey" object must have an "order"')
-    let descending = sortKey.order.toUpperCase() === 'DESC'
+  return orderings.map(({direction, ...rest}) => {
+    let descending = direction.toUpperCase() === 'DESC'
     if (flip) descending = !descending
-
-    for (const column of wrap(sortKey.key)) {
-      orderColumns.push({ column, direction: descending ? 'DESC' : 'ASC' })
-    }
-  }
-
-  return orderColumns
+    return {direction: descending ? 'DESC' : 'ASC', ...rest}
+  })
 }
 
 export function keysetPagingSelect(
@@ -212,7 +189,7 @@ export function interpretForKeysetPaging(node, dialect) {
 
   const order = {
     table: sortTable,
-    columns: sortKeyToOrderings(sortKey, node.args)
+    columns: flipOrderings(sortKey, node.args)
   }
   const cursorKeys = order.columns.map(ordering => ordering.column)
 
