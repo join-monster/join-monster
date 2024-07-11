@@ -7,7 +7,8 @@ import {
   joinPrefix,
   thisIsNotTheEndOfThisBatch,
   sortKeyToOrderings,
-  whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch
+  whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch,
+  orderingsToString
 } from './shared'
 
 export default async function stringifySqlAST(topNode, context, options) {
@@ -432,11 +433,7 @@ async function handleTable(
 function stringifyOuterOrder(orders, q) {
   const conditions = []
   for (const condition of orders) {
-    for (const ordering of condition.columns) {
-      conditions.push(
-        `${q(condition.table)}.${q(ordering.column)} ${ordering.direction}`
-      )
-    }
+    conditions.push(orderingsToString(condition.columns, q, condition.table))
   }
   return conditions.join(', ')
 }
