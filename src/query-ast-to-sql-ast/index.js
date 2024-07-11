@@ -327,12 +327,6 @@ function handleTable(
   // if thats taken, this function will just add an underscore to the end to make it unique
   sqlASTNode.as = namespace.generate('table', field.name)
 
-  if (fieldConfig.orderBy && !sqlASTNode.orderBy) {
-    sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
-    )
-  }
-
   // tables have child fields, lets push them to an array
   const children = (sqlASTNode.children = sqlASTNode.children || [])
 
@@ -367,12 +361,6 @@ function handleTable(
         fieldConfig.junction.include,
         sqlASTNode.args || {},
         context
-      )
-    }
-
-    if (fieldConfig.junction.orderBy) {
-      junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
       )
     }
 
@@ -432,8 +420,28 @@ function handleTable(
     sqlASTNode.offset = unthunk(fieldConfig.offset, sqlASTNode.args || {}, context)
   }
 
+  handleOrdering(fieldConfig, sqlASTNode, context)
+
   if (sqlASTNode.paginate) {
-    getSortColumns(field, sqlASTNode, context)
+    if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
+      if (sqlASTNode.junction) {
+        if (!sqlASTNode.junction.sortKey && !sqlASTNode.junction.orderBy) {
+          throw new Error(
+            '"sortKey" or "orderBy" required if "sqlPaginate" is true'
+          )
+        }
+      } else {
+        throw new Error(
+          '"sortKey" or "orderBy" required if "sqlPaginate" is true'
+        )
+      }
+    }
+    if (sqlASTNode.sortKey && idx(sqlASTNode, _ => _.junction.sortKey)) {
+      throw new Error('"sortKey" must be on junction or main table, not both')
+    }
+    if (sqlASTNode.orderBy && idx(sqlASTNode, _ => _.junction.orderBy)) {
+      throw new Error('"orderBy" must be on junction or main table, not both')
+    }
   }
 
   /*
@@ -873,53 +881,28 @@ export function pruneDuplicateSqlDeps(sqlAST, namespace) {
   }
 }
 
-function getSortColumns(field, sqlASTNode, context) {
-  const fieldConfig = getConfigFromSchemaObject(field)
-
+function handleOrdering(fieldConfig, sqlASTNode, context) {
   if (fieldConfig.sortKey) {
-    sqlASTNode.sortKey = unthunk(
-      fieldConfig.sortKey,
-      sqlASTNode.args || {},
-      context
-    )
+    sqlASTNode.sortKey = handleSortKey(fieldConfig.sortKey, sqlASTNode, context)
   }
-  if (fieldConfig.orderBy) {
-    sqlASTNode.orderBy = handleOrderBy(
-      unthunk(fieldConfig.orderBy, sqlASTNode.args || {}, context)
-    )
+  if (fieldConfig.orderBy && !sqlASTNode.orderBy) {
+    sqlASTNode.orderBy = handleOrderBy(fieldConfig.orderBy, sqlASTNode, context)
   }
   if (fieldConfig.junction) {
     if (fieldConfig.junction.sortKey) {
-      sqlASTNode.junction.sortKey = unthunk(
+      sqlASTNode.junction.sortKey = handleSortKey(
         fieldConfig.junction.sortKey,
-        sqlASTNode.args || {},
+        sqlASTNode,
         context
       )
     }
     if (fieldConfig.junction.orderBy) {
       sqlASTNode.junction.orderBy = handleOrderBy(
-        unthunk(fieldConfig.junction.orderBy, sqlASTNode.args || {}, context)
+        fieldConfig.junction.orderBy, 
+        sqlASTNode, 
+        context
       )
     }
-  }
-  if (!sqlASTNode.sortKey && !sqlASTNode.orderBy) {
-    if (sqlASTNode.junction) {
-      if (!sqlASTNode.junction.sortKey && !sqlASTNode.junction.orderBy) {
-        throw new Error(
-          '"sortKey" or "orderBy" required if "sqlPaginate" is true'
-        )
-      }
-    } else {
-      throw new Error(
-        '"sortKey" or "orderBy" required if "sqlPaginate" is true'
-      )
-    }
-  }
-  if (sqlASTNode.sortKey && idx(sqlASTNode, _ => _.junction.sortKey)) {
-    throw new Error('"sortKey" must be on junction or main table, not both')
-  }
-  if (sqlASTNode.orderBy && idx(sqlASTNode, _ => _.junction.orderBy)) {
-    throw new Error('"orderBy" must be on junction or main table, not both')
   }
 }
 
@@ -961,9 +944,33 @@ const validateAndNormalizeDirection = direction => {
   return direction
 }
 
+export function handleSortKey(thunkedSortKey, sqlASTNode, context) {
+  const sortKey = unthunk(thunkedSortKey, sqlASTNode.args || {}, context)
+  if (!sortKey) return undefined
+  const orderings = []
+  if (Array.isArray(sortKey)) {
+    for (const { column, direction } of sortKey) {
+      assert(
+        column,
+        `Each "sortKey" array entry must have a 'column' and a 'direction' property`
+      )
+      orderings.push({ column, direction: validateAndNormalizeDirection(direction) })
+    }
+  } else {
+    assert(sortKey.order, 'A "sortKey" object must have an "order"')
+
+    for (const column of wrap(sortKey.key)) {
+      orderings.push({ column, direction: validateAndNormalizeDirection(sortKey.order) })
+    }
+  }
+
+  return orderings
+}
+
 // Normalize the three styles of orderBy to an array of {column, direction} objects.
 // orderBy could be just a string, interpreted as a column name, or an object of column: direction key values, or an array of { column, direction }s already.
-export function handleOrderBy(orderBy) {
+export function handleOrderBy(thunkedOrderBy, sqlASTNode, context) {
+  const orderBy = unthunk(thunkedOrderBy, sqlASTNode.args || {}, context)
   if (!orderBy) return undefined
   const orderings = []
   if (Array.isArray(orderBy)) {
