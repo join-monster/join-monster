@@ -67,18 +67,16 @@ export default new GraphQLObjectType({
         joinMonster: {
           sqlPageLimit: 100,
           sqlPaginate: !!PAGINATE,
-          ...do {
-            if (PAGINATE === 'offset') {
-              ;({ orderBy: 'id' })
-            } else if (PAGINATE === 'keyset') {
-              ;({
+          ...(PAGINATE === 'offset' ?
+              { orderBy: 'id' }
+            : PAGINATE === 'keyset' ?
+              {
                 sortKey: {
                   order: 'asc',
                   key: 'id'
                 }
-              })
-            }
-          },
+              }
+              : {}),
           where: (table, args) => {
             // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
             if (args.search)
