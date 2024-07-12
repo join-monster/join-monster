@@ -1,5 +1,7 @@
 ### vNEXT 
 #### Fixed
+- [#538](https://github.com/join-monster/join-monster/pull/538): Refactor: cleanup code around sorting.
+- [#537](https://github.com/join-monster/join-monster/pull/537): Fix for messed up files syntax.
 - [#535](https://github.com/join-monster/join-monster/pull/535): Allow manual offset and limit control.
 
 ### v4.0.0 (July 1, 2024)
