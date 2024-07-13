@@ -25,10 +25,12 @@ export function errCheck(t, errors) {
 }
 
 export function getDatabaseOptions(knex) {
-  const { MINIFY, ALIAS_PREFIX } = process.env
+  const { STRATEGY, MINIFY, ALIAS_PREFIX, DB } = process.env
   const options = {
     minify: +MINIFY === 1,
-    aliasPrefix: ALIAS_PREFIX
+    aliasPrefix: ALIAS_PREFIX,
+    db: DB,
+    strategy: STRATEGY,
   }
   const client = knex.client.config.client
   if (client === 'mysql') {
