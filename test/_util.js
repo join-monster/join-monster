@@ -3,12 +3,6 @@ import { graphql } from 'graphql'
 import schemaBasic from '../test-api/schema-basic/index'
 import * as queryAST from '../src/query-ast-to-sql-ast/index'
 
-import mysqlModule from '../src/stringifiers/dialects/mysql'
-import oracleModule from '../src/stringifiers/dialects/oracle'
-import pgModule from '../src/stringifiers/dialects/pg'
-import sqlite3Module from '../src/stringifiers/dialects/sqlite3'
-
-
 const spy = sinon.spy(queryAST, 'queryASTToSqlAST')
 
 export function buildResolveInfo(query) {
@@ -35,13 +29,13 @@ export function getDatabaseOptions(knex) {
   }
   const client = knex.client.config.client
   if (client === 'mysql') {
-    options.dialectModule = mysqlModule
+    options.dialect = PAGINATE ? 'mysql8' : 'mysql'
   } else if (client === 'pg') {
-    options.dialectModule = pgModule
+    options.dialect = 'pg'
   } else if (client === 'oracledb') {
-    options.dialectModule = oracleModule
+    options.dialect = 'oracle'
   } else if (client === 'sqlite3') {
-    options.dialectModule = sqlite3Module
+    options.dialect = 'sqlite3'
   }
 
   return options
