@@ -286,7 +286,7 @@ test('it should handle order on many-to-many', async t => {
   t.deepEqual(expect, data)
 })
 
-test('it sould handle order on many-to-many', async t => {
+test('it should handle order on many-to-many in junction', async t => {
   const source = `{
     user(id: 3) {
       fullName
