@@ -50,8 +50,8 @@ export default async function stringifySqlAST(topNode, context, options) {
       ([, alias]) => alias.length > dialect.maxAliasLength,
     )
     if (exceedingAliases.length) {
-      // eslint-disable-next-line max-len
       console.warn(
+        // eslint-disable-next-line max-len
         `Alias length exceeds the max allowed length of ${dialect.maxAliasLength} characters for ${dialect.name}: ${exceedingAliases.map(([column, alias]) => `${column} AS ${alias}`).join(', ')}`,
       )
     }
