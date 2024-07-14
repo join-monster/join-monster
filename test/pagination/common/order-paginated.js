@@ -199,7 +199,7 @@ const schema = new GraphQLSchema({
   }),
 })
 
-if (process.env.PAGINATE === 'keyset') {
+if (PAGINATE === 'keyset') {
   test('[keyset] should handle order columns on the main table', async (t) => {
     const source = `{
       user(id: 2) {
@@ -288,7 +288,7 @@ if (process.env.PAGINATE === 'keyset') {
   })
 }
 
-if (process.env.PAGINATE === 'offset') {
+if (PAGINATE === 'offset') {
   test('[offset] should handle order columns on the main table', async (t) => {
     const source = `{
       user(id: 2) {
