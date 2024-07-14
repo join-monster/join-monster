@@ -22,7 +22,7 @@ import joinMonster from '../../src/index'
 
 const { MINIFY, ALIAS_PREFIX, DB } = process.env
 const options = {
-  minify: MINIFY == 1,
+  minify: +MINIFY === 1,
   aliasPrefix: ALIAS_PREFIX,
 }
 if (knex.client.config.client === 'mysql') {
@@ -89,8 +89,7 @@ export default new GraphQLObjectType({
       },
       extensions: {
         joinMonster: {
-          where: (usersTable, args, context) => {
-            // eslint-disable-line no-unused-vars
+          where: (usersTable, args) => {
             if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
             if (args.idEncoded)
               return `${usersTable}.${q('id', DB)} = ${fromBase64(
@@ -122,8 +121,7 @@ export default new GraphQLObjectType({
       },
       extensions: {
         joinMonster: {
-          where: (sponsorsTable, args, context) => {
-            // eslint-disable-line no-unused-vars
+          where: (sponsorsTable, args) => {
             if (args.filterLegless)
               return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
           },

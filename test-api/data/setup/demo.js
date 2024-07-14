@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 import faker from 'faker'
 
 function* count(limit) {

@@ -1,4 +1,3 @@
-const url = require('url')
 const { execSync } = require('child_process')
 const assert = require('assert')
 const fs = require('fs')
@@ -81,7 +80,7 @@ module.exports = function (db, name) {
     return require('knex')({
       client: 'sqlite3',
       connection: {
-        filename: __dirname + `/../db/${name}-data.sl3`,
+        filename: path.join(__dirname, `/../db/${name}-data.sl3`),
       },
       useNullAsDefault: true,
     })

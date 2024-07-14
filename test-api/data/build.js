@@ -10,9 +10,9 @@ assert(
   'Environment variable PG_URL must be defined, e.g. "postgres://user:pass@localhost/"',
 )
 ;(async () => {
-  //console.log('building oracle')
-  //await require('./setup/test1')('oracle')
-  //await require('./setup/test2')('oracle')
+  // console.log('building oracle')
+  // await require('./setup/test1')('oracle')
+  // await require('./setup/test2')('oracle')
 
   console.log('building sqlite3')
   await require('./setup/test1')('sqlite3')

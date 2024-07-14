@@ -75,8 +75,7 @@ const User = new GraphQLObjectType({
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          sqlExpr: (table, args, context) =>
-            `upper(${table}.${q('last_name', DB)})`, // eslint-disable-line no-unused-vars
+          sqlExpr: (table) => `upper(${table}.${q('last_name', DB)})`, // eslint-disable-line no-unused-vars
         },
       },
     },

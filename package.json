@@ -24,7 +24,7 @@
     "testtsd": "npm run build && tsd",
     "coverage": "nyc --reporter=html npm run test",
     "view-coverage": "open coverage/index.html",
-    "lint": "eslint src test",
+    "lint": "eslint src test test-api",
     "prettier": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"test-api/**/*.js\"",
     "start": "babel-watch ./test-api/server.js",
     "docs": "mkdocs serve",

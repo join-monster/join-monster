@@ -26,7 +26,7 @@ import { q } from '../shared'
 const { PAGINATE, DB } = process.env
 
 const options = {
-  minify: process.env.MINIFY == 1,
+  minify: +process.env.MINIFY === 1,
   aliasPrefix: process.env.ALIAS_PREFIX,
 }
 if (knex.client.config.client === 'mysql') {
@@ -67,16 +67,15 @@ export default new GraphQLObjectType({
         joinMonster: {
           sqlPageLimit: 100,
           sqlPaginate: !!PAGINATE,
-          ...(PAGINATE === 'offset'
-            ? { orderBy: 'id' }
-            : PAGINATE === 'keyset'
-              ? {
-                  sortKey: {
-                    order: 'asc',
-                    key: 'id',
-                  },
-                }
-              : {}),
+          ...(PAGINATE === 'offset' ? { orderBy: 'id' } : {}),
+          ...(PAGINATE === 'keyset'
+            ? {
+                sortKey: {
+                  order: 'asc',
+                  key: 'id',
+                },
+              }
+            : {}),
           where: (table, args) => {
             // this is naughty. do not allow un-escaped GraphQLString inputs into the WHERE clause...
             if (args.search)
@@ -125,7 +124,7 @@ export default new GraphQLObjectType({
       },
       extensions: {
         joinMonster: {
-          where: (usersTable, args, context) => {
+          where: (usersTable, args) => {
             // eslint-disable-line no-unused-vars
             if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
           },

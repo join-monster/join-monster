@@ -16,7 +16,7 @@ import {
 
 import { User } from './User'
 import { CommentConnection } from './Comment'
-import { Tag, TagConnection } from './Tag'
+import { Tag } from './Tag'
 import { Authored } from './Authored/Interface'
 import { nodeInterface } from './Node'
 import { q, bool } from '../shared'
@@ -92,16 +92,15 @@ export const Post = new GraphQLObjectType({
       extensions: {
         joinMonster: {
           sqlPaginate: !!PAGINATE,
-          ...(PAGINATE === 'offset'
-            ? { orderBy: 'id' }
-            : PAGINATE === 'keyset'
-              ? {
-                  sortKey: {
-                    order: 'DESC',
-                    key: 'id',
-                  },
-                }
-              : {}),
+          ...(PAGINATE === 'offset' ? { orderBy: 'id' } : {}),
+          ...(PAGINATE === 'keyset'
+            ? {
+                sortKey: {
+                  order: 'DESC',
+                  key: 'id',
+                },
+              }
+            : {}),
           ...(STRATEGY === 'batch' || STRATEGY === 'mix'
             ? {
                 sqlBatch: {
