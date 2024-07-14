@@ -3,7 +3,7 @@ import {
   GraphQLList,
   GraphQLString,
   GraphQLInt,
-  GraphQLBoolean
+  GraphQLBoolean,
 } from 'graphql'
 
 import User from './User'
@@ -19,25 +19,25 @@ export default new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: q('posts', DB),
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   interfaces: () => [Authored],
   fields: () => ({
     id: {
-      type: GraphQLInt
+      type: GraphQLInt,
     },
     body: {
       description: 'The content of the post',
-      type: GraphQLString
+      type: GraphQLString,
     },
     authorId: {
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlColumn: 'author_id'
-        }
-      }
+          sqlColumn: 'author_id',
+        },
+      },
     },
     author: {
       description: 'The user that created the post',
@@ -48,56 +48,56 @@ export default new GraphQLObjectType({
             ? {
                 sqlBatch: {
                   thisKey: 'id',
-                  parentKey: 'author_id'
-                }
+                  parentKey: 'author_id',
+                },
               }
             : {
                 sqlJoin: (postTable, userTable) =>
                   `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
                     'id',
-                    DB
-                  )}`
-              })
-        }
-      }
+                    DB,
+                  )}`,
+              }),
+        },
+      },
     },
     comments: {
       description: 'The comments on this post',
       type: new GraphQLList(Comment),
       args: {
         active: { type: GraphQLBoolean },
-        asc: { type: GraphQLBoolean }
+        asc: { type: GraphQLBoolean },
       },
       extensions: {
         joinMonster: {
-          orderBy: args => ({ id: args.asc ? 'asc' : 'desc' }),
+          orderBy: (args) => ({ id: args.asc ? 'asc' : 'desc' }),
           ...(['batch', 'mix'].includes(STRATEGY)
             ? {
                 sqlBatch: {
                   thisKey: 'post_id',
-                  parentKey: 'id'
+                  parentKey: 'id',
                 },
                 where: (table, args) =>
                   args.active
                     ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
-                    : null
+                    : null,
               }
             : {
                 sqlJoin: (postTable, commentTable, args) =>
                   `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
                     'id',
-                    DB
+                    DB,
                   )} ${
                     args.active
                       ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
                           false,
-                          DB
+                          DB,
                         )}`
                       : ''
-                  }`
-              })
-        }
-      }
+                  }`,
+              }),
+        },
+      },
     },
     numComments: {
       description: 'How many comments this post has',
@@ -105,16 +105,16 @@ export default new GraphQLObjectType({
       extensions: {
         joinMonster: {
           // you can info from a correlated subquery
-          sqlExpr: table =>
+          sqlExpr: (table) =>
             `(SELECT count(*) from ${q('comments', DB)} WHERE ${table}.${q(
               'id',
-              DB
-            )} = ${q('comments', DB)}.${q('post_id', DB)})`
-        }
-      }
+              DB,
+            )} = ${q('comments', DB)}.${q('post_id', DB)})`,
+        },
+      },
     },
     archived: {
-      type: GraphQLBoolean
-    }
-  })
+      type: GraphQLBoolean,
+    },
+  }),
 })

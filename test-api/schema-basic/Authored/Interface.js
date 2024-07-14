@@ -28,24 +28,24 @@ export default new GraphQLInterfaceType({
       FROM ${q('comments', DB)}
     )`,
       uniqueKey: ['id', '$type'],
-      alwaysFetch: '$type'
-    }
+      alwaysFetch: '$type',
+    },
   },
   fields: () => ({
     id: {
-      type: GraphQLInt
+      type: GraphQLInt,
     },
     body: {
-      type: GraphQLString
+      type: GraphQLString,
     },
     authorId: {
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlColumn: 'author_id'
-        }
-      }
-    }
+          sqlColumn: 'author_id',
+        },
+      },
+    },
   }),
-  resolveType: obj => obj.$type
+  resolveType: (obj) => obj.$type,
 })

@@ -1,4 +1,3 @@
-
 import path from 'path'
 import express from 'express'
 import cors from 'cors'
@@ -24,27 +23,28 @@ app.post(
   '/graphql',
   createHandler({
     schema: schemaBasic,
-    context: req => req.raw,
-    formatError: e => {
+    context: (req) => req.raw,
+    formatError: (e) => {
       console.error(e)
       return e
-    }
-  }))
+    },
+  }),
+)
 
 app.post(
   '/graphql-relay',
   createHandler({
     schema: schemaRelay,
-    context: req => req.raw,
-    formatError: e => {
+    context: (req) => req.raw,
+    formatError: (e) => {
       console.error(e)
       return e
-    }
-  })
+    },
+  }),
 )
 
 app.listen(3000, () =>
   console.log(
-    'server listening at http://localhost:3000/graphql and http://localhost:3000/graphql-relay'
-  )
+    'server listening at http://localhost:3000/graphql and http://localhost:3000/graphql-relay',
+  ),
 )

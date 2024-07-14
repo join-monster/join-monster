@@ -16,9 +16,9 @@ const Person = new GraphQLInterfaceType({
   },
   fields: {
     fullName: {
-      type: GraphQLString
-    }
-  }
+      type: GraphQLString,
+    },
+  },
 })
 
 export default Person

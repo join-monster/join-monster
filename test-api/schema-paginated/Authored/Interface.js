@@ -2,7 +2,7 @@ import {
   GraphQLInterfaceType,
   GraphQLID,
   GraphQLInt,
-  GraphQLString
+  GraphQLString,
 } from 'graphql'
 
 import { connectionDefinitions } from 'graphql-relay'
@@ -35,35 +35,34 @@ export const Authored = new GraphQLInterfaceType({
       FROM ${q('comments', DB)}
     )`,
       uniqueKey: ['id', '$type'],
-      alwaysFetch: '$type'
-    }
+      alwaysFetch: '$type',
+    },
   },
   fields: () => ({
     id: {
-      type: GraphQLID
+      type: GraphQLID,
     },
     body: {
-      type: GraphQLString
+      type: GraphQLString,
     },
     authorId: {
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlColumn: 'author_id'
-        }
-      }
-    }
+          sqlColumn: 'author_id',
+        },
+      },
+    },
   }),
-  resolveType: obj => obj.$type
+  resolveType: (obj) => obj.$type,
 })
 
 const connectionConfig = { nodeType: Authored }
 if (PAGINATE === 'offset') {
   connectionConfig.connectionFields = {
-    total: { type: GraphQLInt }
+    total: { type: GraphQLInt },
   }
 }
-const { connectionType: AuthoredConnection } = connectionDefinitions(
-  connectionConfig
-)
+const { connectionType: AuthoredConnection } =
+  connectionDefinitions(connectionConfig)
 export { AuthoredConnection }

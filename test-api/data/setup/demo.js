@@ -13,7 +13,7 @@ const numRelationships = 15
 const numLikes = 300
 const numTags = 200
 
-module.exports = async db => {
+module.exports = async (db) => {
   const knex = await require('../schema/setup')(db, 'demo')
 
   console.log('creating accounts...')
@@ -23,7 +23,7 @@ module.exports = async db => {
       first_name: faker.name.firstName(),
       last_name: faker.name.lastName(),
       email_address: faker.internet.email(),
-      created_at: faker.date.past()
+      created_at: faker.date.past(),
     }
   }
   await knex.batchInsert('accounts', accounts, 50)
@@ -35,7 +35,7 @@ module.exports = async db => {
       body: faker.lorem.sentences(faker.random.number({ min: 2, max: 4 })),
       author_id: faker.random.number({ min: 1, max: numUsers }),
       archived: i % 5 === 0,
-      created_at: faker.date.past()
+      created_at: faker.date.past(),
     }
   }
   await knex.batchInsert('posts', posts, 50)
@@ -48,7 +48,7 @@ module.exports = async db => {
       post_id: faker.random.number({ min: 1, max: numPosts }),
       author_id: faker.random.number({ min: 1, max: numUsers }),
       archived: i % 10 === 0,
-      created_at: faker.date.past()
+      created_at: faker.date.past(),
     }
   }
   await knex.batchInsert('comments', comments, 50)
@@ -65,7 +65,7 @@ module.exports = async db => {
         follower_id,
         followee_id,
         closeness: Math.random() > 0.66 ? 'best' : 'acquaintance',
-        created_at: faker.date.past()
+        created_at: faker.date.past(),
       })
     }
     used.add(key)
@@ -83,7 +83,7 @@ module.exports = async db => {
       likes.push({
         account_id,
         comment_id,
-        created_at: faker.date.past()
+        created_at: faker.date.past(),
       })
     }
     usedLikes.add(key)
@@ -94,28 +94,28 @@ module.exports = async db => {
     {
       generation: 1,
       first_name: 'erlich',
-      last_name: 'bachman'
+      last_name: 'bachman',
     },
     {
       generation: 1,
       first_name: 'andrew',
-      last_name: 'bachman'
+      last_name: 'bachman',
     },
     {
       generation: 2,
       first_name: 'erlich',
-      last_name: 'bachman'
+      last_name: 'bachman',
     },
     {
       generation: 2,
       first_name: 'matt',
-      last_name: 'bachman'
+      last_name: 'bachman',
     },
     {
       generation: 1,
       first_name: 'matt',
-      last_name: 'daemon'
-    }
+      last_name: 'daemon',
+    },
   ])
 
   console.log('creating tags...')
@@ -125,7 +125,7 @@ module.exports = async db => {
       tag: faker.random.word(),
       post_id: faker.random.number({ min: 1, max: numPosts }),
       tag_order: i,
-      created_at: faker.date.past()
+      created_at: faker.date.past(),
     }
   }
   await knex.batchInsert('tags', tags, 50)

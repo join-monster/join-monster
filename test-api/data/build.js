@@ -3,11 +3,11 @@ require('dotenv-expand')(require('dotenv').config())
 
 assert(
   process.env.MYSQL_URL,
-  'Environment variable MYSQL_URL must be defined, e.g. "mysql://user:pass@localhost/"'
+  'Environment variable MYSQL_URL must be defined, e.g. "mysql://user:pass@localhost/"',
 )
 assert(
   process.env.PG_URL,
-  'Environment variable PG_URL must be defined, e.g. "postgres://user:pass@localhost/"'
+  'Environment variable PG_URL must be defined, e.g. "postgres://user:pass@localhost/"',
 )
 ;(async () => {
   //console.log('building oracle')
@@ -26,7 +26,7 @@ assert(
   await require('./setup/test1')('pg')
   await require('./setup/test2')('pg')
   await require('./setup/demo')('pg')
-})().catch(err => {
+})().catch((err) => {
   console.error(err)
   process.exit(1)
 })

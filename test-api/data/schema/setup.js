@@ -5,7 +5,7 @@ const fs = require('fs')
 const path = require('path')
 const Promise = require('bluebird')
 
-module.exports = function(db, name) {
+module.exports = function (db, name) {
   const { ORACLE_URL, PG_URL, MYSQL_URL } = process.env
 
   if (db === 'oracle') {
@@ -17,18 +17,18 @@ module.exports = function(db, name) {
         user: name,
         password,
         connectString,
-        stmtCacheSize: 0
-      }
+        stmtCacheSize: 0,
+      },
     })
 
     let schema = fs.readFileSync(path.join(__dirname, 'oracle.sql')).toString()
     schema = schema.split(/\r?\n\r?\n/)
     return Promise.each(
-      schema.filter(i => i),
-      stmt => knex.raw(stmt.trim())
+      schema.filter((i) => i),
+      (stmt) => knex.raw(stmt.trim()),
     )
       .then(() => knex)
-      .catch(err => {
+      .catch((err) => {
         console.error(err)
         knex.destroy()
         process.exit(1)
@@ -38,7 +38,7 @@ module.exports = function(db, name) {
   if (db === 'pg') {
     assert(
       PG_URL,
-      'Must provide environment variable PG_URL, e.g. "postgres://user:pass@localhost/"'
+      'Must provide environment variable PG_URL, e.g. "postgres://user:pass@localhost/"',
     )
     const out = execSync(`psql ${PG_URL + name} < ${__dirname}/pg.sql`)
     if (out.toString()) {
@@ -46,33 +46,33 @@ module.exports = function(db, name) {
     }
     return require('knex')({
       client: 'pg',
-      connection: PG_URL + name
+      connection: PG_URL + name,
     })
   }
 
   if (db === 'mysql') {
     assert(
       MYSQL_URL,
-      'Must provide environment variable MYSQL_URL, e.g. "mysql://user:pass@localhost/"'
+      'Must provide environment variable MYSQL_URL, e.g. "mysql://user:pass@localhost/"',
     )
     const knex = require('knex')({
       client: 'mysql',
-      connection: MYSQL_URL + name
+      connection: MYSQL_URL + name,
     })
     const ddl = fs
       .readFileSync(`${__dirname}/mysql.sql`, 'utf8')
       .split(';')
-      .map(stmt => stmt.trim())
-      .filter(stmt => !!stmt)
+      .map((stmt) => stmt.trim())
+      .filter((stmt) => !!stmt)
     for (let stmt of ddl) {
       console.log(stmt)
     }
-    return Promise.each(ddl, stmt => knex.raw(stmt)).then(() => knex)
+    return Promise.each(ddl, (stmt) => knex.raw(stmt)).then(() => knex)
   }
 
   if (db === 'sqlite3') {
     const out = execSync(
-      `/bin/cat ${__dirname}/sqlite3.sql | sqlite3 ${__dirname}/../db/${name}-data.sl3`
+      `/bin/cat ${__dirname}/sqlite3.sql | sqlite3 ${__dirname}/../db/${name}-data.sl3`,
     )
     if (out.toString()) {
       console.log(out.toString())
@@ -81,9 +81,9 @@ module.exports = function(db, name) {
     return require('knex')({
       client: 'sqlite3',
       connection: {
-        filename: __dirname + `/../db/${name}-data.sl3`
+        filename: __dirname + `/../db/${name}-data.sl3`,
       },
-      useNullAsDefault: true
+      useNullAsDefault: true,
     })
   }
 

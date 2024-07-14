@@ -4,7 +4,7 @@ import {
   GraphQLNonNull,
   GraphQLString,
   GraphQLInt,
-  GraphQLBoolean
+  GraphQLBoolean,
 } from 'graphql'
 
 import { globalIdField } from 'graphql-relay'
@@ -25,50 +25,50 @@ const User = new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: () => q('accounts', DB),
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   interfaces: [Person],
   fields: () => ({
     id: {
-      type: GraphQLInt
+      type: GraphQLInt,
     },
     email: {
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          sqlColumn: 'email_address'
-        }
-      }
+          sqlColumn: 'email_address',
+        },
+      },
     },
     idEncoded: {
       description: 'The ID base-64 encoded',
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          sqlColumn: 'id'
-        }
+          sqlColumn: 'id',
+        },
       },
-      resolve: user => toBase64(user.idEncoded)
+      resolve: (user) => toBase64(user.idEncoded),
     },
     globalId: {
       description: 'The global ID for the Relay spec',
       ...globalIdField('User'),
       extensions: {
         joinMonster: {
-          sqlDeps: ['id']
-        }
-      }
+          sqlDeps: ['id'],
+        },
+      },
     },
     fullName: {
       description: "A user's first and last name",
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          sqlDeps: ['first_name', 'last_name']
-        }
+          sqlDeps: ['first_name', 'last_name'],
+        },
       },
-      resolve: user => `${user.first_name} ${user.last_name}`
+      resolve: (user) => `${user.first_name} ${user.last_name}`,
     },
     capitalizedLastName: {
       description: 'The last name WITH CAPS LOCK',
@@ -76,9 +76,9 @@ const User = new GraphQLObjectType({
       extensions: {
         joinMonster: {
           sqlExpr: (table, args, context) =>
-            `upper(${table}.${q('last_name', DB)})` // eslint-disable-line no-unused-vars
-        }
-      }
+            `upper(${table}.${q('last_name', DB)})`, // eslint-disable-line no-unused-vars
+        },
+      },
     },
     comments: {
       description: "Comments the user has written on people's posts",
@@ -86,8 +86,8 @@ const User = new GraphQLObjectType({
       args: {
         active: {
           description: 'Get only comments not archived',
-          type: GraphQLBoolean
-        }
+          type: GraphQLBoolean,
+        },
       },
       extensions: {
         joinMonster: {
@@ -96,29 +96,29 @@ const User = new GraphQLObjectType({
             ? {
                 sqlBatch: {
                   thisKey: 'author_id',
-                  parentKey: 'id'
+                  parentKey: 'id',
                 },
                 where: (table, args) =>
                   args.active
                     ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
-                    : null
+                    : null,
               }
             : {
                 sqlJoin: (userTable, commentTable, args) =>
                   `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
                     'id',
-                    DB
+                    DB,
                   )} ${
                     args.active
                       ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
                           false,
-                          DB
+                          DB,
                         )}`
                       : ''
-                  }`
-              })
-        }
-      }
+                  }`,
+              }),
+        },
+      },
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -126,8 +126,8 @@ const User = new GraphQLObjectType({
       args: {
         active: {
           description: 'Get only posts not archived',
-          type: GraphQLBoolean
-        }
+          type: GraphQLBoolean,
+        },
       },
       extensions: {
         joinMonster: {
@@ -140,18 +140,18 @@ const User = new GraphQLObjectType({
             ? {
                 sqlBatch: {
                   thisKey: 'author_id',
-                  parentKey: 'id'
-                }
+                  parentKey: 'id',
+                },
               }
             : {
                 sqlJoin: (userTable, postTable) =>
                   `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
                     'id',
-                    DB
-                  )}`
-              })
-        }
-      }
+                    DB,
+                  )}`,
+              }),
+        },
+      },
     },
     following: {
       description: 'Users that this user is following',
@@ -159,7 +159,7 @@ const User = new GraphQLObjectType({
       args: {
         name: { type: GraphQLString },
         oldestFirst: { type: GraphQLBoolean },
-        intimacy: { type: IntimacyLevel }
+        intimacy: { type: IntimacyLevel },
       },
       extensions: {
         joinMonster: {
@@ -170,7 +170,7 @@ const User = new GraphQLObjectType({
               : false,
           junction: {
             sqlTable: q('relationships', DB),
-            orderBy: args =>
+            orderBy: (args) =>
               args.oldestFirst ? { followee_id: 'desc' } : null,
             where: (table, args) =>
               args.intimacy
@@ -179,16 +179,16 @@ const User = new GraphQLObjectType({
             include: {
               friendship: {
                 sqlColumn: 'closeness',
-                ignoreAll: false
+                ignoreAll: false,
               },
               intimacy: {
-                sqlExpr: table => `${table}.${q('closeness', DB)}`,
-                ignoreAll: false
+                sqlExpr: (table) => `${table}.${q('closeness', DB)}`,
+                ignoreAll: false,
               },
               closeness: {
                 sqlDeps: ['closeness'],
-                ignoreAll: false
-              }
+                ignoreAll: false,
+              },
             },
             ...(['batch', 'mix'].includes(STRATEGY)
               ? {
@@ -199,79 +199,79 @@ const User = new GraphQLObjectType({
                     sqlJoin: (relationTable, followeeTable) =>
                       `${relationTable}.${q(
                         'followee_id',
-                        DB
-                      )} = ${followeeTable}.${q('id', DB)}`
-                  }
+                        DB,
+                      )} = ${followeeTable}.${q('id', DB)}`,
+                  },
                 }
               : {
                   sqlJoins: [
                     (followerTable, relationTable) =>
                       `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
                         'follower_id',
-                        DB
+                        DB,
                       )}`,
                     (relationTable, followeeTable) =>
                       `${relationTable}.${q(
                         'followee_id',
-                        DB
-                      )} = ${followeeTable}.${q('id', DB)}`
-                  ]
-                })
-          }
-        }
-      }
+                        DB,
+                      )} = ${followeeTable}.${q('id', DB)}`,
+                  ],
+                }),
+          },
+        },
+      },
     },
     friendship: {
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          ignoreAll: true
-        }
-      }
+          ignoreAll: true,
+        },
+      },
     },
     intimacy: {
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          ignoreAll: true
-        }
-      }
+          ignoreAll: true,
+        },
+      },
     },
     closeness: {
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          ignoreAll: true
-        }
-      }
+          ignoreAll: true,
+        },
+      },
     },
     favNums: {
       type: new GraphQLList(GraphQLInt),
       extensions: {
         joinMonster: {
-          ignoreAll: true
-        }
+          ignoreAll: true,
+        },
       },
-      resolve: () => [1, 2, 3]
+      resolve: () => [1, 2, 3],
     },
     numLegs: {
       description: 'How many legs this user has',
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlColumn: 'num_legs'
-        }
-      }
+          sqlColumn: 'num_legs',
+        },
+      },
     },
     numFeet: {
       description: 'How many feet this user has',
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlDeps: ['num_legs']
-        }
+          sqlDeps: ['num_legs'],
+        },
       },
-      resolve: user => user.num_legs
+      resolve: (user) => user.num_legs,
     },
     writtenMaterial1: {
       type: new GraphQLList(AuthoredUnion),
@@ -286,7 +286,7 @@ const User = new GraphQLObjectType({
             ? {
                 sqlBatch: {
                   thisKey: 'author_id',
-                  parentKey: 'id'
+                  parentKey: 'id',
                 },
                 where: (table, args) => {
                   if (args.search) {
@@ -301,10 +301,10 @@ const User = new GraphQLObjectType({
                     ? ` AND lower(${unionTable}.${q('body', DB)}) LIKE lower('%${args.search}%')`
                     : ''
                   return joinCondition + filterCondition
-                }
-              })
-        }
-      }
+                },
+              }),
+        },
+      },
     },
     writtenMaterial2: {
       type: new GraphQLList(AuthoredInterface),
@@ -319,7 +319,7 @@ const User = new GraphQLObjectType({
             ? {
                 sqlBatch: {
                   thisKey: 'author_id',
-                  parentKey: 'id'
+                  parentKey: 'id',
                 },
                 where: (table, args) => {
                   if (args.search) {
@@ -328,18 +328,18 @@ const User = new GraphQLObjectType({
                 },
               }
             : {
-              sqlJoin: (userTable, unionTable, args) => {
-                const joinCondition = `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
-                const filterCondition = args.search
-                  ? ` AND lower(${unionTable}.${q('body', DB)}) LIKE lower('%${args.search}%')`
-                  : ''
-                return joinCondition + filterCondition
-              }
-            })
-        }
-      }
-    }
-  })
+                sqlJoin: (userTable, unionTable, args) => {
+                  const joinCondition = `${userTable}.${q('id', DB)} = ${unionTable}.${q('author_id', DB)}`
+                  const filterCondition = args.search
+                    ? ` AND lower(${unionTable}.${q('body', DB)}) LIKE lower('%${args.search}%')`
+                    : ''
+                  return joinCondition + filterCondition
+                },
+              }),
+        },
+      },
+    },
+  }),
 })
 
 export default User

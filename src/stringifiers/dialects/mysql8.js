@@ -10,7 +10,7 @@ module.exports = {
   quote,
 
   compositeKey(parent, keys) {
-    keys = keys.map(key => `${quote(parent)}.${quote(key)}`)
+    keys = keys.map((key) => `${quote(parent)}.${quote(key)}`)
     return `CONCAT(${keys.join(', ')})`
-  }
+  },
 }

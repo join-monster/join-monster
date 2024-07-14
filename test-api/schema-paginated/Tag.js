@@ -11,8 +11,8 @@ export const Tag = new GraphQLScalarType({
     joinMonster: {
       sqlTable: `(SELECT * FROM ${q('tags', DB)})`,
       uniqueKey: 'id',
-      alwaysFetch: ['id', 'tag', 'tag_order']
-    }
+      alwaysFetch: ['id', 'tag', 'tag_order'],
+    },
   },
   parseValue: String,
   serialize: String,
@@ -21,16 +21,15 @@ export const Tag = new GraphQLScalarType({
       return ast.value
     }
     return null
-  }
+  },
 })
 
 const connectionConfig = { nodeType: Tag }
 if (PAGINATE === 'offset') {
   connectionConfig.connectionFields = {
-    total: { type: GraphQLInt }
+    total: { type: GraphQLInt },
   }
 }
-const { connectionType: TagConnection } = connectionDefinitions(
-  connectionConfig
-)
+const { connectionType: TagConnection } =
+  connectionDefinitions(connectionConfig)
 export { TagConnection }

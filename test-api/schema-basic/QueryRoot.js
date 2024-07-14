@@ -3,7 +3,7 @@ import {
   GraphQLList,
   GraphQLString,
   GraphQLInt,
-  GraphQLBoolean
+  GraphQLBoolean,
 } from 'graphql'
 
 import knex from '../data/database'
@@ -23,7 +23,7 @@ import joinMonster from '../../src/index'
 const { MINIFY, ALIAS_PREFIX, DB } = process.env
 const options = {
   minify: MINIFY == 1,
-  aliasPrefix: ALIAS_PREFIX
+  aliasPrefix: ALIAS_PREFIX,
 }
 if (knex.client.config.client === 'mysql') {
   options.dialectModule = mysqlModule
@@ -41,51 +41,51 @@ export default new GraphQLObjectType({
   fields: () => ({
     version: {
       type: GraphQLString,
-      resolve: () => joinMonster.version
+      resolve: () => joinMonster.version,
     },
     database: {
       type: GraphQLString,
       resolve: () =>
         knex.client.config.client +
         ' ' +
-        JSON.stringify(knex.client.config.connection).replace(/"/g, '  ')
+        JSON.stringify(knex.client.config.connection).replace(/"/g, '  '),
     },
     users: {
       type: new GraphQLList(User),
       args: {
-        ids: { type: new GraphQLList(GraphQLInt) }
+        ids: { type: new GraphQLList(GraphQLInt) },
       },
       extensions: {
         joinMonster: {
           where: (table, args) =>
             args.ids ? `${table}.id IN (${args.ids.join(',')})` : null,
-          orderBy: 'id'
-        }
+          orderBy: 'id',
+        },
       },
       resolve: async (parent, args, context, resolveInfo) => {
         return joinMonster(
           resolveInfo,
           context,
-          sql => dbCall(sql, knex, context),
-          options
+          (sql) => dbCall(sql, knex, context),
+          options,
         )
-      }
+      },
     },
     user: {
       type: User,
       args: {
         id: {
           description: 'The users ID number',
-          type: GraphQLInt
+          type: GraphQLInt,
         },
         idEncoded: {
           description: 'The users encoded ID number',
-          type: GraphQLString
+          type: GraphQLString,
         },
         idAsync: {
           description: 'The users ID number, with an async where function',
-          type: GraphQLInt
-        }
+          type: GraphQLInt,
+        },
       },
       extensions: {
         joinMonster: {
@@ -94,31 +94,31 @@ export default new GraphQLObjectType({
             if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
             if (args.idEncoded)
               return `${usersTable}.${q('id', DB)} = ${fromBase64(
-                args.idEncoded
+                args.idEncoded,
               )}`
             if (args.idAsync)
               return Promise.resolve(
-                `${usersTable}.${q('id', DB)} = ${args.idAsync}`
+                `${usersTable}.${q('id', DB)} = ${args.idAsync}`,
               )
-          }
-        }
+          },
+        },
       },
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(
           resolveInfo,
           context,
-          sql => dbCall(sql, knex, context),
-          options
+          (sql) => dbCall(sql, knex, context),
+          options,
         )
-      }
+      },
     },
     sponsors: {
       type: new GraphQLList(Sponsor),
       args: {
         filterLegless: {
           description: 'Exclude sponsors with no leg info',
-          type: GraphQLBoolean
-        }
+          type: GraphQLBoolean,
+        },
       },
       extensions: {
         joinMonster: {
@@ -126,8 +126,8 @@ export default new GraphQLObjectType({
             // eslint-disable-line no-unused-vars
             if (args.filterLegless)
               return `${sponsorsTable}.${q('num_legs', DB)} IS NULL`
-          } 
-        }
+          },
+        },
       },
       resolve: (parent, args, context, resolveInfo) => {
         // use the callback version this time
@@ -137,7 +137,7 @@ export default new GraphQLObjectType({
           (sql, done) => {
             knex
               .raw(sql)
-              .then(result => {
+              .then((result) => {
                 if (options.dialectModule.name === 'mysql') {
                   done(null, result[0])
                 } else {
@@ -146,9 +146,9 @@ export default new GraphQLObjectType({
               })
               .catch(done)
           },
-          options
+          options,
         )
-      }
-    }
-  })
+      },
+    },
+  }),
 })
