@@ -1,5 +1,6 @@
 ### vNEXT 
 #### Fixed
+- [#539](https://github.com/join-monster/join-monster/pull/539): Do not rely on test-api for order tests setup.
 - [#538](https://github.com/join-monster/join-monster/pull/538): Refactor: cleanup code around sorting.
 - [#537](https://github.com/join-monster/join-monster/pull/537): Fix for messed up files syntax.
 - [#535](https://github.com/join-monster/join-monster/pull/535): Allow manual offset and limit control.
