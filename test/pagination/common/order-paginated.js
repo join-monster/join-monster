@@ -96,10 +96,6 @@ const User = new GraphQLObjectType({
             : {}),
           junction: {
             sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
-            where: (table, args) =>
-              args.intimacy
-                ? `${table}.${q('closeness', DB)} = '${args.intimacy}'`
-                : null,
             ...(PAGINATE === 'offset'
               ? {
                   orderBy: (args) =>
