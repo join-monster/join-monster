@@ -34,13 +34,13 @@ function arrToConnection(data, sqlAST) {
   }
   const pageInfo = {
     hasNextPage: false,
-    hasPreviousPage: false
+    hasPreviousPage: false,
   }
   if (!data) {
     if (sqlAST.paginate) {
       return {
         pageInfo,
-        edges: []
+        edges: [],
       }
     }
     return null
@@ -50,8 +50,8 @@ function arrToConnection(data, sqlAST) {
   // we must prevent the recursive processing from visting the same object twice, because mutating the object the first
   // time changes it everywhere. we'll set the `_paginated` property to true to prevent this
   if (sqlAST.paginate && !data._paginated) {
-    if (sqlAST.sortKey || idx(sqlAST, _ => _.junction.sortKey)) {
-      if (idx(sqlAST, _ => _.args.first)) {
+    if (sqlAST.sortKey || idx(sqlAST, (_) => _.junction.sortKey)) {
+      if (idx(sqlAST, (_) => _.args.first)) {
         // we fetched an extra one in order to determine if there is a next page, if there is one, pop off that extra
         if (data.length > sqlAST.args.first) {
           pageInfo.hasNextPage = true
@@ -64,7 +64,7 @@ function arrToConnection(data, sqlAST) {
           data.pop()
         }
         data.reverse()
-      } else if (idx(sqlAST, _ => _.defaultPageSize)) {
+      } else if (idx(sqlAST, (_) => _.defaultPageSize)) {
         // we fetched an extra one in order to determine if there is a next page, if there is one, pop off that extra
         if (data.length > sqlAST.defaultPageSize) {
           pageInfo.hasNextPage = true
@@ -75,7 +75,7 @@ function arrToConnection(data, sqlAST) {
       // convert nodes to edges and compute the cursor for each
       // TODO: only compute all the cursor if asked for them
       const sortKey = sqlAST.sortKey || sqlAST.junction.sortKey
-      const edges = data.map(obj => {
+      const edges = data.map((obj) => {
         const cursor = {}
         for (let key of sortKey) {
           cursor[key.column] = obj[key.column]
@@ -90,21 +90,21 @@ function arrToConnection(data, sqlAST) {
     }
     if (sqlAST.orderBy || (sqlAST.junction && sqlAST.junction.orderBy)) {
       let offset = 0
-      if (idx(sqlAST, _ => _.args.after)) {
+      if (idx(sqlAST, (_) => _.args.after)) {
         offset = cursorToOffset(sqlAST.args.after) + 1
       }
       // $total was a special column for determining the total number of items
       const arrayLength = data[0] && parseInt(data[0].$total, 10)
       let defaultArgs = sqlAST.args
       if (
-        idx(sqlAST, _ => _.defaultPageSize) &&
-        !idx(defaultArgs, _ => _.first)
+        idx(sqlAST, (_) => _.defaultPageSize) &&
+        !idx(defaultArgs, (_) => _.first)
       ) {
         defaultArgs.first = sqlAST.defaultPageSize
       }
       const connection = connectionFromArraySlice(data, defaultArgs, {
         sliceStart: offset,
-        arrayLength
+        arrayLength,
       })
       connection.total = arrayLength || 0
       connection._paginated = true
@@ -119,17 +119,14 @@ export default arrToConnection
 function recurseOnObjInData(dataObj, astChild) {
   const aliasKey = getAliasKey(astChild.fieldName, astChild.alias)
   if (dataObj[aliasKey]) {
-    dataObj[aliasKey] = arrToConnection(
-      dataObj[aliasKey],
-      astChild
-    )
+    dataObj[aliasKey] = arrToConnection(dataObj[aliasKey], astChild)
   }
 
   const dataChild = dataObj[astChild.fieldName]
   if (dataChild && typeof dataChild !== 'function') {
     dataObj[astChild.fieldName] = arrToConnection(
       dataObj[astChild.fieldName],
-      astChild
+      astChild,
     )
   }
 }

@@ -24,14 +24,14 @@ const Comment = new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: q('comments', DB),
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   fields: () => ({
     id: {
-      type: GraphQLInt
+      type: GraphQLInt,
     },
-  })
+  }),
 })
 
 const Post = new GraphQLObjectType({
@@ -39,40 +39,40 @@ const Post = new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: q('posts', DB),
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   fields: () => ({
     id: {
-      type: GraphQLInt
+      type: GraphQLInt,
     },
     comments: {
       description: 'The comments on this post',
       type: new GraphQLList(Comment),
       args: {
-        asc: { type: GraphQLBoolean }
+        asc: { type: GraphQLBoolean },
       },
       extensions: {
         joinMonster: {
-          orderBy: args => ({ id: args.asc ? 'asc' : 'desc' }),
+          orderBy: (args) => ({ id: args.asc ? 'asc' : 'desc' }),
           ...(['batch', 'mix'].includes(STRATEGY)
             ? {
-              sqlBatch: {
-                thisKey: 'post_id',
-                parentKey: 'id'
-              },
-            }
+                sqlBatch: {
+                  thisKey: 'post_id',
+                  parentKey: 'id',
+                },
+              }
             : {
-              sqlJoin: (postTable, commentTable) =>
-                `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
-                  'id',
-                  DB
-                )}`
-            })
-        }
-      }
+                sqlJoin: (postTable, commentTable) =>
+                  `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
+                    'id',
+                    DB,
+                  )}`,
+              }),
+        },
+      },
     },
-  })
+  }),
 })
 
 const User = new GraphQLObjectType({
@@ -81,22 +81,22 @@ const User = new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: () => q('accounts', DB),
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   fields: () => ({
     id: {
-      type: GraphQLInt
+      type: GraphQLInt,
     },
     fullName: {
       description: "A user's first and last name",
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          sqlDeps: ['first_name', 'last_name']
-        }
+          sqlDeps: ['first_name', 'last_name'],
+        },
       },
-      resolve: user => `${user.first_name} ${user.last_name}`
+      resolve: (user) => `${user.first_name} ${user.last_name}`,
     },
     comments: {
       description: "Comments the user has written on people's posts",
@@ -106,20 +106,20 @@ const User = new GraphQLObjectType({
           orderBy: { id: 'asc' },
           ...(['batch', 'mix'].includes(STRATEGY)
             ? {
-              sqlBatch: {
-                thisKey: 'author_id',
-                parentKey: 'id'
+                sqlBatch: {
+                  thisKey: 'author_id',
+                  parentKey: 'id',
+                },
               }
-            }
             : {
-              sqlJoin: (userTable, commentTable) =>
-                `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
-                  'id',
-                  DB
-                )}`
-            })
-        }
-      }
+                sqlJoin: (userTable, commentTable) =>
+                  `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
+                    'id',
+                    DB,
+                  )}`,
+              }),
+        },
+      },
     },
     posts: {
       description: 'A list of Posts the user has written',
@@ -129,20 +129,20 @@ const User = new GraphQLObjectType({
           orderBy: { body: 'desc' },
           ...(STRATEGY === 'batch'
             ? {
-              sqlBatch: {
-                thisKey: 'author_id',
-                parentKey: 'id'
+                sqlBatch: {
+                  thisKey: 'author_id',
+                  parentKey: 'id',
+                },
               }
-            }
             : {
-              sqlJoin: (userTable, postTable) =>
-                `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
-                  'id',
-                  DB
-                )}`
-            })
-        }
-      }
+                sqlJoin: (userTable, postTable) =>
+                  `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
+                    'id',
+                    DB,
+                  )}`,
+              }),
+        },
+      },
     },
     following: {
       description: 'Users that this user is following',
@@ -155,40 +155,40 @@ const User = new GraphQLObjectType({
           orderBy: 'first_name',
           junction: {
             sqlTable: q('relationships', DB),
-            orderBy: args =>
+            orderBy: (args) =>
               args.oldestFirst ? { followee_id: 'desc' } : null,
             ...(['batch', 'mix'].includes(STRATEGY)
               ? {
-                uniqueKey: ['follower_id', 'followee_id'],
-                sqlBatch: {
-                  thisKey: 'follower_id',
-                  parentKey: 'id',
-                  sqlJoin: (relationTable, followeeTable) =>
-                    `${relationTable}.${q(
-                      'followee_id',
-                      DB
-                    )} = ${followeeTable}.${q('id', DB)}`
+                  uniqueKey: ['follower_id', 'followee_id'],
+                  sqlBatch: {
+                    thisKey: 'follower_id',
+                    parentKey: 'id',
+                    sqlJoin: (relationTable, followeeTable) =>
+                      `${relationTable}.${q(
+                        'followee_id',
+                        DB,
+                      )} = ${followeeTable}.${q('id', DB)}`,
+                  },
                 }
-              }
               : {
-                sqlJoins: [
-                  (followerTable, relationTable) =>
-                    `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
-                      'follower_id',
-                      DB
-                    )}`,
-                  (relationTable, followeeTable) =>
-                    `${relationTable}.${q(
-                      'followee_id',
-                      DB
-                    )} = ${followeeTable}.${q('id', DB)}`
-                ]
-              })
-          }
-        }
-      }
+                  sqlJoins: [
+                    (followerTable, relationTable) =>
+                      `${followerTable}.${q('id', DB)} = ${relationTable}.${q(
+                        'follower_id',
+                        DB,
+                      )}`,
+                    (relationTable, followeeTable) =>
+                      `${relationTable}.${q(
+                        'followee_id',
+                        DB,
+                      )} = ${followeeTable}.${q('id', DB)}`,
+                  ],
+                }),
+          },
+        },
+      },
     },
-  })
+  }),
 })
 
 const schema = new GraphQLSchema({
@@ -202,27 +202,27 @@ const schema = new GraphQLSchema({
         args: {
           id: {
             description: 'The users ID number',
-            type: GraphQLInt
+            type: GraphQLInt,
           },
         },
         extensions: {
           joinMonster: {
             where: (usersTable, args) => {
               if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
-            }
-          }
+            },
+          },
         },
         resolve: async (parent, args, context, resolveInfo) => {
           return joinMonster(
             resolveInfo,
             context,
-            sql => dbCall(sql, knex, context),
-            options
+            (sql) => dbCall(sql, knex, context),
+            options,
           )
-        }
-      }
-    })
-  })
+        },
+      },
+    }),
+  }),
 })
 
 function makeQuery(asc) {
@@ -241,30 +241,29 @@ function makeQuery(asc) {
   }`
 }
 
-
-test('it should handle nested ordering with both ASC', async t => {
+test('it should handle nested ordering with both ASC', async (t) => {
   const source = makeQuery(true)
   const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   t.deepEqual(
     [{ id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }, { id: 8 }],
-    data.user.posts[0].comments
+    data.user.posts[0].comments,
   )
   t.deepEqual([{ id: 1 }, { id: 4 }, { id: 6 }, { id: 8 }], data.user.comments)
 })
 
-test('it should handle nested ordering with one ASC and one DESC', async t => {
+test('it should handle nested ordering with one ASC and one DESC', async (t) => {
   const source = makeQuery(false)
   const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   t.deepEqual(
     [{ id: 8 }, { id: 7 }, { id: 6 }, { id: 5 }, { id: 4 }],
-    data.user.posts[0].comments
+    data.user.posts[0].comments,
   )
   t.deepEqual([{ id: 1 }, { id: 4 }, { id: 6 }, { id: 8 }], data.user.comments)
 })
 
-test('it should handle order on many-to-many', async t => {
+test('it should handle order on many-to-many', async (t) => {
   const source = `{
     user(id: 3) {
       fullName
@@ -282,19 +281,19 @@ test('it should handle order on many-to-many', async t => {
       following: [
         {
           id: 1,
-          fullName: 'andrew carlson'
+          fullName: 'andrew carlson',
         },
         {
           id: 2,
-          fullName: 'matt elder'
-        }
-      ]
-    }
+          fullName: 'matt elder',
+        },
+      ],
+    },
   }
   t.deepEqual(expect, data)
 })
 
-test('it should handle order on many-to-many in junction', async t => {
+test('it should handle order on many-to-many in junction', async (t) => {
   const source = `{
     user(id: 3) {
       fullName
@@ -312,14 +311,14 @@ test('it should handle order on many-to-many in junction', async t => {
       following: [
         {
           id: 2,
-          fullName: 'matt elder'
+          fullName: 'matt elder',
         },
         {
           id: 1,
-          fullName: 'andrew carlson'
-        }
-      ]
-    }
+          fullName: 'andrew carlson',
+        },
+      ],
+    },
   }
   t.deepEqual(expect, data)
 })

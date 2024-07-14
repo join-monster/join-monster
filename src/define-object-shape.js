@@ -1,6 +1,10 @@
 import { validateSqlAST, inspect } from './util'
 import idx from 'idx'
-import { getAliasKey, hasConflictingSiblings, resolveAliasValue } from './aliases'
+import {
+  getAliasKey,
+  hasConflictingSiblings,
+  resolveAliasValue,
+} from './aliases'
 
 // generate an object that defines the correct nesting shape for our GraphQL
 // this will be used by the library NestHydrationJS, check out their docs
@@ -16,17 +20,17 @@ function _defineObjectShape(parent, prefix, node) {
   const fieldDefinition = {}
 
   for (let child of node.children) {
-    const setField = definition => {
+    const setField = (definition) => {
       const originalKey = child.fieldName
 
       if (hasConflictingSiblings(child, node.children) && !child.sqlBatch) {
         const aliasKey = getAliasKey(originalKey, child.alias)
-        
+
         fieldDefinition[aliasKey] = definition
         fieldDefinition[originalKey] = {
           column: '__jm__' + aliasKey, // non-existent key
           // we abuse the type handler to place our resolver function into the object instead of a value
-          type: () => resolveAliasValue
+          type: () => resolveAliasValue,
         }
       } else {
         fieldDefinition[originalKey] = definition
@@ -71,17 +75,20 @@ function _defineObjectShape(parent, prefix, node) {
     const suffix = '@' + typeName
 
     for (let child of node.typedChildren[typeName]) {
-      const setField = definition => {
+      const setField = (definition) => {
         const originalKey = child.fieldName + suffix
-  
-        if (hasConflictingSiblings(child, node.typedChildren[typeName]) && !child.sqlBatch) {
+
+        if (
+          hasConflictingSiblings(child, node.typedChildren[typeName]) &&
+          !child.sqlBatch
+        ) {
           const aliasKey = getAliasKey(originalKey, child.alias)
-          
+
           fieldDefinition[aliasKey] = definition
           fieldDefinition[originalKey] = {
             column: '__jm__' + aliasKey, // non-existent key
             // we abuse the type handler to place our resolver function into the object instead of a value
-            type: () => resolveAliasValue
+            type: () => resolveAliasValue,
           }
         } else {
           fieldDefinition[originalKey] = definition
@@ -108,7 +115,7 @@ function _defineObjectShape(parent, prefix, node) {
           if (child.sqlBatch) {
             fieldDefinition[child.sqlBatch.parentKey.fieldName + suffix] =
               prefixToPass + child.sqlBatch.parentKey.as
-          } else if (idx(child, _ => _.junction.sqlBatch)) {
+          } else if (idx(child, (_) => _.junction.sqlBatch)) {
             fieldDefinition[
               child.junction.sqlBatch.parentKey.fieldName + suffix
             ] = prefixToPass + child.junction.sqlBatch.parentKey.as

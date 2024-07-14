@@ -8,7 +8,7 @@ import {
   thisIsNotTheEndOfThisBatch,
   flipOrderings,
   whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch,
-  orderingsToString
+  orderingsToString,
 } from './shared'
 
 export default async function stringifySqlAST(topNode, context, options) {
@@ -39,24 +39,30 @@ export default async function stringifySqlAST(topNode, context, options) {
     [],
     [],
     options.batchScope,
-    dialect
+    dialect,
   )
 
   // bail out if they made no selections
   if (!selections.length) return ''
 
   if (dialect.maxAliasLength) {
-    const exceedingAliases = selections.filter(([, alias]) => alias.length > dialect.maxAliasLength)
+    const exceedingAliases = selections.filter(
+      ([, alias]) => alias.length > dialect.maxAliasLength,
+    )
     if (exceedingAliases.length) {
-      // eslint-disable-next-line max-len
-      console.warn(`Alias length exceeds the max allowed length of ${dialect.maxAliasLength} characters for ${dialect.name}: ${exceedingAliases.map(([column, alias]) => `${column} AS ${alias}`).join(', ')}`)
+      console.warn(
+        // eslint-disable-next-line max-len
+        `Alias length exceeds the max allowed length of ${dialect.maxAliasLength} characters for ${dialect.name}: ${exceedingAliases.map(([column, alias]) => `${column} AS ${alias}`).join(', ')}`,
+      )
     }
   }
 
   // make sure these are unique by converting to a set and then back to an array
   // e.g. we want to get rid of things like `SELECT user.id as id, user.id as id, ...`
   // GraphQL does not prevent queries with duplicate fields
-  selections = [...new Set(selections.map(([column, alias]) => `${column} AS ${alias}`))]
+  selections = [
+    ...new Set(selections.map(([column, alias]) => `${column} AS ${alias}`)),
+  ]
 
   // put together the SQL query
   let sql = 'SELECT\n  ' + selections.join(',\n  ') + '\n' + tables.join('\n')
@@ -83,7 +89,7 @@ async function _stringifySqlAST(
   wheres,
   orders,
   batchScope,
-  dialect
+  dialect,
 ) {
   const { quote: q } = dialect
   const parentTable = node.fromOtherTable || (parent && parent.as)
@@ -99,7 +105,7 @@ async function _stringifySqlAST(
         wheres,
         orders,
         batchScope,
-        dialect
+        dialect,
       )
 
       // recurse thru nodes
@@ -115,7 +121,7 @@ async function _stringifySqlAST(
             wheres,
             orders,
             null,
-            dialect
+            dialect,
           )
         }
       }
@@ -132,7 +138,7 @@ async function _stringifySqlAST(
         wheres,
         orders,
         batchScope,
-        dialect
+        dialect,
       )
 
       // recurse thru nodes
@@ -149,7 +155,7 @@ async function _stringifySqlAST(
               wheres,
               orders,
               null,
-              dialect
+              dialect,
             )
           }
         }
@@ -164,30 +170,39 @@ async function _stringifySqlAST(
             wheres,
             orders,
             null,
-            dialect
+            dialect,
           )
         }
       }
 
       break
     case 'column':
-      selections.push([`${q(parentTable)}.${q(node.name)}`, `${q(joinPrefix(prefix) + node.as)}`])
+      selections.push([
+        `${q(parentTable)}.${q(node.name)}`,
+        `${q(joinPrefix(prefix) + node.as)}`,
+      ])
       break
     case 'columnDeps':
       // grab the dependant columns
       for (let name in node.names) {
-        selections.push([`${q(parentTable)}.${q(name)}`, `${q(joinPrefix(prefix) + node.names[name])}`])
+        selections.push([
+          `${q(parentTable)}.${q(name)}`,
+          `${q(joinPrefix(prefix) + node.names[name])}`,
+        ])
       }
       break
     case 'composite':
-      selections.push([`${dialect.compositeKey(parentTable, node.name)}`, `${q(joinPrefix(prefix) + node.as)}`])
+      selections.push([
+        `${dialect.compositeKey(parentTable, node.name)}`,
+        `${q(joinPrefix(prefix) + node.as)}`,
+      ])
       break
     case 'expression':
       const expr = await node.sqlExpr(
         `${q(parentTable)}`,
         node.args || {},
         context,
-        node
+        node,
       )
       selections.push([`${expr}`, `${q(joinPrefix(prefix) + node.as)}`])
       break
@@ -210,51 +225,51 @@ async function handleTable(
   wheres,
   orders,
   batchScope,
-  dialect
+  dialect,
 ) {
   const { quote: q } = dialect
   // generate the "where" condition, if applicable
   if (whereConditionIsntSupposedToGoInsideSubqueryOrOnNextBatch(node, parent)) {
-    if (idx(node, _ => _.junction.where)) {
+    if (idx(node, (_) => _.junction.where)) {
       wheres.push(
         await node.junction.where(
           `${q(node.junction.as)}`,
           node.args || {},
           context,
-          node
-        )
+          node,
+        ),
       )
     }
     if (node.where) {
       wheres.push(
-        await node.where(`${q(node.as)}`, node.args || {}, context, node)
+        await node.where(`${q(node.as)}`, node.args || {}, context, node),
       )
     }
   }
 
   if (thisIsNotTheEndOfThisBatch(node, parent)) {
-    if (idx(node, _ => _.junction.orderBy)) {
+    if (idx(node, (_) => _.junction.orderBy)) {
       orders.push({
         table: node.junction.as,
-        columns: node.junction.orderBy
+        columns: node.junction.orderBy,
       })
     }
     if (node.orderBy) {
       orders.push({
         table: node.as,
-        columns: node.orderBy
+        columns: node.orderBy,
       })
     }
-    if (idx(node, _ => _.junction.sortKey)) {
+    if (idx(node, (_) => _.junction.sortKey)) {
       orders.push({
         table: node.junction.as,
-        columns: flipOrderings(node.junction.sortKey, node.args)
+        columns: flipOrderings(node.junction.sortKey, node.args),
       })
     }
     if (node.sortKey) {
       orders.push({
         table: node.as,
-        columns: flipOrderings(node.sortKey, node.args)
+        columns: flipOrderings(node.sortKey, node.args),
       })
     }
   }
@@ -266,7 +281,7 @@ async function handleTable(
       q(node.as),
       node.args || {},
       context,
-      node
+      node,
     )
 
     // do we need to paginate? if so this will be a lateral join
@@ -276,7 +291,7 @@ async function handleTable(
         node,
         context,
         tables,
-        joinCondition
+        joinCondition,
       )
 
       // limit has a highly similar approach to paginating
@@ -287,7 +302,7 @@ async function handleTable(
         node,
         context,
         tables,
-        joinCondition
+        joinCondition,
       )
       // otherwite, just a regular left join on the table
     } else {
@@ -295,11 +310,11 @@ async function handleTable(
     }
 
     // many-to-many using batching
-  } else if (idx(node, _ => _.junction.sqlBatch)) {
+  } else if (idx(node, (_) => _.junction.sqlBatch)) {
     if (parent) {
       selections.push([
-        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)}`, 
-        `${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`
+        `${q(parent.as)}.${q(node.junction.sqlBatch.parentKey.name)}`,
+        `${q(joinPrefix(prefix) + node.junction.sqlBatch.parentKey.as)}`,
       ])
     } else {
       const joinCondition = await node.junction.sqlBatch.sqlJoin(
@@ -307,7 +322,7 @@ async function handleTable(
         q(node.as),
         node.args || {},
         context,
-        node
+        node,
       )
       if (node.paginate) {
         await dialect.handleBatchedManyToManyPaginated(
@@ -316,7 +331,7 @@ async function handleTable(
           context,
           tables,
           batchScope,
-          joinCondition
+          joinCondition,
         )
       } else if (node.limit) {
         node.args.first = node.limit
@@ -326,37 +341,37 @@ async function handleTable(
           context,
           tables,
           batchScope,
-          joinCondition
+          joinCondition,
         )
       } else {
         tables.push(
           `FROM ${node.junction.sqlTable} ${q(node.junction.as)}`,
-          `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`
+          `LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition}`,
         )
         // ensures only the correct records are fetched using the value of the parent key
         wheres.push(
           `${q(node.junction.as)}.${q(
-            node.junction.sqlBatch.thisKey.name
-          )} IN (${batchScope.join(',')})`
+            node.junction.sqlBatch.thisKey.name,
+          )} IN (${batchScope.join(',')})`,
         )
       }
     }
 
     // many-to-many using JOINs
-  } else if (idx(node, _ => _.junction.sqlTable)) {
+  } else if (idx(node, (_) => _.junction.sqlTable)) {
     const joinCondition1 = await node.junction.sqlJoins[0](
       `${q(parent.as)}`,
       q(node.junction.as),
       node.args || {},
       context,
-      node
+      node,
     )
     const joinCondition2 = await node.junction.sqlJoins[1](
       `${q(node.junction.as)}`,
       q(node.as),
       node.args || {},
       context,
-      node
+      node,
     )
 
     if (node.paginate) {
@@ -366,7 +381,7 @@ async function handleTable(
         context,
         tables,
         joinCondition1,
-        joinCondition2
+        joinCondition2,
       )
     } else if (node.limit) {
       node.args.first = node.limit
@@ -376,13 +391,13 @@ async function handleTable(
         context,
         tables,
         joinCondition1,
-        joinCondition2
+        joinCondition2,
       )
     } else {
       tables.push(
         `LEFT JOIN ${node.junction.sqlTable} ${q(
-          node.junction.as
-        )} ON ${joinCondition1}`
+          node.junction.as,
+        )} ON ${joinCondition1}`,
       )
     }
     tables.push(`LEFT JOIN ${node.name} ${q(node.as)} ON ${joinCondition2}`)
@@ -391,8 +406,8 @@ async function handleTable(
   } else if (node.sqlBatch) {
     if (parent) {
       selections.push([
-        `${q(parent.as)}.${q(node.sqlBatch.parentKey.name)}`, 
-        `${q(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`
+        `${q(parent.as)}.${q(node.sqlBatch.parentKey.name)}`,
+        `${q(joinPrefix(prefix) + node.sqlBatch.parentKey.as)}`,
       ])
     } else if (node.paginate) {
       await dialect.handleBatchedOneToManyPaginated(
@@ -400,7 +415,7 @@ async function handleTable(
         node,
         context,
         tables,
-        batchScope
+        batchScope,
       )
     } else if (node.limit) {
       node.args.first = node.limit
@@ -409,15 +424,15 @@ async function handleTable(
         node,
         context,
         tables,
-        batchScope
+        batchScope,
       )
       // otherwite, just a regular left join on the table
     } else {
       tables.push(`FROM ${node.name} ${q(node.as)}`)
       wheres.push(
         `${q(node.as)}.${q(node.sqlBatch.thisKey.name)} IN (${batchScope.join(
-          ','
-        )})`
+          ',',
+        )})`,
       )
     }
     // otherwise, we aren't joining, so we are at the "root", and this is the start of the FROM clause
@@ -429,7 +444,7 @@ async function handleTable(
   } else {
     assert(
       !parent,
-      `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`
+      `Object type for "${node.fieldName}" table must have a "sqlJoin" or "sqlBatch"`,
     )
     tables.push(`FROM ${node.name} ${q(node.as)}`)
   }

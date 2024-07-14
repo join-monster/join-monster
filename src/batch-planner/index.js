@@ -2,16 +2,17 @@ import { uniq, chain, map, groupBy, forIn } from 'lodash'
 import arrToConnection from '../array-to-connection'
 import { handleUserDbCall, maybeQuote, wrap, compileSqlAST } from '../util'
 import idx from 'idx'
-import { getAliasKey, hasConflictingSiblings, resolveAliasValue } from '../aliases'
+import {
+  getAliasKey,
+  hasConflictingSiblings,
+  resolveAliasValue,
+} from '../aliases'
 
 async function nextBatch(sqlAST, data, dbCall, context, options) {
   // paginated fields are wrapped in connections. strip those off for the batching
   if (sqlAST.paginate) {
     if (Array.isArray(data)) {
-      data = chain(data)
-        .flatMap('edges')
-        .map('node')
-        .value()
+      data = chain(data).flatMap('edges').map('node').value()
     } else {
       data = map(data.edges, 'node')
     }
@@ -21,28 +22,37 @@ async function nextBatch(sqlAST, data, dbCall, context, options) {
   }
 
   const children = sqlAST.children
-  Object.values(sqlAST.typedChildren || {}).forEach(typedChildren =>
-    children.push(...typedChildren)
+  Object.values(sqlAST.typedChildren || {}).forEach((typedChildren) =>
+    children.push(...typedChildren),
   )
 
   // loop through all the child fields that are tables
   return Promise.all(
-    children.map(childAST =>
-      nextBatchChild(childAST, data, dbCall, context, options, children)
-    )
+    children.map((childAST) =>
+      nextBatchChild(childAST, data, dbCall, context, options, children),
+    ),
   )
 }
 
 // processes a single child of the batch
-async function nextBatchChild(childAST, data, dbCall, context, options, siblings) {
+async function nextBatchChild(
+  childAST,
+  data,
+  dbCall,
+  context,
+  options,
+  siblings,
+) {
   if (childAST.type !== 'table' && childAST.type !== 'union') return
 
   const isConflicting = hasConflictingSiblings(childAST, siblings)
   const fieldName = childAST.fieldName
-  const valueKey = isConflicting ? getAliasKey(fieldName, childAST.alias) : fieldName
+  const valueKey = isConflicting
+    ? getAliasKey(fieldName, childAST.alias)
+    : fieldName
 
   // see if any begin a new batch
-  if (childAST.sqlBatch || idx(childAST, _ => _.junction.sqlBatch)) {
+  if (childAST.sqlBatch || idx(childAST, (_) => _.junction.sqlBatch)) {
     let thisKey
     let parentKey
     if (childAST.sqlBatch) {
@@ -50,7 +60,7 @@ async function nextBatchChild(childAST, data, dbCall, context, options, siblings
       childAST.children.push(childAST.sqlBatch.thisKey)
       thisKey = childAST.sqlBatch.thisKey.fieldName
       parentKey = childAST.sqlBatch.parentKey.fieldName
-    } else if (idx(childAST, _ => _.junction.sqlBatch)) {
+    } else if (idx(childAST, (_) => _.junction.sqlBatch)) {
       childAST.children.push(childAST.junction.sqlBatch.thisKey)
       thisKey = childAST.junction.sqlBatch.thisKey.fieldName
       parentKey = childAST.junction.sqlBatch.parentKey.fieldName
@@ -58,18 +68,18 @@ async function nextBatchChild(childAST, data, dbCall, context, options, siblings
 
     if (Array.isArray(data)) {
       // the "batch scope" is teh set of values to match this key against from the previous batch
-      const batchScope = uniq(data.map(obj => maybeQuote(obj[parentKey])))
+      const batchScope = uniq(data.map((obj) => maybeQuote(obj[parentKey])))
       // generate the SQL, with the batch scope values incorporated in a WHERE IN clause
       const { sql, shapeDefinition } = await compileSqlAST(childAST, context, {
         ...options,
-        batchScope
+        batchScope,
       })
       // grab the data
       let newData = await handleUserDbCall(
         dbCall,
         sql,
         childAST,
-        wrap(shapeDefinition)
+        wrap(shapeDefinition),
       )
       // group the rows by the key so we can match them with the previous batch
       newData = groupBy(newData, thisKey)
@@ -92,8 +102,8 @@ async function nextBatchChild(childAST, data, dbCall, context, options, siblings
                     startCursor: null,
                     endCursor: null,
                     hasNextPage: false,
-                    hasPreviousPage: false
-                  }
+                    hasPreviousPage: false,
+                  },
                 }
               : [])
           if (isConflicting) obj[fieldName] = resolveAliasValue
@@ -104,11 +114,8 @@ async function nextBatchChild(childAST, data, dbCall, context, options, siblings
           const ob = newData[obj[parentKey]]
           if (ob) {
             obj[valueKey] = Object.assign(
-              obj[valueKey] ?? {}, 
-              arrToConnection(
-                newData[obj[parentKey]][0],
-                childAST
-             ) 
+              obj[valueKey] ?? {},
+              arrToConnection(newData[obj[parentKey]][0], childAST),
             )
             matchedData.push(obj)
           } else {
@@ -121,22 +128,22 @@ async function nextBatchChild(childAST, data, dbCall, context, options, siblings
 
       // move down a level and recurse
       const nextLevelData = chain(data)
-        .filter(obj => obj != null)
-        .flatMap(obj => obj[valueKey])
-        .filter(obj => obj != null)
+        .filter((obj) => obj != null)
+        .flatMap((obj) => obj[valueKey])
+        .filter((obj) => obj != null)
         .value()
       return nextBatch(childAST, nextLevelData, dbCall, context, options)
     }
     const batchScope = [maybeQuote(data[parentKey])]
     const { sql, shapeDefinition } = await compileSqlAST(childAST, context, {
       ...options,
-      batchScope
+      batchScope,
     })
     let newData = await handleUserDbCall(
       dbCall,
       sql,
       childAST,
-      wrap(shapeDefinition)
+      wrap(shapeDefinition),
     )
     newData = groupBy(newData, thisKey)
     if (childAST.paginate) {
@@ -148,9 +155,9 @@ async function nextBatchChild(childAST, data, dbCall, context, options, siblings
       const targets = newData[data[parentKey]] || []
       data[valueKey] = targets[0]
     }
-    
+
     if (isConflicting) data[fieldName] = resolveAliasValue
-    
+
     if (data) {
       return nextBatch(childAST, data[valueKey], dbCall, context, options)
     }
@@ -158,9 +165,9 @@ async function nextBatchChild(childAST, data, dbCall, context, options, siblings
     // otherwise, just bypass this and recurse down to the next level
   } else if (Array.isArray(data)) {
     const nextLevelData = chain(data)
-      .filter(obj => obj != null)
-      .flatMap(obj => obj[valueKey])
-      .filter(obj => obj != null)
+      .filter((obj) => obj != null)
+      .flatMap((obj) => obj[valueKey])
+      .filter((obj) => obj != null)
       .value()
     return nextBatch(childAST, nextLevelData, dbCall, context, options)
   } else if (data) {

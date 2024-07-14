@@ -36,8 +36,9 @@ export function isEmptyArray(val) {
 export function ensure(obj, prop, name) {
   if (!obj[prop]) {
     throw new Error(
-      `property "${prop}" must be defined on object: ${name ||
-        util.inspect(obj)}`
+      `property "${prop}" must be defined on object: ${
+        name || util.inspect(obj)
+      }`,
     )
   }
   return obj[prop]
@@ -53,7 +54,7 @@ export function validateSqlAST(topNode) {
 }
 
 export function getConfigFromSchemaObject(fieldOrType) {
-  return idx(fieldOrType, _ => _.extensions.joinMonster) || {}
+  return idx(fieldOrType, (_) => _.extensions.joinMonster) || {}
 }
 
 export function objToCursor(obj) {
@@ -87,7 +88,7 @@ export function maybeQuote(value, dialectName) {
   ) {
     return value.replace(
       /(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)(.\d+)?Z?/,
-      "TIMESTAMP '$1 $2$3 UTC'"
+      "TIMESTAMP '$1 $2$3 UTC'",
     )
   }
 
@@ -142,18 +143,18 @@ export function buildWhereFunction(type, condition, options) {
     assert.equal(
       condition.length,
       uniqueKey.length,
-      `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`
+      `The unique key for the "${type.name}" type is a composite. You must provide an array of values for each column.`,
     )
-    return table =>
+    return (table) =>
       uniqueKey
         .map(
           (key, i) =>
-            `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`
+            `${table}.${quote}${key}${quote} = ${maybeQuote(condition[i])}`,
         )
         .join(' AND ')
     // single keys are simple
   }
-  return table =>
+  return (table) =>
     `${table}.${quote}${uniqueKey}${quote} = ${maybeQuote(condition)}`
 }
 
@@ -187,7 +188,7 @@ export function handleUserDbCall(dbCall, sql, sqlAST, shapeDefinition) {
   // otherwise, we are expecting a promise of the data
   const result = dbCall(sql)
   if (typeof result.then === 'function') {
-    return result.then(rows => {
+    return result.then((rows) => {
       rows = validate(rows)
       if (debug.enabled) {
         debug(emphasize('RAW DATA'), inspect(rows.slice(0, 8)))
@@ -215,7 +216,7 @@ function validate(rows) {
 
   throw new Error(
     `"dbCall" function must return/resolve an array of objects where each object is a row from the result set.
-    Instead got ${util.inspect(rows, { depth: 3 })}`
+    Instead got ${util.inspect(rows, { depth: 3 })}`,
   )
 }
 
@@ -229,7 +230,7 @@ export async function compileSqlAST(sqlAST, context, options) {
   if (options.dialect === 'standard') {
     deprecate(
       'dialect "standard" is deprecated, because there is no true implementation of the SQL standard',
-      '"sqlite3" is the default'
+      '"sqlite3" is the default',
     )
     options.dialect = 'sqlite3'
   }

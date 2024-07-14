@@ -2,8 +2,8 @@ import { nodeDefinitions, fromGlobalId } from 'graphql-relay'
 
 import joinMonster from '../../src/index'
 const options = {
-  minify: process.env.MINIFY == 1,
-  aliasPrefix: process.env.ALIAS_PREFIX
+  minify: +process.env.MINIFY === 1,
+  aliasPrefix: process.env.ALIAS_PREFIX,
 }
 const { PAGINATE } = process.env
 if (knex.client.config.client === 'mysql') {
@@ -24,12 +24,12 @@ const { nodeInterface, nodeField } = nodeDefinitions(
       type,
       resolveInfo,
       context,
-      parseInt(id),
-      sql => dbCall(sql, knex, context),
-      options
+      parseInt(id, 10),
+      (sql) => dbCall(sql, knex, context),
+      options,
     )
   },
-  obj => obj.__type__
+  (obj) => obj.__type__,
 )
 
 export { nodeInterface, nodeField }

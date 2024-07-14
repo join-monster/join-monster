@@ -3,7 +3,7 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLList,
-  GraphQLBoolean
+  GraphQLBoolean,
 } from 'graphql'
 
 import Post from './Post'
@@ -19,25 +19,25 @@ export default new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: q('comments', DB),
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   interfaces: () => [Authored],
   fields: () => ({
     id: {
-      type: GraphQLInt
+      type: GraphQLInt,
     },
     body: {
       description: 'The content of the comment',
-      type: GraphQLString
+      type: GraphQLString,
     },
     postId: {
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlColumn: 'post_id'
-        }
-      }
+          sqlColumn: 'post_id',
+        },
+      },
     },
     post: {
       description: 'The post that the comment belongs to',
@@ -48,26 +48,26 @@ export default new GraphQLObjectType({
             ? {
                 sqlBatch: {
                   thisKey: 'id',
-                  parentKey: 'post_id'
-                }
+                  parentKey: 'post_id',
+                },
               }
             : {
                 sqlJoin: (commentTable, postTable) =>
                   `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
                     'id',
-                    DB
-                  )}`
-              })
-        }
-      }
+                    DB,
+                  )}`,
+              }),
+        },
+      },
     },
     authorId: {
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlColumn: 'author_id'
-        }
-      }
+          sqlColumn: 'author_id',
+        },
+      },
     },
     author: {
       description: 'The user who wrote the comment',
@@ -78,18 +78,18 @@ export default new GraphQLObjectType({
             ? {
                 sqlBatch: {
                   thisKey: 'id',
-                  parentKey: 'author_id'
-                }
+                  parentKey: 'author_id',
+                },
               }
             : {
                 sqlJoin: (commentTable, userTable) =>
                   `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
                     'id',
-                    DB
-                  )}`
-              })
-        }
-      }
+                    DB,
+                  )}`,
+              }),
+        },
+      },
     },
     likers: {
       description: 'Which users have liked this comment',
@@ -102,29 +102,29 @@ export default new GraphQLObjectType({
               (commentTable, likesTable) =>
                 `${commentTable}.${q('id', DB)} = ${likesTable}.${q(
                   'comment_id',
-                  DB
+                  DB,
                 )}`,
               (likesTable, userTable) =>
                 `${likesTable}.${q('account_id', DB)} = ${userTable}.${q(
                   'id',
-                  DB
-                )}`
-            ]
-          }
-        }
-      }
+                  DB,
+                )}`,
+            ],
+          },
+        },
+      },
     },
     archived: {
-      type: GraphQLBoolean
+      type: GraphQLBoolean,
     },
     createdAt: {
       description: 'When this was created',
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          sqlColumn: 'created_at'
-        }
-      }
-    }
-  })
+          sqlColumn: 'created_at',
+        },
+      },
+    },
+  }),
 })

@@ -3,7 +3,7 @@ import {
   GraphQLString,
   GraphQLList,
   GraphQLInt,
-  GraphQLBoolean
+  GraphQLBoolean,
 } from 'graphql'
 
 import { globalIdField, connectionDefinitions } from 'graphql-relay'
@@ -22,8 +22,8 @@ export const Comment = new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: `(SELECT * FROM ${q('comments', DB)})`,
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   interfaces: () => [nodeInterface, Authored],
   fields: () => ({
@@ -31,13 +31,13 @@ export const Comment = new GraphQLObjectType({
       ...globalIdField(),
       extensions: {
         joinMonster: {
-          sqlDeps: ['id']
-        }
-      }
+          sqlDeps: ['id'],
+        },
+      },
     },
     body: {
       description: 'The content of the comment',
-      type: GraphQLString
+      type: GraphQLString,
     },
     post: {
       description: 'The post that the comment belongs to',
@@ -45,17 +45,17 @@ export const Comment = new GraphQLObjectType({
       extensions: {
         joinMonster: {
           sqlJoin: (commentTable, postTable) =>
-            `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)}`
-        }
-      }
+            `${commentTable}.${q('post_id', DB)} = ${postTable}.${q('id', DB)}`,
+        },
+      },
     },
     authorId: {
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlColumn: 'author_id'
-        }
-      }
+          sqlColumn: 'author_id',
+        },
+      },
     },
     author: {
       description: 'The user who wrote the comment',
@@ -65,13 +65,13 @@ export const Comment = new GraphQLObjectType({
           sqlJoin: (commentTable, userTable) =>
             `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
               'id',
-              DB
-            )}`
-        }
-      }
+              DB,
+            )}`,
+        },
+      },
     },
     archived: {
-      type: GraphQLBoolean
+      type: GraphQLBoolean,
     },
     likers: {
       description: 'Which users have liked this comment',
@@ -84,37 +84,36 @@ export const Comment = new GraphQLObjectType({
               (commentTable, likesTable) =>
                 `${commentTable}.${q('id', DB)} = ${likesTable}.${q(
                   'comment_id',
-                  DB
+                  DB,
                 )}`,
               (likesTable, userTable) =>
                 `${likesTable}.${q('account_id', DB)} = ${userTable}.${q(
                   'id',
-                  DB
-                )}`
-            ]
-          }
-        }
-      }
+                  DB,
+                )}`,
+            ],
+          },
+        },
+      },
     },
     createdAt: {
       description: 'When this was created',
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          sqlColumn: 'created_at'
-        }
-      }
-    }
-  })
+          sqlColumn: 'created_at',
+        },
+      },
+    },
+  }),
 })
 
 const connectionConfig = { nodeType: Comment }
 if (PAGINATE === 'offset') {
   connectionConfig.connectionFields = {
-    total: { type: GraphQLInt }
+    total: { type: GraphQLInt },
   }
 }
-const { connectionType: CommentConnection } = connectionDefinitions(
-  connectionConfig
-)
+const { connectionType: CommentConnection } =
+  connectionDefinitions(connectionConfig)
 export { CommentConnection }

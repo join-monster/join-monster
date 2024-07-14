@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLString, GraphQLInt } from 'graphql'
+import { GraphQLObjectType, GraphQLString } from 'graphql'
 import { globalIdField } from 'graphql-relay'
 import { nodeInterface } from './Node'
 import { q } from '../shared'
@@ -13,23 +13,23 @@ const ContextPost = new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: (_, context) => `(SELECT * FROM ${q(context.table, DB)})`,
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   fields: () => ({
     id: {
       ...globalIdField(),
       extensions: {
         joinMonster: {
-          sqlDeps: ['id']
-        }
-      }
+          sqlDeps: ['id'],
+        },
+      },
     },
     body: {
       description: 'The content of the post',
-      type: GraphQLString
-    }
-  })
+      type: GraphQLString,
+    },
+  }),
 })
 
 export default ContextPost

@@ -3,7 +3,7 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLBoolean,
-  GraphQLList
+  GraphQLList,
 } from 'graphql'
 
 import {
@@ -11,12 +11,12 @@ import {
   connectionDefinitions,
   connectionFromArray,
   connectionArgs,
-  forwardConnectionArgs
+  forwardConnectionArgs,
 } from 'graphql-relay'
 
 import { User } from './User'
 import { CommentConnection } from './Comment'
-import { Tag, TagConnection } from './Tag'
+import { Tag } from './Tag'
 import { Authored } from './Authored/Interface'
 import { nodeInterface } from './Node'
 import { q, bool } from '../shared'
@@ -29,8 +29,8 @@ export const Post = new GraphQLObjectType({
   extensions: {
     joinMonster: {
       sqlTable: `(SELECT * FROM ${q('posts', DB)})`,
-      uniqueKey: 'id'
-    }
+      uniqueKey: 'id',
+    },
   },
   interfaces: () => [nodeInterface, Authored],
   fields: () => ({
@@ -38,21 +38,21 @@ export const Post = new GraphQLObjectType({
       ...globalIdField(),
       extensions: {
         joinMonster: {
-          sqlDeps: ['id']
-        }
-      }
+          sqlDeps: ['id'],
+        },
+      },
     },
     body: {
       description: 'The content of the post',
-      type: GraphQLString
+      type: GraphQLString,
     },
     authorId: {
       type: GraphQLInt,
       extensions: {
         joinMonster: {
-          sqlColumn: 'author_id'
-        }
-      }
+          sqlColumn: 'author_id',
+        },
+      },
     },
     author: {
       description: 'The user that created the post',
@@ -61,75 +61,73 @@ export const Post = new GraphQLObjectType({
         joinMonster: {
           ...(STRATEGY === 'batch'
             ? {
-              sqlBatch: {
-                thisKey: 'id',
-                parentKey: 'author_id'
+                sqlBatch: {
+                  thisKey: 'id',
+                  parentKey: 'author_id',
+                },
               }
-            }
             : {
-              sqlJoin: (postTable, userTable) =>
-                `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
-                  'id',
-                  DB
-                )}`
-            })
-        }
-      }
+                sqlJoin: (postTable, userTable) =>
+                  `${postTable}.${q('author_id', DB)} = ${userTable}.${q(
+                    'id',
+                    DB,
+                  )}`,
+              }),
+        },
+      },
     },
     comments: {
       description: 'The comments on this post',
       type: CommentConnection,
       args: {
         active: { type: GraphQLBoolean },
-        ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs)
+        ...(PAGINATE === 'offset' ? forwardConnectionArgs : connectionArgs),
       },
       resolve: PAGINATE
         ? undefined
         : (post, args) => {
-          post.comments.sort((a, b) => a.id - b.id)
-          return connectionFromArray(post.comments, args)
-        },
+            post.comments.sort((a, b) => a.id - b.id)
+            return connectionFromArray(post.comments, args)
+          },
       extensions: {
         joinMonster: {
           sqlPaginate: !!PAGINATE,
-          ...(PAGINATE === 'offset' ?
-            { orderBy: 'id' } :
-            PAGINATE === 'keyset' ?
-              {
+          ...(PAGINATE === 'offset' ? { orderBy: 'id' } : {}),
+          ...(PAGINATE === 'keyset'
+            ? {
                 sortKey: {
                   order: 'DESC',
-                  key: 'id'
-                }
-              } :
-              {
+                  key: 'id',
+                },
               }
-          ),
-          ...(STRATEGY === 'batch' || STRATEGY === 'mix' ?
-            {
-              sqlBatch: {
-                thisKey: 'post_id',
-                parentKey: 'id'
-              },
-              where: (table, args) =>
-                args.active
-                  ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
-                  : null
-            } : {
-
-              sqlJoin: (postTable, commentTable, args) =>
-                `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
-                  'id',
-                  DB
-                )} ${args.active
-                  ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
-                    false,
-                    DB
-                  )}`
-                  : ''
-                }`
-            })
-        }
-      }
+            : {}),
+          ...(STRATEGY === 'batch' || STRATEGY === 'mix'
+            ? {
+                sqlBatch: {
+                  thisKey: 'post_id',
+                  parentKey: 'id',
+                },
+                where: (table, args) =>
+                  args.active
+                    ? `${table}.${q('archived', DB)} = ${bool(false, DB)}`
+                    : null,
+              }
+            : {
+                sqlJoin: (postTable, commentTable, args) =>
+                  `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
+                    'id',
+                    DB,
+                  )} ${
+                    args.active
+                      ? `AND ${commentTable}.${q('archived', DB)} = ${bool(
+                          false,
+                          DB,
+                        )}`
+                      : ''
+                  }`,
+              }),
+        },
+      },
     },
     numComments: {
       description: 'How many comments this post has',
@@ -137,60 +135,59 @@ export const Post = new GraphQLObjectType({
       extensions: {
         joinMonster: {
           // you can info from a correlated subquery
-          sqlExpr: table =>
+          sqlExpr: (table) =>
             `(SELECT count(*) from ${q('comments', DB)} WHERE ${table}.${q(
               'id',
-              DB
-            )} = comments.${q('post_id', DB)})`
-        }
-      }
+              DB,
+            )} = comments.${q('post_id', DB)})`,
+        },
+      },
     },
     archived: {
-      type: GraphQLBoolean
+      type: GraphQLBoolean,
     },
     createdAt: {
       type: GraphQLString,
       extensions: {
         joinMonster: {
-          sqlColumn: 'created_at'
-        }
-      }
+          sqlColumn: 'created_at',
+        },
+      },
     },
     tags: {
       type: new GraphQLList(Tag),
-      resolve: source => {
-        return source.tags.map(tag => tag.tag)
+      resolve: (source) => {
+        return source.tags.map((tag) => tag.tag)
       },
       extensions: {
         joinMonster: {
           orderBy: 'tag_order',
           ...(STRATEGY === 'batch'
             ? {
-              sqlBatch: {
-                thisKey: 'post_id',
-                parentKey: 'id'
+                sqlBatch: {
+                  thisKey: 'post_id',
+                  parentKey: 'id',
+                },
               }
-            }
             : {
-              sqlJoin: (postTable, tagTable) =>
-                `${postTable}.${q('id', DB)} = ${tagTable}.${q(
-                  'post_id',
-                  DB
-                )}`
-            })
-        }
-      }
-    }
-  })
+                sqlJoin: (postTable, tagTable) =>
+                  `${postTable}.${q('id', DB)} = ${tagTable}.${q(
+                    'post_id',
+                    DB,
+                  )}`,
+              }),
+        },
+      },
+    },
+  }),
 })
 
 const connectionConfig = { nodeType: Post }
 if (PAGINATE === 'offset') {
   connectionConfig.connectionFields = {
-    total: { type: GraphQLInt }
+    total: { type: GraphQLInt },
   }
 }
-const { connectionType: PostConnection } = connectionDefinitions(
-  connectionConfig
-)
+const { connectionType: PostConnection } =
+  connectionDefinitions(connectionConfig)
 export { PostConnection }

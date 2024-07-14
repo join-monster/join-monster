@@ -7,5 +7,5 @@ module.exports = {
   handleJoinedOneToManyPaginated: throwErr,
   handleBatchedOneToManyPaginated: throwErr,
   handleJoinedManyToManyPaginated: throwErr,
-  handleBatchedManyToManyPaginated: throwErr
+  handleBatchedManyToManyPaginated: throwErr,
 }

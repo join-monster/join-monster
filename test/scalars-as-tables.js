@@ -3,8 +3,7 @@ import { graphql } from 'graphql'
 import schema from '../test-api/schema-paginated/index'
 import { errCheck } from './_util'
 
-
-test('it should get a scalar list and resolve it', async t => {
+test('it should get a scalar list and resolve it', async (t) => {
   const source = `
     query {
       post(id: 1) {
@@ -13,7 +12,7 @@ test('it should get a scalar list and resolve it', async t => {
       }
     }
   `
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   t.deepEqual(['foo', 'bar', 'baz'], data.post.tags)
 })

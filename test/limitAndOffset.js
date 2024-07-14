@@ -1,5 +1,11 @@
 import test from 'ava'
-import { graphql, GraphQLSchema, GraphQLObjectType, GraphQLList, GraphQLInt } from 'graphql'
+import {
+  graphql,
+  GraphQLSchema,
+  GraphQLObjectType,
+  GraphQLList,
+  GraphQLInt,
+} from 'graphql'
 import { errCheck, getDatabaseOptions } from './_util'
 
 import knex from '../test-api/data/database'
@@ -21,29 +27,29 @@ const schema = new GraphQLSchema({
         type: new GraphQLList(User),
         args: {
           limit: { type: GraphQLInt },
-          offset: { type: GraphQLInt }
+          offset: { type: GraphQLInt },
         },
         extensions: {
           joinMonster: {
             orderBy: 'id',
             limit: (args) => args.limit,
-            offset: (args) => args.offset ?? 0
-          }
+            offset: (args) => args.offset ?? 0,
+          },
         },
         resolve: async (parent, args, context, resolveInfo) => {
           return joinMonster(
             resolveInfo,
             context,
-            sql => dbCall(sql, knex, context),
-            options
+            (sql) => dbCall(sql, knex, context),
+            options,
           )
-        }
-      }
-    })
-  })
+        },
+      },
+    }),
+  }),
 })
 
-test('it should allow specifying a limit', async t => {
+test('it should allow specifying a limit', async (t) => {
   const source = `{
     users(limit: 1) {
       fullName
@@ -55,13 +61,13 @@ test('it should allow specifying a limit', async t => {
     users: [
       {
         fullName: 'andrew carlson',
-      }
-    ]
+      },
+    ],
   }
   t.deepEqual(expect, data)
 })
 
-test('it should allow specifying a limit with join', async t => {
+test('it should allow specifying a limit with join', async (t) => {
   const source = `{
     users(limit: 1) {
       fullName
@@ -90,13 +96,13 @@ test('it should allow specifying a limit with join', async t => {
           },
         ],
         fullName: 'andrew carlson',
-      }
-    ]
+      },
+    ],
   }
   t.deepEqual(expect, data)
 })
 
-test('it should allow specifying a limit and an offset', async t => {
+test('it should allow specifying a limit and an offset', async (t) => {
   const source = `{
     users(limit: 1, offset: 1) {
       fullName
@@ -108,13 +114,13 @@ test('it should allow specifying a limit and an offset', async t => {
     users: [
       {
         fullName: 'matt elder',
-      }
-    ]
+      },
+    ],
   }
   t.deepEqual(expect, data)
 })
 
-test('it should allow specifying a limit and an offset with join', async t => {
+test('it should allow specifying a limit and an offset with join', async (t) => {
   const source = `{
     users(limit: 1, offset: 1) {
       fullName
@@ -130,12 +136,12 @@ test('it should allow specifying a limit and an offset with join', async t => {
       {
         comments: [
           {
-            body: 'FIRST COMMENT!'
-          }
+            body: 'FIRST COMMENT!',
+          },
         ],
         fullName: 'matt elder',
-      }
-    ]
+      },
+    ],
   }
   t.deepEqual(expect, data)
 })

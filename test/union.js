@@ -3,8 +3,7 @@ import { graphql } from 'graphql'
 import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
-
-test('it should a union type', async t => {
+test('it should a union type', async (t) => {
   const source = `
     {
       user(id: 1) {
@@ -30,7 +29,7 @@ test('it should a union type', async t => {
       authorId
     }
   `
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -41,13 +40,13 @@ test('it should a union type', async t => {
           body: 'Wow this is a great post, Matt.',
           postId: 1,
           authorId: 1,
-          likers: [{ fullName: 'matt elder' }]
+          likers: [{ fullName: 'matt elder' }],
         },
         {
           id: 2,
           __typename: 'Post',
           authorId: 1,
-          body: 'Check out this cool new GraphQL library, Join Monster.'
+          body: 'Check out this cool new GraphQL library, Join Monster.',
         },
         {
           __typename: 'Comment',
@@ -55,7 +54,7 @@ test('it should a union type', async t => {
           body: 'Do not forget to check out the demo.',
           authorId: 1,
           postId: 2,
-          likers: []
+          likers: [],
         },
         {
           __typename: 'Comment',
@@ -63,24 +62,23 @@ test('it should a union type', async t => {
           body: 'Also, submit a PR if you have a feature you want to add.',
           authorId: 1,
           postId: 2,
-          likers: []
+          likers: [],
         },
         {
           __typename: 'Comment',
           id: 8,
-          body:
-            'Somebody please help me with this library. It is so much work.',
+          body: 'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
-          likers: []
-        }
-      ]
-    }
+          likers: [],
+        },
+      ],
+    },
   }
   t.deepEqual(expect, data)
 })
 
-test('it should an interface type', async t => {
+test('it should an interface type', async (t) => {
   const source = `
     {
       user(id: 1) {
@@ -99,7 +97,7 @@ test('it should an interface type', async t => {
       }
     }
   `
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -110,13 +108,13 @@ test('it should an interface type', async t => {
           body: 'Wow this is a great post, Matt.',
           postId: 1,
           authorId: 1,
-          likers: [{ fullName: 'matt elder' }]
+          likers: [{ fullName: 'matt elder' }],
         },
         {
           id: 2,
           __typename: 'Post',
           authorId: 1,
-          body: 'Check out this cool new GraphQL library, Join Monster.'
+          body: 'Check out this cool new GraphQL library, Join Monster.',
         },
         {
           __typename: 'Comment',
@@ -124,7 +122,7 @@ test('it should an interface type', async t => {
           body: 'Do not forget to check out the demo.',
           authorId: 1,
           postId: 2,
-          likers: []
+          likers: [],
         },
         {
           __typename: 'Comment',
@@ -132,24 +130,23 @@ test('it should an interface type', async t => {
           body: 'Also, submit a PR if you have a feature you want to add.',
           authorId: 1,
           postId: 2,
-          likers: []
+          likers: [],
         },
         {
           __typename: 'Comment',
           id: 8,
-          body:
-            'Somebody please help me with this library. It is so much work.',
+          body: 'Somebody please help me with this library. It is so much work.',
           authorId: 1,
           postId: 2,
-          likers: []
-        }
-      ]
-    }
+          likers: [],
+        },
+      ],
+    },
   }
   t.deepEqual(expect, data)
 })
 
-test('it should return single disjoint field request for union type', async t => {
+test('it should return single disjoint field request for union type', async (t) => {
   const source = `
     {
       user(id: 1) {
@@ -166,7 +163,7 @@ test('it should return single disjoint field request for union type', async t =>
       }
     }
   `
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -174,41 +171,41 @@ test('it should return single disjoint field request for union type', async t =>
         {
           __typename: 'Comment',
           id: 1,
-          author : {
+          author: {
             capitalizedLastName: 'CARLSON',
-          }
+          },
         },
         {
-          __typename: 'Post'
+          __typename: 'Post',
         },
         {
           __typename: 'Comment',
           id: 4,
-          author : {
-            capitalizedLastName: 'CARLSON'
-          }
+          author: {
+            capitalizedLastName: 'CARLSON',
+          },
         },
         {
           __typename: 'Comment',
           id: 6,
-          author : {
-            capitalizedLastName: 'CARLSON'
-          }
+          author: {
+            capitalizedLastName: 'CARLSON',
+          },
         },
         {
           __typename: 'Comment',
           id: 8,
-          author : {
-            capitalizedLastName: 'CARLSON'
-          }
-        }
-      ]
-    }
+          author: {
+            capitalizedLastName: 'CARLSON',
+          },
+        },
+      ],
+    },
   }
   t.deepEqual(expect, data)
 })
 
-test('it should return multiple disjoint fields requests for union type', async t => {
+test('it should return multiple disjoint fields requests for union type', async (t) => {
   const source = `
     {
       user(id: 1) {
@@ -231,7 +228,7 @@ test('it should return multiple disjoint fields requests for union type', async 
       }
     }
   `
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -239,41 +236,40 @@ test('it should return multiple disjoint fields requests for union type', async 
         {
           __typename: 'Comment',
           id: 1,
-          author : {
+          author: {
             capitalizedLastName: 'CARLSON',
-          }
+          },
         },
         {
           __typename: 'Post',
           id: 2,
-          author : {
-            email: 'andrew@stem.is'
-          }
-
+          author: {
+            email: 'andrew@stem.is',
+          },
         },
         {
           __typename: 'Comment',
           id: 4,
-          author : {
-            capitalizedLastName: 'CARLSON'
-          }
+          author: {
+            capitalizedLastName: 'CARLSON',
+          },
         },
         {
           __typename: 'Comment',
           id: 6,
-          author : {
-            capitalizedLastName: 'CARLSON'
-          }
+          author: {
+            capitalizedLastName: 'CARLSON',
+          },
         },
         {
           __typename: 'Comment',
           id: 8,
-          author : {
-            capitalizedLastName: 'CARLSON'
-          }
-        }
-      ]
-    }
+          author: {
+            capitalizedLastName: 'CARLSON',
+          },
+        },
+      ],
+    },
   }
   t.deepEqual(expect, data)
 })

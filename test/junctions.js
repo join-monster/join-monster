@@ -3,8 +3,7 @@ import { graphql } from 'graphql'
 import schema from '../test-api/schema-basic/index'
 import { errCheck } from './_util'
 
-
-test('should handle data from the junction table', async t => {
+test('should handle data from the junction table', async (t) => {
   const source = `{
     user(id: 3) {
       fullName
@@ -14,7 +13,7 @@ test('should handle data from the junction table', async t => {
       }
     }
   }`
-  const { data, errors } = await graphql({schema, source})
+  const { data, errors } = await graphql({ schema, source })
   errCheck(t, errors)
   const expect = {
     user: {
@@ -22,14 +21,14 @@ test('should handle data from the junction table', async t => {
       following: [
         {
           id: 1,
-          intimacy: 'acquaintance'
+          intimacy: 'acquaintance',
         },
         {
           id: 2,
-          intimacy: 'best'
-        }
-      ]
-    }
+          intimacy: 'best',
+        },
+      ],
+    },
   }
   t.deepEqual(expect, data)
 })

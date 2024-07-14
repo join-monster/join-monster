@@ -10,15 +10,14 @@ const Person = new GraphQLInterfaceType({
       'comments' in value
     ) {
       return info.schema.getType('User')
-    } else {
-      return info.schema.getType('Sponsor')
     }
+    return info.schema.getType('Sponsor')
   },
   fields: {
     fullName: {
-      type: GraphQLString
-    }
-  }
+      type: GraphQLString,
+    },
+  },
 })
 
 export default Person

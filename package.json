@@ -24,7 +24,7 @@
     "testtsd": "npm run build && tsd",
     "coverage": "nyc --reporter=html npm run test",
     "view-coverage": "open coverage/index.html",
-    "lint": "eslint src test",
+    "lint": "eslint src test test-api",
     "prettier": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"test-api/**/*.js\"",
     "start": "babel-watch ./test-api/server.js",
     "docs": "mkdocs serve",
@@ -107,6 +107,7 @@
     "mysql": "^2.14.1",
     "nyc": "^15.0.1",
     "pg": "^8.2.1",
+    "prettier": "^3.3.3",
     "sinon": "^9.0.2",
     "sqlite3": "^5.1.0",
     "tsd": "^0.28.1"

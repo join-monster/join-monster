@@ -30,9 +30,9 @@ export default new GraphQLUnionType({
       FROM ${q('comments', DB)}
     )`,
       uniqueKey: ['id', '$type'],
-      alwaysFetch: '$type'
-    }
+      alwaysFetch: '$type',
+    },
   },
   types: () => [Comment, Post],
-  resolveType: obj => obj.$type
+  resolveType: (obj) => obj.$type,
 })
