@@ -1,8 +1,16 @@
 import test from 'ava'
-import { graphql, GraphQLSchema, GraphQLObjectType, GraphQLList, GraphQLInt, GraphQLString, GraphQLBoolean, GraphQLNonNull } from 'graphql'
+import {
+  graphql,
+  GraphQLSchema,
+  GraphQLObjectType,
+  GraphQLList,
+  GraphQLInt,
+  GraphQLString,
+  GraphQLBoolean,
+  GraphQLNonNull,
+} from 'graphql'
 import { errCheck, getDatabaseOptions } from './_util'
 import { q } from '../test-api/shared'
-
 
 import knex from '../test-api/data/database'
 import dbCall from '../test-api/data/fetch'
@@ -55,7 +63,7 @@ const Post = new GraphQLObjectType({
               },
             }
             : {
-              sqlJoin: (postTable, commentTable, args) =>
+              sqlJoin: (postTable, commentTable) =>
                 `${commentTable}.${q('post_id', DB)} = ${postTable}.${q(
                   'id',
                   DB
@@ -104,7 +112,7 @@ const User = new GraphQLObjectType({
               }
             }
             : {
-              sqlJoin: (userTable, commentTable, args) =>
+              sqlJoin: (userTable, commentTable) =>
                 `${commentTable}.${q('author_id', DB)} = ${userTable}.${q(
                   'id',
                   DB
@@ -199,7 +207,7 @@ const schema = new GraphQLSchema({
         },
         extensions: {
           joinMonster: {
-            where: (usersTable, args, context) => {
+            where: (usersTable, args) => {
               if (args.id) return `${usersTable}.${q('id', DB)} = ${args.id}`
             }
           }
