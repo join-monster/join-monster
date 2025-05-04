@@ -367,6 +367,36 @@ function handleTable(
     if (fieldConfig.junction.where) {
       junction.where = fieldConfig.junction.where
     }
+    //  support for alwaysFetch in junction tables
+    if (fieldConfig.junction.alwaysFetch) {
+      junction.alwaysFetch = wrap(unthunk(
+        fieldConfig.junction.alwaysFetch,
+        sqlASTNode.args || {},
+        context
+      ))
+      // Store the alwaysFetch columns in the junction object for later use
+      junction.alwaysFetchColumns = [];
+  
+      for (let column of junction.alwaysFetch) {
+        // Create the column child in the same way as for regular tables
+        const columnChild = columnToASTChild(
+          unthunk(
+            column,
+            sqlASTNode.as,
+            sqlASTNode.args || {},
+            context,
+            sqlASTNode
+          ),
+          namespace
+        )
+    
+        // Set the table alias to the junction table
+        columnChild.fromOtherTable = junction.as
+    
+        // Add to temporary array instead of directly to children
+        junction.alwaysFetchColumns.push(columnChild);
+      }
+    }
     // are they joining or batching?
     if (fieldConfig.junction.sqlJoins) {
       junction.sqlJoins = fieldConfig.junction.sqlJoins
@@ -478,6 +508,11 @@ function handleTable(
   ) {
     deprecate('`typeHint` is deprecated. Use `alwaysFetch` instead.')
     children.push(columnToASTChild(config.typeHint, namespace))
+  }
+
+  // Add any junction alwaysFetch columns at the end
+  if (sqlASTNode.junction && sqlASTNode.junction.alwaysFetchColumns) {
+     sqlASTNode.children.push(...sqlASTNode.junction.alwaysFetchColumns);
   }
 
   // go handle the pagination information

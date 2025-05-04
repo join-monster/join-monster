@@ -103,12 +103,32 @@ export default new GraphQLObjectType({
           }
         }
       },
+    /*****
       resolve: (parent, args, context, resolveInfo) => {
         return joinMonster(
           resolveInfo,
           context,
           sql => dbCall(sql, knex, context),
           options
+        )
+      }
+    ******/
+      resolve: (parent, args, context, resolveInfo) => {
+         // Add a hook to capture the SQL
+    
+         const sqlLogger = sql => {
+         // Store it in the context for the test to access
+            if (context && Object.prototype.hasOwnProperty.call(context, 'capturedSql')) {
+               context.capturedSql = sql
+            }
+            return dbCall(sql, knex, context)
+         }
+
+         return joinMonster(
+            resolveInfo,
+            context,
+            sqlLogger,
+            options
         )
       }
     },

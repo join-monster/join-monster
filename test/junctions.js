@@ -33,3 +33,25 @@ test('should handle data from the junction table', async t => {
   }
   t.deepEqual(expect, data)
 })
+
+test('should include alwaysFetch columns from junction table in SQL', async t => {
+  const context = { capturedSql: '' }
+  
+  const source = `{
+    user(id: 3) {
+      fullName
+      following {
+        id
+      }
+    }
+  }`
+  
+  
+  await graphql({schema, source, contextValue: context})
+  
+  // Now check the captured SQL
+  console.log(`context = ${JSON.stringify(context)}`)
+  console.log(`SQL = ${context.capturedSql}`)
+  t.true(context.capturedSql.includes('closeness'), 'SQL should include the closeness column')
+})
+
