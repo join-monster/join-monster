@@ -50,8 +50,6 @@ test('should include alwaysFetch columns from junction table in SQL', async t =>
   await graphql({schema, source, contextValue: context})
   
   // Now check the captured SQL
-  console.log(`context = ${JSON.stringify(context)}`)
-  console.log(`SQL = ${context.capturedSql}`)
   t.true(context.capturedSql.includes('closeness'), 'SQL should include the closeness column')
 })
 
