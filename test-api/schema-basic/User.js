@@ -170,6 +170,7 @@ const User = new GraphQLObjectType({
               : false,
           junction: {
             sqlTable: q('relationships', DB),
+            alwaysFetch: ['closeness'],
             orderBy: args =>
               args.oldestFirst ? { followee_id: 'desc' } : null,
             where: (table, args) =>
