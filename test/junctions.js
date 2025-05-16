@@ -34,7 +34,7 @@ test('should handle data from the junction table', async t => {
   t.deepEqual(expect, data)
 })
 
-test('should include alwaysFetch columns from junction table in SQL', async t => {
+test('should include alwaysFetch columns from junction table in SQL and not as the first column', async t => {
   const context = { capturedSql: '' }
   
   const source = `{
@@ -46,9 +46,22 @@ test('should include alwaysFetch columns from junction table in SQL', async t =>
     }
   }`
   
-  
   await graphql({schema, source, contextValue: context})
   
-  // Now check the captured SQL
-  t.true(context.capturedSql.includes('closeness'), 'SQL should include the closeness column')
+  // Extract the SELECT clause
+  const selectMatch = context.capturedSql.match(/SELECT\s+([\s\S]+?)\s+FROM/i)
+  t.truthy(selectMatch, 'Should match SELECT clause')
+  
+  const selectClause = selectMatch[1]
+    .split(',')
+    .map(col => col.trim())
+
+  // Find index of the closeness column
+  const closenessIndex = selectClause.findIndex(col =>
+    col.includes('"following__closeness"') || col.includes('.closeness')
+  )
+
+  t.true(closenessIndex !== -1, 'SQL should include the closeness column')
+  t.true(closenessIndex > 0, 'closeness column should not be the first column in the SELECT list')
 })
+
