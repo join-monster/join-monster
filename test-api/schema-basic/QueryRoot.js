@@ -103,16 +103,6 @@ export default new GraphQLObjectType({
           }
         }
       },
-    /*****
-      resolve: (parent, args, context, resolveInfo) => {
-        return joinMonster(
-          resolveInfo,
-          context,
-          sql => dbCall(sql, knex, context),
-          options
-        )
-      }
-    ******/
       resolve: (parent, args, context, resolveInfo) => {
          // Add a hook to capture the SQL
     

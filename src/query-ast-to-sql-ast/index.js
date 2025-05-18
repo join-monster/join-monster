@@ -496,7 +496,7 @@ function handleTable(
       columnChild.fromOtherTable = sqlASTNode.junction.as
     
       // Add directly to children at this point, after all standard columns
-      sqlASTNode.children.push(columnChild);
+      sqlASTNode.children.push(columnChild)
     }
   }
 
