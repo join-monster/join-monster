@@ -480,6 +480,27 @@ function handleTable(
     children.push(columnToASTChild(config.typeHint, namespace))
   }
 
+
+  // Handle junction alwaysFetch columns
+  if (fieldConfig.junction && fieldConfig.junction.alwaysFetch) {
+    const alwaysFetch = wrap(unthunk(
+      fieldConfig.junction.alwaysFetch,
+      sqlASTNode.args || {},
+      context
+    ))
+
+    for (let column of alwaysFetch) {
+      const columnChild = columnToASTChild(
+        unthunk(column, sqlASTNode.args || {}, context),
+        namespace
+      )
+      columnChild.fromOtherTable = sqlASTNode.junction.as
+    
+      // Add directly to children at this point, after all standard columns
+      sqlASTNode.children.push(columnChild)
+    }
+  }
+  
   // go handle the pagination information
   if (sqlASTNode.paginate) {
     handleColumnsRequiredForPagination(sqlASTNode, namespace)
