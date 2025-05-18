@@ -260,6 +260,7 @@ const User = new GraphQLObjectType({
           },
           junction: {
             sqlTable: `(SELECT * FROM ${q('relationships', DB)})`,
+            alwaysFetch: ['closeness'],
             where: (table, args) =>
               args.intimacy
                 ? `${table}.${q('closeness', DB)} = '${args.intimacy}'`

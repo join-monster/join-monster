@@ -52,7 +52,6 @@ test('should include alwaysFetch columns from junction table in SQL and not as t
   const selectMatch = context.capturedSql.toLowerCase().match(/select\s+([\s\S]+?)\s+from/i)
   t.truthy(selectMatch, 'Should match SELECT clause')
   
-  console.log(`sql = ${context.capturedSql}`)
   const selectClause = selectMatch[1]
     .split(',')
     .map(col => col.trim())
