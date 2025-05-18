@@ -49,7 +49,7 @@ test('should include alwaysFetch columns from junction table in SQL and not as t
   await graphql({schema, source, contextValue: context})
   
   // Extract the SELECT clause
-  const selectMatch = context.capturedSql.match(/SELECT\s+([\s\S]+?)\s+FROM/i)
+  const selectMatch = context.capturedSql.toLowerCase().match(/select\s+([\s\S]+?)\s+from/i)
   t.truthy(selectMatch, 'Should match SELECT clause')
   
   const selectClause = selectMatch[1]
