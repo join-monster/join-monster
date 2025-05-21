@@ -1,6 +1,6 @@
 {
   "name": "join-monster",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "A GraphQL to SQL query execution layer for batch data fetching.",
   "main": "dist/index.js",
   "engines": {
