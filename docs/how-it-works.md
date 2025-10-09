@@ -72,7 +72,7 @@ Join Monster provides a declarative API that lets you define **data requirements
 
 Notice that most of these fields do not have resolvers. Most of the time, adding the SQL decorations will be enough. [Join Monster](https://github.com/join-monster/join-monster) fetches the data and converts it to the correct object tree structure with the expected property names so the child resolvers know where to find the data.
 
-Also notice the `immortal` field, which does have a resolver. This field demonstrates how not all the fields must come from the batch request. You can write custom resolvers like you normally would that gets data from anywhere else. [Join Monster](https://github.com/join-monster/join-monster) is just a way of fetching data, it will not hinder your ability to write your resolvers. You can also have your fields get data fron a column *and* apply a resolver to modify, format, or extend the data.
+Also notice the `immortal` field, which does have a resolver. This field demonstrates how not all the fields must come from the batch request. You can write custom resolvers like you normally would that gets data from anywhere else. [Join Monster](https://github.com/join-monster/join-monster) is just a way of fetching data, it will not hinder your ability to write your resolvers. You can also have your fields get data from a column *and* apply a resolver to modify, format, or extend the data.
 
 ## Calling the Function
 
